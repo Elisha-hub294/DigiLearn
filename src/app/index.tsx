@@ -1,3 +1,4 @@
+import { Feather as Icon } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -5,7 +6,8 @@ import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View } from 're
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather as Icon } from '@expo/vector-icons';
+import { MasonryCardData } from '../components/MasonryCard';
+import MasonrySection from '../components/MasonrySection';
 import { Header } from '../components/ui/Header';
 import { HeroCarousel } from '../components/ui/HeroCarousel';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
@@ -54,14 +56,24 @@ export default function HomeScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(450)} style={styles.section}>
-          <SectionHeader title="For you" subtitle="Personalised learning" onSeeAll={() => router.push('/library')} />
-          <FlatList
-            horizontal
-            data={duplicatedForYou}
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(item, index) => `${item.id}-${index}`}
-            renderItem={({ item }) => <ForYouCard item={item} />}
-            contentContainerStyle={styles.horizontalList}
+          {/* Masonry "For you" section */}
+          <MasonrySection
+            title="For you"
+            subtitle="Personalised learning"
+            data={((): MasonryCardData[] =>
+              duplicatedForYou.map((f, i) => ({
+                id: `${f.id}-${i}`,
+                type: f.image ? 'mixed' : 'text',
+                title: f.title,
+                subtitle: f.subtitle,
+                image: f.image ?? undefined,
+                backgroundColor: f.color,
+                height: f.duration ? 200 : undefined,
+              }))
+            )()}
+            numColumns={2}
+            gap={12}
+            onCardPress={(item) => router.push('/library')}
           />
         </Animated.View>
 
@@ -90,12 +102,21 @@ export default function HomeScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(600)} style={styles.section}>
-          <SectionHeader title="Past papers" subtitle="Practice the latest questions" onSeeAll={() => router.push('/library')} />
-          <View style={styles.grid}>
-            {pastPapersData.map((item) => (
-              <PastPaperCard key={item.id} item={item} />
-            ))}
-          </View>
+          <MasonrySection
+            title="Past papers"
+            subtitle="Practice the latest questions"
+            data={pastPapersData.map((p) => ({
+              id: p.id,
+              type: 'image' as const,
+              title: p.title,
+              image: p.image,
+              backgroundColor: p.accent,
+              height: 140,
+            }))}
+            numColumns={2}
+            gap={12}
+            onCardPress={(item) => router.push('/library')}
+          />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(650)} style={styles.section}>

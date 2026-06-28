@@ -5,8 +5,10 @@
   "dependencies": {
     "@expo/ui": "~56.0.18",
     "@expo/vector-icons": "^15.1.1",
+    "@react-native-seoul/masonry-list": "^1.4.2",
     "@react-navigation/bottom-tabs": "^7.18.3",
     "@react-navigation/native": "^7.3.4",
+    "@shopify/flash-list": "^2.3.2",
     "@types/react-native-vector-icons": "^6.4.18",
     "expo": "~56.0.12",
     "expo-constants": "~56.0.18",
