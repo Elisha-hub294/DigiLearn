@@ -6,6 +6,8 @@ export type CarouselItem = {
   cta: string;
   color: string;
   image: ImageSourcePropType;
+  subtitle?: string;
+  titleColor?: string;
 };
 
 export type ForYouItem = {
@@ -51,6 +53,10 @@ const imageImports = {
   mock: require('../../assets/images/mock.png'),
   uneb: require('../../assets/images/uneb.png'),
   bookshop: require('../../assets/images/bookshop.png'),
+  bookstore: require('../../assets/images/bookstore.png'),
+  download: require('../../assets/images/download.png'),
+  progress: require('../../assets/images/progress.png'),
+  exam: require('../../assets/images/exam.png'),
   footer: require('../../assets/images/footer.png'),
 };
 
@@ -58,31 +64,64 @@ export const carouselData: CarouselItem[] = [
   {
     id: 'slide-1',
     title: 'What would you like to learn today?',
+    subtitle: 'Choose a path that fits your goals and start learning confidently.',
     cta: 'Get Started',
-    color: '#D4EAFD',
+    color: '#DDEBFF',
+    titleColor: '#31527F',
     image: imageImports.panda,
   },
   {
     id: 'slide-2',
-    title: 'Master your revision routine',
-    cta: 'Explore Plans',
-    color: '#E7F8EA',
-    image: imageImports.panda,
+    title: 'Get the best textbooks from the best teachers',
+    subtitle: 'Discover curated resources made to help you learn faster.',
+    cta: 'Browse Books',
+    color: '#FDDA76',
+    titleColor: '#6B3E00',
+    image: imageImports.bookstore,
   },
   {
     id: 'slide-3',
-    title: 'Catch up with the best videos',
-    cta: 'Watch Now',
-    color: '#FCECDD',
-    image: imageImports.panda,
+    title: 'Download Notes Instantly',
+    subtitle: 'Access high-quality revision notes anytime.',
+    cta: 'Download Notes',
+    color: '#D1B3F0',
+    titleColor: '#4A2066',
+    image: imageImports.download,
+  },
+  {
+    id: 'slide-4',
+    title: 'Track your progress',
+    subtitle: 'Stay motivated by seeing your learning journey.',
+    cta: 'View Progress',
+    color: '#FDF0DC',
+    titleColor: '#6B4A00',
+    image: imageImports.progress,
+  },
+  {
+    id: 'slide-5',
+    title: 'Prepare with Past Papers',
+    subtitle: 'Practice with real examination papers.',
+    cta: 'Explore Papers',
+    color: '#F9C269',
+    titleColor: '#6B3A00',
+    image: imageImports.exam,
+  },
+  {
+    id: 'slide-6',
+    title: 'Daily Revision Tips',
+    subtitle: 'Learn smarter with effective study techniques.',
+    cta: 'Read Tips',
+    color: '#E1E0E0',
+    titleColor: '#7A7A7A',
+    image: imageImports.brain,
   },
 ];
 
 export const forYouData: ForYouItem[] = [
   { id: 'fy-1', title: 'Basic What is an organism', subtitle: 'Learn the fundamentals', duration: '30 min', color: '#6BCB77' },
-  { id: 'fy-2', title: 'Join your class', subtitle: 'Stay engaged with peers', color: '#F4F5F7', image: imageImports.avatars },
-  { id: 'fy-3', title: 'Tips for better Revision', subtitle: 'Simple study habits', color: '#B89AF8', image: imageImports.bulb },
-  { id: 'fy-4', title: 'Get tips from others', subtitle: 'Grow with community', color: '#F4F5F7', image: imageImports.brain },
+  { id: 'fy-2', title: 'Join your class', subtitle: 'Stay engaged with peers', color: '#E2E2E2', image: imageImports.avatars },
+  { id: 'fy-3', title: 'Tips for better Revision', subtitle: 'Simple study habits', color: '#BCAAEE', image: imageImports.bulb },
+  { id: 'fy-4', title: 'Get tips from others', subtitle: 'Grow with community', color: '#E2E2E2', image: imageImports.brain },
 ];
 
 export const subjectsData: SubjectItem[] = [
