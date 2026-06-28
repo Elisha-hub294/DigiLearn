@@ -20,7 +20,7 @@ export const Header = () => {
     <View style={styles.container}>
       <View style={styles.textWrap}>
         <Text style={styles.date}>{date}</Text>
-        <Text style={styles.greeting}>{`${greeting}, Kathryn`}</Text>
+        <Text style={styles.greeting}>{`${greeting}, Elisha`}</Text>
       </View>
       <Pressable
         onPress={() => router.push('/profile')}

@@ -1,8 +1,8 @@
+import { Feather as Icon } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useMemo, useRef, useState } from 'react';
 import { FlatList, NativeScrollEvent, NativeSyntheticEvent, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { Feather as Icon } from '@expo/vector-icons';
 import { carouselData, CarouselItem } from '../../constants/data';
 import { colors, radius, shadows, spacing } from '../../constants/theme';
 
@@ -116,6 +116,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 30,
     marginBottom: spacing.lg,
+    width: '60%',
   },
   cta: {
     alignSelf: 'flex-start',
@@ -130,8 +131,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   image: {
-    width: 120,
-    height: 120,
+    width: 180,
+    height: 180,
     position: 'absolute',
     right: 8,
     bottom: 6,

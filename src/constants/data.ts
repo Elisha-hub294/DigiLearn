@@ -59,7 +59,7 @@ export const carouselData: CarouselItem[] = [
     id: 'slide-1',
     title: 'What would you like to learn today?',
     cta: 'Get Started',
-    color: '#DDEBFF',
+    color: '#D4EAFD',
     image: imageImports.panda,
   },
   {
