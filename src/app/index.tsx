@@ -1,98 +1,357 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
+import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { Feather as Icon } from '@expo/vector-icons';
+import { Header } from '../components/ui/Header';
+import { HeroCarousel } from '../components/ui/HeroCarousel';
+import { PrimaryButton } from '../components/ui/PrimaryButton';
+import { SearchBar } from '../components/ui/SearchBar';
+import { SectionHeader } from '../components/ui/SectionHeader';
+import { forYouData, pastPapersData, subjectsData, videosData } from '../constants/data';
+import { colors, dimensions, radius, shadows, spacing } from '../constants/theme';
+import LoadingScreen from './loading';
 
 export default function HomeScreen() {
+  const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
+  const [showLoading, setShowLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowLoading(false), 1100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 900);
+  }, []);
+
+  const duplicatedForYou = useMemo(() => [...forYouData, ...forYouData, ...forYouData], []);
+  const duplicatedSubjects = useMemo(() => [...subjectsData, ...subjectsData, ...subjectsData], []);
+  const duplicatedVideos = useMemo(() => [...videosData, ...videosData, ...videosData], []);
+
+  if (showLoading) {
+    return <LoadingScreen />;
+  }
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      >
+        <Header />
+        <SearchBar />
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        <Animated.View entering={FadeInUp.duration(400)}>
+          <HeroCarousel />
+        </Animated.View>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
+        <Animated.View entering={FadeInUp.duration(450)} style={styles.section}>
+          <SectionHeader title="For you" subtitle="Personalised learning" onSeeAll={() => router.push('/library')} />
+          <FlatList
+            horizontal
+            data={duplicatedForYou}
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            renderItem={({ item }) => <ForYouCard item={item} />}
+            contentContainerStyle={styles.horizontalList}
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+        </Animated.View>
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        <Animated.View entering={FadeInUp.duration(500)} style={styles.section}>
+          <SectionHeader title="Subjects" subtitle="Pick a topic" onSeeAll={() => router.push('/library')} />
+          <FlatList
+            horizontal
+            data={duplicatedSubjects}
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            renderItem={({ item }) => <SubjectCard item={item} />}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.duration(550)} style={styles.section}>
+          <SectionHeader title="Learn by watching" subtitle="Short lessons to stay on track" onSeeAll={() => router.push('/videos')} />
+          <FlatList
+            horizontal
+            data={duplicatedVideos}
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            renderItem={({ item }) => <VideoCard item={item} />}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.duration(600)} style={styles.section}>
+          <SectionHeader title="Past papers" subtitle="Practice the latest questions" onSeeAll={() => router.push('/library')} />
+          <View style={styles.grid}>
+            {pastPapersData.map((item) => (
+              <PastPaperCard key={item.id} item={item} />
+            ))}
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.duration(650)} style={styles.section}>
+          <PromotionBanner />
+        </Animated.View>
+
+        <Animated.View entering={FadeInUp.duration(700)} style={styles.section}>
+          <Image source={require('../../assets/images/footer.png')} style={styles.footerImage} contentFit="contain" />
+        </Animated.View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
+const ForYouCard = ({ item }: { item: any }) => (
+  <View style={[styles.forYouCard, { backgroundColor: item.color }]}> 
+    <View style={styles.forYouHeader}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.forYouTitle}>{item.title}</Text>
+      </View>
+      {item.duration ? <Text style={styles.duration}>{item.duration}</Text> : null}
+    </View>
+    {item.subtitle ? <Text style={styles.forYouSubtitle}>{item.subtitle}</Text> : null}
+    {item.image ? <Image source={item.image} style={styles.forYouImage} contentFit="cover" /> : null}
+    <View style={styles.forYouFooter}>
+      <View style={styles.playButton}><Icon name="play" size={16} color={colors.white} /></View>
+    </View>
+  </View>
+);
+
+const SubjectCard = ({ item }: { item: any }) => (
+  <View style={styles.subjectCard}>
+    <Image source={item.image} style={styles.subjectImage} contentFit="cover" />
+    <Text style={styles.subjectTitle}>{item.title}</Text>
+  </View>
+);
+
+const VideoCard = ({ item }: { item: any }) => (
+  <View style={styles.videoCard}>
+    <Image source={item.image} style={styles.videoImage} contentFit="cover" />
+    <View style={styles.videoPlayButton}><Icon name="play" size={18} color={colors.white} /></View>
+    <Text style={styles.videoTitle}>{item.title}</Text>
+    <Text style={styles.videoAuthor}>{item.author}</Text>
+  </View>
+);
+
+const PastPaperCard = ({ item }: { item: any }) => (
+  <View style={[styles.pastPaperCard, { backgroundColor: item.accent }]}> 
+    <Image source={item.image} style={styles.paperImage} contentFit="cover" />
+    <Text style={styles.paperTitle}>{item.title}</Text>
+    <View style={styles.tagRow}>
+      {item.tags.map((tag: string) => (
+        <View key={tag} style={styles.tagPill}><Text style={styles.tagText}>{tag}</Text></View>
+      ))}
+    </View>
+  </View>
+);
+
+const PromotionBanner = () => (
+  <View style={styles.banner}>
+    <Image source={require('../../assets/images/bookshop.png')} style={styles.bannerImage} contentFit="cover" />
+    <Text style={styles.bannerTitle}>Book Shop</Text>
+    <Text style={styles.bannerSubtitle}>Access to curated books and revision resources for every subject.</Text>
+    <PrimaryButton title="Open Bookshop" fullWidth />
+  </View>
+);
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    backgroundColor: colors.background,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  container: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    backgroundColor: colors.background,
   },
-  title: {
-    textAlign: 'center',
+  content: {
+    paddingHorizontal: dimensions.screenPaddingHorizontal,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
-  code: {
-    textTransform: 'uppercase',
+  section: {
+    marginBottom: spacing.xl,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  horizontalList: {
+    paddingRight: spacing.md,
+  },
+  forYouCard: {
+    width: wp('42%'),
+    minHeight: 180,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    marginRight: spacing.md,
+    ...shadows.card,
+  },
+  forYouHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  forYouTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '700',
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  duration: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  forYouSubtitle: {
+    color: colors.subtitle,
+    marginTop: 8,
+    fontSize: 12,
+    marginBottom: spacing.sm,
+  },
+  forYouImage: {
+    width: '100%',
+    height: 58,
+    borderRadius: radius.md,
+    marginTop: spacing.sm,
+  },
+  forYouFooter: {
+    marginTop: 'auto',
+    alignItems: 'flex-end',
+  },
+  playButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  subjectCard: {
+    width: 96,
+    alignItems: 'center',
+    marginRight: spacing.md,
+  },
+  subjectImage: {
+    width: 84,
+    height: 84,
+    borderRadius: radius.xl,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.lightBackground,
+  },
+  subjectTitle: {
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  videoCard: {
+    width: 220,
+    marginRight: spacing.md,
+    borderRadius: radius.xl,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.white,
+    ...shadows.card,
+    overflow: 'hidden',
+  },
+  videoImage: {
+    width: '100%',
+    height: 120,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+  },
+  videoPlayButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 76,
+    left: 16,
+  },
+  videoTitle: {
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 14,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+  },
+  videoAuthor: {
+    color: colors.subtitle,
+    fontSize: 12,
+    paddingHorizontal: spacing.md,
+    marginTop: 4,
+  },
+  grid: {
+    gap: spacing.md,
+  },
+  pastPaperCard: {
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    ...shadows.soft,
+  },
+  paperImage: {
+    width: '100%',
+    height: 90,
+    borderRadius: radius.lg,
+    marginBottom: spacing.sm,
+  },
+  paperTitle: {
+    color: colors.text,
+    fontWeight: '700',
+    fontSize: 16,
+    marginBottom: spacing.sm,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tagPill: {
+    backgroundColor: colors.white,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+  },
+  tagText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  banner: {
+    backgroundColor: colors.white,
+    borderRadius: radius.xl,
+    padding: spacing.md,
+    ...shadows.card,
+  },
+  bannerImage: {
+    width: '100%',
+    height: 140,
+    borderRadius: radius.lg,
+    marginBottom: spacing.md,
+  },
+  bannerTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  bannerSubtitle: {
+    color: colors.subtitle,
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: spacing.md,
+  },
+  footerImage: {
+    width: wp('88%'),
+    height: 180,
+    borderRadius: radius.xl,
   },
 });

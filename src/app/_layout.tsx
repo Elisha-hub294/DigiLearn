@@ -1,15 +1,21 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { Tabs } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { BottomTabBar } from '../components/ui/BottomTabBar';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <Tabs screenOptions={{ headerShown: false, tabBarStyle: { display: 'none' } }} tabBar={(props: any) => <BottomTabBar {...props} />}>
+          <Tabs.Screen name="index" options={{ title: 'Home' }} />
+          <Tabs.Screen name="library" options={{ title: 'Library' }} />
+          <Tabs.Screen name="videos" options={{ title: 'Videos' }} />
+          <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
+        </Tabs>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
