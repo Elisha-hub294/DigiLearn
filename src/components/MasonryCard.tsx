@@ -77,7 +77,7 @@ const MasonryCard: React.FC<Props> = ({ item, onPress, spacing = 12 }) => {
       default:
         return (
           <View style={styles.mixedColumn}>
-            {item.image ? <Image source={item.image} style={styles.imageLarge} contentFit="contain" /> : null}
+            {item.image ? <Image source={item.image} style={styles.imageLarge} contentFit="cover" /> : null}
             <View style={styles.mixedContent}>
               {item.title ? <Text style={styles.title}>{item.title}</Text> : null}
               {item.subtitle ? <Text style={styles.subtitle}>{item.subtitle}</Text> : null}

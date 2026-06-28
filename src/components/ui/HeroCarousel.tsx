@@ -57,7 +57,7 @@ export const HeroCarousel = () => {
   };
 
   return (
-    <View style={[styles.container, { paddingHorizontal: containerPadding }]}> 
+    <View style={styles.container}> 
       <AnimatedFlatList
         ref={flatRef}
         data={slides}
@@ -65,6 +65,7 @@ export const HeroCarousel = () => {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item: CarouselItem) => item.id}
         snapToInterval={snapInterval}
+        snapToAlignment="center"
         decelerationRate="fast"
         bounces={false}
         onScroll={onScroll}

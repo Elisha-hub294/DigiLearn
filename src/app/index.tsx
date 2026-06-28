@@ -32,7 +32,6 @@ export default function HomeScreen() {
     setTimeout(() => setRefreshing(false), 900);
   }, []);
 
-  const duplicatedForYou = useMemo(() => [...forYouData, ...forYouData, ...forYouData], []);
   const duplicatedSubjects = useMemo(() => [...subjectsData, ...subjectsData, ...subjectsData], []);
   const duplicatedVideos = useMemo(() => [...videosData, ...videosData, ...videosData], []);
 
@@ -61,8 +60,8 @@ export default function HomeScreen() {
             title="For you"
             subtitle="Personalised learning"
             data={((): MasonryCardData[] =>
-              duplicatedForYou.map((f, i) => ({
-                id: `${f.id}-${i}`,
+              forYouData.map((f) => ({
+                id: f.id,
                 type: f.image ? 'mixed' : 'text',
                 title: f.title,
                 subtitle: f.subtitle,
