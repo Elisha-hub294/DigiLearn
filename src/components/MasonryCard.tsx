@@ -76,9 +76,9 @@ const MasonryCard: React.FC<Props> = ({ item, onPress, spacing = 12 }) => {
 
       default:
         return (
-          <View style={styles.mixedWrap}>
-            {item.image ? <Image source={item.image} style={styles.smallImage} contentFit="cover" /> : null}
-            <View style={{ flex: 1, marginLeft: 12 }}>
+          <View style={styles.mixedColumn}>
+            {item.image ? <Image source={item.image} style={styles.imageLarge} contentFit="contain" /> : null}
+            <View style={styles.mixedContent}>
               {item.title ? <Text style={styles.title}>{item.title}</Text> : null}
               {item.subtitle ? <Text style={styles.subtitle}>{item.subtitle}</Text> : null}
               <View style={styles.rowBottom}>
@@ -167,6 +167,19 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 12,
+  },
+  imageLarge: {
+    width: '100%',
+    height: 120,
+    borderRadius: 12,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.lightBackground,
+  },
+  mixedColumn: {
+    flexDirection: 'column',
+  },
+  mixedContent: {
+    flex: 1,
   },
   rowBottom: {
     flexDirection: 'row',

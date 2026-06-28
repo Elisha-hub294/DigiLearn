@@ -52,14 +52,17 @@ export const shadows = {
 } as const;
 
 export const typography = {
-  title: { fontSize: 24, fontWeight: '700' as const },
-  subtitle: { fontSize: 14, fontWeight: '500' as const },
-  body: { fontSize: 13, fontWeight: '400' as const },
-  heading: { fontSize: 18, fontWeight: '700' as const },
+  title: { fontSize: width >= 768 ? 28 : 24, fontWeight: '700' as const },
+  subtitle: { fontSize: width >= 768 ? 16 : 14, fontWeight: '500' as const },
+  body: { fontSize: width >= 768 ? 15 : 13, fontWeight: '400' as const },
+  heading: { fontSize: width >= 768 ? 20 : 18, fontWeight: '700' as const },
 };
 
 export const dimensions = {
   width,
   height,
-  screenPaddingHorizontal: width * 0.06,
+  // Responsive horizontal padding: small phones ~16, medium ~22, tablets 40
+  screenPaddingHorizontal: width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 22 : 16,
+  // Max content width to prevent stretching on large screens
+  maxContentWidth: Math.min(1000, width - 80),
 };

@@ -85,7 +85,10 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item, index) => `${item.id}-${index}`}
             renderItem={({ item }) => <SubjectCard item={item} />}
-            contentContainerStyle={styles.horizontalList}
+            contentContainerStyle={[styles.horizontalList, { paddingLeft: dimensions.screenPaddingHorizontal - 8 }]}
+            decelerationRate="fast"
+            snapToAlignment="start"
+            snapToInterval={96 + spacing.md}
           />
         </Animated.View>
 
@@ -97,7 +100,10 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item, index) => `${item.id}-${index}`}
             renderItem={({ item }) => <VideoCard item={item} />}
-            contentContainerStyle={styles.horizontalList}
+            contentContainerStyle={[styles.horizontalList, { paddingLeft: dimensions.screenPaddingHorizontal - 8 }]}
+            decelerationRate="fast"
+            snapToAlignment="start"
+            snapToInterval={220 + spacing.md}
           />
         </Animated.View>
 
@@ -111,7 +117,14 @@ export default function HomeScreen() {
               title: p.title,
               image: p.image,
               backgroundColor: p.accent,
-              height: 140,
+              height:
+                p.title.toLowerCase().includes('uneb')
+                  ? 220
+                  : p.title.toLowerCase().includes('mock')
+                  ? 160
+                  : p.title.toLowerCase().includes('mark')
+                  ? 260
+                  : 130,
             }))}
             numColumns={2}
             gap={12}
@@ -176,11 +189,15 @@ const PastPaperCard = ({ item }: { item: any }) => (
 );
 
 const PromotionBanner = () => (
-  <View style={styles.banner}>
-    <Image source={require('../../assets/images/bookshop.png')} style={styles.bannerImage} contentFit="cover" />
+    <View style={[styles.banner, { backgroundColor: colors.primaryLight }]}> 
+    <View style={{ alignItems: 'center', marginBottom: spacing.md }}>
+      <Image source={require('../../assets/images/bookshop.png')} style={styles.bannerImage} contentFit="contain" />
+    </View>
     <Text style={styles.bannerTitle}>Book Shop</Text>
     <Text style={styles.bannerSubtitle}>Access to curated books and revision resources for every subject.</Text>
-    <PrimaryButton title="Open Bookshop" fullWidth />
+    <View style={{ marginTop: spacing.md }}>
+      <PrimaryButton title="Open Bookshop" fullWidth />
+    </View>
   </View>
 );
 
