@@ -2,7 +2,7 @@ import { Feather as Icon } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,7 +10,6 @@ import { MasonryCardData } from '../components/MasonryCard';
 import MasonrySection from '../components/MasonrySection';
 import { Header } from '../components/ui/Header';
 import { HeroCarousel } from '../components/ui/HeroCarousel';
-import { PrimaryButton } from '../components/ui/PrimaryButton';
 import { SearchBar } from '../components/ui/SearchBar';
 import { SectionHeader } from '../components/ui/SectionHeader';
 import { forYouData, pastPapersData, subjectsData, videosData } from '../constants/data';
@@ -188,15 +187,15 @@ const PastPaperCard = ({ item }: { item: any }) => (
 );
 
 const PromotionBanner = () => (
-    <View style={[styles.banner, { backgroundColor: colors.primaryLight }]}> 
+    <View style={[styles.banner, { backgroundColor: '#FBE7CD' }]}> 
     <View style={{ alignItems: 'center', marginBottom: spacing.md }}>
       <Image source={require('../../assets/images/bookshop.png')} style={styles.bannerImage} contentFit="contain" />
     </View>
     <Text style={styles.bannerTitle}>Book Shop</Text>
     <Text style={styles.bannerSubtitle}>Access to curated books and revision resources for every subject.</Text>
-    <View style={{ marginTop: spacing.md }}>
-      <PrimaryButton title="Open Bookshop" fullWidth />
-    </View>
+    <Pressable style={styles.bookshopButton} android_ripple={{ color: 'rgba(0,0,0,0.08)' }}>
+      <Text style={styles.bookshopButtonText}>Open Bookshop</Text>
+    </Pressable>
   </View>
 );
 
@@ -363,19 +362,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   banner: {
-    backgroundColor: colors.white,
+    backgroundColor: '#FBE7CD',
     borderRadius: radius.xl,
     padding: spacing.md,
     ...shadows.card,
   },
   bannerImage: {
     width: '100%',
-    height: 140,
+    height: 190,
     borderRadius: radius.lg,
     marginBottom: spacing.md,
   },
   bannerTitle: {
-    color: colors.text,
+    color: '#995926',
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 4,
@@ -385,6 +384,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     marginBottom: spacing.md,
+  },
+  bookshopButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#B0A562',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.pill,
+    ...shadows.soft,
+  },
+  bookshopButtonText: {
+    color: colors.white,
+    fontWeight: '700',
   },
   footerImage: {
     width: wp('88%'),
