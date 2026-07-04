@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingHorizontal: dimensions.width < 400 ? Math.max(dimensions.screenPaddingHorizontal - 8, 12) : dimensions.screenPaddingHorizontal,
+    paddingHorizontal: dimensions.width < 400 ? 0 : 12,
     paddingTop: spacing.xl,
     paddingBottom: spacing.xxl,
     maxWidth: dimensions.maxContentWidth,
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   skeletonContent: {
     flex: 1,
-    paddingHorizontal: dimensions.width < 400 ? Math.max(dimensions.screenPaddingHorizontal - 8, 12) : dimensions.screenPaddingHorizontal,
+    paddingHorizontal: dimensions.width < 400 ? 8 : 12,
     paddingTop: spacing.xl,
     paddingBottom: spacing.xxl,
   },

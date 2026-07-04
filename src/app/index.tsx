@@ -209,9 +209,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingHorizontal: dimensions.screenPaddingHorizontal,
+    paddingHorizontal: dimensions.width < 400 ? 8 : 12,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
+    maxWidth: dimensions.maxContentWidth,
+    alignSelf: 'center',
+    width: '100%',
   },
   section: {
     marginBottom: spacing.xl,
