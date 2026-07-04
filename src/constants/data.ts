@@ -137,8 +137,8 @@ export const videosData: VideoItem[] = [
 ];
 
 export const pastPapersData: PastPaperItem[] = [
-  { id: 'paper-1', title: 'Mocks', image: imageImports.mock, accent: '#DDEBFF', tags: ['MOCKS'] },
-  { id: 'paper-2', title: 'UNEB', image: imageImports.uneb, accent: '#FCECDD', tags: ['UNEB'] },
-  { id: 'paper-3', title: 'Marking Guides', image: imageImports.mock, accent: '#E7F8EA', tags: ['UNEB', 'MOCKS'] },
-  { id: 'paper-4', title: 'Other exam papers', image: imageImports.uneb, accent: '#F1EAFE', tags: ['MORE'] },
+  { id: 'paper-1', title: 'Mocks', image: imageImports.mock, accent: '', tags: ['MOCKS'] },
+  { id: 'paper-2', title: 'UNEB', image: imageImports.uneb, accent: '', tags: ['UNEB'] },
+  { id: 'paper-3', title: 'Marking Guides', image: imageImports.mock, accent: '', tags: ['UNEB', 'MOCKS'] },
+  { id: 'paper-4', title: 'Other exam papers', image: imageImports.uneb, accent: '', tags: ['MORE'] },
 ];
