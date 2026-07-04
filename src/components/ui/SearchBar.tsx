@@ -1,11 +1,21 @@
 import { Feather as Icon } from '@expo/vector-icons';
 import { StyleSheet, TextInput, View } from 'react-native';
-import { colors, radius, shadows, spacing } from '../../constants/theme';
+import { colors, shadows, spacing } from '../../constants/theme';
 
-export const SearchBar = () => (
+type SearchBarProps = {
+  placeholder?: string;
+};
+
+export const SearchBar = ({ placeholder = 'Search by title, author, subject or teacher' }: SearchBarProps) => (
   <View style={styles.container}>
     <Icon name="search" size={18} color={colors.subtitle} />
-    <TextInput placeholder="Search" placeholderTextColor={colors.subtitle} style={styles.input} />
+    <TextInput
+      accessibilityLabel="Search library"
+      placeholder={placeholder}
+      placeholderTextColor="#9A9A9A"
+      style={styles.input}
+      returnKeyType="search"
+    />
   </View>
 );
 
@@ -13,17 +23,19 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#dadada',
-    borderRadius: radius.md,
+    backgroundColor: '#F2F2F2',
+    borderRadius: 14,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: 14,
     ...shadows.soft,
     marginBottom: spacing.xl,
+    height: 52,
   },
   input: {
     flex: 1,
     marginLeft: spacing.sm,
     color: colors.text,
-    fontSize: 15,
+    fontSize: 14,
+    paddingVertical: 0,
   },
 });
