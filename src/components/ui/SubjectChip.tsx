@@ -24,6 +24,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 10,
     marginRight: spacing.sm,
+    marginTop: spacing.sm,
     borderWidth: 1,
   },
   active: {

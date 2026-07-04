@@ -33,7 +33,7 @@ export const BookCard = ({ item, index, scrollX }: BookCardProps) => {
   return (
     <Animated.View style={[styles.card, animatedStyle]}>
       <Pressable accessibilityRole="button" style={styles.pressable}>
-        <Image source={item.image} style={styles.image} contentFit="cover" />
+        <Image source={item.image} style={styles.image} contentFit="cover" contentPosition={'top left'} />
         <View style={styles.content}>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.description}>{item.description}</Text>

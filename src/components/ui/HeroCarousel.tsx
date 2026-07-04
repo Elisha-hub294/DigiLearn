@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
-  Extrapolate,
-  interpolate,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming
+    Extrapolate,
+    interpolate,
+    useAnimatedScrollHandler,
+    useAnimatedStyle,
+    useSharedValue,
+    withSequence,
+    withTiming
 } from 'react-native-reanimated';
 import { carouselData, CarouselItem } from '../../constants/data';
 import { colors, dimensions, radius, shadows, spacing, typography } from '../../constants/theme';
@@ -72,7 +72,7 @@ export const HeroCarousel = () => {
         onMomentumScrollEnd={handleScrollEnd}
         onScrollBeginDrag={() => setIsInteracting(true)}
         onScrollEndDrag={() => setIsInteracting(false)}
-        contentContainerStyle={{ paddingLeft: sidePadding, paddingRight: sidePadding }}
+        contentContainerStyle={{ paddingLeft: Math.max(0, sidePadding - 12), paddingRight: sidePadding }}
         renderItem={({ item, index }: { item: CarouselItem; index: number }) => (
           <CarouselCard item={item} index={index} cardWidth={cardWidth} scrollX={scrollX} snapInterval={snapInterval} />
         )}

@@ -64,5 +64,5 @@ export const dimensions = {
   // Responsive horizontal padding: small phones ~14, medium ~20, tablets 36
   screenPaddingHorizontal: width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 20 : 14,
   // Max content width to prevent stretching on large screens
-  maxContentWidth: Math.min(1000, width - 80),
+  maxContentWidth: Math.min(1000, width - 20),
 };

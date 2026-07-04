@@ -125,7 +125,7 @@ export default function LibraryScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(400)} style={styles.heroCard}>
-          <LinearGradient colors={['#F4F7FF', '#F9F8FF']} style={styles.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <LinearGradient colors={['#ffffff', '#6d7bff']} style={styles.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <View style={styles.heroText}>
               <Text style={styles.heroBadge}>New • Curated collection</Text>
               <Text style={styles.heroTitle}>Discover premium resources for every subject.</Text>
@@ -215,12 +215,6 @@ const styles = StyleSheet.create({
     color: '#111111',
     marginBottom: 6,
   },
-  // pageSubtitle: {
-  //   color: colors.subtitle,
-  //   fontSize: 14,
-  //   lineHeight: 21,
-  //   maxWidth: 560,
-  // },
   heroCard: {
     marginBottom: spacing.xl,
     borderRadius: radius.xl,
@@ -248,16 +242,16 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: colors.text,
-    fontSize: 20,
+    fontSize: 25,
     fontWeight: '700',
-    marginBottom: 6,
-    lineHeight: 26,
+    marginBottom: spacing.lg,
+    lineHeight: 35,
   },
   heroSubtitle: {
     color: colors.subtitle,
     fontSize: 13,
     lineHeight: 20,
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   heroImage: {
     width: 120,
