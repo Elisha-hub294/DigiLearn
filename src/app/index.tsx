@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   section: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.xxl,
   },
   horizontalList: {
     paddingRight: spacing.md,
