@@ -84,9 +84,9 @@ export default function LibraryScreen() {
     setTimeout(() => setRefreshing(false), 900);
   }, []);
 
-  const topics = useMemo(() => [...topicData, ...topicData], []);
-  const teachers = useMemo(() => [...teacherData, ...teacherData], []);
-  const books = useMemo(() => [...bookData, ...bookData], []);
+  const topics = useMemo(() => topicData, []);
+  const teachers = useMemo(() => teacherData, []);
+  const books = useMemo(() => bookData, []);
 
   const toggleBookmark = useCallback((id: string) => {
     setBookmarkedIds((current) => (current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id]));
@@ -117,7 +117,7 @@ export default function LibraryScreen() {
       >
         <Animated.View entering={FadeInUp.duration(320)} style={styles.headerWrap}>
           <Text style={styles.pageTitle}>Library</Text>
-          <Text style={styles.pageSubtitle}>Study smarter with curated books, notes and past papers built for exam success.</Text>
+          {/* <Text style={styles.pageSubtitle}>Study smarter with curated books, notes and past papers built for exam success.</Text> */}
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(360)}>
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingHorizontal: dimensions.screenPaddingHorizontal,
+    paddingHorizontal: dimensions.width < 400 ? Math.max(dimensions.screenPaddingHorizontal - 8, 12) : dimensions.screenPaddingHorizontal,
     paddingTop: spacing.xl,
     paddingBottom: spacing.xxl,
     maxWidth: dimensions.maxContentWidth,
@@ -215,23 +215,24 @@ const styles = StyleSheet.create({
     color: '#111111',
     marginBottom: 6,
   },
-  pageSubtitle: {
-    color: colors.subtitle,
-    fontSize: 14,
-    lineHeight: 21,
-    maxWidth: 560,
-  },
+  // pageSubtitle: {
+  //   color: colors.subtitle,
+  //   fontSize: 14,
+  //   lineHeight: 21,
+  //   maxWidth: 560,
+  // },
   heroCard: {
     marginBottom: spacing.xl,
     borderRadius: radius.xl,
     overflow: 'hidden',
+    marginHorizontal: dimensions.width < 400 ? -2 : 0,
     ...shadows.card,
   },
   gradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.lg,
+    padding: dimensions.width < 400 ? spacing.md : spacing.lg,
   },
   heroText: {
     flex: 1,
@@ -302,7 +303,7 @@ const styles = StyleSheet.create({
   },
   skeletonContent: {
     flex: 1,
-    paddingHorizontal: dimensions.screenPaddingHorizontal,
+    paddingHorizontal: dimensions.width < 400 ? Math.max(dimensions.screenPaddingHorizontal - 8, 12) : dimensions.screenPaddingHorizontal,
     paddingTop: spacing.xl,
     paddingBottom: spacing.xxl,
   },

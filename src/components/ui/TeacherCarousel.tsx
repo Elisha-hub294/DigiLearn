@@ -9,7 +9,7 @@ type TeacherCarouselProps = {
 export const TeacherCarousel = ({ data }: TeacherCarouselProps) => (
   <FlatList
     horizontal
-    data={[...data, ...data]}
+    data={data}
     showsHorizontalScrollIndicator={false}
     keyExtractor={(item, index) => `${item.id}-${index}`}
     renderItem={({ item }) => <TeacherCard item={item} />}

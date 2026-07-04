@@ -45,9 +45,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: spacing.md,
-    backgroundColor: colors.white,
     padding: spacing.sm,
-    borderRadius: radius.sm,
   },
   icon: {
     width: 70,

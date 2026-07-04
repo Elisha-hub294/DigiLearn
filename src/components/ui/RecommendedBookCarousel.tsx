@@ -22,7 +22,7 @@ export const RecommendedBookCarousel = ({ data }: RecommendedBookCarouselProps) 
     <Animated.FlatList
       ref={flatListRef}
       horizontal
-      data={[...data, ...data]}
+      data={data}
       showsHorizontalScrollIndicator={false}
       keyExtractor={(item, index) => `${item.id}-${index}`}
       renderItem={({ item, index }) => <BookCard item={item} index={index} scrollX={scrollX} />}
