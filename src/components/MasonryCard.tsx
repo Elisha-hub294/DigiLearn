@@ -104,7 +104,6 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 20,
     overflow: 'hidden',
-    ...shadows.card,
   },
   pressable: {
     flex: 1,

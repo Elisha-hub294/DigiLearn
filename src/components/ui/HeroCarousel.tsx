@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
-    Extrapolate,
-    interpolate,
-    useAnimatedScrollHandler,
-    useAnimatedStyle,
-    useSharedValue,
-    withSequence,
-    withTiming
+  Extrapolate,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming
 } from 'react-native-reanimated';
 import { carouselData, CarouselItem } from '../../constants/data';
-import { colors, dimensions, radius, shadows, spacing, typography } from '../../constants/theme';
+import { colors, dimensions, radius, spacing, typography } from '../../constants/theme';
 
 const CARD_WIDTH_RATIO = 0.86;
 const CARD_SPACING = 16;
@@ -152,7 +152,6 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     borderRadius: 22,
     padding: spacing.lg,
-    ...shadows.card,
     overflow: 'hidden',
   },
   cardInner: {
@@ -185,7 +184,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
-    ...shadows.soft,
   },
   ctaText: {
     fontWeight: '700',

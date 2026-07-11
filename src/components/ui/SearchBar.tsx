@@ -1,41 +1,15 @@
-import { Feather as Icon } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, TextInput, View } from 'react-native';
-import { colors, shadows, spacing } from '../../constants/theme';
+import { videoColors, videoRadii, videoShadows } from './videoDesign';
 
-type SearchBarProps = {
-  placeholder?: string;
-};
-
-export const SearchBar = ({ placeholder = 'Search by title, author, subject or teacher' }: SearchBarProps) => (
-  <View style={styles.container}>
-    <Icon name="search" size={18} color={colors.subtitle} />
-    <TextInput
-      accessibilityLabel="Search library"
-      placeholder={placeholder}
-      placeholderTextColor="#9A9A9A"
-      style={styles.input}
-      returnKeyType="search"
-    />
-  </View>
-);
+export function SearchBar() {
+  return <View style={styles.container} accessibilityRole="search">
+    <Ionicons name="search" size={21} color={videoColors.subtle} />
+    <TextInput accessibilityLabel="Search lessons" placeholder="Search by title, subject or teacher" placeholderTextColor={videoColors.subtle} style={styles.input} returnKeyType="search" />
+  </View>;
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F2F2F2',
-    borderRadius: 14,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-    ...shadows.soft,
-    marginBottom: spacing.xl,
-    height: 52,
-  },
-  input: {
-    flex: 1,
-    marginLeft: spacing.sm,
-    color: colors.text,
-    fontSize: 14,
-    paddingVertical: 0,
-  },
+  container: { ...videoShadows.soft, alignItems: 'center', backgroundColor: videoColors.surface, borderRadius: videoRadii.search, flexDirection: 'row', height: 52, paddingHorizontal: 16 },
+  input: { color: videoColors.ink, flex: 1, fontSize: 15, marginLeft: 10, paddingVertical: 0 },
 });
