@@ -5,12 +5,12 @@ import { TrendingVideoCard, VideoLesson } from './TrendingVideoCard';
 export function TrendingCarousel({ items, cardWidth }: { items: VideoLesson[]; cardWidth: number }) {
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isInteracting, setIsInteracting] = useState(false);
   const data = useMemo(() => [...items, ...items, ...items], [items]);
   const itemWidth = cardWidth + 14;
 
   useEffect(() => {
-    if (data.length === 0 || isDragging) return;
+    if (data.length === 0 || isInteracting) return;
 
     const interval = setInterval(() => {
       const nextIndex = (currentIndex + 1) % data.length;
@@ -23,12 +23,13 @@ export function TrendingCarousel({ items, cardWidth }: { items: VideoLesson[]; c
     }, 3500);
 
     return () => clearInterval(interval);
-  }, [currentIndex, data.length, itemWidth, isDragging]);
+  }, [currentIndex, data.length, itemWidth, isInteracting]);
 
   const handleScrollEnd = (event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const index = Math.round(offsetX / itemWidth);
     setCurrentIndex(index);
+    setIsInteracting(false);
   };
 
   return (
@@ -44,9 +45,11 @@ export function TrendingCarousel({ items, cardWidth }: { items: VideoLesson[]; c
         decelerationRate="fast"
         snapToInterval={itemWidth}
         snapToAlignment="start"
-        onScrollBeginDrag={() => setIsDragging(true)}
+        onTouchStart={() => setIsInteracting(true)}
+        onTouchEnd={() => setIsInteracting(false)}
+        onTouchCancel={() => setIsInteracting(false)}
+        onScrollBeginDrag={() => setIsInteracting(true)}
         onScrollEndDrag={(e) => {
-          setIsDragging(false);
           handleScrollEnd(e);
         }}
         onMomentumScrollEnd={handleScrollEnd}
