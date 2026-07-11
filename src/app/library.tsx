@@ -1,4 +1,4 @@
-import { FlashList } from '@shopify/flash-list';
+
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -155,14 +155,13 @@ export default function LibraryScreen() {
         <Animated.View entering={FadeInUp.duration(560)} style={styles.section}>
           <SectionHeader title="More Books" subtitle="A wider collection for steady revision and enrichment" onSeeAll={() => {}} />
           <View style={styles.listWrap}>
-            <FlashList
-              data={moreBooksData}
-              keyExtractor={(item) => item.id}
-              estimatedItemSize={160}
-              renderItem={({ item }) => <BookListItem item={{ ...item, bookmarked: bookmarkedIds.includes(item.id) }} onPress={() => toggleBookmark(item.id)} />}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.flashListContent}
-            />
+            {moreBooksData.map((item) => (
+              <BookListItem
+                key={item.id}
+                item={{ ...item, bookmarked: bookmarkedIds.includes(item.id) }}
+                onPress={() => toggleBookmark(item.id)}
+              />
+            ))}
           </View>
         </Animated.View>
 
@@ -266,9 +265,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   listWrap: {
-    height: 520,
-  },
-  flashListContent: {
     paddingBottom: spacing.md,
   },
   chipRow: {

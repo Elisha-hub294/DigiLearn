@@ -89,16 +89,15 @@ export default function HomeScreen() {
           <MasonrySection
             title="For you"
             subtitle="Personalised learning"
-            data={((): MasonryCardData[] =>
-              forYouData.map((f) => ({
-                id: f.id,
-                type: f.image ? "mixed" : "text",
-                title: f.title,
-                subtitle: f.subtitle,
-                image: f.image ?? undefined,
-                backgroundColor: f.color,
-                height: f.duration ? 200 : undefined,
-              })))()}
+            data={forYouData.map((f) => ({
+              id: f.id,
+              type: f.image ? "mixed" : "text",
+              title: f.title,
+              subtitle: f.subtitle,
+              image: f.image ?? undefined,
+              backgroundColor: f.color,
+              height: f.duration ? 200 : undefined,
+            }))}
             numColumns={2}
             gap={12}
             onCardPress={(item) => router.push("/library")}
@@ -189,33 +188,6 @@ export default function HomeScreen() {
   );
 }
 
-const ForYouCard = ({ item }: { item: any }) => (
-  <View style={[styles.forYouCard, { backgroundColor: item.color }]}>
-    <View style={styles.forYouHeader}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.forYouTitle}>{item.title}</Text>
-      </View>
-      {item.duration ? (
-        <Text style={styles.duration}>{item.duration}</Text>
-      ) : null}
-    </View>
-    {item.subtitle ? (
-      <Text style={styles.forYouSubtitle}>{item.subtitle}</Text>
-    ) : null}
-    {item.image ? (
-      <Image
-        source={item.image}
-        style={styles.forYouImage}
-        contentFit="cover"
-      />
-    ) : null}
-    <View style={styles.forYouFooter}>
-      <View style={styles.playButton}>
-        <Icon name="play" size={16} color={colors.white} />
-      </View>
-    </View>
-  </View>
-);
 
 const SubjectCard = ({ item }: { item: any }) => (
   <View style={styles.subjectCard}>
@@ -235,19 +207,6 @@ const VideoCard = ({ item }: { item: any }) => (
   </View>
 );
 
-const PastPaperCard = ({ item }: { item: any }) => (
-  <View style={[styles.pastPaperCard, { backgroundColor: item.accent }]}>
-    <Image source={item.image} style={styles.paperImage} contentFit="cover" />
-    <Text style={styles.paperTitle}>{item.title}</Text>
-    <View style={styles.tagRow}>
-      {item.tags.map((tag: string) => (
-        <View key={tag} style={styles.tagPill}>
-          <Text style={styles.tagText}>{tag}</Text>
-        </View>
-      ))}
-    </View>
-  </View>
-);
 
 const PromotionBanner = () => (
   <View style={[styles.banner, { backgroundColor: "#FBE7CD" }]}>
