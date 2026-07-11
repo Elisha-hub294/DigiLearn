@@ -32,7 +32,7 @@ export default function VideosScreen() {
   const isTablet = width >= 768;
   const horizontalPadding = isTablet ? 44 : width >= 390 ? 22 : 16;
   const contentWidth = Math.min(width - horizontalPadding * 2, 720);
-  const cardWidth = Math.min(contentWidth * 0.9, 570);
+  const cardWidth = isTablet ? Math.min(contentWidth * 0.72, 480) : Math.min(contentWidth * 0.9, 570);
   const onRefresh = useCallback(() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 650); }, []);
   const visibleLatest = useMemo(() => subject === 'All' ? latest : latest.filter((_, index) => index % 2 === 0), [subject]);
   const header = useMemo(() => <>
