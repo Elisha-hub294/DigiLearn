@@ -12,6 +12,7 @@ import { SubjectFilter } from '@/components/ui/SubjectFilter';
 import { TrendingCarousel } from '@/components/ui/TrendingCarousel';
 import { VideoLesson } from '@/components/ui/TrendingVideoCard';
 import { videoColors } from '@/components/ui/videoDesign';
+import { dimensions } from '../constants/theme';
 
 const trending: VideoLesson[] = [
   { id: 'quadratic', title: 'Mastering Quadratic Equations | Complete Revision Lesson', teacher: 'Tr. Elisha', uploadedAt: '2 months ago', duration: '12:58', thumbnail: require('../../assets/images/thumb-1.jpeg'), avatar: require('../../assets/images/tr-1.webp') },
@@ -30,8 +31,8 @@ export default function VideosScreen() {
   const [subject, setSubject] = useState('All');
   const [refreshing, setRefreshing] = useState(false);
   const isTablet = width >= 768;
-  const horizontalPadding = isTablet ? 44 : width >= 390 ? 22 : 16;
-  const contentWidth = Math.min(width - horizontalPadding * 2, 720);
+  const horizontalPadding = dimensions.screenPaddingHorizontal;
+  const contentWidth = Math.min(width, dimensions.maxContentWidth) - horizontalPadding * 2;
   const cardWidth = isTablet ? Math.min(contentWidth * 0.72, 480) : Math.min(contentWidth * 0.9, 570);
   const onRefresh = useCallback(() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 650); }, []);
   const visibleLatest = useMemo(() => subject === 'All' ? latest : latest.filter((_, index) => index % 2 === 0), [subject]);
@@ -41,7 +42,7 @@ export default function VideosScreen() {
     <View style={styles.section}><SectionHeader title="Trending ⚡" /><TrendingCarousel items={trending} cardWidth={cardWidth} /></View>
     <View style={styles.latestHeading}><SectionHeader title="Latest" /></View>
   </>, [cardWidth, subject]);
-  return <SafeAreaView edges={['top']} style={styles.safe}><Animated.View entering={FadeIn.duration(380)} style={[styles.container, { maxWidth: 808, paddingHorizontal: horizontalPadding }]}><FlashList key={`latest-${isTablet ? 2 : 1}`} data={visibleLatest} numColumns={isTablet ? 2 : 1} renderItem={({ item, index }) => <LatestVideoCard item={item} index={index} isGrid={isTablet} />} keyExtractor={(item) => item.id} ListHeaderComponent={header} ListFooterComponent={<Image source={require('../../assets/images/footer-vids.png')} contentFit="contain" style={styles.footerImage} accessibilityLabel="Learning together illustration" />} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={videoColors.primary} />} /></Animated.View></SafeAreaView>;
+  return <SafeAreaView edges={['top']} style={styles.safe}><Animated.View entering={FadeIn.duration(380)} style={[styles.container, { maxWidth: dimensions.maxContentWidth, paddingHorizontal: horizontalPadding }]}><FlashList key={`latest-${isTablet ? 2 : 1}`} data={visibleLatest} numColumns={isTablet ? 2 : 1} renderItem={({ item, index }) => <LatestVideoCard item={item} index={index} isGrid={isTablet} />} keyExtractor={(item) => item.id} ListHeaderComponent={header} ListFooterComponent={<Image source={require('../../assets/images/footer-vids.png')} contentFit="contain" style={styles.footerImage} accessibilityLabel="Learning together illustration" />} contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={videoColors.primary} />} /></Animated.View></SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
