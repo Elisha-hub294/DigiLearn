@@ -1,14 +1,15 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { colors, shadows, spacing } from "../../constants/theme";
+import { colors, spacing } from "../../constants/theme";
 
 export const FeaturedNoteCard = () => {
   const { width } = useWindowDimensions();
@@ -42,12 +43,16 @@ export const FeaturedNoteCard = () => {
             <Text style={styles.dot}>•</Text>
             <Text style={styles.meta}>Updated 3 days ago</Text>
           </View>
-          <Pressable
+          <LinearGradient
+            colors={["#3B82F6", "#f65cee"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.downloadButton}
-            accessibilityLabel="Download featured note"
           >
-            <Icon name="download" size={16} color={colors.white} />
-          </Pressable>
+            <Pressable accessibilityLabel="Download featured note">
+              <Icon name="download" size={16} color={colors.white} />
+            </Pressable>
+          </LinearGradient>
         </View>
       </View>
     </Animated.View>
@@ -59,10 +64,11 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
     backgroundColor: colors.white,
-    borderRadius: 22,
-    padding: spacing.lg,
-    ...shadows.card,
-    marginBottom: spacing.xl,
+    borderRadius: 10,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
   },
   cardWide: {
     maxWidth: 760,
@@ -90,12 +96,13 @@ const styles = StyleSheet.create({
   teacher: { color: colors.text, fontSize: 13, fontWeight: "700" },
   subject: { color: colors.subtitle, fontSize: 12, marginTop: 2 },
   previewWrap: {
-    borderRadius: 18,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
     overflow: "hidden",
     position: "relative",
     marginBottom: spacing.md,
   },
-  preview: { width: "100%", height: 220, borderRadius: 16 },
+  preview: { width: "100%", height: 220 },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.2)" },
   content: {},
   title: {
@@ -127,9 +134,8 @@ const styles = StyleSheet.create({
   downloadButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.primary,
   },
 });

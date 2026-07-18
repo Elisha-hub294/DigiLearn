@@ -108,7 +108,6 @@ export default function HomeScreen() {
             >
               <SectionHeader
                 title="Topical notes"
-                subtitle="Concise revision summaries"
                 onSeeAll={() => router.push("/library")}
               />
               <TopicalNotesSlider />
@@ -120,7 +119,6 @@ export default function HomeScreen() {
             >
               <SectionHeader
                 title="Popular courses"
-                subtitle="Streamlined lessons for mastery"
                 onSeeAll={() => router.push("/videos")}
               />
               <CoursesCarousel />
@@ -132,7 +130,6 @@ export default function HomeScreen() {
             >
               <SectionHeader
                 title="UNEB papers"
-                subtitle="Practice with the latest questions"
                 onSeeAll={() => router.push("/library")}
               />
               <UnebCard />
@@ -165,7 +162,6 @@ export default function HomeScreen() {
             >
               <SectionHeader
                 title="Textbooks"
-                subtitle="Curated study guides"
                 onSeeAll={() => router.push("/library")}
               />
               <BookCarousel />

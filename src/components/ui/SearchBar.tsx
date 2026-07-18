@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#D9D9D9",
     ...shadows.soft,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xxl,
   },
   input: {
     flex: 1,

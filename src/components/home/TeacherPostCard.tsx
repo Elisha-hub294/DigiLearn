@@ -2,7 +2,7 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 
 export const TeacherPostCard = () => {
   const { width } = useWindowDimensions();
@@ -50,10 +50,9 @@ export const TeacherPostCard = () => {
       </View>
 
       <View style={styles.actions}>
-        <Action icon="heart" label="Like" />
+        <Action icon="star" label="Like" />
         <Action icon="bookmark" label="Bookmark" />
         <Action icon="share-2" label="Share" />
-        <Action icon="message-circle" label="Comment" />
       </View>
     </Animated.View>
   );
@@ -71,10 +70,11 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
     backgroundColor: colors.white,
-    borderRadius: 22,
-    padding: spacing.lg,
-    ...shadows.card,
-    marginBottom: spacing.xl,
+    borderRadius: 10,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
   },
   cardWide: {
     maxWidth: 760,
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   profileRow: { flexDirection: "row", alignItems: "center", flex: 1 },
-  avatar: { width: 44, height: 44, borderRadius: 22, marginRight: spacing.sm },
+  avatar: { width: 44, height: 44, borderRadius: 10, marginRight: spacing.sm },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   name: { color: colors.text, fontSize: 14, fontWeight: "700" },
   time: { color: colors.subtitle, fontSize: 12, marginTop: 2 },
@@ -103,12 +103,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   previewWrap: {
-    borderRadius: 18,
+    borderRadius: 10,
     overflow: "hidden",
     position: "relative",
     marginBottom: spacing.md,
   },
-  preview: { width: "100%", height: 220, borderRadius: 16 },
+  preview: { width: "100%", height: 220, borderRadius: 10 },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.2)" },
   previewTag: {
     position: "absolute",

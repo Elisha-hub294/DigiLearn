@@ -10,7 +10,7 @@ export const colors = {
   orange: "#F4A261",
   background: "#EAEAEA",
   lightBackground: "#F8F9FC",
-  text: "#222222",
+  text: "#414141",
   subtitle: "#777777",
   border: "#D9D9D9",
   white: "#FFFFFF",
