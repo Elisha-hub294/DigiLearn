@@ -1,13 +1,13 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { StyleSheet, TextInput, View } from "react-native";
-import { colors, shadows, spacing } from "../../constants/theme";
+import { colors, shadows, spacing } from "../constants/theme";
 
-export function SearchBar() {
+export const SearchBar = () => {
   return (
     <View style={styles.container} accessibilityRole="search">
       <Icon name="search" size={18} color="#8A8A8A" />
       <TextInput
-        accessibilityLabel="Search lessons"
+        accessibilityLabel="Search for lessons and resources"
         placeholder="Search"
         placeholderTextColor="#8A8A8A"
         style={styles.input}
@@ -15,7 +15,7 @@ export function SearchBar() {
       />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {

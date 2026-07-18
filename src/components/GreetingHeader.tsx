@@ -1,20 +1,20 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { colors, radius, shadows, spacing } from "../constants/theme";
 
-export const Header = () => {
-  const router = useRouter();
+export const GreetingHeader = () => {
   const date = new Date().toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
   });
 
   return (
-    <View style={styles.container}>
+    <Animated.View entering={FadeInDown.duration(350)} style={styles.container}>
       <View style={styles.textWrap}>
         <Text style={styles.date}>{date}</Text>
         <Text style={styles.greeting}>Hi, Kathryn</Text>
+        <Text style={styles.caption}>Your learning dashboard is ready.</Text>
       </View>
       <View style={styles.actions}>
         <View style={styles.streakPill}>
@@ -22,7 +22,6 @@ export const Header = () => {
           <Text style={styles.streakText}>7 day streak</Text>
         </View>
         <Pressable
-          onPress={() => router.push("/profile")}
           style={styles.notificationButton}
           accessibilityLabel="Open notifications"
         >
@@ -30,7 +29,7 @@ export const Header = () => {
           <View style={styles.badge} />
         </Pressable>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -54,6 +53,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -0.6,
   },
+  caption: { color: colors.subtitle, marginTop: 4, fontSize: 13 },
   actions: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   streakPill: {
     flexDirection: "row",

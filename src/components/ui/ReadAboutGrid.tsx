@@ -1,8 +1,8 @@
-import { Image } from 'expo-image';
-import { useMemo } from 'react';
-import { FlatList, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { dimensions, spacing } from '../../constants/theme';
-import { TopicCard, TopicCardItem } from './TopicCard';
+import { Image } from "expo-image";
+import { useMemo } from "react";
+import { FlatList, StyleSheet, View, useWindowDimensions } from "react-native";
+import { dimensions, spacing } from "../../constants/theme";
+import { TopicCard, TopicCardItem } from "./TopicCard";
 
 type ReadAboutGridProps = {
   data: TopicCardItem[];
@@ -22,7 +22,11 @@ export const ReadAboutGrid = ({ data }: ReadAboutGridProps) => {
 
   return (
     <View style={styles.container}>
-      <Image source={require('../../../assets/images/bg.png')} style={styles.backgroundImage} contentFit="cover" />
+      <Image
+        source={require("../../../assets/images/bg.png")}
+        style={styles.backgroundImage}
+        contentFit="cover"
+      />
       <View style={styles.overlay} />
       <FlatList
         data={pages}
@@ -31,8 +35,18 @@ export const ReadAboutGrid = ({ data }: ReadAboutGridProps) => {
         pagingEnabled
         keyExtractor={(_, index) => `page-${index}`}
         renderItem={({ item }) => (
-          <View style={[styles.page, { width: Math.min(width - dimensions.screenPaddingHorizontal * 2, 420) }]}> 
-            <View style={styles.grid}> 
+          <View
+            style={[
+              styles.page,
+              {
+                width: Math.min(
+                  width - dimensions.screenPaddingHorizontal * 2,
+                  420,
+                ),
+              },
+            ]}
+          >
+            <View style={styles.grid}>
               {item.map((topic) => (
                 <TopicCard key={topic.id} item={topic} />
               ))}
@@ -50,29 +64,29 @@ export const ReadAboutGrid = ({ data }: ReadAboutGridProps) => {
 const styles = StyleSheet.create({
   container: {
     borderRadius: 18,
-    overflow: 'hidden',
-    position: 'relative',
+    overflow: "hidden",
+    position: "relative",
   },
   backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 18,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 18,
   },
   listContent: {
     paddingRight: spacing.lg,
-    position: 'relative',
+    position: "relative",
     zIndex: 1,
   },
   page: {
     paddingRight: spacing.sm,
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
   },
 });
