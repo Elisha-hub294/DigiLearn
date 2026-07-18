@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
     position: "relative",
     marginBottom: spacing.md,
   },
-  preview: { width: "100%", height: 150 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.25)" },
+  preview: { width: "100%", height: 250 },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.2)" },
   actions: {
     flexDirection: "row",
     justifyContent: "space-between",
