@@ -1,8 +1,9 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 
 export const MarkingGuideCard = () => {
   return (
@@ -23,12 +24,16 @@ export const MarkingGuideCard = () => {
         <Text style={styles.meta}>10 pages • PDF • Updated 2 days ago</Text>
         <View style={styles.footer}>
           <Text style={styles.status}>Download now</Text>
-          <Pressable
+          <LinearGradient
+            colors={["#3B82F6", "#f65cee"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.downloadButton}
-            accessibilityLabel="Download marking guide"
           >
-            <Icon name="download" size={15} color={colors.white} />
-          </Pressable>
+            <Pressable accessibilityLabel="Download marking guide">
+              <Icon name="download" size={15} color={colors.white} />
+            </Pressable>
+          </LinearGradient>
         </View>
       </View>
     </Animated.View>
@@ -38,28 +43,29 @@ export const MarkingGuideCard = () => {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
-    borderRadius: 22,
+    borderRadius: 10,
     overflow: "hidden",
-    ...shadows.card,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.sm,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
   },
-  previewWrap: { position: "relative", height: 160 },
+  previewWrap: { position: "relative", height: 200 },
   preview: { width: "100%", height: "100%" },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.25)" },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.2)" },
   badge: {
     position: "absolute",
     left: spacing.md,
     top: spacing.md,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: radius.pill,
   },
-  badgeText: { color: colors.white, fontSize: 11, fontWeight: "700" },
-  content: { padding: spacing.lg },
+  badgeText: { color: colors.white, fontSize: 11, fontWeight: "500" },
+  content: { padding: spacing.sm },
   title: {
     color: colors.text,
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "500",
     marginBottom: 6,
   },
   meta: {
@@ -77,7 +83,7 @@ const styles = StyleSheet.create({
   downloadButton: {
     width: 38,
     height: 38,
-    borderRadius: 19,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: colors.primary,

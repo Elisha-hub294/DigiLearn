@@ -2,7 +2,7 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 
 export const AnnouncementCard = () => {
   const { width } = useWindowDimensions();
@@ -42,8 +42,7 @@ export const AnnouncementCard = () => {
         <View style={styles.overlay} />
       </View>
       <View style={styles.actions}>
-        <Action icon="heart" label="Like" />
-        <Action icon="message-circle" label="Comment" />
+        <Action icon="star" label="Like" />
         <Action icon="share-2" label="Share" />
       </View>
     </Animated.View>
@@ -62,10 +61,11 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
     backgroundColor: colors.white,
-    borderRadius: 22,
-    padding: spacing.lg,
-    ...shadows.card,
-    marginBottom: spacing.xl,
+    borderRadius: 10,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
   },
   cardWide: {
     maxWidth: 760,
@@ -73,19 +73,19 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: spacing.md,
   },
   profileRow: { flexDirection: "row", alignItems: "center", flex: 1 },
-  avatar: { width: 44, height: 44, borderRadius: 22, marginRight: spacing.sm },
-  name: { color: colors.text, fontSize: 14, fontWeight: "700" },
+  avatar: { width: 44, height: 44, borderRadius: 10, marginRight: spacing.sm },
+  name: { color: colors.text, fontSize: 14, fontWeight: "500" },
   time: { color: colors.subtitle, fontSize: 12, marginTop: 2 },
   badge: {
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: radius.pill,
   },
-  badgeText: { color: colors.white, fontSize: 11, fontWeight: "700" },
+  badgeText: { color: colors.white, fontSize: 11, fontWeight: "500" },
   message: {
     color: colors.text,
     fontSize: 14,
@@ -93,16 +93,16 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   previewWrap: {
-    borderRadius: 18,
+    borderRadius: 10,
     overflow: "hidden",
     position: "relative",
     marginBottom: spacing.md,
   },
-  preview: { width: "100%", height: 220, borderRadius: 16 },
+  preview: { width: "100%", height: 220, borderRadius: 10 },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.2)" },
   actions: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     flexWrap: "wrap",
     gap: 8,
   },
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 8,
     borderRadius: 999,
-    backgroundColor: "#F6F7FB",
+    backgroundColor: colors.background,
   },
-  actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "600" },
+  actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
 });

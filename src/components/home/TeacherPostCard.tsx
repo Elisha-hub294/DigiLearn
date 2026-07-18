@@ -82,13 +82,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: spacing.md,
   },
   profileRow: { flexDirection: "row", alignItems: "center", flex: 1 },
   avatar: { width: 44, height: 44, borderRadius: 10, marginRight: spacing.sm },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  name: { color: colors.text, fontSize: 14, fontWeight: "700" },
+  name: { color: colors.text, fontSize: 14, fontWeight: "500" },
   time: { color: colors.subtitle, fontSize: 12, marginTop: 2 },
   badge: {
     paddingHorizontal: 10,
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
   previewTagText: { color: colors.white, fontSize: 11, fontWeight: "800" },
   actions: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     flexWrap: "wrap",
     gap: 8,
   },
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 8,
     borderRadius: 999,
-    backgroundColor: "#F6F7FB",
+    backgroundColor: colors.background,
   },
-  actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "600" },
+  actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
 });

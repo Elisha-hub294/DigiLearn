@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 10,
-    backgroundColor: "#ff00d4",
+    backgroundColor: colors.primary,
   },
   openText: { color: colors.white, fontSize: 12, fontWeight: "700" },
 });

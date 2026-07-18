@@ -1,14 +1,15 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 
 export const UnebCard = () => {
   const { width } = useWindowDimensions();
@@ -35,12 +36,16 @@ export const UnebCard = () => {
         <Text style={styles.meta}>12 pages • PDF • Updated 3 days ago</Text>
         <View style={styles.footer}>
           <Text style={styles.status}>Ready to download</Text>
-          <Pressable
+          <LinearGradient
+            colors={["#3B82F6", "#f65cee"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.downloadButton}
-            accessibilityLabel="Download UNEB paper"
           >
-            <Icon name="download" size={15} color={colors.white} />
-          </Pressable>
+            <Pressable accessibilityLabel="Download UNEB paper">
+              <Icon name="download" size={15} color={colors.white} />
+            </Pressable>
+          </LinearGradient>
         </View>
       </View>
     </Animated.View>
@@ -52,31 +57,33 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
     backgroundColor: colors.white,
-    borderRadius: 22,
+    borderRadius: 10,
     overflow: "hidden",
-    ...shadows.card,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.sm,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
+    marginTop: spacing.md,
   },
   cardWide: {
     maxWidth: 760,
   },
-  previewWrap: { position: "relative", height: 160 },
+  previewWrap: { position: "relative", height: 200 },
   preview: { width: "100%", height: "100%" },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.25)" },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.2)" },
   badge: {
     position: "absolute",
     left: spacing.md,
     top: spacing.md,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: radius.pill,
   },
-  badgeText: { color: colors.white, fontSize: 11, fontWeight: "700" },
-  content: { padding: spacing.lg },
+  badgeText: { color: colors.white, fontSize: 11, fontWeight: "500" },
+  content: { padding: spacing.sm },
   title: {
     color: colors.text,
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "500",
     marginBottom: 6,
   },
   meta: {
@@ -92,11 +99,10 @@ const styles = StyleSheet.create({
   },
   status: { color: colors.text, fontSize: 12, fontWeight: "700" },
   downloadButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.primary,
   },
 });
