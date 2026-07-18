@@ -55,11 +55,13 @@ export const TopicalNotesSlider = () => {
 
 const styles = StyleSheet.create({
   container: { marginBottom: spacing.xl },
-  list: { paddingRight: spacing.md },
-  card: {
-    width: 128,
-    marginRight: spacing.md,
+  list: {
+    paddingRight: spacing.md,
     paddingVertical: spacing.md,
+  },
+  card: {
+    marginRight: spacing.md,
+    paddingVertical: spacing.sm,
     paddingHorizontal: spacing.sm,
     borderRadius: 22,
     backgroundColor: colors.white,
@@ -67,14 +69,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   imageWrap: {
-    width: 84,
-    height: 84,
-    borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: spacing.sm,
-    backgroundColor: "#F3F4F6",
   },
-  image: { width: 64, height: 64 },
+  image: { width: 94, height: 94, borderRadius: 10 },
   title: { color: colors.text, fontSize: 13, fontWeight: "700" },
 });
