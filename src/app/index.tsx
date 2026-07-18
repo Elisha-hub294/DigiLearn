@@ -240,6 +240,5 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 320,
     height: 180,
-    borderRadius: radius.xl,
   },
 });
