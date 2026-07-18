@@ -70,7 +70,10 @@ export const CoursesCarousel = () => {
 
 const styles = StyleSheet.create({
   container: { marginBottom: spacing.xl },
-  list: { paddingRight: spacing.md },
+  list: {
+    paddingRight: spacing.md,
+    paddingVertical: spacing.lg,
+  },
   card: {
     width: 220,
     marginRight: spacing.md,
