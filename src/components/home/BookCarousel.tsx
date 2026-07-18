@@ -64,7 +64,7 @@ export const BookCarousel = () => {
 
 const styles = StyleSheet.create({
   container: { marginBottom: spacing.xl },
-  list: { paddingRight: spacing.md },
+  list: { paddingRight: spacing.md, paddingVertical: spacing.lg },
   card: {
     width: 180,
     marginRight: spacing.md,
