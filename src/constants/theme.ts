@@ -1,20 +1,20 @@
-import { Dimensions } from 'react-native';
+import { Dimensions } from "react-native";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 export const colors = {
-  primary: '#3D7BFF',
-  primaryLight: '#DDEBFF',
-  green: '#6BCB77',
-  purple: '#B89AF8',
-  orange: '#F4A261',
-  background: '#FFFFFF',
-  lightBackground: '#F8F9FC',
-  text: '#222222',
-  subtitle: '#777777',
-  border: '#E9ECF3',
-  white: '#FFFFFF',
-  dark: '#111827',
+  primary: "#3B82F6",
+  primaryLight: "#DDEBFF",
+  green: "#6BCB77",
+  purple: "#B89AF8",
+  orange: "#F4A261",
+  background: "#EAEAEA",
+  lightBackground: "#F8F9FC",
+  text: "#222222",
+  subtitle: "#777777",
+  border: "#D9D9D9",
+  white: "#FFFFFF",
+  dark: "#111827",
 } as const;
 
 export const spacing = {
@@ -36,14 +36,14 @@ export const radius = {
 
 export const shadows = {
   card: {
-    shadowColor: '#0F172A',
+    shadowColor: "#0F172A",
     shadowOpacity: 0.08,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 10 },
     elevation: 4,
   },
   soft: {
-    shadowColor: '#0F172A',
+    shadowColor: "#0F172A",
     shadowOpacity: 0.06,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 6 },
@@ -52,17 +52,18 @@ export const shadows = {
 } as const;
 
 export const typography = {
-  title: { fontSize: width >= 768 ? 28 : 24, fontWeight: '700' as const },
-  subtitle: { fontSize: width >= 768 ? 16 : 14, fontWeight: '500' as const },
-  body: { fontSize: width >= 768 ? 15 : 13, fontWeight: '400' as const },
-  heading: { fontSize: width >= 768 ? 20 : 18, fontWeight: '700' as const },
+  title: { fontSize: width >= 768 ? 28 : 24, fontWeight: "700" as const },
+  subtitle: { fontSize: width >= 768 ? 16 : 14, fontWeight: "500" as const },
+  body: { fontSize: width >= 768 ? 15 : 13, fontWeight: "400" as const },
+  heading: { fontSize: width >= 768 ? 20 : 18, fontWeight: "700" as const },
 };
 
 export const dimensions = {
   width,
   height,
   // Responsive horizontal padding: small phones ~14, medium ~20, tablets 36
-  screenPaddingHorizontal: width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 20 : 14,
+  screenPaddingHorizontal:
+    width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 20 : 14,
   // Max content width to prevent stretching on large screens
   maxContentWidth: Math.min(1000, width - 20),
 };
