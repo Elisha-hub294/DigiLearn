@@ -21,6 +21,7 @@ import { TeacherPostCard } from "../components/home/TeacherPostCard";
 import { TopicalNotesSlider } from "../components/home/TopicalNotesSlider";
 import { UnebCard } from "../components/home/UnebCard";
 import { Header } from "../components/ui/Header";
+import HeroCarousel from "../components/ui/HeroCarousel";
 import { SearchBar } from "../components/ui/SearchBar";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import {
@@ -67,6 +68,10 @@ export default function HomeScreen() {
       >
         <Header />
         <SearchBar />
+
+        <Animated.View entering={FadeInUp.duration(400)} style={styles.section}>
+          <HeroCarousel />
+        </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(400)} style={styles.section}>
           <FeaturedNoteCard />

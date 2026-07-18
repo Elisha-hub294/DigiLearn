@@ -78,8 +78,8 @@ const styles = StyleSheet.create({
     position: "relative",
     marginBottom: spacing.md,
   },
-  preview: { width: "100%", height: 180 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.25)" },
+  preview: { width: "100%", height: 250 },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.2)" },
   content: {},
   title: {
     color: colors.text,
