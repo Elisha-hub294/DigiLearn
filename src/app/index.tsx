@@ -41,8 +41,8 @@ export default function HomeScreen() {
         : width >= 600
           ? 32
           : width >= 400
-            ? 20
-            : 12;
+            ? 10
+            : 5;
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   useEffect(() => {
