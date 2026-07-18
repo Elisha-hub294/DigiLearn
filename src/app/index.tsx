@@ -24,7 +24,7 @@ import { UnebCard } from "../components/home/UnebCard";
 import { Header } from "../components/ui/Header";
 import { SearchBar } from "../components/ui/SearchBar";
 import { SectionHeader } from "../components/ui/SectionHeader";
-import { colors, radius, shadows, spacing } from "../constants/theme";
+import { colors, spacing } from "../constants/theme";
 import LoadingScreen from "./loading";
 
 export default function HomeScreen() {
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   },
   dualColumnLayout: {
     flexDirection: "row",
-    gap: spacing.lg,
+    gap: spacing.sm,
     alignItems: "flex-start",
   },
   dualColumnItem: {
@@ -266,14 +266,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   gradientCard: {
-    borderRadius: radius.xl,
+    borderRadius: 10,
     padding: spacing.lg,
-    ...shadows.card,
   },
   gradientContent: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-end",
     gap: spacing.md,
     flexWrap: "wrap",
   },
@@ -284,7 +283,7 @@ const styles = StyleSheet.create({
   gradientEyebrow: {
     color: "rgba(255,255,255,0.8)",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "500",
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 6,
@@ -292,7 +291,7 @@ const styles = StyleSheet.create({
   gradientTitle: {
     color: colors.white,
     fontSize: 20,
-    fontWeight: "800",
+    fontWeight: "500",
     marginBottom: 8,
   },
   gradientBody: {
@@ -302,14 +301,14 @@ const styles = StyleSheet.create({
   },
   gradientButton: {
     backgroundColor: colors.white,
-    borderRadius: radius.pill,
+    borderRadius: 10,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
   gradientButtonText: {
     color: colors.primary,
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "600",
   },
   footerCard: {
     alignItems: "center",
