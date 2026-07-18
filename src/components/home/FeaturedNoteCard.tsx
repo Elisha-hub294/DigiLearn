@@ -7,23 +7,6 @@ import { colors, shadows, spacing } from "../../constants/theme";
 export const FeaturedNoteCard = () => {
   return (
     <Animated.View entering={FadeInUp.duration(420)} style={styles.card}>
-      <View style={styles.header}>
-        <View style={[styles.badge, { backgroundColor: "#C85F4B" }]}>
-          <Icon name="book-open" size={14} color={colors.white} />
-        </View>
-        <View style={styles.profileRow}>
-          <Image
-            source={require("../../../assets/images/tr-1.webp")}
-            style={styles.avatar}
-            contentFit="cover"
-          />
-          <View>
-            <Text style={styles.teacher}>Tr. Sarah Namusoke</Text>
-            <Text style={styles.subject}>Mathematics</Text>
-          </View>
-        </View>
-      </View>
-
       <View style={styles.previewWrap}>
         <Image
           source={require("../../../assets/images/pdf-preview.jpeg")}
