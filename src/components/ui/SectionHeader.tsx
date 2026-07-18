@@ -13,7 +13,7 @@ export function SectionHeader({
   actionLabel = "See all",
 }: SectionHeaderProps) {
   return (
-    <View style={styles.wrap}>
+    <View>
       <View style={styles.row}>
         <View style={styles.textContainer}>
           <Text style={styles.title}>{title}</Text>
@@ -33,7 +33,6 @@ export function SectionHeader({
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: 10 },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",

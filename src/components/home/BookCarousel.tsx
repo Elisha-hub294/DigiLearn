@@ -1,14 +1,14 @@
 import { Image } from "expo-image";
 import {
-    FlatList,
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 
 const items = [
   {
@@ -80,17 +80,17 @@ const styles = StyleSheet.create({
   card: {
     marginRight: spacing.md,
     backgroundColor: colors.white,
-    borderRadius: 22,
+    borderRadius: 10,
     overflow: "hidden",
-    ...shadows.card,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
   },
   image: { width: "100%", height: 170 },
   body: { padding: spacing.md },
   title: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: "700",
-    marginBottom: 4,
+    fontWeight: "500",
   },
   author: { color: colors.subtitle, fontSize: 12, marginBottom: spacing.sm },
   row: {

@@ -1,14 +1,14 @@
 import { Image } from "expo-image";
 import {
-    FlatList,
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { colors, shadows, spacing } from "../../constants/theme";
+import { colors, spacing } from "../../constants/theme";
 
 const items = [
   {
@@ -34,7 +34,7 @@ export const TopicalNotesSlider = () => {
   const cardWidth = width >= 900 ? 128 : 110;
 
   return (
-    <Animated.View entering={FadeInUp.duration(460)} style={styles.container}>
+    <Animated.View entering={FadeInUp.duration(460)}>
       <FlatList
         horizontal
         data={data}
@@ -63,19 +63,17 @@ export const TopicalNotesSlider = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { marginBottom: spacing.xl },
   list: {
-    paddingRight: spacing.md,
     paddingVertical: spacing.md,
   },
   card: {
     marginRight: spacing.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    borderRadius: 22,
+    padding: spacing.sm,
+    borderRadius: 10,
     backgroundColor: colors.white,
-    ...shadows.soft,
     alignItems: "center",
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
   },
   imageWrap: {
     justifyContent: "center",
@@ -83,5 +81,5 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   image: { width: 94, height: 94, borderRadius: 10 },
-  title: { color: colors.text, fontSize: 13, fontWeight: "700" },
+  title: { color: colors.text, fontSize: 13, fontWeight: "500" },
 });

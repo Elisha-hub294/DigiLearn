@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   section: {
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.sm,
   },
   stack: {
     width: "100%",
