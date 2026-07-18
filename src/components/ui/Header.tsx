@@ -14,7 +14,7 @@ export const Header = () => {
     <View style={styles.container}>
       <View style={styles.textWrap}>
         <Text style={styles.date}>{date}</Text>
-        <Text style={styles.greeting}>Hi, Kathryn</Text>
+        <Text style={styles.greeting}>Hi, Elisha</Text>
       </View>
       <View style={styles.actions}>
         <View style={styles.streakPill}>
