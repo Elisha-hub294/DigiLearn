@@ -1,5 +1,12 @@
 import { Image } from "expo-image";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+    FlatList,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
+} from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, shadows, spacing } from "../../constants/theme";
 
@@ -22,7 +29,9 @@ const items = [
 ];
 
 export const TopicalNotesSlider = () => {
+  const { width } = useWindowDimensions();
   const data = [...items, ...items, ...items];
+  const cardWidth = width >= 900 ? 128 : 110;
 
   return (
     <Animated.View entering={FadeInUp.duration(460)} style={styles.container}>
@@ -33,7 +42,7 @@ export const TopicalNotesSlider = () => {
         keyExtractor={(item, index) => `${item.id}-${index}`}
         renderItem={({ item }) => (
           <Pressable
-            style={styles.card}
+            style={[styles.card, { width: cardWidth }]}
             accessibilityRole="button"
             accessibilityLabel={item.title}
           >

@@ -1,5 +1,12 @@
 import { Image } from "expo-image";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+    FlatList,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
+} from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, radius, shadows, spacing } from "../../constants/theme";
 
@@ -28,7 +35,9 @@ const items = [
 ];
 
 export const BookCarousel = () => {
+  const { width } = useWindowDimensions();
   const data = [...items, ...items, ...items];
+  const cardWidth = width >= 900 ? 220 : 180;
 
   return (
     <Animated.View entering={FadeInUp.duration(680)} style={styles.container}>
@@ -38,7 +47,10 @@ export const BookCarousel = () => {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item, index) => `${item.id}-${index}`}
         renderItem={({ item }) => (
-          <Pressable style={styles.card} accessibilityRole="button">
+          <Pressable
+            style={[styles.card, { width: cardWidth }]}
+            accessibilityRole="button"
+          >
             <Image
               source={item.image}
               style={styles.image}
@@ -66,7 +78,6 @@ const styles = StyleSheet.create({
   container: { marginBottom: spacing.xl },
   list: { paddingRight: spacing.md, paddingVertical: spacing.lg },
   card: {
-    width: 180,
     marginRight: spacing.md,
     backgroundColor: colors.white,
     borderRadius: 22,

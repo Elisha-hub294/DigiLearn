@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
@@ -21,22 +22,28 @@ import { TeacherPostCard } from "../components/home/TeacherPostCard";
 import { TopicalNotesSlider } from "../components/home/TopicalNotesSlider";
 import { UnebCard } from "../components/home/UnebCard";
 import { Header } from "../components/ui/Header";
-import HeroCarousel from "../components/ui/HeroCarousel";
 import { SearchBar } from "../components/ui/SearchBar";
 import { SectionHeader } from "../components/ui/SectionHeader";
-import {
-  colors,
-  dimensions,
-  radius,
-  shadows,
-  spacing,
-} from "../constants/theme";
+import { colors, radius, shadows, spacing } from "../constants/theme";
 import LoadingScreen from "./loading";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const [refreshing, setRefreshing] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
+  const isWideLayout = width >= 900;
+  const horizontalPadding =
+    width >= 1200
+      ? 64
+      : width >= 900
+        ? 48
+        : width >= 600
+          ? 32
+          : width >= 400
+            ? 20
+            : 12;
+  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowLoading(false), 1100);
@@ -54,85 +61,132 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-          />
-        }
-      >
-        <Header />
-        <SearchBar />
+      <Animated.View entering={FadeInUp.duration(480)} style={styles.page}>
+        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+          <ScrollView
+            style={styles.container}
+            contentContainerStyle={[
+              styles.content,
+              { paddingHorizontal: horizontalPadding },
+            ]}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.primary}
+              />
+            }
+          >
+            <Header />
+            <SearchBar />
 
-        <Animated.View entering={FadeInUp.duration(400)} style={styles.section}>
-          <HeroCarousel />
-        </Animated.View>
+            <Animated.View
+              entering={FadeInUp.duration(400)}
+              style={styles.section}
+            >
+              {isWideLayout ? (
+                <View style={styles.dualColumnLayout}>
+                  <View style={styles.dualColumnItem}>
+                    <FeaturedNoteCard />
+                  </View>
+                  <View style={styles.dualColumnItem}>
+                    <TeacherPostCard />
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.stack}>
+                  <FeaturedNoteCard />
+                  <TeacherPostCard />
+                </View>
+              )}
+            </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(400)} style={styles.section}>
-          <FeaturedNoteCard />
-        </Animated.View>
+            <Animated.View
+              entering={FadeInUp.duration(450)}
+              style={styles.section}
+            >
+              <SectionHeader
+                title="Topical notes"
+                subtitle="Concise revision summaries"
+                onSeeAll={() => router.push("/library")}
+              />
+              <TopicalNotesSlider />
+            </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(450)} style={styles.section}>
-          <SectionHeader
-            title="Topical notes"
-            subtitle="Concise revision summaries"
-            onSeeAll={() => router.push("/library")}
-          />
-          <TopicalNotesSlider />
-        </Animated.View>
+            <Animated.View
+              entering={FadeInUp.duration(550)}
+              style={styles.section}
+            >
+              <SectionHeader
+                title="Popular courses"
+                subtitle="Streamlined lessons for mastery"
+                onSeeAll={() => router.push("/videos")}
+              />
+              <CoursesCarousel />
+            </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(500)} style={styles.section}>
-          <TeacherPostCard />
-        </Animated.View>
+            <Animated.View
+              entering={FadeInUp.duration(600)}
+              style={styles.section}
+            >
+              <SectionHeader
+                title="UNEB papers"
+                subtitle="Practice with the latest questions"
+                onSeeAll={() => router.push("/library")}
+              />
+              <UnebCard />
+            </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(550)} style={styles.section}>
-          <SectionHeader
-            title="Popular courses"
-            subtitle="Streamlined lessons for mastery"
-            onSeeAll={() => router.push("/videos")}
-          />
-          <CoursesCarousel />
-        </Animated.View>
+            <Animated.View
+              entering={FadeInUp.duration(650)}
+              style={styles.section}
+            >
+              {isWideLayout ? (
+                <View style={styles.dualColumnLayout}>
+                  <View style={styles.dualColumnItem}>
+                    <AnnouncementCard />
+                  </View>
+                  <View style={styles.dualColumnItem}>
+                    <MarkingGuideCard />
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.stack}>
+                  <AnnouncementCard />
+                  <MarkingGuideCard />
+                </View>
+              )}
+            </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(600)} style={styles.section}>
-          <SectionHeader
-            title="UNEB papers"
-            subtitle="Practice with the latest questions"
-            onSeeAll={() => router.push("/library")}
-          />
-          <UnebCard />
-        </Animated.View>
+            <Animated.View
+              entering={FadeInUp.duration(700)}
+              style={styles.section}
+            >
+              <SectionHeader
+                title="Textbooks"
+                subtitle="Curated study guides"
+                onSeeAll={() => router.push("/library")}
+              />
+              <BookCarousel />
+            </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(650)} style={styles.section}>
-          <AnnouncementCard />
-        </Animated.View>
+            <Animated.View
+              entering={FadeInUp.duration(750)}
+              style={styles.section}
+            >
+              <GradientAnnouncement />
+            </Animated.View>
 
-        <Animated.View entering={FadeInUp.duration(700)} style={styles.section}>
-          <SectionHeader
-            title="Textbooks"
-            subtitle="Curated study guides"
-            onSeeAll={() => router.push("/library")}
-          />
-          <BookCarousel />
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(750)} style={styles.section}>
-          <GradientAnnouncement />
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(800)} style={styles.section}>
-          <MarkingGuideCard />
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(850)} style={styles.section}>
-          <FooterIllustration />
-        </Animated.View>
-      </ScrollView>
+            <Animated.View
+              entering={FadeInUp.duration(850)}
+              style={styles.section}
+            >
+              <FooterIllustration />
+            </Animated.View>
+          </ScrollView>
+        </View>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -177,20 +231,43 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  page: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: colors.background,
+  },
+  contentContainer: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 1100,
+    alignSelf: "center",
+  },
   container: {
     flex: 1,
+    width: "100%",
     backgroundColor: colors.background,
   },
   content: {
-    paddingHorizontal: dimensions.width < 400 ? 8 : 12,
+    flexGrow: 1,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
-    maxWidth: dimensions.maxContentWidth,
     alignSelf: "center",
     width: "100%",
   },
   section: {
     marginBottom: spacing.xxl,
+  },
+  stack: {
+    width: "100%",
+  },
+  dualColumnLayout: {
+    flexDirection: "row",
+    gap: spacing.lg,
+    alignItems: "flex-start",
+  },
+  dualColumnItem: {
+    flex: 1,
+    minWidth: 0,
   },
   gradientCard: {
     borderRadius: radius.xl,

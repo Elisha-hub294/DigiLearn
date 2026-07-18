@@ -1,5 +1,11 @@
 import { Image } from "expo-image";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+    FlatList,
+    Pressable,
+    StyleSheet,
+    Text,
+    View
+} from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { topicalNotes, type TopicalNote } from "../constants/homeData";
 import { colors, shadows, spacing } from "../constants/theme";

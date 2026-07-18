@@ -1,5 +1,12 @@
 import { Image } from "expo-image";
-import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+    FlatList,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
+} from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, radius, shadows, spacing } from "../../constants/theme";
 
@@ -28,7 +35,9 @@ const items = [
 ];
 
 export const CoursesCarousel = () => {
+  const { width } = useWindowDimensions();
   const data = [...items, ...items, ...items];
+  const cardWidth = width >= 900 ? 240 : 220;
 
   return (
     <Animated.View entering={FadeInUp.duration(540)} style={styles.container}>
@@ -38,7 +47,10 @@ export const CoursesCarousel = () => {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item, index) => `${item.id}-${index}`}
         renderItem={({ item }) => (
-          <Pressable style={styles.card} accessibilityRole="button">
+          <Pressable
+            style={[styles.card, { width: cardWidth }]}
+            accessibilityRole="button"
+          >
             <View style={styles.imageWrap}>
               <Image
                 source={item.image}
@@ -75,7 +87,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
   },
   card: {
-    width: 220,
     marginRight: spacing.md,
     backgroundColor: colors.white,
     borderRadius: 22,

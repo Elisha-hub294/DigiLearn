@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Animated, {
   Extrapolate,
   interpolate,
@@ -7,10 +14,15 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSequence,
-  withTiming
-} from 'react-native-reanimated';
-import { carouselData, CarouselItem } from '../../constants/data';
-import { colors, dimensions, radius, spacing, typography } from '../../constants/theme';
+  withTiming,
+} from "react-native-reanimated";
+import { carouselData, CarouselItem } from "../../constants/data";
+import {
+  colors,
+  radius,
+  spacing,
+  typography
+} from "../../constants/theme";
 
 const CARD_WIDTH_RATIO = 0.86;
 const CARD_SPACING = 16;
@@ -21,8 +33,18 @@ const AnimatedFlatList = Animated.createAnimatedComponent(FlatList as any);
 export const HeroCarousel = () => {
   const slides = useMemo(() => carouselData, []);
   const { width } = useWindowDimensions();
-  const containerPadding = Math.max(16, dimensions.screenPaddingHorizontal);
-  const cardWidth = Math.min(width * CARD_WIDTH_RATIO, width - containerPadding * 2 - CARD_SPACING, 920);
+  const containerPadding =
+    width >= 1200
+      ? 64
+      : width >= 900
+        ? 48
+        : width >= 600
+          ? 32
+          : width >= 400
+            ? 20
+            : 12;
+  const availableWidth = Math.min(width - containerPadding * 2, 900);
+  const cardWidth = Math.min(width * 0.82, availableWidth, 760);
   const snapInterval = cardWidth + CARD_SPACING;
   const sidePadding = Math.max(containerPadding, (width - cardWidth) / 2);
 
@@ -30,6 +52,9 @@ export const HeroCarousel = () => {
   const flatRef = useRef<FlatList<CarouselItem>>(null);
   const [isInteracting, setIsInteracting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const autoplayRef = useRef<number | null>(null);
+  const entranceOpacity = useSharedValue(0);
+  const entranceTranslateY = useSharedValue(18);
 
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -37,18 +62,36 @@ export const HeroCarousel = () => {
     },
   });
 
-  // Auto-play
   useEffect(() => {
-    let timer: any;
+    entranceOpacity.value = withTiming(1, { duration: 500 });
+    entranceTranslateY.value = withTiming(0, { duration: 520 });
+  }, []);
+
+  useEffect(() => {
+    if (autoplayRef.current) {
+      clearInterval(autoplayRef.current);
+    }
+
     if (!isInteracting) {
-      timer = setInterval(() => {
-        const next = (currentIndex + 1) % slides.length;
-        flatRef.current?.scrollToOffset({ offset: next * snapInterval, animated: true });
-        setCurrentIndex(next);
+      autoplayRef.current = setInterval(() => {
+        setCurrentIndex((prev) => {
+          const next = (prev + 1) % slides.length;
+          flatRef.current?.scrollToOffset({
+            offset: next * snapInterval,
+            animated: true,
+          });
+          return next;
+        });
       }, AUTOPLAY_INTERVAL);
     }
-    return () => clearInterval(timer);
-  }, [isInteracting, currentIndex, slides.length, snapInterval]);
+
+    return () => {
+      if (autoplayRef.current) {
+        clearInterval(autoplayRef.current);
+        autoplayRef.current = null;
+      }
+    };
+  }, [isInteracting, slides.length, snapInterval]);
 
   const handleScrollEnd = (e: any) => {
     const offsetX = e.nativeEvent.contentOffset.x;
@@ -56,8 +99,13 @@ export const HeroCarousel = () => {
     setCurrentIndex(idx);
   };
 
+  const entranceStyle = useAnimatedStyle(() => ({
+    opacity: entranceOpacity.value,
+    transform: [{ translateY: entranceTranslateY.value }],
+  }));
+
   return (
-    <View style={styles.container}> 
+    <Animated.View style={[styles.container, entranceStyle]}>
       <AnimatedFlatList
         ref={flatRef}
         data={slides}
@@ -72,9 +120,27 @@ export const HeroCarousel = () => {
         onMomentumScrollEnd={handleScrollEnd}
         onScrollBeginDrag={() => setIsInteracting(true)}
         onScrollEndDrag={() => setIsInteracting(false)}
-        contentContainerStyle={{ paddingLeft: Math.max(0, sidePadding - 12), paddingRight: sidePadding }}
-        renderItem={({ item, index }: { item: CarouselItem; index: number }) => (
-          <CarouselCard item={item} index={index} cardWidth={cardWidth} scrollX={scrollX} snapInterval={snapInterval} />
+        scrollEventThrottle={16}
+        nestedScrollEnabled={false}
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{
+          paddingLeft: Math.max(0, sidePadding - 12),
+          paddingRight: sidePadding,
+        }}
+        renderItem={({
+          item,
+          index,
+        }: {
+          item: CarouselItem;
+          index: number;
+        }) => (
+          <CarouselCard
+            item={item}
+            index={index}
+            cardWidth={cardWidth}
+            scrollX={scrollX}
+            snapInterval={snapInterval}
+          />
         )}
       />
 
@@ -83,80 +149,157 @@ export const HeroCarousel = () => {
           <AnimatedDot key={i} index={i} currentIndex={currentIndex} />
         ))}
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
-const CarouselCard = ({ item, index, cardWidth, scrollX, snapInterval }: { item: CarouselItem; index: number; cardWidth: number; scrollX: any; snapInterval: number }) => {
-  const inputRange = [(index - 1) * snapInterval, index * snapInterval, (index + 1) * snapInterval];
+const CarouselCard = ({
+  item,
+  index,
+  cardWidth,
+  scrollX,
+  snapInterval,
+}: {
+  item: CarouselItem;
+  index: number;
+  cardWidth: number;
+  scrollX: any;
+  snapInterval: number;
+}) => {
+  const inputRange = [
+    (index - 1) * snapInterval,
+    index * snapInterval,
+    (index + 1) * snapInterval,
+  ];
   const pressScale = useSharedValue(1);
 
   const style = useAnimatedStyle(() => {
-    const scrollScale = interpolate(scrollX.value, inputRange, [0.95, 1, 0.95], Extrapolate.CLAMP);
+    const scrollScale = interpolate(
+      scrollX.value,
+      inputRange,
+      [0.95, 1, 0.95],
+      Extrapolate.CLAMP,
+    );
     const scale = scrollScale * pressScale.value;
-    const translateY = interpolate(scrollX.value, inputRange, [8, 0, 8], Extrapolate.CLAMP);
+    const translateY = interpolate(
+      scrollX.value,
+      inputRange,
+      [8, 0, 8],
+      Extrapolate.CLAMP,
+    );
     return { transform: [{ scale }, { translateY }] };
   });
 
-  const floatStyle = useAnimatedStyle(() => ({ transform: [{ translateY: withSequence(withTiming(-6, { duration: 1400 }), withTiming(0, { duration: 1400 })) }] }));
+  const floatStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY: withSequence(
+          withTiming(-6, { duration: 1400 }),
+          withTiming(0, { duration: 1400 }),
+        ),
+      },
+    ],
+  }));
 
   const handlePressIn = () => {
     pressScale.value = withTiming(0.96, { duration: 100 });
   };
 
   const handlePressOut = () => {
-    pressScale.value = withSequence(withTiming(1.04, { duration: 120 }), withTiming(1, { duration: 150 }));
+    pressScale.value = withSequence(
+      withTiming(1.04, { duration: 120 }),
+      withTiming(1, { duration: 150 }),
+    );
   };
 
   return (
-    <Animated.View style={[styles.card, { width: cardWidth, backgroundColor: item.color, marginRight: CARD_SPACING }, style]}>
+    <Animated.View
+      style={[
+        styles.card,
+        {
+          width: cardWidth,
+          backgroundColor: item.color,
+          marginRight: CARD_SPACING,
+        },
+        style,
+      ]}
+    >
       <Pressable
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
+        android_ripple={{ color: "rgba(0,0,0,0.06)" }}
         style={styles.cardInner}
       >
         <View style={styles.left}>
-          <Text style={[styles.title, { color: item.titleColor ?? colors.text }]} accessibilityRole="header">
+          <Text
+            style={[styles.title, { color: item.titleColor ?? colors.text }]}
+            accessibilityRole="header"
+          >
             {item.title}
           </Text>
-          {item.subtitle ? <Text style={styles.subtitle}>{item.subtitle}</Text> : null}
-          <Pressable android_ripple={{ color: 'rgba(0,0,0,0.06)' }} style={styles.ctaButton} accessibilityLabel={item.cta}>
-            <Text style={[styles.ctaText, { color: item.titleColor ?? colors.primary }]}>{item.cta}</Text>
+          {item.subtitle ? (
+            <Text style={styles.subtitle}>{item.subtitle}</Text>
+          ) : null}
+          <Pressable
+            android_ripple={{ color: "rgba(0,0,0,0.06)" }}
+            style={styles.ctaButton}
+            accessibilityLabel={item.cta}
+          >
+            <Text
+              style={[
+                styles.ctaText,
+                { color: item.titleColor ?? colors.primary },
+              ]}
+            >
+              {item.cta}
+            </Text>
           </Pressable>
         </View>
 
         <View style={styles.right} pointerEvents="none">
-          <Animated.Image source={item.image} style={[styles.image, floatStyle as any]} />
+          <Animated.Image
+            source={item.image}
+            style={[styles.image, floatStyle as any]}
+          />
         </View>
       </Pressable>
     </Animated.View>
   );
 };
 
-const AnimatedDot = ({ index, currentIndex }: { index: number; currentIndex: number }) => {
+const AnimatedDot = ({
+  index,
+  currentIndex,
+}: {
+  index: number;
+  currentIndex: number;
+}) => {
   const active = currentIndex === index;
   const anim = useSharedValue(active ? 1 : 0);
   useEffect(() => {
     anim.value = withTiming(active ? 1 : 0, { duration: 300 });
   }, [active]);
-  const style = useAnimatedStyle(() => ({ width: 8 + anim.value * 12, backgroundColor: anim.value ? colors.primary : '#D5DCE6' }));
+  const style = useAnimatedStyle(() => ({
+    width: 8 + anim.value * 12,
+    backgroundColor: anim.value ? colors.primary : "#D5DCE6",
+  }));
   return <Animated.View style={[styles.dot, style]} />;
 };
 
 const styles = StyleSheet.create({
   container: {
     marginBottom: spacing.xl,
+    alignItems: "center",
   },
   card: {
     marginVertical: 4,
     borderRadius: 22,
     padding: spacing.lg,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   cardInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   left: {
     flex: 0.55,
@@ -164,8 +307,8 @@ const styles = StyleSheet.create({
   },
   right: {
     flex: 0.45,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     ...typography.title,
@@ -179,23 +322,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   ctaButton: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     backgroundColor: colors.white,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderRadius: radius.sm,
   },
   ctaText: {
-    fontWeight: '700',
+    fontWeight: "700",
   },
   image: {
-    width: '100%',
+    width: "100%",
     height: 140,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: spacing.md,
     gap: 8,
   },

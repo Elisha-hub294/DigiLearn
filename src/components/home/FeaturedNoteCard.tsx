@@ -1,12 +1,24 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
+} from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, shadows, spacing } from "../../constants/theme";
 
 export const FeaturedNoteCard = () => {
+  const { width } = useWindowDimensions();
+  const isWide = width >= 900;
+
   return (
-    <Animated.View entering={FadeInUp.duration(420)} style={styles.card}>
+    <Animated.View
+      entering={FadeInUp.duration(420)}
+      style={[styles.card, isWide && styles.cardWide]}
+    >
       <View style={styles.previewWrap}>
         <Image
           source={require("../../../assets/images/pdf-preview.jpeg")}
@@ -44,11 +56,16 @@ export const FeaturedNoteCard = () => {
 
 const styles = StyleSheet.create({
   card: {
+    width: "100%",
+    alignSelf: "center",
     backgroundColor: colors.white,
     borderRadius: 22,
     padding: spacing.lg,
     ...shadows.card,
     marginBottom: spacing.xl,
+  },
+  cardWide: {
+    maxWidth: 760,
   },
   header: {
     flexDirection: "row",
@@ -78,7 +95,7 @@ const styles = StyleSheet.create({
     position: "relative",
     marginBottom: spacing.md,
   },
-  preview: { width: "100%", height: 250 },
+  preview: { width: "100%", height: 220, borderRadius: 16 },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.2)" },
   content: {},
   title: {
