@@ -1,7 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   Pressable,
@@ -45,36 +45,32 @@ const formatCreatedAt = (value: unknown) => {
 export const FeaturedNoteCard = () => {
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
-  const [note, setNote] = useState<TopicalNote | null>(null);
+  const [notes, setNotes] = useState<TopicalNote[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchFeaturedNote = async () => {
+    const fetchFeaturedNotes = async () => {
       try {
         const notesRef = collection(db, "topicalNotesCards");
-        const noteQuery = query(
-          notesRef,
-          orderBy("createdAt", "desc"),
-          limit(1),
-        );
+        const noteQuery = query(notesRef, orderBy("createdAt", "desc"));
         const snapshot = await getDocs(noteQuery);
 
         if (!isMounted) {
           return;
         }
 
-        const doc = snapshot.docs[0];
-        if (doc) {
-          setNote({ id: doc.id, ...(doc.data() as Omit<TopicalNote, "id">) });
-        } else {
-          setNote(null);
-        }
+        const fetchedNotes = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<TopicalNote, "id">),
+        }));
+
+        setNotes(fetchedNotes);
       } catch (error) {
-        console.error("Failed to load featured note", error);
+        console.error("Failed to load featured notes", error);
         if (isMounted) {
-          setNote(null);
+          setNotes([]);
         }
       } finally {
         if (isMounted) {
@@ -83,62 +79,84 @@ export const FeaturedNoteCard = () => {
       }
     };
 
-    fetchFeaturedNote();
+    fetchFeaturedNotes();
 
     return () => {
       isMounted = false;
     };
   }, []);
 
-  const title = note?.title ?? "Featured note";
-  const description =
-    note?.description ?? "A fresh study note will appear here.";
-  const metaText = loading
-    ? "Loading note..."
-    : note
-      ? formatCreatedAt(note.createdAt)
-      : "No note available yet";
+  if (loading) {
+    return (
+      <View style={[styles.card, isWide && styles.cardWide]}>
+        <Text style={styles.title}>Loading notes...</Text>
+      </View>
+    );
+  }
+
+  if (notes.length === 0) {
+    return (
+      <View style={[styles.card, isWide && styles.cardWide]}>
+        <Text style={styles.title}>No notes available yet</Text>
+      </View>
+    );
+  }
 
   return (
-    <Animated.View
-      entering={FadeInUp.duration(420)}
-      style={[styles.card, isWide && styles.cardWide]}
-    >
-      <View style={styles.previewWrap}>
-        <Image
-          source={require("../../../assets/images/pdf-preview.jpeg")}
-          style={styles.preview}
-          contentFit="cover"
-        />
-        <View style={styles.overlay} />
-      </View>
+    <View style={styles.list}> 
+      {notes.map((note) => {
+        const title = note.title ?? "Featured note";
+        const description =
+          note.description ?? "A fresh study note will appear here.";
+        const metaText = formatCreatedAt(note.createdAt);
 
-      <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
-        <View style={styles.footer}>
-          <View style={styles.metaRow}>
-            <Text style={styles.meta}>Topical note</Text>
-            <Text style={styles.dot}>•</Text>
-            <Text style={styles.meta}>{metaText}</Text>
-          </View>
-          <LinearGradient
-            colors={["#3B82F6", "#f65cee"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.downloadButton}
+        return (
+          <Animated.View
+            key={note.id}
+            entering={FadeInUp.duration(420)}
+            style={[styles.card, isWide && styles.cardWide]}
           >
-            <Pressable accessibilityLabel="Download featured note">
-              <Icon name="download" size={16} color={colors.white} />
-            </Pressable>
-          </LinearGradient>
-        </View>
-      </View>
-    </Animated.View>
+            <View style={styles.previewWrap}>
+              <Image
+                source={require("../../../assets/images/pdf-preview.jpeg")}
+                style={styles.preview}
+                contentFit="cover"
+              />
+              <View style={styles.overlay} />
+            </View>
+
+            <View style={styles.content}>
+              <Text style={styles.title}>{title}</Text>
+              <Text style={styles.description}>{description}</Text>
+              <View style={styles.footer}>
+                <View style={styles.metaRow}>
+                  <Text style={styles.meta}>Topical note</Text>
+                  <Text style={styles.dot}>•</Text>
+                  <Text style={styles.meta}>{metaText}</Text>
+                </View>
+                <LinearGradient
+                  colors={["#3B82F6", "#f65cee"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.downloadButton}
+                >
+                  <Pressable accessibilityLabel="Download featured note">
+                    <Icon name="download" size={16} color={colors.white} />
+                  </Pressable>
+                </LinearGradient>
+              </View>
+            </View>
+          </Animated.View>
+        );
+      })}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  list: {
+    width: "100%",
+  },
   card: {
     width: "100%",
     alignSelf: "center",
