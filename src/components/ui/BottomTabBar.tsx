@@ -13,7 +13,6 @@ const tabs = [
   { name: "Library", icon: "archive", route: "library" },
   { name: "Courses", icon: "play-circle", route: "videos" },
   { name: "Account", icon: "user", route: "profile" },
-  { name: "Settings", icon: "settings", route: "settings" },
 ] as const;
 
 export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
@@ -60,14 +59,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.white,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: -8 },
-    elevation: 8,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   item: {
     alignItems: "center",

@@ -42,14 +42,14 @@ export const TopicalNotesSlider = () => {
         keyExtractor={(item, index) => `${item.id}-${index}`}
         renderItem={({ item }) => (
           <Pressable
-            style={[styles.card, { width: cardWidth }]}
+            style={[styles.card]}
             accessibilityRole="button"
             accessibilityLabel={item.title}
           >
             <View style={styles.imageWrap}>
               <Image
                 source={item.image}
-                style={styles.image}
+                style={[styles.image]}
                 contentFit="contain"
               />
             </View>

@@ -59,10 +59,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 10,
     overflow: "hidden",
-    marginBottom: spacing.sm,
     borderBottomWidth: 2,
     borderBottomColor: colors.border,
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
   },
   cardWide: {
     maxWidth: 760,

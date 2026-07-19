@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   greeting: {
     color: colors.text,
     fontSize: 24,
-    fontWeight: "800",
+    fontWeight: "600",
     letterSpacing: -0.6,
   },
   actions: { flexDirection: "row", alignItems: "center", gap: spacing.sm },

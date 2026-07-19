@@ -20,7 +20,6 @@ export default function RootLayout() {
           <Tabs.Screen name="library" options={{ title: "Library" }} />
           <Tabs.Screen name="videos" options={{ title: "Courses" }} />
           <Tabs.Screen name="profile" options={{ title: "Account" }} />
-          <Tabs.Screen name="settings" options={{ title: "Settings" }} />
         </Tabs>
       </SafeAreaProvider>
     </GestureHandlerRootView>
