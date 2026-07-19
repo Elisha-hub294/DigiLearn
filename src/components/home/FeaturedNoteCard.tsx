@@ -103,11 +103,13 @@ export const FeaturedNoteCard = () => {
   }
 
   return (
-    <View style={styles.list}> 
+    <View style={styles.list}>
       {notes.map((note) => {
         const title = note.title ?? "Featured note";
         const description =
-          note.description ?? "A fresh study note will appear here.";
+          (note.description?.length ?? 0) > 100
+            ? `${note.description?.slice(0, 100)}...`
+            : (note.description ?? "A fresh study note will appear here.");
         const metaText = formatCreatedAt(note.createdAt);
 
         return (
