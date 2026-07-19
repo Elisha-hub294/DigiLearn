@@ -1,6 +1,8 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -9,11 +11,93 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import { db } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
+
+type TopicalNote = {
+  id: string;
+  title?: string;
+  description?: string;
+  createdAt?: unknown;
+};
+
+const formatCreatedAt = (value: unknown) => {
+  if (!value) {
+    return "Recently added";
+  }
+
+  if (typeof value === "object" && value !== null && "toDate" in value) {
+    const date = (value as { toDate: () => Date }).toDate();
+    return `Updated ${date.toLocaleDateString()}`;
+  }
+
+  if (value instanceof Date) {
+    return `Updated ${value.toLocaleDateString()}`;
+  }
+
+  if (typeof value === "string") {
+    return `Updated ${new Date(value).toLocaleDateString()}`;
+  }
+
+  return "Recently added";
+};
 
 export const FeaturedNoteCard = () => {
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
+  const [note, setNote] = useState<TopicalNote | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchFeaturedNote = async () => {
+      try {
+        const notesRef = collection(db, "topicalNotesCards");
+        const noteQuery = query(
+          notesRef,
+          orderBy("createdAt", "desc"),
+          limit(1),
+        );
+        const snapshot = await getDocs(noteQuery);
+
+        if (!isMounted) {
+          return;
+        }
+
+        const doc = snapshot.docs[0];
+        if (doc) {
+          setNote({ id: doc.id, ...(doc.data() as Omit<TopicalNote, "id">) });
+        } else {
+          setNote(null);
+        }
+      } catch (error) {
+        console.error("Failed to load featured note", error);
+        if (isMounted) {
+          setNote(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchFeaturedNote();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const title = note?.title ?? "Featured note";
+  const description =
+    note?.description ?? "A fresh study note will appear here.";
+  const metaText = loading
+    ? "Loading note..."
+    : note
+      ? formatCreatedAt(note.createdAt)
+      : "No note available yet";
 
   return (
     <Animated.View
@@ -30,18 +114,13 @@ export const FeaturedNoteCard = () => {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>Quadratic Equations</Text>
-        <Text style={styles.description}>
-          A clear guide to factorization, roots, and graph interpretation with
-          worked examples.
-        </Text>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.description}>{description}</Text>
         <View style={styles.footer}>
           <View style={styles.metaRow}>
-            <Text style={styles.meta}>12 Pages</Text>
+            <Text style={styles.meta}>Topical note</Text>
             <Text style={styles.dot}>•</Text>
-            <Text style={styles.meta}>PDF</Text>
-            <Text style={styles.dot}>•</Text>
-            <Text style={styles.meta}>Updated 3 days ago</Text>
+            <Text style={styles.meta}>{metaText}</Text>
           </View>
           <LinearGradient
             colors={["#3B82F6", "#f65cee"]}
