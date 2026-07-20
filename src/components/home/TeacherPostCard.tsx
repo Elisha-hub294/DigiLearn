@@ -1,60 +1,220 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
+
+type TeacherPost = {
+  id: string;
+  teacher?: string;
+  subject?: string;
+  description?: string;
+  hasPdf?: boolean;
+  createdAt?: unknown;
+};
+
+const normalizeTeacherPost = (doc: {
+  id: string;
+  data: () => Record<string, unknown>;
+}) => {
+  const data = doc.data();
+
+  const teacher =
+    typeof data.teacher === "string"
+      ? data.teacher
+      : typeof data.teacherName === "string"
+        ? data.teacherName
+        : "Teacher";
+
+  const subject =
+    typeof data.subject === "string"
+      ? data.subject
+      : typeof data.subjectName === "string"
+        ? data.subjectName
+        : "Physics";
+
+  const description =
+    typeof data.description === "string"
+      ? data.description
+      : typeof data.content === "string"
+        ? data.content
+        : typeof data.message === "string"
+          ? data.message
+          : undefined;
+
+  const hasPdf =
+    typeof data.hasPdf === "boolean"
+      ? data.hasPdf
+      : typeof data.type === "string"
+        ? data.type === "pdf"
+        : true;
+
+  return {
+    id: doc.id,
+    teacher,
+    subject,
+    description,
+    hasPdf,
+  } satisfies TeacherPost;
+};
+
+const teacherPostCollections = [
+  "teacherPosts",
+  "teacherPostsCards",
+  "teacherUpdates",
+];
 
 export const TeacherPostCard = () => {
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
+  const [posts, setPosts] = useState<TeacherPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTeacherPost = async () => {
+      try {
+        for (const collectionName of teacherPostCollections) {
+          try {
+            const postsRef = collection(db, collectionName);
+            const postsQuery = query(postsRef, orderBy("createdAt", "desc"));
+            const snapshot = await getDocs(postsQuery);
+
+            if (!isMounted) {
+              return;
+            }
+
+            const fetchedPosts = snapshot.docs.map((doc) =>
+              normalizeTeacherPost(doc),
+            );
+
+            if (fetchedPosts.length > 0) {
+              setPosts(fetchedPosts);
+              setLoading(false);
+              return;
+            }
+          } catch (queryError) {
+            console.warn(
+              `Teacher post collection ${collectionName} unavailable`,
+              queryError,
+            );
+          }
+        }
+
+        if (isMounted) {
+          setPosts([]);
+        }
+      } catch (error) {
+        console.error("Failed to load teacher post", error);
+        if (isMounted) {
+          setPosts([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchTeacherPost();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <Animated.View
+        entering={FadeInUp.duration(500)}
+        style={[styles.card, isWide && styles.cardWide]}
+      >
+        <Text style={styles.caption}>Loading teacher posts...</Text>
+      </Animated.View>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <Animated.View
+        entering={FadeInUp.duration(500)}
+        style={[styles.card, isWide && styles.cardWide]}
+      >
+        <Text style={styles.caption}>No teacher updates available yet.</Text>
+      </Animated.View>
+    );
+  }
 
   return (
-    <Animated.View
-      entering={FadeInUp.duration(500)}
-      style={[styles.card, isWide && styles.cardWide]}
-    >
-      <View style={styles.header}>
-        <View style={styles.profileRow}>
-          <Image
-            source={require("../../../assets/images/tr-2.jpg")}
-            style={styles.avatar}
-            contentFit="cover"
-          />
-          <View>
-            <View style={styles.nameRow}>
-              <Text style={styles.name}>Tr. Daniel Kato</Text>
-              <Icon name="check-circle" size={14} color={colors.primary} />
+    <View style={styles.list}>
+      {posts.map((postItem, index) => {
+        const teacherName = postItem.teacher
+          ? `Tr. ${postItem.teacher}`
+          : "Tr. Teacher";
+        const subject = postItem.subject ?? "Physics";
+        const description =
+          postItem.description ?? "No teacher update available yet.";
+        const showPreview = postItem.hasPdf ?? true;
+
+        return (
+          <Animated.View
+            key={postItem.id}
+            entering={FadeInUp.duration(500 + index * 80)}
+            style={[styles.card, isWide && styles.cardWide]}
+          >
+            <View style={styles.header}>
+              <View style={styles.profileRow}>
+                <Image
+                  source={require("../../../assets/images/tr-2.jpg")}
+                  style={styles.avatar}
+                  contentFit="cover"
+                />
+                <View>
+                  <View style={styles.nameRow}>
+                    <Text style={styles.name}>{teacherName}</Text>
+                    <Icon
+                      name="check-circle"
+                      size={14}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <Text style={styles.time}>Recently shared</Text>
+                </View>
+              </View>
+              <View style={[styles.badge, { backgroundColor: "#4C7CF0" }]}>
+                <Text style={styles.badgeText}>{subject}</Text>
+              </View>
             </View>
-            <Text style={styles.time}>2 hours ago</Text>
-          </View>
-        </View>
-        <View style={[styles.badge, { backgroundColor: "#4C7CF0" }]}>
-          <Text style={styles.badgeText}>Physics</Text>
-        </View>
-      </View>
 
-      <Text style={styles.caption}>
-        Shared a fresh PDF pack with revised examples and exam-focused notes.
-      </Text>
+            <Text style={styles.caption}>{description}</Text>
 
-      <View style={styles.previewWrap}>
-        <Image
-          source={require("../../../assets/images/pdf-preview.jpeg")}
-          style={styles.preview}
-          contentFit="cover"
-        />
-        <View style={styles.overlay} />
-        <View style={styles.previewTag}>
-          <Text style={styles.previewTagText}>PDF</Text>
-        </View>
-      </View>
+            {showPreview ? (
+              <View style={styles.previewWrap}>
+                <Image
+                  source={require("../../../assets/images/pdf-preview.jpeg")}
+                  style={styles.preview}
+                  contentFit="cover"
+                />
+                <View style={styles.overlay} />
+                <View style={styles.previewTag}>
+                  <Text style={styles.previewTagText}>PDF</Text>
+                </View>
+              </View>
+            ) : null}
 
-      <View style={styles.actions}>
-        <Action icon="star" label="Like" />
-        <Action icon="bookmark" label="Bookmark" />
-        <Action icon="share-2" label="Share" />
-      </View>
-    </Animated.View>
+            <View style={styles.actions}>
+              <Action icon="star" label="Like" />
+              <Action icon="bookmark" label="Bookmark" />
+              <Action icon="share-2" label="Share" />
+            </View>
+          </Animated.View>
+        );
+      })}
+    </View>
   );
 };
 
@@ -66,6 +226,9 @@ const Action = ({ icon, label }: { icon: any; label: string }) => (
 );
 
 const styles = StyleSheet.create({
+  list: {
+    width: "100%",
+  },
   card: {
     width: "100%",
     alignSelf: "center",
