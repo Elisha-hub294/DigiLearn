@@ -37,7 +37,7 @@ type FirestoreLesson = {
   avatar?: string;
 };
 
-type LessonRecord = VideoLesson & { _uploadedAtDate?: Date };
+type LessonRecord = VideoLesson & { _uploadedAtDate?: Date; link?: string };
 
 function parseUploadedDate(value: unknown): Date | null {
   if (!value) {
@@ -118,6 +118,7 @@ function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
     duration: item.duration ?? "00:00",
     thumbnail: item.thumbnail ?? "",
     avatar: item.avatar ?? "",
+    link: item.link ?? "",
     isNew: isNewLesson(uploadedAtValue),
     _uploadedAtDate: uploadedAtDate ?? undefined,
   };

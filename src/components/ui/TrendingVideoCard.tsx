@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -19,6 +20,7 @@ export type VideoLesson = {
   duration: string;
   thumbnail?: number | string;
   avatar?: number | string;
+  link?: string;
   isNew?: boolean;
 };
 
@@ -47,10 +49,25 @@ export function TrendingVideoCard({
   item: VideoLesson;
   width: number;
 }) {
+  const router = useRouter();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
+  function openLesson() {
+    router.push({
+      pathname: "/lesson-player",
+      params: {
+        title: item.title,
+        teacher: item.teacher,
+        subject: item.subject,
+        duration: item.duration,
+        uploadedAt: item.uploadedAt,
+        link: (item as VideoLesson & { link?: string }).link ?? "",
+      },
+    });
+  }
 
   return (
     <AnimatedPressable
@@ -63,6 +80,7 @@ export function TrendingVideoCard({
       onPressOut={() => {
         scale.value = withSpring(1);
       }}
+      onPress={openLesson}
       style={[styles.card, { width }, animatedStyle]}
     >
       <View style={styles.thumbnail}>

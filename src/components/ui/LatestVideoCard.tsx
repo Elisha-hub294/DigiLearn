@@ -1,20 +1,29 @@
 import { Image } from "expo-image";
-import { StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { DurationBadge } from "./DurationBadge";
 import { PlayButton } from "./PlayButton";
 import { TeacherInfo } from "./TeacherInfo";
 import { VideoLesson } from "./TrendingVideoCard";
 import { videoRadii } from "./videoDesign";
+
 function resolveImageSource(source?: number | string) {
   if (!source) {
     return require("../../../assets/images/thumb-1.jpeg");
   }
+  // Safely check for remote or base64 URLs
   if (typeof source === "string") {
-    return { uri: source };
+    if (source.startsWith("http") || source.startsWith("data:")) {
+      return { uri: source };
+    }
+    // Fall back to default if it's a local string path
+    return require("../../../assets/images/thumb-1.jpeg");
   }
+  // Numeric require(...) module reference
   return source;
 }
+
 export function LatestVideoCard({
   item,
   index,
@@ -24,31 +33,49 @@ export function LatestVideoCard({
   index: number;
   isGrid?: boolean;
 }) {
+  const router = useRouter();
+
+  function openLesson() {
+    router.push({
+      pathname: "/lesson-player",
+      params: {
+        title: item.title,
+        teacher: item.teacher,
+        subject: item.subject,
+        duration: item.duration,
+        uploadedAt: item.uploadedAt,
+        link: (item as VideoLesson & { link?: string }).link ?? "",
+      },
+    });
+  }
+
   return (
     <Animated.View
       entering={FadeInDown.delay(Math.min(index * 60, 300)).duration(380)}
       style={[styles.card, isGrid && styles.gridCard]}
     >
-      <View style={styles.thumbnail}>
-        <Image
-          source={resolveImageSource(item.thumbnail)}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          transition={250}
-        />
-        <View style={styles.overlay} />
-        <View style={styles.play}>
-          <PlayButton label={`Play ${item.title}`} />
-        </View>
-        <View style={styles.duration}>
-          <DurationBadge duration={item.duration} />
-        </View>
-        {item.isNew && (
-          <View style={styles.new}>
-            <Text style={styles.newText}>NEW</Text>
+      <Pressable onPress={openLesson}>
+        <View style={styles.thumbnail}>
+          <Image
+            source={resolveImageSource(item.thumbnail)}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={250}
+          />
+          <View style={styles.overlay} />
+          <View style={styles.play}>
+            <PlayButton label={`Play ${item.title}`} />
           </View>
-        )}
-      </View>
+          <View style={styles.duration}>
+            <DurationBadge duration={item.duration} />
+          </View>
+          {item.isNew && (
+            <View style={styles.new}>
+              <Text style={styles.newText}>NEW</Text>
+            </View>
+          )}
+        </View>
+      </Pressable>
       <TeacherInfo
         name={item.teacher}
         uploadedAt={item.uploadedAt}
@@ -60,6 +87,7 @@ export function LatestVideoCard({
     </Animated.View>
   );
 }
+
 const styles = StyleSheet.create({
   card: { marginBottom: 48 },
   gridCard: { marginHorizontal: 8 },
@@ -67,6 +95,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ddd",
     borderRadius: videoRadii.thumbnail,
     height: 210,
+    width: "100%", // Explicit full width for grid/flex layout calculation
     overflow: "hidden",
   },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.25)" },
