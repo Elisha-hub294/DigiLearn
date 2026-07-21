@@ -21,16 +21,25 @@ export type VideoLesson = {
   avatar?: number | string;
   isNew?: boolean;
 };
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 function resolveImageSource(source?: number | string) {
   if (!source) {
     return require("../../../assets/images/thumb-1.jpeg");
   }
+  // Check if string is a remote URL or a base64 string
   if (typeof source === "string") {
-    return { uri: source };
+    if (source.startsWith("http") || source.startsWith("data:")) {
+      return { uri: source };
+    }
+    // If it's a local string path, fallback to default asset to prevent broken render
+    return require("../../../assets/images/thumb-1.jpeg");
   }
+  // Numeric require(...) module reference
   return source;
 }
+
 export function TrendingVideoCard({
   item,
   width,
@@ -42,6 +51,7 @@ export function TrendingVideoCard({
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
+
   return (
     <AnimatedPressable
       entering={FadeIn.duration(450)}
@@ -86,10 +96,12 @@ export function TrendingVideoCard({
     </AnimatedPressable>
   );
 }
+
 const styles = StyleSheet.create({
   card: { marginRight: 14 },
   thumbnail: {
     ...videoShadows.soft,
+    width: "100%", // Explicit width so aspectRatio calculates correctly
     aspectRatio: 1.55,
     backgroundColor: "#ddd",
     borderRadius: videoRadii.card,
