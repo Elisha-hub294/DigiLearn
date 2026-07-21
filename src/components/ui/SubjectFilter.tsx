@@ -1,7 +1,7 @@
 import { FlatList, StyleSheet, View } from "react-native";
 import { FilterChip } from "./FilterChip";
 
-const subjects = [
+export const subjects = [
   "All",
   "Mathematics",
   "Physics",

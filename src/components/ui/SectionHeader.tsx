@@ -3,12 +3,14 @@ import { colors } from "../../constants/theme";
 
 interface SectionHeaderProps {
   title: string;
+  subtitle?: string;
   onSeeAll?: () => void;
   actionLabel?: string;
 }
 
 export function SectionHeader({
   title,
+  subtitle,
   onSeeAll,
   actionLabel = "See all",
 }: SectionHeaderProps) {
@@ -17,6 +19,7 @@ export function SectionHeader({
       <View style={styles.row}>
         <View style={styles.textContainer}>
           <Text style={styles.title}>{title}</Text>
+          {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
         {onSeeAll ? (
           <Pressable
@@ -44,6 +47,11 @@ const styles = StyleSheet.create({
     color: colors.dark,
     fontSize: 30,
     fontWeight: "600",
+  },
+  subtitle: {
+    color: colors.text,
+    fontSize: 13,
+    marginTop: 4,
   },
   actionButton: {
     paddingVertical: 6,

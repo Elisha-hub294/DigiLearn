@@ -4,6 +4,16 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { videoColors } from "./videoDesign";
 
+function resolveImageSource(source?: number | string) {
+  if (!source) {
+    return require("../../../assets/images/tr-default.png");
+  }
+  if (typeof source === "string") {
+    return { uri: source };
+  }
+  return source;
+}
+
 export function TeacherInfo({
   name,
   uploadedAt,
@@ -11,12 +21,12 @@ export function TeacherInfo({
 }: {
   name: string;
   uploadedAt: string;
-  avatar: number;
+  avatar?: number | string;
 }) {
   return (
     <Animated.View entering={FadeIn.duration(360)} style={styles.row}>
       <Image
-        source={avatar}
+        source={resolveImageSource(avatar)}
         style={styles.avatar}
         contentFit="cover"
         transition={180}

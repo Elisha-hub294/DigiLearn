@@ -6,6 +6,15 @@ import { PlayButton } from "./PlayButton";
 import { TeacherInfo } from "./TeacherInfo";
 import { VideoLesson } from "./TrendingVideoCard";
 import { videoRadii } from "./videoDesign";
+function resolveImageSource(source?: number | string) {
+  if (!source) {
+    return require("../../../assets/images/thumb-1.jpeg");
+  }
+  if (typeof source === "string") {
+    return { uri: source };
+  }
+  return source;
+}
 export function LatestVideoCard({
   item,
   index,
@@ -22,7 +31,7 @@ export function LatestVideoCard({
     >
       <View style={styles.thumbnail}>
         <Image
-          source={item.thumbnail}
+          source={resolveImageSource(item.thumbnail)}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           transition={250}

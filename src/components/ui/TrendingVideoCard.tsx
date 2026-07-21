@@ -17,11 +17,20 @@ export type VideoLesson = {
   teacher: string;
   uploadedAt: string;
   duration: string;
-  thumbnail: number;
-  avatar: number;
+  thumbnail?: number | string;
+  avatar?: number | string;
   isNew?: boolean;
 };
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+function resolveImageSource(source?: number | string) {
+  if (!source) {
+    return require("../../../assets/images/thumb-1.jpeg");
+  }
+  if (typeof source === "string") {
+    return { uri: source };
+  }
+  return source;
+}
 export function TrendingVideoCard({
   item,
   width,
@@ -48,7 +57,7 @@ export function TrendingVideoCard({
     >
       <View style={styles.thumbnail}>
         <Image
-          source={item.thumbnail}
+          source={resolveImageSource(item.thumbnail)}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           transition={250}
