@@ -84,13 +84,6 @@ export default function HomeScreen() {
               entering={FadeInUp.duration(400)}
               style={styles.section}
             >
-              <HeroCarousel />
-            </Animated.View>
-
-            <Animated.View
-              entering={FadeInUp.duration(400)}
-              style={styles.section}
-            >
               {isWideLayout ? (
                 <View style={styles.dualColumnLayout}>
                   <View style={styles.dualColumnItem}>
@@ -102,6 +95,12 @@ export default function HomeScreen() {
                 </View>
               ) : (
                 <View style={styles.stack}>
+                  <Animated.View
+                    entering={FadeInUp.duration(400)}
+                    style={styles.section}
+                  >
+                    <HeroCarousel />
+                  </Animated.View>
                   <FeaturedNoteCard />
                   <TeacherPostCard />
                 </View>

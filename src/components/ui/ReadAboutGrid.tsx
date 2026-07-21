@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { useMemo } from "react";
 import { FlatList, StyleSheet, View, useWindowDimensions } from "react-native";
 import { dimensions, spacing } from "../../constants/theme";
@@ -22,11 +21,6 @@ export const ReadAboutGrid = ({ data }: ReadAboutGridProps) => {
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../../../assets/images/bg.png")}
-        style={styles.backgroundImage}
-        contentFit="cover"
-      />
       <View style={styles.overlay} />
       <FlatList
         data={pages}
