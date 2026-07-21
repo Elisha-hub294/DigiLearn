@@ -54,7 +54,7 @@ export function ProfileHeader() {
 const s = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
-    borderRadius: 20,
+    borderRadius: 10,
     padding: spacing.lg,
     alignItems: "center",
     borderBottomWidth: 2,
@@ -94,7 +94,7 @@ const s = StyleSheet.create({
     borderColor: "#fff",
   },
   name: {
-    fontSize: 30,
+    fontSize: 25,
     lineHeight: 37,
     fontWeight: "500",
     color: "#111",

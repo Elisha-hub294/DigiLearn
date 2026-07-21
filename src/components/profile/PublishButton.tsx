@@ -1,4 +1,41 @@
-import { LinearGradient } from "expo-linear-gradient"; import { Pressable, StyleSheet, Text } from "react-native"; import Animated,{useAnimatedStyle,useSharedValue,withSpring} from "react-native-reanimated";
-const A=Animated.createAnimatedComponent(Pressable);
-export function PublishButton(){const scale=useSharedValue(1);const style=useAnimatedStyle(()=>({transform:[{scale:scale.value}]}));return <A accessibilityLabel="Publish a new learning update" accessibilityRole="button" onPressIn={()=>{scale.value=withSpring(.97)}} onPressOut={()=>{scale.value=withSpring(1)}} style={[s.button,style]}><LinearGradient colors={["#3F7BEB","#E500C7"]} start={{x:0,y:0}} end={{x:1,y:0}} style={s.gradient}><Text style={s.text}>PUBLISH -&gt;</Text></LinearGradient></A>}
-const s=StyleSheet.create({button:{height:54,borderRadius:16,overflow:"hidden"},gradient:{flex:1,alignItems:"center",justifyContent:"center"},text:{color:"#fff",fontSize:15,fontWeight:"800",letterSpacing:.8}});
+import { LinearGradient } from "expo-linear-gradient";
+import { Pressable, StyleSheet, Text } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+const A = Animated.createAnimatedComponent(Pressable);
+export function PublishButton() {
+  const scale = useSharedValue(1);
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+  return (
+    <A
+      accessibilityLabel="Publish a new learning update"
+      accessibilityRole="button"
+      onPressIn={() => {
+        scale.value = withSpring(0.97);
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1);
+      }}
+      style={[s.button, style]}
+    >
+      <LinearGradient
+        colors={["#3F7BEB", "#E500C7"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={s.gradient}
+      >
+        <Text style={s.text}>PUBLISH</Text>
+      </LinearGradient>
+    </A>
+  );
+}
+const s = StyleSheet.create({
+  button: { height: 54, borderRadius: 100, overflow: "hidden" },
+  gradient: { flex: 1, alignItems: "center", justifyContent: "center" },
+  text: { color: "#fff", fontSize: 15, fontWeight: "500", letterSpacing: 0.8 },
+});
