@@ -1,6 +1,6 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { StyleSheet, TextInput, View } from "react-native";
-import { colors, shadows, spacing } from "../../constants/theme";
+import { colors, spacing } from "../../constants/theme";
 
 export function SearchBar() {
   return (
@@ -23,12 +23,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: 52,
     paddingHorizontal: spacing.md,
-    borderRadius: 14,
+    borderRadius: 100,
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: "#D9D9D9",
-    ...shadows.soft,
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.xl,
   },
   input: {
     flex: 1,

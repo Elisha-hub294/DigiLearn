@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
-import { colors, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 
 type TopicalNote = {
   id: string;
@@ -163,11 +163,10 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
     backgroundColor: colors.white,
-    borderRadius: 10,
-    padding: spacing.sm,
-    marginBottom: spacing.sm,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.border,
+    marginBottom: spacing.xl,
+    // borderRadius: radius.lg,
+    // borderBottomWidth: 1,
+    // borderBottomColor: colors.border,
   },
   cardWide: {
     maxWidth: 760,
@@ -195,15 +194,17 @@ const styles = StyleSheet.create({
   teacher: { color: colors.text, fontSize: 13, fontWeight: "700" },
   subject: { color: colors.subtitle, fontSize: 12, marginTop: 2 },
   previewWrap: {
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+    // borderTopLeftRadius: radius.lg,
+    // borderTopRightRadius: radius.lg,
     overflow: "hidden",
     position: "relative",
     marginBottom: spacing.md,
   },
   preview: { width: "100%", height: 220 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.2)" },
-  content: {},
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.1)" },
+  content: {
+    padding: spacing.sm,
+  },
   title: {
     color: colors.text,
     fontSize: 18,
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
   downloadButton: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    borderRadius: radius.pill,
     justifyContent: "center",
     alignItems: "center",
   },

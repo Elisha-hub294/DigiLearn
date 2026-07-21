@@ -17,12 +17,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { carouselData, CarouselItem } from "../../constants/data";
-import {
-  colors,
-  radius,
-  spacing,
-  typography
-} from "../../constants/theme";
+import { colors, radius, spacing, typography } from "../../constants/theme";
 
 const CARD_WIDTH_RATIO = 0.86;
 const CARD_SPACING = 16;
@@ -42,7 +37,7 @@ export const HeroCarousel = () => {
           ? 32
           : width >= 400
             ? 20
-            : 12;
+            : 5;
   const availableWidth = Math.min(width - containerPadding * 2, 900);
   const cardWidth = Math.min(width * 0.82, availableWidth, 760);
   const snapInterval = cardWidth + CARD_SPACING;
@@ -293,8 +288,9 @@ const styles = StyleSheet.create({
   },
   card: {
     marginVertical: 4,
-    borderRadius: 22,
-    padding: spacing.lg,
+    borderTopLeftRadius: radius.md,
+    borderTopRightRadius: radius.md,
+    padding: spacing.md,
     overflow: "hidden",
   },
   cardInner: {
@@ -333,7 +329,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: 140,
+    height: 180,
     resizeMode: "contain",
   },
   dots: {
@@ -343,7 +339,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dot: {
-    height: 8,
+    height: 5,
     borderRadius: 8,
     marginHorizontal: 4,
   },

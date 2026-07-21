@@ -1,3 +1,4 @@
+import HeroCarousel from "@/components/ui/HeroCarousel";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -13,11 +14,9 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { AnnouncementCard } from "../components/home/AnnouncementCard";
 import { BookCarousel } from "../components/home/BookCarousel";
 import { CoursesCarousel } from "../components/home/CoursesCarousel";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
-import { MarkingGuideCard } from "../components/home/MarkingGuideCard";
 import { TeacherPostCard } from "../components/home/TeacherPostCard";
 import { TopicalNotesSlider } from "../components/home/TopicalNotesSlider";
 import { UnebCard } from "../components/home/UnebCard";
@@ -85,6 +84,13 @@ export default function HomeScreen() {
               entering={FadeInUp.duration(400)}
               style={styles.section}
             >
+              <HeroCarousel />
+            </Animated.View>
+
+            <Animated.View
+              entering={FadeInUp.duration(400)}
+              style={styles.section}
+            >
               {isWideLayout ? (
                 <View style={styles.dualColumnLayout}>
                   <View style={styles.dualColumnItem}>
@@ -136,27 +142,6 @@ export default function HomeScreen() {
             </Animated.View>
 
             <Animated.View
-              entering={FadeInUp.duration(650)}
-              style={styles.section}
-            >
-              {isWideLayout ? (
-                <View style={styles.dualColumnLayout}>
-                  <View style={styles.dualColumnItem}>
-                    <AnnouncementCard />
-                  </View>
-                  <View style={styles.dualColumnItem}>
-                    <MarkingGuideCard />
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.stack}>
-                  <AnnouncementCard />
-                  <MarkingGuideCard />
-                </View>
-              )}
-            </Animated.View>
-
-            <Animated.View
               entering={FadeInUp.duration(700)}
               style={styles.section}
             >
@@ -172,13 +157,6 @@ export default function HomeScreen() {
               style={styles.section}
             >
               <GradientAnnouncement />
-            </Animated.View>
-
-            <Animated.View
-              entering={FadeInUp.duration(850)}
-              style={styles.section}
-            >
-              <FooterIllustration />
             </Animated.View>
           </ScrollView>
         </View>

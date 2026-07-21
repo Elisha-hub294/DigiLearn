@@ -89,15 +89,13 @@ export const CoursesCarousel = () => {
 
 const styles = StyleSheet.create({
   list: {
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.sm,
   },
   card: {
     marginRight: spacing.md,
     backgroundColor: colors.white,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     overflow: "hidden",
-    borderBottomWidth: 2,
-    borderBottomColor: colors.border,
   },
   imageWrap: { height: 132, position: "relative" },
   image: { width: "100%", height: "100%" },
@@ -136,8 +134,8 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     paddingVertical: 8,
     paddingHorizontal: 10,
-    borderRadius: 10,
-    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    backgroundColor: colors.green,
   },
-  openText: { color: colors.white, fontSize: 12, fontWeight: "700" },
+  openText: { color: colors.white, fontSize: 15, fontWeight: "500" },
 });

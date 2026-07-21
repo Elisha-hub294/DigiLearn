@@ -45,13 +45,12 @@ const styles = StyleSheet.create({
   textContainer: { flex: 1 },
   title: {
     color: colors.dark,
-    fontSize: 30,
-    fontWeight: "600",
+    fontSize: 25,
+    fontWeight: "500",
   },
   subtitle: {
     color: colors.text,
     fontSize: 13,
-    marginTop: 4,
   },
   actionButton: {
     paddingVertical: 6,

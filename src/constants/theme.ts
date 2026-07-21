@@ -3,18 +3,18 @@ import { Dimensions } from "react-native";
 const { width, height } = Dimensions.get("window");
 
 export const colors = {
-  primary: "#3B82F6",
+  primary: "#006eff",
   primaryLight: "#DDEBFF",
   green: "#6BCB77",
   purple: "#B89AF8",
   orange: "#F4A261",
-  background: "#EAEAEA",
+  background: "#fff",
   lightBackground: "#F8F9FC",
   text: "#414141",
   subtitle: "#777777",
   border: "#D9D9D9",
   white: "#FFFFFF",
-  dark: "#111827",
+  dark: "#00091d",
 } as const;
 
 export const spacing = {

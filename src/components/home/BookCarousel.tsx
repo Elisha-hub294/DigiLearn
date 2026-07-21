@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 10,
     overflow: "hidden",
-    borderBottomWidth: 2,
+    borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   image: { width: "100%", height: 170 },
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
   },
   author: { color: colors.subtitle, fontSize: 12, marginBottom: spacing.sm },
   row: {

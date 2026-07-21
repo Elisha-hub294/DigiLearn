@@ -1,7 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, spacing } from "../../constants/theme";
 
 export const Header = () => {
   const router = useRouter();
@@ -14,11 +14,13 @@ export const Header = () => {
     <View style={styles.container}>
       <View style={styles.textWrap}>
         <Text style={styles.date}>{date}</Text>
-        <Text style={styles.greeting}>Hi, Elisha</Text>
+        <Text style={styles.greeting}>
+          Hi, <Text style={{ color: colors.primary }}>Elisha</Text>
+        </Text>
       </View>
       <View style={styles.actions}>
         <View style={styles.streakPill}>
-          <Icon name="zap" size={14} color={colors.primary} />
+          <Icon name="zap" size={14} color={colors.green} />
           <Text style={styles.streakText}>7 day streak</Text>
         </View>
         <Pressable
@@ -38,7 +40,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "flex-end",
     marginBottom: spacing.xl,
   },
   textWrap: { flex: 1, paddingRight: spacing.md },
@@ -49,32 +51,37 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   greeting: {
-    color: colors.text,
-    fontSize: 24,
+    color: colors.dark,
+    fontSize: 30,
     fontWeight: "600",
     letterSpacing: -0.6,
   },
-  actions: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: colors.purple,
+    borderRadius: 100,
+    padding: 5,
+  },
   streakPill: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.sm,
     paddingVertical: 8,
-    borderRadius: radius.pill,
+    borderRadius: 100,
     backgroundColor: colors.white,
-    ...shadows.soft,
     gap: 6,
   },
-  streakText: { color: colors.text, fontSize: 12, fontWeight: "700" },
+  streakText: { color: colors.dark, fontSize: 12, fontWeight: "500" },
   notificationButton: {
-    width: 44,
-    height: 44,
+    width: 32,
+    height: 32,
     borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: colors.white,
     position: "relative",
-    ...shadows.soft,
   },
   badge: {
     position: "absolute",

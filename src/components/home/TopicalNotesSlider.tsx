@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { colors, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 
 const items = [
   {
@@ -64,22 +64,24 @@ export const TopicalNotesSlider = () => {
 
 const styles = StyleSheet.create({
   list: {
-    paddingVertical: spacing.md,
+    marginBottom: spacing.xl,
   },
   card: {
-    marginRight: spacing.md,
-    padding: spacing.sm,
-    borderRadius: 10,
-    backgroundColor: colors.white,
+    marginRight: spacing.lg,
+    // borderRadius: 10,
     alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: colors.border,
+    // borderBottomWidth: 1,
+    // borderBottomColor: colors.border,
   },
   imageWrap: {
     justifyContent: "center",
     alignItems: "center",
     marginBottom: spacing.sm,
   },
-  image: { width: 94, height: 94, borderRadius: 10 },
-  title: { color: colors.text, fontSize: 13, fontWeight: "500" },
+  image: { width: 94, height: 94, borderRadius: radius.sm },
+  title: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "500",
+  },
 });
