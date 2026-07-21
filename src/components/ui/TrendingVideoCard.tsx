@@ -13,6 +13,7 @@ import { videoRadii, videoShadows } from "./videoDesign";
 export type VideoLesson = {
   id: string;
   title: string;
+  subject: string;
   teacher: string;
   uploadedAt: string;
   duration: string;

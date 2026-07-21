@@ -35,6 +35,7 @@ const trending: VideoLesson[] = [
   {
     id: "bonding",
     title: "Understanding Chemical Bonding Made Easy",
+    subject: "Chemistry",
     teacher: "Tr. Sarah",
     uploadedAt: "3 weeks ago",
     duration: "08:45",
@@ -45,6 +46,7 @@ const trending: VideoLesson[] = [
   {
     id: "writing",
     title: "Essay Writing Techniques for UNEB English",
+    subject: "English",
     teacher: "Tr. David",
     uploadedAt: "1 month ago",
     duration: "21:17",
@@ -57,6 +59,7 @@ const latest: VideoLesson[] = [
   {
     id: "photosynthesis",
     title: "Understanding Photosynthesis",
+    subject: "Biology",
     teacher: "Tr. Maria A.",
     uploadedAt: "6 days ago",
     duration: "14:20",
@@ -67,6 +70,7 @@ const latest: VideoLesson[] = [
   {
     id: "circuits",
     title: "Electric Circuits Explained",
+    subject: "Physics",
     teacher: "Tr. Elisha Bagalwa",
     uploadedAt: "2 days ago",
     duration: "18:32",
@@ -77,6 +81,7 @@ const latest: VideoLesson[] = [
   {
     id: "networks",
     title: "Introduction to Computer Networks",
+    subject: "Computer Science",
     teacher: "Tr. Joshua",
     uploadedAt: "1 week ago",
     duration: "10:05",
