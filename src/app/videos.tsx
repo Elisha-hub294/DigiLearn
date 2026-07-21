@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -236,21 +237,27 @@ export default function VideosScreen() {
         ]}
       >
         {showEmptyState ? (
-          <View style={styles.emptyState}>
-            <Image
-              source={{
-                uri: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/images/empty.png",
-              }}
-              style={styles.emptyImage}
-              contentFit="contain"
-            />
-            <Text style={styles.emptyTitle}>
-              No lessons in this subject yet
-            </Text>
-            <Text style={styles.emptyText}>
-              Try another subject or add a new lesson to this collection.
-            </Text>
-          </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={styles.emptyStateContainer}
+          >
+            <View style={styles.emptyHeader}>{header}</View>
+            <View style={styles.emptyState}>
+              <Image
+                source={{
+                  uri: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/images/empty.png",
+                }}
+                style={styles.emptyImage}
+                contentFit="contain"
+              />
+              <Text style={styles.emptyTitle}>
+                No lessons in this subject yet
+              </Text>
+              <Text style={styles.emptyText}>
+                Try another subject or add a new lesson to this collection.
+              </Text>
+            </View>
+          </ScrollView>
         ) : (
           <FlashList
             key={`latest-${isTablet ? 2 : 1}`}
@@ -330,6 +337,12 @@ const styles = StyleSheet.create({
     height: 250,
     marginTop: 18,
     width: "90%",
+  },
+  emptyStateContainer: {
+    flex: 1,
+  },
+  emptyHeader: {
+    paddingHorizontal: 0,
   },
   emptyState: {
     alignItems: "center",
