@@ -2,10 +2,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
-    FadeIn,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  FadeIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { DurationBadge } from "./DurationBadge";
 import { videoRadii, videoShadows } from "./videoDesign";
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   title: {
     color: "#111",
     fontSize: 17,
-    fontWeight: "600",
+    fontWeight: "500",
     lineHeight: 22,
     marginTop: 12,
   },
