@@ -53,7 +53,7 @@ export const UnebCard = () => {
 
     const fetchPastPapers = async () => {
       try {
-        const papersRef = collection(db, "pastpapers");
+        const papersRef = collection(db, "pastpaper");
         const papersQuery = query(papersRef, orderBy("date", "desc"));
         const snapshot = await getDocs(papersQuery);
 
