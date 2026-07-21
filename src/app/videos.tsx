@@ -178,8 +178,13 @@ export default function VideosScreen() {
   }, [lessons, subject]);
 
   const trendingLessons = useMemo(() => {
-    return lessons.slice(0, 3);
-  }, [lessons]);
+    if (subject === "All") {
+      return lessons.slice(0, 3);
+    }
+    return visibleLatest.slice(0, 3);
+  }, [lessons, subject, visibleLatest]);
+
+  const showEmptyState = !loading && visibleLatest.length === 0;
 
   const header = useMemo(
     () => (
@@ -230,33 +235,51 @@ export default function VideosScreen() {
           },
         ]}
       >
-        <FlashList
-          key={`latest-${isTablet ? 2 : 1}`}
-          data={visibleLatest}
-          numColumns={isTablet ? 2 : 1}
-          renderItem={({ item, index }) => (
-            <LatestVideoCard item={item} index={index} isGrid={isTablet} />
-          )}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={header}
-          ListFooterComponent={
+        {showEmptyState ? (
+          <View style={styles.emptyState}>
             <Image
-              source={require("../../assets/images/footer-vids.png")}
+              source={{
+                uri: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/images/empty.png",
+              }}
+              style={styles.emptyImage}
               contentFit="contain"
-              style={styles.footerImage}
-              accessibilityLabel="Learning together illustration"
             />
-          }
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={videoColors.primary}
-            />
-          }
-        />
+            <Text style={styles.emptyTitle}>
+              No lessons in this subject yet
+            </Text>
+            <Text style={styles.emptyText}>
+              Try another subject or add a new lesson to this collection.
+            </Text>
+          </View>
+        ) : (
+          <FlashList
+            key={`latest-${isTablet ? 2 : 1}`}
+            data={visibleLatest}
+            numColumns={isTablet ? 2 : 1}
+            renderItem={({ item, index }) => (
+              <LatestVideoCard item={item} index={index} isGrid={isTablet} />
+            )}
+            keyExtractor={(item) => item.id}
+            ListHeaderComponent={header}
+            ListFooterComponent={
+              <Image
+                source={require("../../assets/images/footer-vids.png")}
+                contentFit="contain"
+                style={styles.footerImage}
+                accessibilityLabel="Learning together illustration"
+              />
+            }
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={videoColors.primary}
+              />
+            }
+          />
+        )}
       </Animated.View>
       <Pressable
         accessibilityLabel="Add a new lesson"
@@ -307,6 +330,31 @@ const styles = StyleSheet.create({
     height: 250,
     marginTop: 18,
     width: "90%",
+  },
+  emptyState: {
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+  },
+  emptyImage: {
+    height: 220,
+    marginBottom: 18,
+    width: "100%",
+  },
+  emptyTitle: {
+    color: "#111",
+    fontSize: 20,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  emptyText: {
+    color: "#64748B",
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+    textAlign: "center",
   },
   loader: {
     alignItems: "center",
