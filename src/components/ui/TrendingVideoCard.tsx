@@ -65,6 +65,8 @@ export function TrendingVideoCard({
         duration: item.duration,
         uploadedAt: item.uploadedAt,
         link: (item as VideoLesson & { link?: string }).link ?? "",
+        thumbnail: typeof item.thumbnail === "string" ? item.thumbnail : "",
+        avatar: typeof item.avatar === "string" ? item.avatar : "",
       },
     });
   }
