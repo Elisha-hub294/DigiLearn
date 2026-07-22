@@ -30,7 +30,7 @@ const items = [
 
 export const TopicalNotesSlider = () => {
   const { width } = useWindowDimensions();
-  const data = [...items, ...items, ...items];
+  const data = [...items];
   const cardWidth = width >= 900 ? 128 : 110;
 
   return (
