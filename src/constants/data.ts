@@ -46,9 +46,6 @@ const imageImports = {
   avatars: require("../../assets/images/avatars.png"),
   bulb: require("../../assets/images/bulb.png"),
   brain: require("../../assets/images/brain.png"),
-  math: require("../../assets/images/math.png"),
-  physics: require("../../assets/images/physics.png"),
-  chemistry: require("../../assets/images/chemistry.png"),
   video: require("../../assets/images/video.jpg"),
   mock: require("../../assets/images/mock.png"),
   uneb: require("../../assets/images/uneb.png"),
@@ -147,12 +144,6 @@ export const forYouData: ForYouItem[] = [
     color: "#E2E2E2",
     image: imageImports.brain,
   },
-];
-
-export const subjectsData: SubjectItem[] = [
-  { id: "subject-1", title: "Math", image: imageImports.math },
-  { id: "subject-2", title: "Physics", image: imageImports.physics },
-  { id: "subject-3", title: "Chemistry", image: imageImports.chemistry },
 ];
 
 export const videosData: VideoItem[] = [
