@@ -1,4 +1,3 @@
-import HeroCarousel from "@/components/ui/HeroCarousel";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -81,6 +80,17 @@ export default function HomeScreen() {
             <SearchBar />
 
             <Animated.View
+              entering={FadeInUp.duration(450)}
+              style={styles.section}
+            >
+              <SectionHeader
+                title="Topical notes"
+                onSeeAll={() => router.push("/library")}
+              />
+              <TopicalNotesSlider />
+            </Animated.View>
+
+            <Animated.View
               entering={FadeInUp.duration(400)}
               style={styles.section}
             >
@@ -99,7 +109,7 @@ export default function HomeScreen() {
                     entering={FadeInUp.duration(400)}
                     style={styles.section}
                   >
-                    <HeroCarousel />
+                    {/* <HeroCarousel /> */}
                   </Animated.View>
                   <FeaturedNoteCard />
                   <TeacherPostCard />
@@ -107,16 +117,7 @@ export default function HomeScreen() {
               )}
             </Animated.View>
 
-            <Animated.View
-              entering={FadeInUp.duration(450)}
-              style={styles.section}
-            >
-              <SectionHeader
-                title="Topical notes"
-                onSeeAll={() => router.push("/library")}
-              />
-              <TopicalNotesSlider />
-            </Animated.View>
+
 
             <Animated.View
               entering={FadeInUp.duration(550)}

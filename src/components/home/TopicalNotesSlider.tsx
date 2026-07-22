@@ -1,7 +1,9 @@
 import { Image } from "expo-image";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   StyleSheet,
   Text,
@@ -95,7 +97,7 @@ const items = [
   },
 ];
 
-/** Fisher-Yates shuffle â€” runs once per app mount */
+/** Fisher-Yates shuffle — runs once per app mount */
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -105,30 +107,130 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+const AUTO_SCROLL_INTERVAL_MS = 2500;
+const RESUME_DELAY_MS = 3000;
+const CARD_GAP = spacing.lg; // marginRight on each card
+
 export const TopicalNotesSlider = () => {
   const { width } = useWindowDimensions();
   const cardWidth = width >= 900 ? 128 : 110;
+  const itemStep = cardWidth + CARD_GAP;
 
-  // Shuffle once when the component mounts
-  const data = useMemo(() => shuffle(items), []);
+  // Triple the shuffled list for an infinite-loop illusion
+  const shuffled = useMemo(() => shuffle(items), []);
+  const data = useMemo(
+    () => [
+      ...shuffled.map((i) => ({ ...i, _key: `a-${i.id}` })),
+      ...shuffled.map((i) => ({ ...i, _key: `b-${i.id}` })),
+      ...shuffled.map((i) => ({ ...i, _key: `c-${i.id}` })),
+    ],
+    [shuffled]
+  );
+
+  const listRef = useRef<FlatList>(null);
+  const offsetRef = useRef(shuffled.length * itemStep); // start in middle third
+  const isUserScrolling = useRef(false);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [ready, setReady] = useState(false);
+
+  // Jump to middle section on first layout so loop can go either direction
+  const onLayout = useCallback(() => {
+    if (!ready) {
+      listRef.current?.scrollToOffset({
+        offset: offsetRef.current,
+        animated: false,
+      });
+      setReady(true);
+    }
+  }, [ready]);
+
+  const startAutoScroll = useCallback(() => {
+    if (intervalRef.current) return;
+    intervalRef.current = setInterval(() => {
+      if (isUserScrolling.current) return;
+      offsetRef.current += itemStep;
+      listRef.current?.scrollToOffset({
+        offset: offsetRef.current,
+        animated: true,
+      });
+    }, AUTO_SCROLL_INTERVAL_MS);
+  }, [itemStep]);
+
+  const stopAutoScroll = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (ready) startAutoScroll();
+    return stopAutoScroll;
+  }, [ready, startAutoScroll, stopAutoScroll]);
+
+  // Seamlessly loop: when nearing either edge, silently snap to the mirror
+  // position inside the middle third — user never sees the jump.
+  const onScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const x = e.nativeEvent.contentOffset.x;
+      const sectionWidth = shuffled.length * itemStep;
+      offsetRef.current = x;
+
+      if (x < sectionWidth * 0.5) {
+        const corrected = x + sectionWidth;
+        offsetRef.current = corrected;
+        listRef.current?.scrollToOffset({ offset: corrected, animated: false });
+      } else if (x > sectionWidth * 2.5) {
+        const corrected = x - sectionWidth;
+        offsetRef.current = corrected;
+        listRef.current?.scrollToOffset({ offset: corrected, animated: false });
+      }
+    },
+    [shuffled.length, itemStep]
+  );
+
+  const onScrollBeginDrag = useCallback(() => {
+    isUserScrolling.current = true;
+    stopAutoScroll();
+    if (resumeTimerRef.current) {
+      clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+  }, [stopAutoScroll]);
+
+  const onScrollEnd = useCallback(() => {
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = setTimeout(() => {
+      isUserScrolling.current = false;
+      startAutoScroll();
+    }, RESUME_DELAY_MS);
+  }, [startAutoScroll]);
 
   return (
     <Animated.View entering={FadeInUp.duration(460)}>
       <FlatList
+        ref={listRef}
         horizontal
         data={data}
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
+        keyExtractor={(item) => item._key}
+        onLayout={onLayout}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        onScrollBeginDrag={onScrollBeginDrag}
+        onScrollEndDrag={onScrollEnd}
+        onMomentumScrollEnd={onScrollEnd}
         renderItem={({ item }) => (
           <Pressable
-            style={[styles.card]}
+            style={styles.card}
             accessibilityRole="button"
             accessibilityLabel={item.title}
           >
             <View style={styles.imageWrap}>
               <Image
                 source={{ uri: item.image }}
-                style={[styles.image]}
+                style={styles.image}
                 contentFit="contain"
               />
             </View>
@@ -146,7 +248,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   card: {
-    marginRight: spacing.lg,
+    marginRight: CARD_GAP,
     alignItems: "center",
   },
   imageWrap: {
