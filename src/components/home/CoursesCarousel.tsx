@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
 import {
+  ActivityIndicator,
   FlatList,
   Pressable,
   StyleSheet,
@@ -9,47 +10,42 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, radius, spacing } from "../../constants/theme";
-
-const items = [
-  {
-    id: "c1",
-    title: "Mastering Quadratics",
-    teacher: "Tr. Sarah",
-    duration: "18 min",
-    image: require("../../../assets/images/thumb-1.jpeg"),
-  },
-  {
-    id: "c2",
-    title: "Physics in Practice",
-    teacher: "Tr. Daniel",
-    duration: "24 min",
-    image: require("../../../assets/images/thumb-2.jpeg"),
-  },
-  {
-    id: "c3",
-    title: "Organic Chemistry Essentials",
-    teacher: "Tr. Joy",
-    duration: "12 min",
-    image: require("../../../assets/images/thumb-4.jpeg"),
-  },
-];
+import { useTrendingLessons } from "../../hooks/useTrendingLessons";
 
 export const CoursesCarousel = () => {
   const { width } = useWindowDimensions();
-  const data = [...items, ...items, ...items];
+  const { lessons, loading, error } = useTrendingLessons();
   const cardWidth = width >= 900 ? 240 : 220;
+
+  if (loading) {
+    return (
+      <View style={styles.loaderWrap}>
+        <ActivityIndicator size="small" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (error || lessons.length === 0) {
+    return (
+      <View style={styles.emptyWrap}>
+        <Text style={styles.emptyText}>
+          {error ?? "No courses available yet."}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <Animated.View entering={FadeInUp.duration(540)}>
       <FlatList
         horizontal
-        data={data}
+        data={lessons}
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item, index) => `${item.id}-${index}`}
         renderItem={({ item }) => {
           const displayTitle =
-            item.title.length > 20
-              ? `${item.title.slice(0, 20)}...`
+            item.title.length > 22
+              ? `${item.title.slice(0, 22)}...`
               : item.title;
 
           return (
@@ -58,22 +54,32 @@ export const CoursesCarousel = () => {
               accessibilityRole="button"
             >
               <View style={styles.imageWrap}>
-                <Image
-                  source={item.image}
-                  style={styles.image}
-                  contentFit="cover"
-                />
+                {item.thumbnail ? (
+                  <Image
+                    source={{ uri: item.thumbnail }}
+                    style={styles.image}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <View style={[styles.image, styles.imagePlaceholder]} />
+                )}
                 <View style={styles.overlay} />
                 <View style={styles.playButton}>
                   <Text style={styles.playText}>▶</Text>
                 </View>
-                <View style={styles.durationBadge}>
-                  <Text style={styles.durationText}>{item.duration}</Text>
-                </View>
+                {!!item.duration && (
+                  <View style={styles.durationBadge}>
+                    <Text style={styles.durationText}>{item.duration}</Text>
+                  </View>
+                )}
               </View>
               <View style={styles.body}>
-                <Text style={styles.title}>{displayTitle}</Text>
-                <Text style={styles.teacher}>{item.teacher}</Text>
+                <Text style={styles.title} numberOfLines={2}>
+                  {displayTitle}
+                </Text>
+                <Text style={styles.teacher} numberOfLines={1}>
+                  {item.teacher}
+                </Text>
                 <View style={styles.buttonWrap}>
                   <Text style={styles.openText}>Watch</Text>
                 </View>
@@ -88,6 +94,22 @@ export const CoursesCarousel = () => {
 };
 
 const styles = StyleSheet.create({
+  loaderWrap: {
+    height: 180,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyWrap: {
+    height: 100,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.lg,
+  },
+  emptyText: {
+    color: colors.subtitle,
+    fontSize: 13,
+    textAlign: "center",
+  },
   list: {
     paddingVertical: spacing.sm,
   },
@@ -96,9 +118,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: radius.sm,
     overflow: "hidden",
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
   imageWrap: { height: 132, position: "relative" },
   image: { width: "100%", height: "100%" },
+  imagePlaceholder: { backgroundColor: "#E2E8F0" },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.2)" },
   playButton: {
     position: "absolute",
