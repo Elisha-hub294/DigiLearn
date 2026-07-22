@@ -2,20 +2,118 @@ import { Image } from "expo-image";
 import {
   ActivityIndicator,
   FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useTrendingLessons } from "../../hooks/useTrendingLessons";
+
+const AUTO_SCROLL_INTERVAL_MS = 4500;
+const RESUME_DELAY_MS = 5000;
+const CARD_GAP = spacing.md; // matches marginRight on each card
 
 export const CoursesCarousel = () => {
   const { width } = useWindowDimensions();
   const { lessons, loading, error } = useTrendingLessons();
   const cardWidth = width >= 900 ? 240 : 220;
+  const itemStep = cardWidth + CARD_GAP;
+
+  // Triple the lessons array for an infinite-loop illusion
+  const data = useMemo(
+    () => [
+      ...lessons.map((l, i) => ({ ...l, _key: `a-${l.id}-${i}` })),
+      ...lessons.map((l, i) => ({ ...l, _key: `b-${l.id}-${i}` })),
+      ...lessons.map((l, i) => ({ ...l, _key: `c-${l.id}-${i}` })),
+    ],
+    [lessons]
+  );
+
+  const listRef = useRef<FlatList>(null);
+  const offsetRef = useRef(0);
+  const isUserScrolling = useRef(false);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [ready, setReady] = useState(false);
+
+  // On first layout jump into the middle third
+  const onLayout = useCallback(() => {
+    if (!ready && lessons.length > 0) {
+      const midOffset = lessons.length * itemStep;
+      offsetRef.current = midOffset;
+      listRef.current?.scrollToOffset({ offset: midOffset, animated: false });
+      setReady(true);
+    }
+  }, [ready, lessons.length, itemStep]);
+
+  const startAutoScroll = useCallback(() => {
+    if (intervalRef.current) return;
+    intervalRef.current = setInterval(() => {
+      if (isUserScrolling.current) return;
+      offsetRef.current += itemStep;
+      listRef.current?.scrollToOffset({
+        offset: offsetRef.current,
+        animated: true,
+      });
+    }, AUTO_SCROLL_INTERVAL_MS);
+  }, [itemStep]);
+
+  const stopAutoScroll = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (ready) startAutoScroll();
+    return stopAutoScroll;
+  }, [ready, startAutoScroll, stopAutoScroll]);
+
+  // Silent seamless loop: snap back to middle third near either edge
+  const onScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const x = e.nativeEvent.contentOffset.x;
+      const sectionWidth = lessons.length * itemStep;
+      offsetRef.current = x;
+
+      if (sectionWidth > 0) {
+        if (x < sectionWidth * 0.5) {
+          const corrected = x + sectionWidth;
+          offsetRef.current = corrected;
+          listRef.current?.scrollToOffset({ offset: corrected, animated: false });
+        } else if (x > sectionWidth * 2.5) {
+          const corrected = x - sectionWidth;
+          offsetRef.current = corrected;
+          listRef.current?.scrollToOffset({ offset: corrected, animated: false });
+        }
+      }
+    },
+    [lessons.length, itemStep]
+  );
+
+  const onScrollBeginDrag = useCallback(() => {
+    isUserScrolling.current = true;
+    stopAutoScroll();
+    if (resumeTimerRef.current) {
+      clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+  }, [stopAutoScroll]);
+
+  const onScrollEnd = useCallback(() => {
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = setTimeout(() => {
+      isUserScrolling.current = false;
+      startAutoScroll();
+    }, RESUME_DELAY_MS);
+  }, [startAutoScroll]);
 
   if (loading) {
     return (
@@ -38,10 +136,17 @@ export const CoursesCarousel = () => {
   return (
     <Animated.View entering={FadeInUp.duration(540)}>
       <FlatList
+        ref={listRef}
         horizontal
-        data={lessons}
+        data={data}
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
+        keyExtractor={(item) => item._key}
+        onLayout={onLayout}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+        onScrollBeginDrag={onScrollBeginDrag}
+        onScrollEndDrag={onScrollEnd}
+        onMomentumScrollEnd={onScrollEnd}
         renderItem={({ item }) => {
           const displayTitle =
             item.title.length > 22
@@ -65,7 +170,7 @@ export const CoursesCarousel = () => {
                 )}
                 <View style={styles.overlay} />
                 <View style={styles.playButton}>
-                  <Text style={styles.playText}>▶</Text>
+                  <Text style={styles.playText}>?</Text>
                 </View>
                 {!!item.duration && (
                   <View style={styles.durationBadge}>
@@ -114,12 +219,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   card: {
-    marginRight: spacing.md,
+    marginRight: CARD_GAP,
     backgroundColor: colors.white,
     borderRadius: radius.sm,
     overflow: "hidden",
     borderBottomColor: colors.border,
-    borderBottomWidth: 0.5
+    borderBottomWidth: 0.5,
   },
   imageWrap: { height: 132, position: "relative" },
   image: { width: "100%", height: "100%" },
