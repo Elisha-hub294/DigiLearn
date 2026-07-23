@@ -19,16 +19,12 @@ export const Header = () => {
         </Text>
       </View>
       <View style={styles.actions}>
-        <View style={styles.streakPill}>
-          <Icon name="zap" size={14} color={colors.green} />
-          <Text style={styles.streakText}>7 day streak</Text>
-        </View>
         <Pressable
           onPress={() => router.push("/profile")}
           style={styles.notificationButton}
           accessibilityLabel="Open notifications"
         >
-          <Icon name="bell" size={18} color={colors.text} />
+          <Icon name="bell" size={35} color={colors.text} />
           <View style={styles.badge} />
         </Pressable>
       </View>
@@ -59,24 +55,10 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    backgroundColor: colors.purple,
-    borderRadius: 100,
-    padding: 5,
   },
-  streakPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 8,
-    borderRadius: 100,
-    backgroundColor: colors.white,
-    gap: 6,
-  },
-  streakText: { color: colors.dark, fontSize: 12, fontWeight: "500" },
   notificationButton: {
-    width: 32,
-    height: 32,
+    width: 50,
+    height: 50,
     borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
@@ -86,11 +68,11 @@ const styles = StyleSheet.create({
   badge: {
     position: "absolute",
     top: 8,
-    right: 8,
-    width: 9,
-    height: 9,
+    right: 10,
+    width: 11,
+    height: 11,
     borderRadius: 4.5,
-    backgroundColor: "#FF5D5D",
+    backgroundColor: "#ff0000",
     borderWidth: 2,
     borderColor: colors.white,
   },

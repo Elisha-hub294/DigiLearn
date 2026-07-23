@@ -1,4 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -10,7 +12,6 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useTrendingLessons } from "../../hooks/useTrendingLessons";
@@ -32,7 +33,7 @@ export const CoursesCarousel = () => {
       ...lessons.map((l, i) => ({ ...l, _key: `b-${l.id}-${i}` })),
       ...lessons.map((l, i) => ({ ...l, _key: `c-${l.id}-${i}` })),
     ],
-    [lessons]
+    [lessons],
   );
 
   const listRef = useRef<FlatList>(null);
@@ -87,15 +88,21 @@ export const CoursesCarousel = () => {
         if (x < sectionWidth * 0.5) {
           const corrected = x + sectionWidth;
           offsetRef.current = corrected;
-          listRef.current?.scrollToOffset({ offset: corrected, animated: false });
+          listRef.current?.scrollToOffset({
+            offset: corrected,
+            animated: false,
+          });
         } else if (x > sectionWidth * 2.5) {
           const corrected = x - sectionWidth;
           offsetRef.current = corrected;
-          listRef.current?.scrollToOffset({ offset: corrected, animated: false });
+          listRef.current?.scrollToOffset({
+            offset: corrected,
+            animated: false,
+          });
         }
       }
     },
-    [lessons.length, itemStep]
+    [lessons.length, itemStep],
   );
 
   const onScrollBeginDrag = useCallback(() => {
@@ -170,7 +177,9 @@ export const CoursesCarousel = () => {
                 )}
                 <View style={styles.overlay} />
                 <View style={styles.playButton}>
-                  <Text style={styles.playText}>?</Text>
+                  <Text style={styles.playText}>
+                    <Ionicons name="play" size={20} color="#1111117a" />
+                  </Text>
                 </View>
                 {!!item.duration && (
                   <View style={styles.durationBadge}>

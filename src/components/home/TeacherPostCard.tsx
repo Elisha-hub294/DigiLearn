@@ -185,7 +185,7 @@ export const TeacherPostCard = () => {
                   <Text style={styles.time}>Recently shared</Text>
                 </View>
               </View>
-              <View style={[styles.badge, { backgroundColor: "#4C7CF0" }]}>
+              <View style={[styles.badge, { backgroundColor: "#4ccaf0" }]}>
                 <Text style={styles.badgeText}>{subject}</Text>
               </View>
             </View>
@@ -208,7 +208,7 @@ export const TeacherPostCard = () => {
 
             <View style={styles.actions}>
               <Action icon="star" label="Like" />
-              <Action icon="bookmark" label="Bookmark" />
+              <Action icon="bookmark" label="Save" />
               <Action icon="share-2" label="Share" />
             </View>
           </Animated.View>
@@ -233,10 +233,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
     backgroundColor: colors.white,
-    // padding: spacing.sm,
     marginBottom: spacing.xl,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   cardWide: {
     maxWidth: 760,
@@ -267,11 +264,14 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 14,
     lineHeight: 20,
+    marginBottom: spacing.sm,
   },
   previewWrap: {
     overflow: "hidden",
     position: "relative",
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
+    borderTopLeftRadius: radius.sm,
+    borderTopRightRadius: radius.sm,
   },
   preview: { width: "100%", height: 220 },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.1)" },
