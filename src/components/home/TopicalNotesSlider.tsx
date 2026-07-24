@@ -53,51 +53,51 @@ const items = [
   {
     id: "kiswahili",
     title: "Kiswahili",
-    image: `${SUPABASE_ICONS}/default-book-3d.png`,
+    image: `${SUPABASE_ICONS}/kis-3d.png`,
   },
   {
     id: "entrepreneurship",
     title: "Entrepreneurship",
-    image: `${SUPABASE_ICONS}/default-book-3d.png`,
+    image: `${SUPABASE_ICONS}/ent-3d.png`,
   },
   {
     id: "ire",
     title: "IRE",
-    image: `${SUPABASE_ICONS}/default-book-3d.png`,
+    image: `${SUPABASE_ICONS}/ire-3d.png`,
   },
   {
     id: "art-design",
     title: "Art & Design",
-    image: `${SUPABASE_ICONS}/default-book-3d.png`,
+    image: `${SUPABASE_ICONS}/art-3d.png`,
   },
   {
     id: "ict",
     title: "ICT",
-    image: `${SUPABASE_ICONS}/default-book-3d.png`,
+    image: `${SUPABASE_ICONS}/ict-3d.png`,
   },
   {
     id: "literature",
     title: "Literature",
-    image: `${SUPABASE_ICONS}/default-book-3d.png`,
+    image: `${SUPABASE_ICONS}/lit-3d.png`,
   },
   {
     id: "luganda",
     title: "Luganda",
-    image: `${SUPABASE_ICONS}/default-book-3d.png`,
+    image: `${SUPABASE_ICONS}/lug-3d.png`,
   },
   {
     id: "runyankole",
     title: "Runyankole",
-    image: `${SUPABASE_ICONS}/default-book-3d.png`,
+    image: `${SUPABASE_ICONS}/runy-3d.png`,
   },
   {
     id: "french",
     title: "French",
-    image: `${SUPABASE_ICONS}/default-book-3d.png`,
+    image: `${SUPABASE_ICONS}/fr-3d.png`,
   },
 ];
 
-/** Fisher-Yates shuffle — runs once per app mount */
+/** Fisher-Yates shuffle runs once per app mount */
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -124,7 +124,7 @@ export const TopicalNotesSlider = () => {
       ...shuffled.map((i) => ({ ...i, _key: `b-${i.id}` })),
       ...shuffled.map((i) => ({ ...i, _key: `c-${i.id}` })),
     ],
-    [shuffled]
+    [shuffled],
   );
 
   const listRef = useRef<FlatList>(null);
@@ -170,7 +170,7 @@ export const TopicalNotesSlider = () => {
   }, [ready, startAutoScroll, stopAutoScroll]);
 
   // Seamlessly loop: when nearing either edge, silently snap to the mirror
-  // position inside the middle third — user never sees the jump.
+  // position inside the middle third ï¿½ user never sees the jump.
   const onScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       const x = e.nativeEvent.contentOffset.x;
@@ -187,7 +187,7 @@ export const TopicalNotesSlider = () => {
         listRef.current?.scrollToOffset({ offset: corrected, animated: false });
       }
     },
-    [shuffled.length, itemStep]
+    [shuffled.length, itemStep],
   );
 
   const onScrollBeginDrag = useCallback(() => {
