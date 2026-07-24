@@ -4,6 +4,7 @@ import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, useWindowDimensions, View, Pressable, Linking } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import PdfPreview from "./PdfPreview";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 
@@ -170,11 +171,15 @@ const FeaturedNoteItem = ({ note, isWide }: { note: TopicalNote; isWide: boolean
             }
           }}
         >
-          <Image
-            source={require("../../../assets/images/pdf-preview.jpeg")}
-            style={styles.preview}
-            contentFit="cover"
-          />
+          {note.document ? (
+            <PdfPreview uri={note.document} style={styles.preview} />
+          ) : (
+            <Image
+              source={require("../../../assets/images/pdf-preview.jpeg")}
+              style={styles.preview}
+              contentFit="cover"
+            />
+          )}
           <View style={styles.overlay} />
         </Pressable>
         <View style={styles.actions}>

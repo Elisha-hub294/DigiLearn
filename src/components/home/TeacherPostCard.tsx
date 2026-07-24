@@ -4,6 +4,7 @@ import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, useWindowDimensions, View, Pressable, Linking } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import PdfPreview from "./PdfPreview";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 
@@ -240,11 +241,15 @@ const TeacherPostItem = ({ postItem, index, isWide }: { postItem: TeacherPost; i
               }
             }}
           >
-            <Image
-              source={require("../../../assets/images/pdf-preview.jpeg")}
-              style={styles.preview}
-              contentFit="cover"
-            />
+            {postItem.document ? (
+              <PdfPreview uri={postItem.document} style={styles.preview} />
+            ) : (
+              <Image
+                source={require("../../../assets/images/pdf-preview.jpeg")}
+                style={styles.preview}
+                contentFit="cover"
+              />
+            )}
             <View style={styles.overlay} />
             <View style={styles.previewTag}>
               <Text style={styles.previewTagText}>PDF</Text>
