@@ -2,7 +2,7 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { StyleSheet, Text, useWindowDimensions, View, Pressable, Linking } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
@@ -12,6 +12,25 @@ type TopicalNote = {
   title?: string;
   description?: string;
   createdAt?: unknown;
+  subject?: string;
+  document?: string;
+};
+
+const getSubjectAvatar = (subject?: string) => {
+  switch (subject) {
+    case "Mathematics": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/math-2d.png";
+    case "Physics": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/phy-2d.png";
+    case "Biology": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/bio-2d.png";
+    case "Chemistry": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/chem-2d.png";
+    case "Art": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/art-2d.png";
+    case "Economics": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/econ-2d.png";
+    case "Entrepreneurship": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/ent-2d.png";
+    case "Computer": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/ict-2d.png";
+    case "Geography": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/geo-2d.png";
+    case "History": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/hist-2d.png";
+    case "English": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/lang-2d.png";
+    default: return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/default-2d.png";
+  }
 };
 
 const formatCreatedAt = (value: unknown) => {
@@ -97,48 +116,74 @@ export const FeaturedNoteCard = () => {
 
   return (
     <View style={styles.list}>
-      {notes.map((note) => {
-        const title = note.title ?? "Featured note";
-        const description =
-          (note.description?.length ?? 0) > 100
-            ? `${note.description?.slice(0, 100)}...`
-            : (note.description ?? "A fresh study note will appear here.");
-        const metaText = formatCreatedAt(note.createdAt);
-
-        return (
-          <Animated.View
-            key={note.id}
-            entering={FadeInUp.duration(420)}
-            style={[styles.card, isWide && styles.cardWide]}
-          >
-            <View style={styles.content}>
-              <Image
-                source={require("../../../assets/images/math-2d.png")}
-                style={styles.avatar}
-                contentFit="cover"
-              />
-              <View style={styles.contentData}>
-                <Text style={styles.title}>{title}</Text>
-                <Text style={styles.description}>{description}</Text>
-              </View>
-            </View>
-            <View style={styles.previewWrap}>
-              <Image
-                source={require("../../../assets/images/pdf-preview.jpeg")}
-                style={styles.preview}
-                contentFit="cover"
-              />
-              <View style={styles.overlay} />
-            </View>
-            <View style={styles.actions}>
-              <Action icon="star" label="Like" />
-              <Action icon="bookmark" label="Save" />
-              <Action icon="share-2" label="Share" />
-            </View>
-          </Animated.View>
-        );
-      })}
+      {notes.map((note) => (
+        <FeaturedNoteItem key={note.id} note={note} isWide={isWide} />
+      ))}
     </View>
+  );
+};
+
+const FeaturedNoteItem = ({ note, isWide }: { note: TopicalNote; isWide: boolean }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const title = note.title ?? "Featured note";
+  const description =
+    (note.description?.length ?? 0) > 100
+      ? `${note.description?.slice(0, 100)}...`
+      : (note.description ?? "A fresh study note will appear here.");
+
+  return (
+    <Animated.View
+      entering={FadeInUp.duration(420)}
+      style={{ width: "100%" }}
+    >
+      <Pressable
+        {...({
+          onHoverIn: () => setIsHovered(true),
+          onHoverOut: () => setIsHovered(false),
+        } as any)}
+        style={({ pressed, hovered }: any) => [
+          styles.card,
+          isWide && styles.cardWide,
+          (pressed || hovered || isHovered) && { backgroundColor: "#f0f0f0" },
+        ]}
+      >
+        <View style={styles.content}>
+          <Image
+            source={{ uri: getSubjectAvatar(note.subject) }}
+            style={styles.avatar}
+            contentFit="cover"
+          />
+          <View style={styles.contentData}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.description}>{description}</Text>
+          </View>
+        </View>
+        <Pressable 
+          {...({
+            onHoverIn: () => setIsHovered(true),
+            onHoverOut: () => setIsHovered(false),
+          } as any)}
+          style={styles.previewWrap}
+          onPress={() => {
+            if (note.document) {
+              Linking.openURL(note.document).catch((err) => console.error("Couldn't load page", err));
+            }
+          }}
+        >
+          <Image
+            source={require("../../../assets/images/pdf-preview.jpeg")}
+            style={styles.preview}
+            contentFit="cover"
+          />
+          <View style={styles.overlay} />
+        </Pressable>
+        <View style={styles.actions}>
+          <Action icon="star" label="Like" />
+          <Action icon="bookmark" label="Save" />
+          <Action icon="share-2" label="Share" />
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 };
 

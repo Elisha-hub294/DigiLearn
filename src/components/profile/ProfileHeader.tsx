@@ -18,7 +18,7 @@ export function ProfileHeader() {
         style={s.avatarWrap}
       >
         <Image
-          source={require("../../../assets/images/tr-default.jpg")}
+          source={require("../../../assets/images/tr-default.png")}
           style={s.avatar}
           contentFit="cover"
           accessibilityLabel="User profile picture"

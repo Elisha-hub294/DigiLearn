@@ -2,7 +2,7 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { StyleSheet, Text, useWindowDimensions, View, Pressable, Linking } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
@@ -14,6 +14,14 @@ type TeacherPost = {
   description?: string;
   hasPdf?: boolean;
   createdAt?: unknown;
+  document?: string;
+};
+
+const getTeacherAvatar = (teacher?: string) => {
+  if (teacher === "Opero Stephen") {
+    return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/opero-stephen.jpeg";
+  }
+  return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png";
 };
 
 const normalizeTeacherPost = (doc: {
@@ -52,12 +60,18 @@ const normalizeTeacherPost = (doc: {
         ? data.type === "pdf"
         : true;
 
+  const document =
+    typeof data.document === "string"
+      ? data.document
+      : undefined;
+
   return {
     id: doc.id,
     teacher,
     subject,
     description,
     hasPdf,
+    document,
   } satisfies TeacherPost;
 };
 
@@ -151,70 +165,100 @@ export const TeacherPostCard = () => {
 
   return (
     <View style={styles.list}>
-      {posts.map((postItem, index) => {
-        const teacherName = postItem.teacher
-          ? `Tr. ${postItem.teacher}`
-          : "Tr. Teacher";
-        const subject = postItem.subject ?? "Physics";
-        const description =
-          postItem.description ?? "No teacher update available yet.";
-        const showPreview = postItem.hasPdf ?? true;
-
-        return (
-          <Animated.View
-            key={postItem.id}
-            entering={FadeInUp.duration(500 + index * 80)}
-            style={[styles.card, isWide && styles.cardWide]}
-          >
-            <View style={styles.header}>
-              <View style={styles.profileRow}>
-                <Image
-                  source={require("../../../assets/images/tr-2.jpg")}
-                  style={styles.avatar}
-                  contentFit="cover"
-                />
-                <View>
-                  <View style={styles.nameRow}>
-                    <Text style={styles.name}>{teacherName}</Text>
-                    <Icon
-                      name="check-circle"
-                      size={14}
-                      color={colors.primary}
-                    />
-                  </View>
-                  <Text style={styles.time}>Recently shared</Text>
-                </View>
-              </View>
-              <View style={[styles.badge, { backgroundColor: "#4ccaf0" }]}>
-                <Text style={styles.badgeText}>{subject}</Text>
-              </View>
-            </View>
-
-            <Text style={styles.caption}>{description}</Text>
-
-            {showPreview ? (
-              <View style={styles.previewWrap}>
-                <Image
-                  source={require("../../../assets/images/pdf-preview.jpeg")}
-                  style={styles.preview}
-                  contentFit="cover"
-                />
-                <View style={styles.overlay} />
-                <View style={styles.previewTag}>
-                  <Text style={styles.previewTagText}>PDF</Text>
-                </View>
-              </View>
-            ) : null}
-
-            <View style={styles.actions}>
-              <Action icon="star" label="Like" />
-              <Action icon="bookmark" label="Save" />
-              <Action icon="share-2" label="Share" />
-            </View>
-          </Animated.View>
-        );
-      })}
+      {posts.map((postItem, index) => (
+        <TeacherPostItem key={postItem.id} postItem={postItem} index={index} isWide={isWide} />
+      ))}
     </View>
+  );
+};
+
+const TeacherPostItem = ({ postItem, index, isWide }: { postItem: TeacherPost; index: number; isWide: boolean }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const teacherName = postItem.teacher
+    ? `Tr. ${postItem.teacher}`
+    : "Tr. Teacher";
+  const subject = postItem.subject ?? "Physics";
+  const description =
+    postItem.description ?? "No teacher update available yet.";
+  const showPreview = postItem.hasPdf ?? true;
+
+  return (
+    <Animated.View
+      entering={FadeInUp.duration(500 + index * 80)}
+      style={{ width: "100%" }}
+    >
+      <Pressable
+        {...({
+          onHoverIn: () => setIsHovered(true),
+          onHoverOut: () => setIsHovered(false),
+        } as any)}
+        style={({ pressed, hovered }: any) => [
+          styles.card,
+          isWide && styles.cardWide,
+          (pressed || hovered || isHovered) && { backgroundColor: "#f0f0f0" },
+        ]}
+      >
+        <View style={styles.header}>
+          <View style={styles.profileRow}>
+            <Image
+              source={{ uri: getTeacherAvatar(postItem.teacher) }}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+            <View>
+              <View style={styles.nameRow}>
+                <Text style={styles.name}>{teacherName}</Text>
+                <Icon
+                  name="check-circle"
+                  size={14}
+                  color={colors.primary}
+                />
+              </View>
+              <Text style={styles.time}>Recently shared</Text>
+            </View>
+          </View>
+          <View style={[styles.badge, { backgroundColor: "#4ccaf0" }]}>
+            <Text style={styles.badgeText}>{subject}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.caption}>{description}</Text>
+
+        {showPreview ? (
+          <Pressable
+            {...({
+              onHoverIn: () => setIsHovered(true),
+              onHoverOut: () => setIsHovered(false),
+            } as any)}
+            style={styles.previewWrap}
+            onPress={() => {
+              if (postItem.document) {
+                Linking.openURL(postItem.document).catch((err) =>
+                  console.error("Couldn't load page", err)
+                );
+              }
+            }}
+          >
+            <Image
+              source={require("../../../assets/images/pdf-preview.jpeg")}
+              style={styles.preview}
+              contentFit="cover"
+            />
+            <View style={styles.overlay} />
+            <View style={styles.previewTag}>
+              <Text style={styles.previewTagText}>PDF</Text>
+            </View>
+          </Pressable>
+        ) : null}
+
+        <View style={styles.actions}>
+          <Action icon="star" label="Like" />
+          <Action icon="bookmark" label="Save" />
+          <Action icon="share-2" label="Share" />
+        </View>
+      </Pressable>
+    </Animated.View>
   );
 };
 
