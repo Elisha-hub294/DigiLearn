@@ -2,11 +2,18 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, useWindowDimensions, View, Pressable, Linking } from "react-native";
+import {
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import PdfPreview from "./PdfPreview";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
+import PdfPreview from "./PdfPreview";
 
 type TopicalNote = {
   id: string;
@@ -19,18 +26,30 @@ type TopicalNote = {
 
 const getSubjectAvatar = (subject?: string) => {
   switch (subject) {
-    case "Mathematics": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/math-2d.png";
-    case "Physics": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/phy-2d.png";
-    case "Biology": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/bio-2d.png";
-    case "Chemistry": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/chem-2d.png";
-    case "Art": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/art-2d.png";
-    case "Economics": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/econ-2d.png";
-    case "Entrepreneurship": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/ent-2d.png";
-    case "Computer": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/ict-2d.png";
-    case "Geography": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/geo-2d.png";
-    case "History": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/hist-2d.png";
-    case "English": return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/lang-2d.png";
-    default: return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/default-2d.png";
+    case "Mathematics":
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/math-2d.png";
+    case "Physics":
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/phy-2d.png";
+    case "Biology":
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/bio-2d.png";
+    case "Chemistry":
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/chem-2d.png";
+    case "Art":
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/art-2d.png";
+    case "Economics":
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/econ-2d.png";
+    case "Entrepreneurship":
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/ent-2d.png";
+    case "Computer":
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/ict-2d.png";
+    case "Geography":
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/geo-2d.png";
+    case "History":
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/hist-2d.png";
+    case "English":
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/lang-2d.png";
+    default:
+      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/default-2d.png";
   }
 };
 
@@ -124,7 +143,13 @@ export const FeaturedNoteCard = () => {
   );
 };
 
-const FeaturedNoteItem = ({ note, isWide }: { note: TopicalNote; isWide: boolean }) => {
+const FeaturedNoteItem = ({
+  note,
+  isWide,
+}: {
+  note: TopicalNote;
+  isWide: boolean;
+}) => {
   const [isHovered, setIsHovered] = useState(false);
   const title = note.title ?? "Featured note";
   const description =
@@ -133,10 +158,7 @@ const FeaturedNoteItem = ({ note, isWide }: { note: TopicalNote; isWide: boolean
       : (note.description ?? "A fresh study note will appear here.");
 
   return (
-    <Animated.View
-      entering={FadeInUp.duration(420)}
-      style={{ width: "100%" }}
-    >
+    <Animated.View entering={FadeInUp.duration(420)} style={{ width: "100%" }}>
       <Pressable
         {...({
           onHoverIn: () => setIsHovered(true),
@@ -145,7 +167,11 @@ const FeaturedNoteItem = ({ note, isWide }: { note: TopicalNote; isWide: boolean
         style={({ pressed, hovered }: any) => [
           styles.card,
           isWide && styles.cardWide,
-          (pressed || hovered || isHovered) && { backgroundColor: "#f0f0f0" },
+          (pressed || hovered || isHovered) && {
+            backgroundColor: "#f0f0f0",
+            borderWidth: 1,
+            borderColor: "#d8d8d8",
+          },
         ]}
       >
         <View style={styles.content}>
@@ -159,7 +185,7 @@ const FeaturedNoteItem = ({ note, isWide }: { note: TopicalNote; isWide: boolean
             <Text style={styles.description}>{description}</Text>
           </View>
         </View>
-        <Pressable 
+        <Pressable
           {...({
             onHoverIn: () => setIsHovered(true),
             onHoverOut: () => setIsHovered(false),
@@ -167,7 +193,9 @@ const FeaturedNoteItem = ({ note, isWide }: { note: TopicalNote; isWide: boolean
           style={styles.previewWrap}
           onPress={() => {
             if (note.document) {
-              Linking.openURL(note.document).catch((err) => console.error("Couldn't load page", err));
+              Linking.openURL(note.document).catch((err) =>
+                console.error("Couldn't load page", err),
+              );
             }
           }}
         >
@@ -208,6 +236,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
+    padding: 7,
+    borderRadius: 25,
+    borderColor: "#fff",
+    borderWidth: 1,
   },
   cardWide: {
     maxWidth: 760,
@@ -256,7 +288,7 @@ const styles = StyleSheet.create({
   },
   description: {
     color: colors.subtitle,
-    fontSize: 14,
+    fontSize: 13,
     marginBottom: spacing.md,
   },
   actions: {
@@ -269,8 +301,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 999,
     backgroundColor: colors.background,
   },

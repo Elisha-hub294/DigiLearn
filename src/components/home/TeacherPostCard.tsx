@@ -2,11 +2,18 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, useWindowDimensions, View, Pressable, Linking } from "react-native";
+import {
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import PdfPreview from "./PdfPreview";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
+import PdfPreview from "./PdfPreview";
 
 type TeacherPost = {
   id: string;
@@ -62,9 +69,7 @@ const normalizeTeacherPost = (doc: {
         : true;
 
   const document =
-    typeof data.document === "string"
-      ? data.document
-      : undefined;
+    typeof data.document === "string" ? data.document : undefined;
 
   return {
     id: doc.id,
@@ -167,13 +172,26 @@ export const TeacherPostCard = () => {
   return (
     <View style={styles.list}>
       {posts.map((postItem, index) => (
-        <TeacherPostItem key={postItem.id} postItem={postItem} index={index} isWide={isWide} />
+        <TeacherPostItem
+          key={postItem.id}
+          postItem={postItem}
+          index={index}
+          isWide={isWide}
+        />
       ))}
     </View>
   );
 };
 
-const TeacherPostItem = ({ postItem, index, isWide }: { postItem: TeacherPost; index: number; isWide: boolean }) => {
+const TeacherPostItem = ({
+  postItem,
+  index,
+  isWide,
+}: {
+  postItem: TeacherPost;
+  index: number;
+  isWide: boolean;
+}) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const teacherName = postItem.teacher
@@ -197,7 +215,11 @@ const TeacherPostItem = ({ postItem, index, isWide }: { postItem: TeacherPost; i
         style={({ pressed, hovered }: any) => [
           styles.card,
           isWide && styles.cardWide,
-          (pressed || hovered || isHovered) && { backgroundColor: "#f0f0f0" },
+          (pressed || hovered || isHovered) && {
+            backgroundColor: "#f0f0f0",
+            borderWidth: 1,
+            borderColor: "#d8d8d8",
+          },
         ]}
       >
         <View style={styles.header}>
@@ -210,11 +232,7 @@ const TeacherPostItem = ({ postItem, index, isWide }: { postItem: TeacherPost; i
             <View>
               <View style={styles.nameRow}>
                 <Text style={styles.name}>{teacherName}</Text>
-                <Icon
-                  name="check-circle"
-                  size={14}
-                  color={colors.primary}
-                />
+                <Icon name="check-circle" size={14} color={colors.primary} />
               </View>
               <Text style={styles.time}>Recently shared</Text>
             </View>
@@ -236,7 +254,7 @@ const TeacherPostItem = ({ postItem, index, isWide }: { postItem: TeacherPost; i
             onPress={() => {
               if (postItem.document) {
                 Linking.openURL(postItem.document).catch((err) =>
-                  console.error("Couldn't load page", err)
+                  console.error("Couldn't load page", err),
                 );
               }
             }}
@@ -283,6 +301,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
+    padding: 7,
+    borderRadius: 25,
+    borderColor: "#fff",
+    borderWidth: 1,
   },
   cardWide: {
     maxWidth: 760,
@@ -344,8 +366,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 999,
     backgroundColor: colors.background,
   },
