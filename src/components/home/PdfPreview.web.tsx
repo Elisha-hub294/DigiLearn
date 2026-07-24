@@ -89,7 +89,7 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
       <Image
         source={require("../../../assets/images/pdf-preview.jpeg")}
         style={style}
-        contentFit="contain"
+        contentFit="cover"
       />
     );
   }

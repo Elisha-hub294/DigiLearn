@@ -24,7 +24,7 @@ export const Header = () => {
           style={styles.notificationButton}
           accessibilityLabel="Open notifications"
         >
-          <Icon name="bell" size={35} color={colors.text} />
+          <Icon name="bell" size={30} color={colors.text} />
           <View style={styles.badge} />
         </Pressable>
       </View>
@@ -57,8 +57,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   notificationButton: {
-    width: 50,
-    height: 50,
+    width: 45,
+    height: 45,
     borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
