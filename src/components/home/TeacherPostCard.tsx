@@ -237,7 +237,7 @@ const TeacherPostItem = ({
               <Text style={styles.time}>Recently shared</Text>
             </View>
           </View>
-          <View style={[styles.badge, { backgroundColor: "#4ccaf0" }]}>
+          <View style={[styles.badge, { backgroundColor: "#001172" }]}>
             <Text style={styles.badgeText}>{subject}</Text>
           </View>
         </View>
@@ -334,7 +334,6 @@ const styles = StyleSheet.create({
   caption: {
     color: colors.text,
     fontSize: 14,
-    lineHeight: 20,
     marginBottom: spacing.sm,
   },
   previewWrap: {

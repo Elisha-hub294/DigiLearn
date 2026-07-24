@@ -236,8 +236,8 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
-    padding: 7,
     borderRadius: 25,
+    padding: 7,
     borderColor: "#fff",
     borderWidth: 1,
   },
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   description: {
-    color: colors.subtitle,
+    color: colors.text,
     fontSize: 13,
     marginBottom: spacing.md,
   },

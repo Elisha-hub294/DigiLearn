@@ -194,9 +194,6 @@ export const CoursesCarousel = () => {
                 <Text style={styles.teacher} numberOfLines={1}>
                   {item.teacher}
                 </Text>
-                <View style={styles.buttonWrap}>
-                  <Text style={styles.openText}>Watch</Text>
-                </View>
               </View>
             </Pressable>
           );

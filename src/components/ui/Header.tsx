@@ -20,7 +20,7 @@ export const Header = () => {
       </View>
       <View style={styles.actions}>
         <Pressable
-          onPress={() => router.push("/profile")}
+          // onPress={() => router.push("/profile")}
           style={styles.notificationButton}
           accessibilityLabel="Open notifications"
         >
