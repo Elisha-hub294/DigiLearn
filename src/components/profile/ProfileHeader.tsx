@@ -18,10 +18,10 @@ export function ProfileHeader() {
         style={s.avatarWrap}
       >
         <Image
-          source={require("../../../assets/images/tr-2.jpg")}
+          source={require("../../../assets/images/tr-default.jpg")}
           style={s.avatar}
           contentFit="cover"
-          accessibilityLabel="Elisha Bagalwa profile picture"
+          accessibilityLabel="User profile picture"
         />
         <Pressable
           accessibilityLabel="Edit profile picture"
@@ -32,10 +32,10 @@ export function ProfileHeader() {
         </Pressable>
       </Animated.View>
       <Text allowFontScaling style={s.name}>
-        Elisha Bagalwa
+        User Name
       </Text>
       <Text allowFontScaling style={s.email}>
-        elishabagalw@gmail.com
+        user@email.com
       </Text>
       <View style={s.badge}>
         <Text style={s.badgeText}>Student Account</Text>
