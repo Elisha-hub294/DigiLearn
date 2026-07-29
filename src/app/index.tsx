@@ -12,34 +12,34 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { BookCarousel } from "../components/home/BookCarousel";
 import { CoursesCarousel } from "../components/home/CoursesCarousel";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
 import { TeacherPostCard } from "../components/home/TeacherPostCard";
 import { TopicalNotesSlider } from "../components/home/TopicalNotesSlider";
-import { UnebCard } from "../components/home/UnebCard";
 import { Header } from "../components/ui/Header";
 import { SearchBar } from "../components/ui/SearchBar";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import { colors, spacing } from "../constants/theme";
 import LoadingScreen from "./loading";
 
+const getHorizontalPadding = (width: number) => {
+  if (width >= 1200) return 64;
+  if (width >= 900) return 48;
+  if (width >= 600) return 32;
+  if (width >= 400) return 10;
+  return 5;
+};
+
 export default function HomeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [refreshing, setRefreshing] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
+
   const isWideLayout = width >= 900;
-  const horizontalPadding =
-    width >= 1200
-      ? 64
-      : width >= 900
-        ? 48
-        : width >= 600
-          ? 32
-          : width >= 400
-            ? 10
-            : 5;
+  const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   useEffect(() => {
@@ -104,12 +104,6 @@ export default function HomeScreen() {
                 </View>
               ) : (
                 <View style={styles.stack}>
-                  <Animated.View
-                    entering={FadeInUp.duration(400)}
-                    style={styles.section}
-                  >
-                    {/* <HeroCarousel /> */}
-                  </Animated.View>
                   <FeaturedNoteCard />
                   <TeacherPostCard />
                 </View>
@@ -125,17 +119,6 @@ export default function HomeScreen() {
                 onSeeAll={() => router.push("/videos")}
               />
               <CoursesCarousel />
-            </Animated.View>
-
-            <Animated.View
-              entering={FadeInUp.duration(600)}
-              style={styles.section}
-            >
-              <SectionHeader
-                title="UNEB papers"
-                onSeeAll={() => router.push("/library")}
-              />
-              <UnebCard />
             </Animated.View>
 
             <Animated.View
@@ -187,16 +170,6 @@ const GradientAnnouncement = () => (
   </LinearGradient>
 );
 
-// const FooterIllustration = () => (
-//   <View style={styles.footerCard}>
-//     <Image
-//       source={require("../../assets/images/lib.jpeg")}
-//       style={styles.footerImage}
-//       contentFit="contain"
-//     />
-//   </View>
-// );
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -205,24 +178,19 @@ const styles = StyleSheet.create({
   page: {
     flex: 1,
     alignItems: "center",
-    backgroundColor: colors.background,
   },
   contentContainer: {
     flex: 1,
     width: "100%",
-    maxWidth: 1100,
-    alignSelf: "center",
   },
   container: {
     flex: 1,
     width: "100%",
-    backgroundColor: colors.background,
   },
   content: {
     flexGrow: 1,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
-    alignSelf: "center",
     width: "100%",
   },
   section: {
@@ -230,6 +198,7 @@ const styles = StyleSheet.create({
   },
   stack: {
     width: "100%",
+    gap: spacing.sm,
   },
   dualColumnLayout: {
     flexDirection: "row",
@@ -284,13 +253,5 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 13,
     fontWeight: "600",
-  },
-  footerCard: {
-    alignItems: "center",
-  },
-  footerImage: {
-    width: "100%",
-    maxWidth: 320,
-    height: 180,
   },
 });

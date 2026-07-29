@@ -222,28 +222,6 @@ const TeacherPostItem = ({
           },
         ]}
       >
-        <View style={styles.header}>
-          <View style={styles.profileRow}>
-            <Image
-              source={{ uri: getTeacherAvatar(postItem.teacher) }}
-              style={styles.avatar}
-              contentFit="cover"
-            />
-            <View>
-              <View style={styles.nameRow}>
-                <Text style={styles.name}>{teacherName}</Text>
-                <Icon name="check-circle" size={14} color={colors.primary} />
-              </View>
-              <Text style={styles.time}>Recently shared</Text>
-            </View>
-          </View>
-          <View style={[styles.badge, { backgroundColor: "#001172" }]}>
-            <Text style={styles.badgeText}>{subject}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.caption}>{description}</Text>
-
         {showPreview ? (
           <Pressable
             {...({
@@ -275,6 +253,28 @@ const TeacherPostItem = ({
           </Pressable>
         ) : null}
 
+        <View style={styles.header}>
+          <View style={styles.profileRow}>
+            <Image
+              source={{ uri: getTeacherAvatar(postItem.teacher) }}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+            <View>
+              <View style={styles.nameRow}>
+                <Text style={styles.name}>{teacherName}</Text>
+                <Icon name="check-circle" size={14} color={colors.primary} />
+              </View>
+              <Text style={styles.time}>Recently shared</Text>
+            </View>
+          </View>
+          <View style={[styles.badge, { backgroundColor: "#001172" }]}>
+            <Text style={styles.badgeText}>{subject}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.caption}>{description}</Text>
+
         <View style={styles.actions}>
           <Action icon="star" label="Like" />
           <Action icon="bookmark" label="Save" />
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
     padding: 7,
-    borderRadius: 25,
+    borderRadius: radius.sm,
     borderColor: "#fff",
     borderWidth: 1,
   },
@@ -344,8 +344,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.sm,
     borderTopRightRadius: radius.sm,
   },
-  preview: { width: "100%", height: 220 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.1)" },
+  preview: { width: "100%", height: 250 },
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+  },
   previewTag: {
     position: "absolute",
     left: spacing.md,

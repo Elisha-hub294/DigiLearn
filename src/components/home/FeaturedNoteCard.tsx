@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
-import { colors, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 import PdfPreview from "./PdfPreview";
 
 type TopicalNote = {
@@ -174,9 +174,9 @@ const FeaturedNoteItem = ({
         style={({ pressed, hovered }: any) => [
           styles.card,
           (pressed || hovered || isHovered) && {
-            backgroundColor: "#e9efff",
+            backgroundColor: "#f0f0f0",
             borderWidth: 1,
-            borderColor: "#dfe8ff",
+            borderColor: "#d8d8d8",
           },
         ]}
       >
@@ -269,9 +269,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
-    borderRadius: 24,
+    borderRadius: radius.sm,
     padding: 8,
-    borderColor: "#eff4ff",
+    borderColor: "#ffffff",
     borderWidth: 1,
   },
   stateCard: {
@@ -300,10 +300,11 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
     marginBottom: spacing.sm,
-    borderRadius: 18,
+    borderTopLeftRadius: radius.sm,
+    borderTopRightRadius: radius.sm,
   },
-  preview: { width: "100%", height: 400 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.12)" },
+  preview: { width: "100%", height: 250 },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.1)" },
   content: {
     flexDirection: "row",
     paddingHorizontal: spacing.sm,
@@ -319,8 +320,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text,
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "500",
     marginBottom: 4,
   },
   description: {
