@@ -5,7 +5,7 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 export const FooterImage = () => (
   <Animated.View entering={FadeInUp.duration(600)} style={styles.container}>
     <Image
-      source={require("../../assets/images/footer-home.png")}
+      source={require("../../assets/images/lib.jpeg")}
       style={styles.image}
       contentFit="contain"
     />

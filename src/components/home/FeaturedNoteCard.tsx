@@ -1,7 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Linking,
   Pressable,
@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
-import { colors, radius, spacing } from "../../constants/theme";
+import { colors, spacing } from "../../constants/theme";
 import PdfPreview from "./PdfPreview";
 
 type TopicalNote = {
@@ -51,27 +51,6 @@ const getSubjectAvatar = (subject?: string) => {
     default:
       return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/default-2d.png";
   }
-};
-
-const formatCreatedAt = (value: unknown) => {
-  if (!value) {
-    return "Recently added";
-  }
-
-  if (typeof value === "object" && value !== null && "toDate" in value) {
-    const date = (value as { toDate: () => Date }).toDate();
-    return `Updated ${date.toLocaleDateString()}`;
-  }
-
-  if (value instanceof Date) {
-    return `Updated ${value.toLocaleDateString()}`;
-  }
-
-  if (typeof value === "string") {
-    return `Updated ${new Date(value).toLocaleDateString()}`;
-  }
-
-  return "Recently added";
 };
 
 export const FeaturedNoteCard = () => {
@@ -120,22 +99,22 @@ export const FeaturedNoteCard = () => {
 
   if (loading) {
     return (
-      <View style={[styles.card, isWide && styles.cardWide]}>
-        <Text style={styles.title}>Loading notes...</Text>
+      <View style={[styles.stateCard, isWide && styles.stateCardWide]}>
+        <Text style={styles.stateTitle}>Loading notes...</Text>
       </View>
     );
   }
 
   if (notes.length === 0) {
     return (
-      <View style={[styles.card, isWide && styles.cardWide]}>
-        <Text style={styles.title}>No notes available yet</Text>
+      <View style={[styles.stateCard, isWide && styles.stateCardWide]}>
+        <Text style={styles.stateTitle}>No notes available yet</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.list}>
+    <View style={[styles.list, isWide && styles.listWide]}>
       {notes.map((note) => (
         <FeaturedNoteItem key={note.id} note={note} isWide={isWide} />
       ))}
@@ -158,7 +137,10 @@ const FeaturedNoteItem = ({
       : (note.description ?? "A fresh study note will appear here.");
 
   return (
-    <Animated.View entering={FadeInUp.duration(420)} style={{ width: "100%" }}>
+    <Animated.View
+      entering={FadeInUp.duration(420)}
+      style={[styles.itemWrapper, isWide && styles.itemWrapperWide]}
+    >
       <Pressable
         {...({
           onHoverIn: () => setIsHovered(true),
@@ -166,25 +148,13 @@ const FeaturedNoteItem = ({
         } as any)}
         style={({ pressed, hovered }: any) => [
           styles.card,
-          isWide && styles.cardWide,
           (pressed || hovered || isHovered) && {
-            backgroundColor: "#f0f0f0",
+            backgroundColor: "#e9efff",
             borderWidth: 1,
-            borderColor: "#d8d8d8",
+            borderColor: "#dfe8ff",
           },
         ]}
       >
-        <View style={styles.content}>
-          <Image
-            source={{ uri: getSubjectAvatar(note.subject) }}
-            style={styles.avatar}
-            contentFit="cover"
-          />
-          <View style={styles.contentData}>
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.description}>{description}</Text>
-          </View>
-        </View>
         <Pressable
           {...({
             onHoverIn: () => setIsHovered(true),
@@ -210,6 +180,23 @@ const FeaturedNoteItem = ({
           )}
           <View style={styles.overlay} />
         </Pressable>
+        <View style={styles.content}>
+          <Image
+            source={{ uri: getSubjectAvatar(note.subject) }}
+            style={styles.avatar}
+            contentFit="cover"
+          />
+          <View style={styles.contentData}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.description}>{description}</Text>
+          </View>
+          <Pressable
+            accessibilityLabel="More options"
+            style={styles.menuButton}
+          >
+            <Icon name="more-vertical" size={18} color={colors.subtitle} />
+          </Pressable>
+        </View>
         <View style={styles.actions}>
           <Action icon="star" label="Like" />
           <Action icon="bookmark" label="Save" />
@@ -231,71 +218,89 @@ const styles = StyleSheet.create({
   list: {
     width: "100%",
   },
+  listWide: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
+  itemWrapper: {
+    width: "100%",
+  },
+  itemWrapperWide: {
+    width: "48%",
+  },
   card: {
     width: "100%",
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
-    borderRadius: 25,
-    padding: 7,
-    borderColor: "#fff",
+    borderRadius: 24,
+    padding: 8,
+    borderColor: "#eff4ff",
     borderWidth: 1,
   },
-  cardWide: {
+  stateCard: {
+    width: "100%",
+    minHeight: 120,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.white,
+    borderRadius: 24,
+    borderColor: "#eff4ff",
+    borderWidth: 1,
+  },
+  stateCardWide: {
     maxWidth: 760,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.md,
-  },
-  badge: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+  menuButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
-  },
-  profileRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    justifyContent: "flex-end",
+    backgroundColor: "#f6f8fb",
   },
   avatar: { width: 42, height: 42, borderRadius: 21, marginRight: spacing.sm },
-  teacher: { color: colors.text, fontSize: 13, fontWeight: "700" },
-  subject: { color: colors.subtitle, fontSize: 12, marginTop: 2 },
   previewWrap: {
     overflow: "hidden",
     position: "relative",
-    marginBottom: spacing.xs,
-    borderTopLeftRadius: radius.sm,
-    borderTopRightRadius: radius.sm,
+    marginBottom: spacing.sm,
+    borderRadius: 18,
   },
-  preview: { width: "100%", height: 220 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.1)" },
+  preview: { width: "100%", height: 400 },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.12)" },
   content: {
     flexDirection: "row",
+    paddingHorizontal: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   contentData: {
-    width: "80%",
+    flex: 1,
+  },
+  stateTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "700",
   },
   title: {
     color: colors.text,
-    fontSize: 14,
-    fontWeight: "500",
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 4,
   },
   description: {
     color: colors.text,
     fontSize: 13,
-    marginBottom: spacing.md,
+    lineHeight: 18,
   },
   actions: {
     flexDirection: "row",
     justifyContent: "flex-start",
     flexWrap: "wrap",
     gap: 8,
+    paddingHorizontal: spacing.sm,
+    paddingBottom: spacing.xs,
   },
   actionItem: {
     flexDirection: "row",

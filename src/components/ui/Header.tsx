@@ -1,31 +1,45 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
 
-export const Header = () => {
-  const router = useRouter();
+type HeaderProps = {
+  title?: string;
+  rightIconName?: string;
+  showBadge?: boolean;
+};
+
+export const Header = ({
+  title,
+  rightIconName = "bell",
+  showBadge = true,
+}: HeaderProps) => {
   const date = new Date().toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
   });
+  const isLibraryVariant = Boolean(title);
 
   return (
     <View style={styles.container}>
       <View style={styles.textWrap}>
-        <Text style={styles.date}>{date}</Text>
-        <Text style={styles.greeting}>
-          Hi, <Text style={{ color: colors.primary }}>Elisha</Text>
-        </Text>
+        {isLibraryVariant ? (
+          <Text style={styles.libraryTitle}>{title}</Text>
+        ) : (
+          <>
+            <Text style={styles.date}>{date}</Text>
+            <Text style={styles.greeting}>
+              Hi, <Text style={{ color: colors.primary }}>Elisha</Text>
+            </Text>
+          </>
+        )}
       </View>
       <View style={styles.actions}>
         <Pressable
-          // onPress={() => router.push("/profile")}
           style={styles.notificationButton}
-          accessibilityLabel="Open notifications"
+          accessibilityLabel="Open actions"
         >
-          <Icon name="bell" size={30} color={colors.text} />
-          <View style={styles.badge} />
+          <Icon name={rightIconName as any} size={22} color={colors.text} />
+          {showBadge ? <View style={styles.badge} /> : null}
         </Pressable>
       </View>
     </View>
@@ -36,8 +50,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-end",
-    marginBottom: spacing.xl,
+    alignItems: "center",
+    marginBottom: spacing.sm,
   },
   textWrap: { flex: 1, paddingRight: spacing.md },
   date: {
@@ -52,14 +66,20 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: -0.6,
   },
+  libraryTitle: {
+    color: colors.dark,
+    fontSize: 32,
+    fontWeight: "700",
+    letterSpacing: -0.6,
+  },
   actions: {
     flexDirection: "row",
     alignItems: "center",
   },
   notificationButton: {
-    width: 45,
-    height: 45,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: colors.white,

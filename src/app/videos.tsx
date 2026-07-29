@@ -12,14 +12,14 @@ import { useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -270,7 +270,7 @@ export default function VideosScreen() {
             ListHeaderComponent={header}
             ListFooterComponent={
               <Image
-                source={require("../../assets/images/footer-vids.png")}
+                source={require("../../assets/images/lib.jpeg")}
                 contentFit="contain"
                 style={styles.footerImage}
                 accessibilityLabel="Learning together illustration"

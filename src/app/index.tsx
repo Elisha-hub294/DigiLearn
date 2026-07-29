@@ -1,7 +1,6 @@
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -117,8 +116,6 @@ export default function HomeScreen() {
               )}
             </Animated.View>
 
-
-
             <Animated.View
               entering={FadeInUp.duration(550)}
               style={styles.section}
@@ -190,15 +187,15 @@ const GradientAnnouncement = () => (
   </LinearGradient>
 );
 
-const FooterIllustration = () => (
-  <View style={styles.footerCard}>
-    <Image
-      source={require("../../assets/images/footer-home.png")}
-      style={styles.footerImage}
-      contentFit="contain"
-    />
-  </View>
-);
+// const FooterIllustration = () => (
+//   <View style={styles.footerCard}>
+//     <Image
+//       source={require("../../assets/images/lib.jpeg")}
+//       style={styles.footerImage}
+//       contentFit="contain"
+//     />
+//   </View>
+// );
 
 const styles = StyleSheet.create({
   safeArea: {
