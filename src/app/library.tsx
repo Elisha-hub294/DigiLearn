@@ -180,6 +180,9 @@ export default function LibraryScreen() {
   const [formSubtitle, setFormSubtitle] = useState("");
   const [formAuthor, setFormAuthor] = useState("");
   const [formExtra, setFormExtra] = useState("");
+  const [formCover, setFormCover] = useState("");
+  const [formRating, setFormRating] = useState("");
+  const [formIsTop, setFormIsTop] = useState(false);
   const [heroSlides, setHeroSlides] = useState<HeroBook[]>([]);
   const [topBooks, setTopBooks] = useState<TopSellingBook[]>([]);
   const [promos, setPromos] = useState<PromotionalBannerItem[]>([]);
@@ -349,6 +352,9 @@ export default function LibraryScreen() {
     setFormSubtitle("");
     setFormAuthor("");
     setFormExtra("");
+    setFormCover("");
+    setFormRating("");
+    setFormIsTop(false);
   }, []);
 
   const openForm = useCallback(
@@ -370,17 +376,20 @@ export default function LibraryScreen() {
       };
 
       if (formType === "book") {
+        const parsedRating = Number.parseFloat(formRating.trim());
+
         await addDoc(collection(db, "books"), {
           ...payload,
           author: formAuthor.trim() || "Added from app",
           subtitle:
             formSubtitle.trim() || "Freshly created from the library screen",
           image:
+            formCover.trim() ||
             "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/default-2d.png",
           avatar:
             "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/default-2d.png",
-          rating: 4.8,
-          isTop: true,
+          rating: Number.isFinite(parsedRating) ? parsedRating : 4.8,
+          isTop: formIsTop,
         });
       } else if (formType === "banner") {
         await addDoc(collection(db, "promotionalBanner"), {
@@ -417,7 +426,10 @@ export default function LibraryScreen() {
     }
   }, [
     formAuthor,
+    formCover,
     formExtra,
+    formIsTop,
+    formRating,
     formSubtitle,
     formTitle,
     formType,
@@ -591,6 +603,56 @@ export default function LibraryScreen() {
                   value={formSubtitle}
                   onChangeText={setFormSubtitle}
                 />
+                <Text style={styles.fieldLabel}>Cover</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Image URL"
+                  value={formCover}
+                  onChangeText={setFormCover}
+                />
+                <Text style={styles.fieldLabel}>Rating</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="4.8"
+                  value={formRating}
+                  onChangeText={setFormRating}
+                  keyboardType="numeric"
+                />
+                <Text style={styles.fieldLabel}>Featured</Text>
+                <View style={styles.toggleRow}>
+                  <Pressable
+                    style={[
+                      styles.toggleChip,
+                      formIsTop && styles.toggleChipActive,
+                    ]}
+                    onPress={() => setFormIsTop(true)}
+                  >
+                    <Text
+                      style={[
+                        styles.toggleChipText,
+                        formIsTop && styles.toggleChipTextActive,
+                      ]}
+                    >
+                      Yes
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={[
+                      styles.toggleChip,
+                      !formIsTop && styles.toggleChipActive,
+                    ]}
+                    onPress={() => setFormIsTop(false)}
+                  >
+                    <Text
+                      style={[
+                        styles.toggleChipText,
+                        !formIsTop && styles.toggleChipTextActive,
+                      ]}
+                    >
+                      No
+                    </Text>
+                  </Pressable>
+                </View>
               </>
             ) : null}
 
@@ -730,6 +792,29 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     gap: 12,
     marginTop: spacing.sm,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: spacing.md,
+  },
+  toggleChip: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+  },
+  toggleChipActive: {
+    borderColor: colors.primary,
+    backgroundColor: "rgba(37, 99, 235, 0.1)",
+  },
+  toggleChipText: {
+    color: colors.subtitle,
+    fontWeight: "700",
+  },
+  toggleChipTextActive: {
+    color: colors.primary,
   },
   secondaryButton: {
     paddingVertical: 10,
