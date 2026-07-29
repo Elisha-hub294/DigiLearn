@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useMemo, useState } from "react";
 import {
     Pressable,
@@ -27,11 +28,23 @@ export function HeroBookCarousel({ data }: HeroBookCarouselProps) {
   const { width } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const slides = useMemo(() => [...data, ...data], [data]);
+  const slides = useMemo(() => {
+    const seen = new Set<string>();
+
+    return data.filter((item) => {
+      if (seen.has(item.id)) {
+        return false;
+      }
+
+      seen.add(item.id);
+      return true;
+    });
+  }, [data]);
+
   const itemWidth = Math.min(width * 0.78, 320);
   const gap = 14;
   const snapInterval = itemWidth + gap;
-  const normalizedIndex = activeIndex % data.length;
+  const normalizedIndex = activeIndex % Math.max(slides.length, 1);
 
   return (
     <View style={styles.container}>
@@ -69,7 +82,17 @@ export function HeroBookCarousel({ data }: HeroBookCarouselProps) {
                   style={styles.image}
                   contentFit="cover"
                 />
-                <View style={styles.overlay} />
+                <LinearGradient
+                  colors={[
+                    "transparent",
+                    "rgba(3, 7, 18, 0.35)",
+                    "rgba(3, 7, 18, 0.85)",
+                  ]}
+                  locations={[0, 0.45, 1]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={styles.overlay}
+                />
                 <View style={styles.content}>
                   <Text style={styles.title} numberOfLines={2}>
                     {item.title}
@@ -103,7 +126,7 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     height: 300,
-    borderRadius: 24,
+    borderRadius: radius.md,
     overflow: "hidden",
     backgroundColor: colors.white,
     ...shadows.card,
@@ -120,8 +143,7 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    ...StyleSheet.absoluteFill,
   },
   content: {
     flex: 1,

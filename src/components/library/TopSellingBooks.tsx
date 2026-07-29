@@ -18,7 +18,18 @@ type TopSellingBooksProps = {
 };
 
 export function TopSellingBooks({ items }: TopSellingBooksProps) {
-  const repeatedItems = [...items, ...items];
+  const uniqueItems = React.useMemo(() => {
+    const seen = new Set<string>();
+
+    return items.filter((book) => {
+      if (seen.has(book.id)) {
+        return false;
+      }
+
+      seen.add(book.id);
+      return true;
+    });
+  }, [items]);
 
   return (
     <ScrollView
@@ -26,8 +37,8 @@ export function TopSellingBooks({ items }: TopSellingBooksProps) {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.content}
     >
-      {repeatedItems.map((book, index) => (
-        <View key={`${book.id}-${index}`} style={styles.card}>
+      {uniqueItems.map((book) => (
+        <View key={book.id} style={styles.card}>
           <Image source={book.image} style={styles.cover} contentFit="cover" />
           {book.badge ? (
             <View style={styles.badge}>
