@@ -24,6 +24,10 @@ type TopicalNote = {
   document?: string;
 };
 
+type FeaturedNoteCardProps = {
+  layout?: "stack" | "two-column";
+};
+
 const getSubjectAvatar = (subject?: string) => {
   switch (subject) {
     case "Mathematics":
@@ -53,9 +57,12 @@ const getSubjectAvatar = (subject?: string) => {
   }
 };
 
-export const FeaturedNoteCard = () => {
+export const FeaturedNoteCard = ({
+  layout = "stack",
+}: FeaturedNoteCardProps) => {
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
+  const useTwoColumns = isWide && layout === "two-column";
   const [notes, setNotes] = useState<TopicalNote[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -114,9 +121,19 @@ export const FeaturedNoteCard = () => {
   }
 
   return (
-    <View style={[styles.list, isWide && styles.listWide]}>
+    <View
+      style={[
+        styles.list,
+        useTwoColumns ? styles.listTwoColumns : isWide && styles.listWide,
+      ]}
+    >
       {notes.map((note) => (
-        <FeaturedNoteItem key={note.id} note={note} isWide={isWide} />
+        <FeaturedNoteItem
+          key={note.id}
+          note={note}
+          isWide={useTwoColumns}
+          layout={layout}
+        />
       ))}
     </View>
   );
@@ -125,9 +142,11 @@ export const FeaturedNoteCard = () => {
 const FeaturedNoteItem = ({
   note,
   isWide,
+  layout,
 }: {
   note: TopicalNote;
   isWide: boolean;
+  layout: "stack" | "two-column";
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const title = note.title ?? "Featured note";
@@ -139,7 +158,13 @@ const FeaturedNoteItem = ({
   return (
     <Animated.View
       entering={FadeInUp.duration(420)}
-      style={[styles.itemWrapper, isWide && styles.itemWrapperWide]}
+      style={[
+        styles.itemWrapper,
+        isWide &&
+          (layout === "two-column"
+            ? styles.itemWrapperTwoColumns
+            : styles.itemWrapperWide),
+      ]}
     >
       <Pressable
         {...({
@@ -219,15 +244,24 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   listWide: {
+    flexDirection: "column",
+    gap: spacing.md,
+    width: "100%",
+  },
+  listTwoColumns: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     gap: spacing.md,
+    width: "100%",
   },
   itemWrapper: {
     width: "100%",
   },
   itemWrapperWide: {
+    width: "100%",
+  },
+  itemWrapperTwoColumns: {
     width: "48%",
   },
   card: {

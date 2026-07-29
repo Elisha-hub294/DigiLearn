@@ -46,17 +46,21 @@ export function TopSellingBooks({ items }: TopSellingBooksProps) {
             </View>
           ) : null}
           <View style={styles.info}>
-            <Text style={styles.title} numberOfLines={2}>
-              {book.title}
-            </Text>
-            <Text style={styles.author}>{book.author}</Text>
-            <View style={styles.metaRow}>
-              <Text style={styles.rating}>{book.rating}</Text>
+            <View style={styles.headRow}>
+              <View>
+                <Text style={styles.title} numberOfLines={2}>
+                  {book.title}
+                </Text>
+                <Text style={styles.author}>{book.author}</Text>
+              </View>
               <Image
                 source={book.avatar}
                 style={styles.avatar}
                 contentFit="cover"
               />
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.rating}>{book.rating}</Text>
             </View>
           </View>
         </View>
@@ -95,9 +99,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
   },
-  info: {
-    padding: spacing.md,
-  },
   title: {
     color: colors.text,
     fontSize: 14,
@@ -113,6 +114,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  headRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   rating: {
     color: "#FFB400",

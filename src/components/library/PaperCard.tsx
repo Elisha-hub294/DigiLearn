@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import React from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, shadows, spacing } from "../../constants/theme";
+import PdfPreview from "../home/PdfPreview";
 
 type PaperCardProps = {
   title: string;
@@ -32,7 +33,11 @@ export function PaperCard({
         }
       }}
     >
-      <Image source={image} style={styles.preview} contentFit="cover" />
+      {document ? (
+        <PdfPreview uri={document} style={styles.preview} />
+      ) : (
+        <Image source={image} style={styles.preview} contentFit="cover" />
+      )}
       <View style={styles.content}>
         <Text style={styles.subject}>{subject}</Text>
         <Text style={styles.title}>{title}</Text>

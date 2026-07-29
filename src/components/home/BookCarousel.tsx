@@ -1,4 +1,6 @@
 import { Image } from "expo-image";
+import { collection, getDocs } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import {
     FlatList,
     Pressable,
@@ -8,44 +10,134 @@ import {
     View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 
-const items = [
-  {
-    id: "b1",
-    title: "Mathematics for Senior",
-    author: "K. Tendo",
-    rating: "4.8",
-    image: require("../../../assets/images/thumb-1.jpeg"),
-  },
-  {
-    id: "b2",
-    title: "Physics Study Guide",
-    author: "A. Mwanga",
-    rating: "4.7",
-    image: require("../../../assets/images/pdf-preview.jpeg"),
-  },
-  {
-    id: "b3",
-    title: "Chemistry Workbook",
-    author: "J. Nakato",
-    rating: "4.9",
-    image: require("../../../assets/images/lib.jpeg"),
-  },
-];
+type BookItem = {
+  id: string;
+  title: string;
+  author: string;
+  rating: string;
+  image: any;
+};
+
+const pickString = (value: unknown, fallback = "") => {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+  return fallback;
+};
+
+const pickImage = (value: unknown, fallback: any) => {
+  if (typeof value === "string" && value.trim()) {
+    return value;
+  }
+  return fallback;
+};
+
+const formatRating = (value: unknown) => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return `${value.toFixed(1)}`;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value);
+    if (!Number.isNaN(parsed)) {
+      return `${parsed.toFixed(1)}`;
+    }
+  }
+
+  return "4.8";
+};
 
 export const BookCarousel = () => {
   const { width } = useWindowDimensions();
-  const data = [...items, ...items, ...items];
+  const [books, setBooks] = useState<BookItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const cardWidth = width >= 900 ? 220 : 180;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchBooks = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "books"));
+
+        if (!isMounted) {
+          return;
+        }
+
+        const fetchedBooks = snapshot.docs
+          .map((doc, index) => {
+            const data = doc.data() as Record<string, any>;
+            const ratingValue = Number.parseFloat(
+              data.rating || data.averageRating || data.score || "4.8",
+            );
+
+            return {
+              id: doc.id || `book-${index}`,
+              title: pickString(
+                data.title || data.name || data.bookTitle,
+                "Untitled book",
+              ),
+              author: pickString(
+                data.author || data.writer || data.publisher,
+                "Unknown author",
+              ),
+              rating: formatRating(ratingValue),
+              image: pickImage(
+                data.image || data.coverImage || data.cover || data.thumbnail,
+                require("../../../assets/images/lib.jpeg"),
+              ),
+            } satisfies BookItem;
+          })
+          .sort(
+            (a, b) => Number.parseFloat(b.rating) - Number.parseFloat(a.rating),
+          );
+
+        setBooks(fetchedBooks);
+      } catch (error) {
+        console.error("Failed to load textbooks", error);
+        if (isMounted) {
+          setBooks([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchBooks();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <Animated.View entering={FadeInUp.duration(680)} style={styles.container}>
+        <Text style={styles.loadingText}>Loading textbooks...</Text>
+      </Animated.View>
+    );
+  }
+
+  if (books.length === 0) {
+    return (
+      <Animated.View entering={FadeInUp.duration(680)} style={styles.container}>
+        <Text style={styles.loadingText}>No textbooks available yet.</Text>
+      </Animated.View>
+    );
+  }
 
   return (
     <Animated.View entering={FadeInUp.duration(680)} style={styles.container}>
       <FlatList
         horizontal
-        data={data}
+        data={books}
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Pressable
             style={[styles.card, { width: cardWidth }]}
@@ -76,6 +168,11 @@ export const BookCarousel = () => {
 
 const styles = StyleSheet.create({
   container: { marginBottom: spacing.sm },
+  loadingText: {
+    color: colors.subtitle,
+    fontSize: 13,
+    paddingVertical: spacing.sm,
+  },
   list: { paddingRight: spacing.md, paddingVertical: spacing.lg },
   card: {
     marginRight: spacing.md,

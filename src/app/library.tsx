@@ -183,6 +183,8 @@ export default function LibraryScreen() {
   const [formCover, setFormCover] = useState("");
   const [formRating, setFormRating] = useState("");
   const [formIsTop, setFormIsTop] = useState(false);
+  const [formPaperPages, setFormPaperPages] = useState("");
+  const [formPaperDoc, setFormPaperDoc] = useState("");
   const [heroSlides, setHeroSlides] = useState<HeroBook[]>([]);
   const [topBooks, setTopBooks] = useState<TopSellingBook[]>([]);
   const [promos, setPromos] = useState<PromotionalBannerItem[]>([]);
@@ -310,7 +312,10 @@ export default function LibraryScreen() {
             data.image || data.coverImage || data.thumbnail,
             defaultPaperImage,
           ),
-          document: pickString(data.document || data.pdf || data.url, ""),
+          document: pickString(
+            data.doc || data.document || data.pdf || data.url,
+            "",
+          ),
         });
         paperGroups.set(sectionKey, sectionItems);
       });
@@ -355,6 +360,8 @@ export default function LibraryScreen() {
     setFormCover("");
     setFormRating("");
     setFormIsTop(false);
+    setFormPaperPages("");
+    setFormPaperDoc("");
   }, []);
 
   const openForm = useCallback(
@@ -407,10 +414,11 @@ export default function LibraryScreen() {
           subject: formSubtitle.trim() || "General",
           type: formAuthor.trim() || "UNEB",
           year: formExtra.trim() || "2026",
-          pages: "12 Pages",
+          pages: formPaperPages.trim() || "12 Pages",
+          doc: formPaperDoc.trim() || "",
           image:
             "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/default-2d.png",
-          document: "",
+          document: formPaperDoc.trim() || "",
         });
       }
 
@@ -429,6 +437,8 @@ export default function LibraryScreen() {
     formCover,
     formExtra,
     formIsTop,
+    formPaperDoc,
+    formPaperPages,
     formRating,
     formSubtitle,
     formTitle,
@@ -496,7 +506,7 @@ export default function LibraryScreen() {
             onSeeAll={() => {}}
             actionLabel="More"
           />
-          <FeaturedNoteCard />
+          <FeaturedNoteCard layout="two-column" />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(560)} style={styles.section}>
@@ -545,7 +555,7 @@ export default function LibraryScreen() {
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Add new library item"
+        accessibilityLabel="Add a new book"
         style={[styles.fab, isAdding && styles.fabDisabled]}
         onPress={() => openForm("book")}
         disabled={isAdding}
@@ -555,6 +565,16 @@ export default function LibraryScreen() {
           size={24}
           color={colors.white}
         />
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Add a new past paper"
+        style={[styles.fabSecondary, isAdding && styles.fabDisabled]}
+        onPress={() => openForm("paper")}
+        disabled={isAdding}
+      >
+        <Icon name="file-text" size={22} color={colors.white} />
       </Pressable>
 
       <Modal
@@ -677,7 +697,7 @@ export default function LibraryScreen() {
                   value={formSubtitle}
                   onChangeText={setFormSubtitle}
                 />
-                <Text style={styles.fieldLabel}>Exam type</Text>
+                <Text style={styles.fieldLabel}>Type</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="UNEB / MOCK"
@@ -690,6 +710,21 @@ export default function LibraryScreen() {
                   placeholder="2026"
                   value={formExtra}
                   onChangeText={setFormExtra}
+                />
+                <Text style={styles.fieldLabel}>Pages</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="12"
+                  value={formPaperPages}
+                  onChangeText={setFormPaperPages}
+                  keyboardType="numeric"
+                />
+                <Text style={styles.fieldLabel}>Doc</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Document URL"
+                  value={formPaperDoc}
+                  onChangeText={setFormPaperDoc}
                 />
               </>
             ) : null}
@@ -743,6 +778,22 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 29,
     backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 8,
+    shadowColor: colors.text,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  fabSecondary: {
+    position: "absolute",
+    right: spacing.lg,
+    bottom: spacing.xl + 74,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "#ec4899",
     alignItems: "center",
     justifyContent: "center",
     elevation: 8,

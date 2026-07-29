@@ -1,7 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Linking,
   Pressable,
@@ -307,7 +307,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   cardWide: {
-    maxWidth: 760,
+    width: "100%",
+    maxWidth: "100%",
   },
   header: {
     flexDirection: "row",
