@@ -37,7 +37,7 @@ export const radius = {
 export const shadows = {
   card: {
     shadowColor: "#0F172A",
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.2,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 10 },
     elevation: 4,

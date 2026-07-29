@@ -54,7 +54,7 @@ const imageImports = {
   download: require("../../assets/images/download.png"),
   progress: require("../../assets/images/progress.png"),
   exam: require("../../assets/images/exam.png"),
-  footer: require("../../assets/images/footer-home.png"),
+  footer: require("../../assets/images/lib.jpeg"),
 };
 
 export const carouselData: CarouselItem[] = [
