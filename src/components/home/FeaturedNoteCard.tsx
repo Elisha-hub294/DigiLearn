@@ -1,10 +1,11 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Linking,
   Pressable,
+  Animated as RNAnimated,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -19,47 +20,32 @@ type TopicalNote = {
   id: string;
   title?: string;
   description?: string;
-  createdAt?: unknown;
   subject?: string;
   document?: string;
 };
 
-type FeaturedNoteCardProps = {
-  layout?: "stack" | "two-column";
+const AVATARS: Record<string, string> = {
+  Mathematics: "math",
+  Physics: "phy",
+  Biology: "bio",
+  Chemistry: "chem",
+  Art: "art",
+  Economics: "econ",
+  Entrepreneurship: "ent",
+  Computer: "ict",
+  Geography: "geo",
+  History: "hist",
+  English: "lang",
 };
 
-const getSubjectAvatar = (subject?: string) => {
-  switch (subject) {
-    case "Mathematics":
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/math-2d.png";
-    case "Physics":
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/phy-2d.png";
-    case "Biology":
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/bio-2d.png";
-    case "Chemistry":
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/chem-2d.png";
-    case "Art":
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/art-2d.png";
-    case "Economics":
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/econ-2d.png";
-    case "Entrepreneurship":
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/ent-2d.png";
-    case "Computer":
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/ict-2d.png";
-    case "Geography":
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/geo-2d.png";
-    case "History":
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/hist-2d.png";
-    case "English":
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/lang-2d.png";
-    default:
-      return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/default-2d.png";
-  }
-};
+const getAvatar = (sub?: string) =>
+  `https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/${AVATARS[sub || ""] || "default"}-2d.png`;
 
 export const FeaturedNoteCard = ({
   layout = "stack",
-}: FeaturedNoteCardProps) => {
+}: {
+  layout?: "stack" | "two-column";
+}) => {
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
   const useTwoColumns = isWide && layout === "two-column";
@@ -67,58 +53,45 @@ export const FeaturedNoteCard = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchFeaturedNotes = async () => {
-      try {
-        const notesRef = collection(db, "topicalNotesCards");
-        const noteQuery = query(notesRef, orderBy("createdAt", "desc"));
-        const snapshot = await getDocs(noteQuery);
-
-        if (!isMounted) {
-          return;
-        }
-
-        const fetchedNotes = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<TopicalNote, "id">),
-        }));
-
-        setNotes(fetchedNotes);
-      } catch (error) {
-        console.error("Failed to load featured notes", error);
-        if (isMounted) {
-          setNotes([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchFeaturedNotes();
-
+    let active = true;
+    getDocs(
+      query(collection(db, "topicalNotesCards"), orderBy("createdAt", "desc")),
+    )
+      .then(
+        (snap) =>
+          active &&
+          setNotes(
+            snap.docs.map((d) => ({ id: d.id, ...d.data() }) as TopicalNote),
+          ),
+      )
+      .catch(() => active && setNotes([]))
+      .finally(() => active && setLoading(false));
     return () => {
-      isMounted = false;
+      active = false;
     };
   }, []);
 
   if (loading) {
+    const skeletonCount = useTwoColumns ? 2 : 1;
     return (
-      <View style={[styles.stateCard, isWide && styles.stateCardWide]}>
-        <Text style={styles.stateTitle}>Loading notes...</Text>
+      <View
+        style={[
+          styles.list,
+          useTwoColumns ? styles.listTwoColumns : isWide && styles.listWide,
+        ]}
+      >
+        {Array.from({ length: skeletonCount }).map((_, index) => (
+          <SkeletonNoteCard
+            key={index}
+            isWide={useTwoColumns}
+            layout={layout}
+          />
+        ))}
       </View>
     );
   }
 
-  if (notes.length === 0) {
-    return (
-      <View style={[styles.stateCard, isWide && styles.stateCardWide]}>
-        <Text style={styles.stateTitle}>No notes available yet</Text>
-      </View>
-    );
-  }
+  if (!notes.length) return null;
 
   return (
     <View
@@ -139,6 +112,86 @@ export const FeaturedNoteCard = ({
   );
 };
 
+const SkeletonNoteCard = ({
+  isWide,
+  layout,
+}: {
+  isWide: boolean;
+  layout: string;
+}) => {
+  const pulseAnim = useRef(new RNAnimated.Value(0.3)).current;
+
+  useEffect(() => {
+    const pulse = RNAnimated.loop(
+      RNAnimated.sequence([
+        RNAnimated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        RNAnimated.timing(pulseAnim, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [pulseAnim]);
+
+  return (
+    <View
+      style={[
+        styles.itemWrapper,
+        isWide &&
+          (layout === "two-column"
+            ? styles.itemWrapperTwoColumns
+            : styles.itemWrapperWide),
+      ]}
+    >
+      <View style={styles.card}>
+        <RNAnimated.View
+          style={[
+            styles.previewWrap,
+            styles.skeletonBox,
+            styles.skeletonPreview,
+            { opacity: pulseAnim },
+          ]}
+        />
+        <View style={styles.content}>
+          <RNAnimated.View
+            style={[styles.avatar, styles.skeletonBox, { opacity: pulseAnim }]}
+          />
+          <View style={styles.contentData}>
+            <RNAnimated.View
+              style={[
+                styles.skeletonBox,
+                styles.skeletonTitle,
+                { opacity: pulseAnim },
+              ]}
+            />
+            <RNAnimated.View
+              style={[
+                styles.skeletonBox,
+                styles.skeletonDesc,
+                { opacity: pulseAnim },
+              ]}
+            />
+            <RNAnimated.View
+              style={[
+                styles.skeletonBox,
+                styles.skeletonDescShort,
+                { opacity: pulseAnim },
+              ]}
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
+
 const FeaturedNoteItem = ({
   note,
   isWide,
@@ -146,9 +199,9 @@ const FeaturedNoteItem = ({
 }: {
   note: TopicalNote;
   isWide: boolean;
-  layout: "stack" | "two-column";
+  layout: string;
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const title = note.title ?? "Featured note";
   const description =
     (note.description?.length ?? 0) > 100
@@ -167,32 +220,16 @@ const FeaturedNoteItem = ({
       ]}
     >
       <Pressable
-        {...({
-          onHoverIn: () => setIsHovered(true),
-          onHoverOut: () => setIsHovered(false),
-        } as any)}
-        style={({ pressed, hovered }: any) => [
+        onHoverIn={() => setHovered(true)}
+        onHoverOut={() => setHovered(false)}
+        style={({ pressed }) => [
           styles.card,
-          (pressed || hovered || isHovered) && {
-            backgroundColor: "#f0f0f0",
-            borderWidth: 1,
-            borderColor: "#d8d8d8",
-          },
+          (pressed || hovered) && styles.cardHovered,
         ]}
       >
         <Pressable
-          {...({
-            onHoverIn: () => setIsHovered(true),
-            onHoverOut: () => setIsHovered(false),
-          } as any)}
           style={styles.previewWrap}
-          onPress={() => {
-            if (note.document) {
-              Linking.openURL(note.document).catch((err) =>
-                console.error("Couldn't load page", err),
-              );
-            }
-          }}
+          onPress={() => note.document && Linking.openURL(note.document)}
         >
           {note.document ? (
             <PdfPreview uri={note.document} style={styles.preview} />
@@ -205,9 +242,10 @@ const FeaturedNoteItem = ({
           )}
           <View style={styles.overlay} />
         </Pressable>
+
         <View style={styles.content}>
           <Image
-            source={{ uri: getSubjectAvatar(note.subject) }}
+            source={{ uri: getAvatar(note.subject) }}
             style={styles.avatar}
             contentFit="cover"
           />
@@ -222,8 +260,8 @@ const FeaturedNoteItem = ({
             <Icon name="more-vertical" size={18} color={colors.subtitle} />
           </Pressable>
         </View>
+
         <View style={styles.actions}>
-          <Action icon="star" label="Like" />
           <Action icon="bookmark" label="Save" />
           <Action icon="share-2" label="Share" />
         </View>
@@ -240,52 +278,31 @@ const Action = ({ icon, label }: { icon: any; label: string }) => (
 );
 
 const styles = StyleSheet.create({
-  list: {
-    width: "100%",
-  },
-  listWide: {
-    flexDirection: "column",
-    gap: spacing.md,
-    width: "100%",
-  },
+  list: { width: "100%" },
+  listWide: { flexDirection: "column", gap: spacing.md },
   listTwoColumns: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     gap: spacing.md,
-    width: "100%",
   },
-  itemWrapper: {
-    width: "100%",
-  },
-  itemWrapperWide: {
-    width: "100%",
-  },
-  itemWrapperTwoColumns: {
-    width: "48%",
-  },
+  itemWrapper: { width: "100%" },
+  itemWrapperWide: { width: "100%" },
+  itemWrapperTwoColumns: { width: "48%" },
   card: {
     width: "100%",
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
-    borderRadius: radius.sm,
+    borderRadius: radius.lg,
     padding: 8,
     borderColor: "#ffffff",
     borderWidth: 1,
   },
-  stateCard: {
-    width: "100%",
-    minHeight: 120,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.white,
-    borderRadius: 24,
-    borderColor: "#eff4ff",
+  cardHovered: {
+    backgroundColor: "#f0f0f0",
     borderWidth: 1,
-  },
-  stateCardWide: {
-    maxWidth: 760,
+    borderColor: "#d8d8d8",
   },
   menuButton: {
     width: 36,
@@ -300,35 +317,27 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
     marginBottom: spacing.sm,
-    borderTopLeftRadius: radius.sm,
-    borderTopRightRadius: radius.sm,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
   },
   preview: { width: "100%", height: 250 },
-  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.1)" },
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+  },
   content: {
     flexDirection: "row",
     paddingHorizontal: spacing.sm,
     paddingBottom: spacing.sm,
   },
-  contentData: {
-    flex: 1,
-  },
-  stateTitle: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "700",
-  },
+  contentData: { flex: 1 },
   title: {
     color: colors.text,
     fontSize: 14,
     fontWeight: "500",
     marginBottom: 4,
   },
-  description: {
-    color: colors.text,
-    fontSize: 13,
-    lineHeight: 18,
-  },
+  description: { color: colors.text, fontSize: 13, lineHeight: 18 },
   actions: {
     flexDirection: "row",
     justifyContent: "flex-start",
@@ -347,4 +356,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
+  /* Skeleton Styles */
+  skeletonBox: { backgroundColor: "#EFEFEF", borderRadius: radius.sm },
+  skeletonPreview: { height: 250, marginBottom: spacing.sm },
+  skeletonTitle: { height: 16, width: "60%", marginBottom: 8 },
+  skeletonDesc: { height: 12, width: "90%", marginBottom: 6 },
+  skeletonDescShort: { height: 12, width: "40%" },
 });

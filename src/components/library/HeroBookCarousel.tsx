@@ -2,14 +2,14 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useMemo, useState } from "react";
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
-    useWindowDimensions,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from "react-native";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 
 type HeroBook = {
   id: string;
@@ -126,10 +126,9 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     height: 300,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     overflow: "hidden",
     backgroundColor: colors.white,
-    ...shadows.card,
   },
   inactiveCard: {
     transform: [{ scale: 0.96 }],

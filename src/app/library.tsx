@@ -134,7 +134,7 @@ export default function LibraryScreen() {
           <SectionHeader
             title="Categories"
             onSeeAll={() => {}}
-            actionLabel="Browse"
+            actionLabel=""
           />
           <CategorySlider items={CATEGORIES} />
         </Animated.View>
@@ -150,7 +150,7 @@ export default function LibraryScreen() {
 
         <Animated.View entering={FadeInUp.duration(560)} style={styles.section}>
           <SectionHeader
-            title="Top selling books"
+            title="Text Books"
             onSeeAll={() => {}}
             actionLabel="See all"
           />
@@ -243,6 +243,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: spacing.xl,
+    textTransform: "capitalize",
   },
   fab: {
     position: "absolute",

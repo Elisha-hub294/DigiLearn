@@ -33,11 +33,14 @@ export function PaperCard({
         }
       }}
     >
-      {document ? (
-        <PdfPreview uri={document} style={styles.preview} />
-      ) : (
-        <Image source={image} style={styles.preview} contentFit="cover" />
-      )}
+      <View style={styles.previewContainer}>
+        {document ? (
+          <PdfPreview uri={document} style={styles.preview} />
+        ) : (
+          <Image source={image} style={styles.preview} contentFit="cover" />
+        )}
+        <View style={styles.darkOverlay} />
+      </View>
       <View style={styles.content}>
         <Text style={styles.subject}>{subject}</Text>
         <Text style={styles.title}>{title}</Text>
@@ -54,14 +57,23 @@ const styles = StyleSheet.create({
   card: {
     width: 220,
     marginRight: spacing.md,
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     backgroundColor: colors.white,
     overflow: "hidden",
     ...shadows.card,
   },
-  preview: {
+  previewContainer: {
     width: "100%",
     height: 130,
+    position: "relative",
+  },
+  preview: {
+    width: "100%",
+    height: "100%",
+  },
+  darkOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
   },
   content: {
     paddingHorizontal: spacing.md,
@@ -77,7 +89,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "500",
     marginBottom: spacing.sm,
   },
   metaRow: {

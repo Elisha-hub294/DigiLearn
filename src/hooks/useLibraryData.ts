@@ -50,12 +50,36 @@ const DEFAULT_HERO_IMAGE = require("../../assets/images/lib.jpeg");
 const DEFAULT_AVATAR = require("../../assets/images/user.png");
 const DEFAULT_PAPER_IMAGE = require("../../assets/images/pdf-preview.jpeg");
 
+const OPERO_STEPHEN_AVATAR =
+  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/opero-stephen.jpeg";
+
 const pickString = (value: unknown, fallback = ""): string => {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 };
 
 const pickImage = (value: unknown, fallback: ImageSource): ImageSource => {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
+};
+
+const formatPages = (value: unknown): string => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return `${value} ${value === 1 ? "Page" : "Pages"}`;
+  }
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isNaN(parsed)) {
+      return `${parsed} ${parsed === 1 ? "Page" : "Pages"}`;
+    }
+    return value.trim();
+  }
+  return "12 Pages";
+};
+
+const resolveAuthorAvatar = (authorName: string): ImageSource => {
+  if (authorName.trim().toLowerCase() === "opero stephen") {
+    return OPERO_STEPHEN_AVATAR;
+  }
+  return DEFAULT_AVATAR;
 };
 
 const getRatingValue = (value: unknown): number => {
@@ -95,6 +119,10 @@ export function useLibraryData() {
             data.rating || data.averageRating || data.score,
           );
           const isTop = Boolean(data.isTop || data.featured || data.highlight);
+          const authorName = pickString(
+            data.author || data.writer || data.publisher,
+            "Unknown author",
+          );
 
           return {
             id: doc.id || `book-${index}`,
@@ -102,10 +130,7 @@ export function useLibraryData() {
               data.title || data.name || data.bookTitle,
               "Untitled book",
             ),
-            author: pickString(
-              data.author || data.writer || data.publisher,
-              "Unknown author",
-            ),
+            author: authorName,
             subtitle: pickString(
               data.subtitle || data.summary || data.description,
               "Fresh study resource",
@@ -118,10 +143,7 @@ export function useLibraryData() {
               data.badge || (isTop ? "Featured" : data.type),
               isTop ? "Featured" : "New",
             ),
-            avatar: pickImage(
-              data.avatar || data.authorAvatar || data.authorImage,
-              DEFAULT_AVATAR,
-            ),
+            avatar: resolveAuthorAvatar(authorName),
             ratingValue: ratingVal,
             isTop,
           };
@@ -162,7 +184,7 @@ export function useLibraryData() {
             "Explore a new study experience",
           ),
           image: pickImage(
-            data.image || data.coverImage || data.thumbnail,
+            data.cover || data.image || data.coverImage || data.thumbnail,
             DEFAULT_HERO_IMAGE,
           ),
           avatar: pickImage(
@@ -185,7 +207,7 @@ export function useLibraryData() {
         );
         const title = pickString(data.title || data.name, `Paper ${index + 1}`);
         const subject = pickString(data.subject || data.topic, "General");
-        const pages = pickString(data.pages || data.pageCount, "12 Pages");
+        const pages = formatPages(data.pages ?? data.pageCount);
 
         const sectionKey = `${type} ${year}`.trim();
         const sectionItems = paperGroups.get(sectionKey) ?? [];

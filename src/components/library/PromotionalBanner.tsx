@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 
 type PromotionalBannerProps = {
   title: string;
@@ -21,7 +21,9 @@ export function PromotionalBanner({
     <Pressable accessibilityRole="button" style={styles.card}>
       <Image source={image} style={styles.image} contentFit="cover" />
       <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.78)"]}
+        colors={["rgba(0,0,0,0.85)", "transparent"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
         style={styles.overlay}
       />
       <View style={styles.content}>
@@ -31,7 +33,9 @@ export function PromotionalBanner({
           <View style={styles.exploreButton}>
             <Text style={styles.exploreText}>Explore</Text>
           </View>
-          <Image source={avatar} style={styles.avatar} contentFit="cover" />
+          <View style={styles.avatarContainer}>
+            <Image source={avatar} style={styles.avatar} contentFit="cover" />
+          </View>
         </View>
       </View>
     </Pressable>
@@ -41,16 +45,15 @@ export function PromotionalBanner({
 const styles = StyleSheet.create({
   card: {
     height: 220,
-    borderRadius: radius.sm,
+    // borderRadius: radius.lg,
     overflow: "hidden",
     marginBottom: spacing.xl,
-    ...shadows.card,
   },
   image: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   content: {
     flex: 1,
@@ -87,9 +90,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
   },
+  avatarContainer: {},
   avatar: {
     width: 70,
     height: 70,
     borderRadius: radius.pill,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
   },
 });

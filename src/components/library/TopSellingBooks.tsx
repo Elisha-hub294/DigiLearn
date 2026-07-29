@@ -39,12 +39,14 @@ export function TopSellingBooks({ items }: TopSellingBooksProps) {
     >
       {uniqueItems.map((book) => (
         <View key={book.id} style={styles.card}>
-          <Image source={book.image} style={styles.cover} contentFit="cover" />
-          {book.badge ? (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{book.badge}</Text>
-            </View>
-          ) : null}
+          <View style={styles.coverContainer}>
+            <Image
+              source={book.image}
+              style={styles.cover}
+              contentFit="cover"
+            />
+            <View style={styles.imageOverlay} />
+          </View>
           <View style={styles.info}>
             <View style={styles.headRow}>
               <View>
@@ -81,23 +83,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     overflow: "hidden",
   },
-  cover: {
+  coverContainer: {
+    position: "relative",
     width: "100%",
     height: 220,
   },
-  badge: {
-    position: "absolute",
-    top: spacing.sm,
-    left: spacing.sm,
-    backgroundColor: "rgba(0,0,0,0.65)",
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
+  cover: {
+    width: "100%",
+    height: "100%",
   },
-  badgeText: {
-    color: colors.white,
-    fontSize: 11,
-    fontWeight: "700",
+  imageOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+  info: {
+    paddingVertical: spacing.sm,
   },
   title: {
     color: colors.text,
