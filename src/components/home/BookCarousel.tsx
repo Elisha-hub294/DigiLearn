@@ -1,11 +1,11 @@
 import { Image } from "expo-image";
 import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    FlatList,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, radius, spacing } from "../../constants/theme";
@@ -16,21 +16,21 @@ const items = [
     title: "Mathematics for Senior",
     author: "K. Tendo",
     rating: "4.8",
-    image: require("../../../assets/images/book1.jpg"),
+    image: require("../../../assets/images/thumb-1.jpeg"),
   },
   {
     id: "b2",
     title: "Physics Study Guide",
     author: "A. Mwanga",
     rating: "4.7",
-    image: require("../../../assets/images/book2.png"),
+    image: require("../../../assets/images/pdf-preview.jpeg"),
   },
   {
     id: "b3",
     title: "Chemistry Workbook",
     author: "J. Nakato",
     rating: "4.9",
-    image: require("../../../assets/images/book3.jpeg"),
+    image: require("../../../assets/images/lib.jpeg"),
   },
 ];
 
