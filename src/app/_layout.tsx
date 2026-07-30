@@ -13,7 +13,6 @@ export default function RootLayout() {
         <Tabs
           screenOptions={{
             headerShown: false,
-            tabBarStyle: { display: "none" },
           }}
           tabBar={(props: any) => <BottomTabBar {...props} />}
         >
@@ -21,7 +20,10 @@ export default function RootLayout() {
           <Tabs.Screen name="library" options={{ title: "Library" }} />
           <Tabs.Screen name="videos" options={{ title: "Courses" }} />
           <Tabs.Screen name="profile" options={{ title: "Account" }} />
-          <Tabs.Screen name="book-preview" options={{ href: null }} />
+          <Tabs.Screen
+            name="book-preview"
+            options={{ href: null, tabBarStyle: { display: "none" } }}
+          />
         </Tabs>
       </SafeAreaProvider>
     </GestureHandlerRootView>

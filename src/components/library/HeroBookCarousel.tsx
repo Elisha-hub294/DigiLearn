@@ -71,7 +71,7 @@ export function HeroBookCarousel({ data }: HeroBookCarouselProps) {
               key={`${item.id}-${index}`}
               accessibilityRole="button"
               accessibilityLabel={`Open ${item.title}`}
-              onPress={() => router.push({ pathname: "/book-preview", params: { id: item.id } } as any)}
+              onPress={() => router.push({ pathname: "/book-preview", params: { id: item.id, source: "library" } } as any)}
               style={[styles.slideWrapper, { width: itemWidth }]}
             >
               <View

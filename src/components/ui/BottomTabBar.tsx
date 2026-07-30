@@ -16,6 +16,12 @@ const tabs = [
 ] as const;
 
 export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
+  const activeRoute = state.routes[state.index];
+
+  if (activeRoute?.name === "book-preview") {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       {state.routes.map((route: TabRoute) => {

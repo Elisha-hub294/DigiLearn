@@ -39,7 +39,7 @@ export function TopSellingBooks({ items }: TopSellingBooksProps) {
       contentContainerStyle={styles.content}
     >
       {uniqueItems.map((book) => (
-        <Pressable key={book.id} style={styles.card} accessibilityRole="button" accessibilityLabel={`Open ${book.title}`} onPress={() => router.push({ pathname: "/book-preview", params: { id: book.id } } as any)}>
+        <Pressable key={book.id} style={styles.card} accessibilityRole="button" accessibilityLabel={`Open ${book.title}`} onPress={() => router.push({ pathname: "/book-preview", params: { id: book.id, source: "library" } } as any)}>
           <View style={styles.coverContainer}>
             <Image
               source={book.image}
