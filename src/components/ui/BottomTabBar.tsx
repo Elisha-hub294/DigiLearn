@@ -18,7 +18,10 @@ const tabs = [
 export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
   const activeRoute = state.routes[state.index];
 
-  if (activeRoute?.name === "book-preview") {
+  if (
+    activeRoute?.name === "book-preview" ||
+    activeRoute?.name === "lesson-player"
+  ) {
     return null;
   }
 

@@ -1,6 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "expo-router";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -21,6 +28,7 @@ const RESUME_DELAY_MS = 5000;
 const CARD_GAP = spacing.md; // matches marginRight on each card
 
 export const CoursesCarousel = () => {
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const { lessons, loading, error } = useTrendingLessons();
   const cardWidth = width >= 900 ? 240 : 220;
@@ -164,6 +172,20 @@ export const CoursesCarousel = () => {
             <Pressable
               style={[styles.card, { width: cardWidth }]}
               accessibilityRole="button"
+              accessibilityLabel={`Open lesson: ${item.title}`}
+              onPress={() =>
+                router.push({
+                  pathname: "/lesson-player",
+                  params: {
+                    title: item.title,
+                    teacher: item.teacher,
+                    subject: item.subject,
+                    duration: item.duration,
+                    link: item.link,
+                    thumbnail: item.thumbnail,
+                  },
+                })
+              }
             >
               <View style={styles.imageWrap}>
                 {item.thumbnail ? (
@@ -178,7 +200,7 @@ export const CoursesCarousel = () => {
                 <View style={styles.overlay} />
                 <View style={styles.playButton}>
                   <Text style={styles.playText}>
-                    <Ionicons name="play" size={20} color="#1111117a" />
+                    <Ionicons name="play" size={20} color="#ffffff7a" />
                   </Text>
                 </View>
                 {!!item.duration && (
@@ -229,8 +251,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: radius.sm,
     overflow: "hidden",
-    borderBottomColor: colors.border,
-    borderBottomWidth: 0.5,
   },
   imageWrap: { height: 132, position: "relative" },
   image: { width: "100%", height: "100%" },
@@ -243,7 +263,7 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.7)",
+    backgroundColor: "rgba(0, 149, 207, 0.7)",
     justifyContent: "center",
     alignItems: "center",
   },

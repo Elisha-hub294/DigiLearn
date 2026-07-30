@@ -28,7 +28,7 @@ const getHorizontalPadding = (width: number) => {
   if (width >= 1200) return 64;
   if (width >= 900) return 48;
   if (width >= 600) return 32;
-  if (width >= 400) return 10;
+  if (width >= 400) return 5;
   return 5;
 };
 

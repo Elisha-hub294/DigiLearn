@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   FadeIn,

@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -22,6 +22,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { getTeacherAvatar } from "../constants/teacherAvatar";
 import { dimensions } from "../constants/theme";
 
 function getYoutubeEmbedUrl(rawUrl?: string) {
@@ -52,19 +53,6 @@ function resolveImageSource(source?: string) {
     return { uri: source };
   }
   return require("../../assets/images/thumb-1.jpeg");
-}
-
-function resolveAvatarSource(source?: string) {
-  if (!source) {
-    return require("../../assets/images/user.png");
-  }
-  if (
-    typeof source === "string" &&
-    (source.startsWith("http") || source.startsWith("data:"))
-  ) {
-    return { uri: source };
-  }
-  return require("../../assets/images/user.png");
 }
 
 export default function LessonPlayerScreen() {
@@ -98,7 +86,7 @@ export default function LessonPlayerScreen() {
       return;
     }
     await WebBrowser.openBrowserAsync(embedUrl, {
-      presentationStyle: "fullScreen",
+      presentationStyle: WebBrowser.WebBrowserPresentationStyle.FullScreen,
       controlsColor: "#3B82F6",
     });
   }
@@ -156,7 +144,7 @@ export default function LessonPlayerScreen() {
         >
           <Ionicons name="chevron-back" size={24} color="#0F172A" />
         </Pressable>
-        <Text style={styles.headerTitle}>Lesson Preview</Text>
+        {/* <Text style={styles.headerTitle}>Lesson Preview</Text> */}
         <View style={styles.headerRightActions}>
           <Pressable
             accessibilityLabel="Bookmark lesson"
@@ -246,25 +234,6 @@ export default function LessonPlayerScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* Primary Watch Action Button */}
-        <Animated.View entering={FadeInDown.delay(100).duration(400)}>
-          <Pressable
-            style={styles.primaryWatchBtn}
-            onPress={openVideo}
-            accessibilityLabel="Watch full lesson video"
-            accessibilityRole="button"
-          >
-            <Ionicons name="play-circle" size={24} color="#FFFFFF" />
-            <Text style={styles.primaryWatchBtnText}>Watch Full Lesson</Text>
-            <Ionicons
-              name="arrow-forward"
-              size={20}
-              color="#FFFFFF"
-              style={styles.arrowIcon}
-            />
-          </Pressable>
-        </Animated.View>
-
         {/* Lesson Details & Educator Section */}
         <Animated.View
           entering={FadeInDown.delay(150).duration(400)}
@@ -275,7 +244,7 @@ export default function LessonPlayerScreen() {
           {/* Instructor Profile */}
           <View style={styles.instructorRow}>
             <Image
-              source={resolveAvatarSource(params.avatar)}
+              source={{ uri: getTeacherAvatar(params.teacher) }}
               style={styles.avatarImage}
               contentFit="cover"
             />
@@ -363,13 +332,14 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#fff",
     borderBottomColor: "#F1F5F9",
     borderBottomWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingVertical: 12,
+    backdropFilter: "blur(10px)",
   },
   iconButton: {
     alignItems: "center",
@@ -384,7 +354,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     color: "#0F172A",
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "600",
     letterSpacing: -0.3,
   },
   headerRightActions: {
@@ -400,13 +370,9 @@ const styles = StyleSheet.create({
   heroCardContainer: {
     aspectRatio: 1.6,
     backgroundColor: "#0F172A",
-    borderRadius: 24,
+    borderRadius: 10,
     elevation: 4,
     overflow: "hidden",
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
     width: "100%",
   },
   heroPressable: {
@@ -414,12 +380,12 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(15, 23, 42, 0.35)",
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(15, 23, 42, 0.3)",
   },
   subjectBadge: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 8,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: 5,
     left: 14,
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -429,7 +395,7 @@ const styles = StyleSheet.create({
   subjectBadgeText: {
     color: "#3B82F6",
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "500",
     letterSpacing: 0.6,
   },
   playButtonWrapper: {
@@ -443,16 +409,12 @@ const styles = StyleSheet.create({
   },
   playButtonInner: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#ffffff",
     borderRadius: 35,
     elevation: 6,
-    height: 70,
     justifyContent: "center",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    width: 70,
+    width: 60,
+    height: 60,
   },
   playIconOffset: {
     marginLeft: 3,
@@ -474,29 +436,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
-  primaryWatchBtn: {
-    alignItems: "center",
-    backgroundColor: "#3B82F6",
-    borderRadius: 16,
-    elevation: 4,
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    shadowColor: "#3B82F6",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-  },
-  primaryWatchBtnText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  arrowIcon: {
-    marginLeft: "auto",
-  },
   detailsCard: {
     backgroundColor: "#F8FAFC",
     borderColor: "#E2E8F0",
@@ -508,7 +447,7 @@ const styles = StyleSheet.create({
   title: {
     color: "#0F172A",
     fontSize: 22,
-    fontWeight: "800",
+    fontWeight: "600",
     letterSpacing: -0.4,
     lineHeight: 28,
   },

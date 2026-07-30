@@ -1,32 +1,22 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
+import { getTeacherAvatar } from "../../constants/teacherAvatar";
 import { videoColors } from "./videoDesign";
-
-function resolveImageSource(source?: number | string) {
-  if (!source) {
-    return require("../../../assets/images/tr-default.png");
-  }
-  if (typeof source === "string") {
-    return { uri: source };
-  }
-  return source;
-}
 
 export function TeacherInfo({
   name,
   uploadedAt,
-  avatar,
 }: {
   name: string;
   uploadedAt: string;
-  avatar?: number | string;
 }) {
   return (
     <Animated.View entering={FadeIn.duration(360)} style={styles.row}>
       <Image
-        source={resolveImageSource(avatar)}
+        source={{ uri: getTeacherAvatar(name) }}
         style={styles.avatar}
         contentFit="cover"
         transition={180}

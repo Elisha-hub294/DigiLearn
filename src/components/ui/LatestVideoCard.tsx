@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { DurationBadge } from "./DurationBadge";
@@ -78,11 +79,7 @@ export function LatestVideoCard({
           )}
         </View>
       </Pressable>
-      <TeacherInfo
-        name={item.teacher}
-        uploadedAt={item.uploadedAt}
-        avatar={item.avatar}
-      />
+      <TeacherInfo name={item.teacher} uploadedAt={item.uploadedAt} />
       <Text numberOfLines={2} style={styles.title}>
         {item.title}
       </Text>
