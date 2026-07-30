@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import React from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BottomTabBar } from "../components/ui/BottomTabBar";
@@ -20,6 +21,7 @@ export default function RootLayout() {
           <Tabs.Screen name="library" options={{ title: "Library" }} />
           <Tabs.Screen name="videos" options={{ title: "Courses" }} />
           <Tabs.Screen name="profile" options={{ title: "Account" }} />
+          <Tabs.Screen name="book-preview" options={{ href: null }} />
         </Tabs>
       </SafeAreaProvider>
     </GestureHandlerRootView>

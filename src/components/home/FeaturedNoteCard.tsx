@@ -1,9 +1,12 @@
 import { Feather as Icon } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system";
 import { Image } from "expo-image";
+import * as IntentLauncher from "expo-intent-launcher";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Linking,
+  Platform,
   Pressable,
   Animated as RNAnimated,
   StyleSheet,
@@ -40,6 +43,36 @@ const AVATARS: Record<string, string> = {
 
 const getAvatar = (sub?: string) =>
   `https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/${AVATARS[sub || ""] || "default"}-2d.png`;
+
+const openPdfDocument = async (url: string) => {
+  if (!url) return;
+
+  if (Platform.OS === "android") {
+    try {
+      const filename = url.split("/").pop()?.split("?")[0] || "document.pdf";
+      const localUri = `${FileSystem.cacheDirectory}${Date.now()}_${filename}`;
+
+      const downloadResult = await FileSystem.downloadAsync(url, localUri);
+      const contentUri = await FileSystem.getContentUriAsync(
+        downloadResult.uri,
+      );
+
+      await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
+        data: contentUri,
+        type: "application/pdf",
+        flags: 1,
+      });
+    } catch (error) {
+      console.error(
+        "Failed to launch intent, opening in fallback browser:",
+        error,
+      );
+      Linking.openURL(url).catch(console.error);
+    }
+  } else {
+    Linking.openURL(url).catch(console.error);
+  }
+};
 
 export const FeaturedNoteCard = ({
   layout = "stack",
@@ -229,7 +262,7 @@ const FeaturedNoteItem = ({
       >
         <Pressable
           style={styles.previewWrap}
-          onPress={() => note.document && Linking.openURL(note.document)}
+          onPress={() => note.document && openPdfDocument(note.document)}
         >
           {note.document ? (
             <PdfPreview uri={note.document} style={styles.preview} />
@@ -356,7 +389,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
-  /* Skeleton Styles */
   skeletonBox: { backgroundColor: "#EFEFEF", borderRadius: radius.sm },
   skeletonPreview: { height: 250, marginBottom: spacing.sm },
   skeletonTitle: { height: 16, width: "60%", marginBottom: 8 },

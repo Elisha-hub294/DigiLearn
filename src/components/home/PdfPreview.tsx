@@ -1,21 +1,24 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import Pdf from "react-native-pdf";
+import { StyleSheet, View } from "react-native";
+import { WebView } from "react-native-webview";
 
 interface PdfPreviewProps {
   uri: string;
-  style: any;
+  style?: any;
 }
 
 export default function PdfPreview({ uri, style }: PdfPreviewProps) {
+  // Uses Google Docs Viewer to render the PDF preview in webview
+  const googleDocsUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(
+    uri,
+  )}`;
+
   return (
     <View pointerEvents="none" style={style}>
-      <Pdf
-        source={{ uri, cache: true }}
+      <WebView
+        source={{ uri: googleDocsUrl }}
         style={StyleSheet.absoluteFill}
-        singlePage={true}
-        page={1}
-        onError={(error) => console.log("PDF render error:", error)}
+        scrollEnabled={false}
       />
     </View>
   );

@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 
 type TopSellingBook = {
@@ -38,7 +39,7 @@ export function TopSellingBooks({ items }: TopSellingBooksProps) {
       contentContainerStyle={styles.content}
     >
       {uniqueItems.map((book) => (
-        <View key={book.id} style={styles.card}>
+        <Pressable key={book.id} style={styles.card} accessibilityRole="button" accessibilityLabel={`Open ${book.title}`} onPress={() => router.push({ pathname: "/book-preview", params: { id: book.id } } as any)}>
           <View style={styles.coverContainer}>
             <Image
               source={book.image}
@@ -65,7 +66,7 @@ export function TopSellingBooks({ items }: TopSellingBooksProps) {
               <Text style={styles.rating}>{book.rating}</Text>
             </View>
           </View>
-        </View>
+        </Pressable>
       ))}
     </ScrollView>
   );

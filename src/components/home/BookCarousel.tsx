@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
 import { collection, getDocs } from "firebase/firestore";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
     FlatList,
@@ -142,6 +143,8 @@ export const BookCarousel = () => {
           <Pressable
             style={[styles.card, { width: cardWidth }]}
             accessibilityRole="button"
+            accessibilityLabel={`Open ${item.title}`}
+            onPress={() => router.push({ pathname: "/book-preview", params: { id: item.id } } as any)}
           >
             <Image
               source={item.image}
