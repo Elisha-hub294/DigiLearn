@@ -3,5 +3,57 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Book } from "./bookTypes";
 
-export function BookOverview({ book }: { book: Book }) { return <View><Text style={styles.heading}>Book Overview</Text><Text style={styles.description}>{book.description || "No overview is available for this book yet."}</Text><View style={styles.stats}>{book.pages ? <Text style={styles.stat}><Feather name="file-text" size={14} /> {book.pages} pages</Text> : null}{book.rating ? <Text style={styles.stat}><Feather name="star" size={14} color="#E8A600" /> {book.rating.toFixed(1)}</Text> : null}{typeof book.saves === "number" ? <Text style={styles.stat}><Feather name="heart" size={14} /> {book.saves} saved</Text> : null}</View><View style={styles.chips}>{book.subject.map((subject) => <View key={subject} style={styles.chip}><Text style={styles.chipText}>{subject}</Text></View>)}</View></View>; }
-const styles = StyleSheet.create({ heading: { fontSize: 21, fontWeight: "800", color: "#1B2730", marginBottom: 14 }, description: { color: "#555", fontSize: 16, lineHeight: 28 }, stats: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 18 }, stat: { color: "#52606D", fontSize: 13, fontWeight: "600" }, chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 16 }, chip: { backgroundColor: "#EEF7F3", borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7 }, chipText: { color: "#147B5B", fontWeight: "700", fontSize: 12 } });
+export function BookOverview({ book }: { book: Book }) {
+  return (
+    <View>
+      <Text style={styles.heading}>Book Overview</Text>
+      <Text style={styles.description}>
+        {book.description || "No overview is available for this book yet."}
+      </Text>
+      <View style={styles.stats}>
+        {book.pages ? (
+          <Text style={styles.stat}>
+            <Feather name="file-text" size={14} /> {book.pages} pages
+          </Text>
+        ) : null}
+        {book.rating ? (
+          <Text style={styles.stat}>
+            <Feather name="star" size={14} color="#E8A600" />{" "}
+            {book.rating.toFixed(1)}
+          </Text>
+        ) : null}
+        {typeof book.saves === "number" ? (
+          <Text style={styles.stat}>
+            <Feather name="heart" size={14} /> {book.saves} saved
+          </Text>
+        ) : null}
+      </View>
+      <View style={styles.chips}>
+        {book.subject.map((subject) => (
+          <View key={subject} style={styles.chip}>
+            <Text style={styles.chipText}>{subject}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+const styles = StyleSheet.create({
+  heading: {
+    fontSize: 21,
+    fontWeight: "500",
+    color: "#1B2730",
+    marginBottom: 14,
+  },
+  description: { color: "#555", fontSize: 16, lineHeight: 28 },
+  stats: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 18 },
+  stat: { color: "#52606D", fontSize: 13, fontWeight: "600" },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 16 },
+  chip: {
+    backgroundColor: "#EEF7F3",
+    borderRadius: 99,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  chipText: { color: "#147B5B", fontWeight: "700", fontSize: 12 },
+});
