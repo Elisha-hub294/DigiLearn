@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import PdfPreview from "../home/PdfPreview";
 import { FALLBACK_DOC_PREVIEW, TopicalNote } from "./pageTypes";
 
 export function PageHero({
@@ -33,13 +34,18 @@ export function PageHero({
       entering={FadeIn.duration(450)}
       style={[styles.hero, { height: heroHeight }]}
     >
-      <Image
-        source={{ uri: previewUri }}
-        placeholder={{ uri: FALLBACK_DOC_PREVIEW }}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-        transition={250}
-      />
+      {note.document ? (
+        <PdfPreview uri={note.document} style={StyleSheet.absoluteFill} />
+      ) : (
+        <Image
+          source={{ uri: previewUri }}
+          placeholder={{ uri: FALLBACK_DOC_PREVIEW }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          contentPosition="top"
+          transition={250}
+        />
+      )}
 
       <LinearGradient
         colors={[
@@ -49,6 +55,7 @@ export function PageHero({
         ]}
         locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
+        pointerEvents="none"
       />
 
       {/* Floating Navigation */}
@@ -68,6 +75,7 @@ export function PageHero({
       <Animated.View
         entering={FadeInUp.duration(480).delay(100)}
         style={styles.copy}
+        pointerEvents="none"
       >
         <Text style={styles.title} numberOfLines={2}>
           {note.title || "Untitled Page"}
@@ -107,6 +115,7 @@ const styles = StyleSheet.create({
     bottom: 34,
     left: 24,
     right: 24,
+    zIndex: 5,
   },
   title: {
     maxWidth: "85%",

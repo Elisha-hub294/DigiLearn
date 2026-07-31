@@ -10,11 +10,14 @@ import Animated, {
 export function BookmarkButton({
   selected,
   onPress,
+  accentColor = "#000000",
 }: {
   selected: boolean;
   onPress: () => void;
+  accentColor?: string;
 }) {
   const scale = useSharedValue(1);
+  const activeAccent = accentColor || "#000000";
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -37,14 +40,16 @@ export function BookmarkButton({
       <Animated.View
         style={[
           styles.button,
-          selected ? styles.selectedButton : styles.unselectedButton,
+          selected
+            ? [styles.selectedButton, { borderColor: `${activeAccent}44` }]
+            : styles.unselectedButton,
           animatedStyle,
         ]}
       >
         <Ionicons
           name={selected ? "bookmark" : "bookmark-outline"}
           size={22}
-          color={selected ? "#6C4DD9" : "#475569"}
+          color={selected ? activeAccent : "#475569"}
         />
       </Animated.View>
     </Pressable>
@@ -65,8 +70,7 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
   },
   selectedButton: {
-    backgroundColor: "#F4F0FF",
+    backgroundColor: "#F8FAFC",
     borderWidth: 1,
-    borderColor: "#D8CCFF",
   },
 });

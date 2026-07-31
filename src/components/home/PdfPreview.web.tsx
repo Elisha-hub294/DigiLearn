@@ -90,6 +90,7 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
         source={require("../../../assets/images/pdf-preview.jpeg")}
         style={style}
         contentFit="cover"
+        contentPosition="top"
       />
     );
   }
@@ -107,6 +108,7 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
           width: "100%",
           height: "100%",
           objectFit: "cover",
+          objectPosition: "top center",
           display: loading ? "none" : "block",
         }}
       />
@@ -117,7 +119,7 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
 const styles = StyleSheet.create({
   container: {
     overflow: "hidden",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
     backgroundColor: "#f5f5f5",
   },

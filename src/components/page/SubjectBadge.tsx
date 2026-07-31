@@ -13,6 +13,7 @@ export function SubjectBadge({
   pagesCount,
   isRecommended,
   isRecentlyUpdated,
+  accentColor = "#000000",
 }: {
   avatarUrl?: string;
   title: string;
@@ -21,8 +22,10 @@ export function SubjectBadge({
   pagesCount?: string | number;
   isRecommended?: boolean;
   isRecentlyUpdated?: boolean;
+  accentColor?: string;
 }) {
   const avatarSource = avatarUrl || DEFAULT_SUBJECT_AVATAR;
+  const activeAccent = accentColor || "#000000";
 
   return (
     <View style={styles.headerContainer}>
@@ -38,7 +41,7 @@ export function SubjectBadge({
         </Animated.View>
 
         <View style={styles.infoBlock}>
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={[styles.title, { color: activeAccent }]} numberOfLines={2}>
             {title}
           </Text>
           <Text style={styles.dateText} numberOfLines={1}>
@@ -51,8 +54,10 @@ export function SubjectBadge({
       <View style={styles.badgesRow}>
         {pagesCount ? (
           <View style={styles.pageBadge}>
-            <Feather name="file-text" size={13} color="#6C4DD9" />
-            <Text style={styles.pageBadgeText}>{pagesCount} Pages</Text>
+            <Feather name="file-text" size={13} color={activeAccent} />
+            <Text style={[styles.pageBadgeText, { color: activeAccent }]}>
+              {pagesCount} Pages
+            </Text>
           </View>
         ) : null}
 
@@ -117,7 +122,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#6C4DD9",
     lineHeight: 28,
   },
   dateText: {
@@ -142,7 +146,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   pageBadgeText: {
-    color: "#6C4DD9",
     fontWeight: "600",
     fontSize: 12,
   },

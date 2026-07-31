@@ -104,6 +104,30 @@ const openPdfDocument = async (url?: string) => {
   }
 };
 
+const extractAccentColor = (rawAccent: unknown): string => {
+  if (!rawAccent) return "#000000";
+  if (typeof rawAccent === "string" && rawAccent.trim()) {
+    const trimmed = rawAccent.trim();
+    if (trimmed.startsWith("#") || trimmed.startsWith("rgb") || trimmed.toLowerCase() === "black") {
+      return trimmed;
+    }
+    if (/^[0-9A-Fa-f]{6}$/.test(trimmed) || /^[0-9A-Fa-f]{3}$/.test(trimmed)) {
+      return `#${trimmed}`;
+    }
+    return trimmed;
+  }
+  if (typeof rawAccent === "object" && rawAccent !== null) {
+    const obj = rawAccent as Record<string, unknown>;
+    if (typeof obj.color === "string" && obj.color.trim()) {
+      return obj.color.trim();
+    }
+    if (typeof obj.hex === "string" && obj.hex.trim()) {
+      return obj.hex.trim();
+    }
+  }
+  return "#000000";
+};
+
 export function PagePreviewScreen() {
   const { id, source } = useLocalSearchParams<{
     id: string;
@@ -114,6 +138,7 @@ export function PagePreviewScreen() {
   const [allNotes, setAllNotes] = useState<TopicalNote[]>([]);
   const [sourceBooks, setSourceBooks] = useState<SourceBook[]>([]);
   const [subjectAvatar, setSubjectAvatar] = useState<string>(DEFAULT_SUBJECT_AVATAR);
+  const [subjectAccent, setSubjectAccent] = useState<string>("#000000");
   const [loading, setLoading] = useState(true);
   const [bookmarked, setBookmarked] = useState(false);
 
@@ -172,27 +197,34 @@ export function PagePreviewScreen() {
         });
         setAllNotes(mappedNotes);
 
-        // Subject Avatar Lookup
+        // Subject Avatar & Accent Lookup
         const currentSubjects = currentDoc?.subject ? normalizeArray(currentDoc.subject) : [];
         let matchedAvatar = DEFAULT_SUBJECT_AVATAR;
+        let matchedAccent = "#000000";
 
         if (currentSubjects.length > 0 && !subjectsSnap.empty) {
-          const subjectDocs = subjectsSnap.docs.map((s) => ({
-            name: (s.data().name as string)?.trim().toLowerCase(),
-            avatar: s.data().avatar as string,
-          }));
+          const subjectDocs = subjectsSnap.docs.map((s) => {
+            const sData = s.data() as Record<string, unknown>;
+            return {
+              name: (sData.name as string)?.trim().toLowerCase(),
+              avatar: sData.avatar as string,
+              accent: extractAccentColor(sData.accent),
+            };
+          });
 
           for (const subName of currentSubjects) {
             const match = subjectDocs.find(
               (s) => s.name && s.name === subName.trim().toLowerCase(),
             );
-            if (match && match.avatar) {
-              matchedAvatar = match.avatar;
+            if (match) {
+              if (match.avatar) matchedAvatar = match.avatar;
+              if (match.accent) matchedAccent = match.accent;
               break;
             }
           }
         }
         setSubjectAvatar(matchedAvatar);
+        setSubjectAccent(matchedAccent);
 
         // Source Books Lookup
         const pageBookTitles = currentDoc?.book ? normalizeArray(currentDoc.book) : [];
@@ -358,6 +390,7 @@ export function PagePreviewScreen() {
               pagesCount={note.pages}
               isRecommended={note.isRecommended}
               isRecentlyUpdated={isRecentlyUpdated}
+              accentColor={subjectAccent}
             />
 
             {/* Overview Section */}
@@ -377,6 +410,7 @@ export function PagePreviewScreen() {
             {/* Similar Pages Section (Hidden if empty) */}
             <SimilarPages
               pages={similarPages}
+              accentColor={subjectAccent}
               onSelectPage={(nextId) =>
                 router.replace({
                   pathname: "/page-preview",
@@ -401,6 +435,7 @@ export function PagePreviewScreen() {
             onBookmark={() => setBookmarked((prev) => !prev)}
             onOpen={handleOpenPdf}
             onShare={handleShare}
+            accentColor={subjectAccent}
           />
         </View>
       </View>

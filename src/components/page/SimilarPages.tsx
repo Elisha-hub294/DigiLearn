@@ -7,12 +7,16 @@ export function SimilarPages({
   pages,
   onSelectPage,
   onSeeAll,
+  accentColor = "#000000",
 }: {
   pages: TopicalNote[];
   onSelectPage: (id: string) => void;
   onSeeAll?: () => void;
+  accentColor?: string;
 }) {
   if (!pages || pages.length === 0) return null;
+
+  const activeAccent = accentColor || "#000000";
 
   return (
     <View style={styles.section}>
@@ -24,7 +28,7 @@ export function SimilarPages({
           onPress={onSeeAll}
           hitSlop={8}
         >
-          <Text style={styles.seeAllText}>See all</Text>
+          <Text style={[styles.seeAllText, { color: activeAccent }]}>See all</Text>
         </Pressable>
       </View>
       <ScrollView
@@ -62,7 +66,6 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 14,
-    color: "#6C4DD9",
     fontWeight: "600",
   },
   list: {

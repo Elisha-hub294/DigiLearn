@@ -6,8 +6,15 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 
-export function OpenButton({ onPress }: { onPress: () => void }) {
+export function OpenButton({
+  onPress,
+  accentColor = "#000000",
+}: {
+  onPress: () => void;
+  accentColor?: string;
+}) {
   const scale = useSharedValue(1);
+  const activeAccent = accentColor || "#000000";
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -26,7 +33,16 @@ export function OpenButton({ onPress }: { onPress: () => void }) {
       }}
       style={styles.wrap}
     >
-      <Animated.View style={[styles.button, animatedStyle]}>
+      <Animated.View
+        style={[
+          styles.button,
+          {
+            backgroundColor: activeAccent,
+            shadowColor: activeAccent,
+          },
+          animatedStyle,
+        ]}
+      >
         <Text allowFontScaling style={styles.text}>
           Open
         </Text>
@@ -45,10 +61,8 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 58,
     borderRadius: 30,
-    backgroundColor: "#6C4DD9",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#6C4DD9",
     shadowOpacity: 0.3,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },

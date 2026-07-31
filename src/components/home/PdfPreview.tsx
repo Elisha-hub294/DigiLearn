@@ -14,7 +14,7 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
   )}`;
 
   return (
-    <View pointerEvents="none" style={style}>
+    <View pointerEvents="none" style={[style, { justifyContent: "flex-start" }]}>
       <WebView
         source={{ uri: googleDocsUrl }}
         style={StyleSheet.absoluteFill}

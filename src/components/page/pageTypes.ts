@@ -18,6 +18,7 @@ export type SubjectItem = {
   id: string;
   name: string;
   avatar: string;
+  accent?: string;
 };
 
 export type SourceBook = {

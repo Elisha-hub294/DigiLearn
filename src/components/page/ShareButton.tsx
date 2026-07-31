@@ -2,16 +2,28 @@ import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, StyleSheet } from "react-native";
 
-export function ShareButton({ onPress }: { onPress: () => void }) {
+export function ShareButton({
+  onPress,
+  accentColor = "#000000",
+}: {
+  onPress: () => void;
+  accentColor?: string;
+}) {
+  const activeAccent = accentColor || "#000000";
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel="Share note document"
       onPress={onPress}
-      style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.button,
+        { borderColor: `${activeAccent}22` },
+        pressed && styles.pressed,
+      ]}
       hitSlop={8}
     >
-      <Feather name="share-2" size={20} color="#6C4DD9" />
+      <Feather name="share-2" size={20} color={activeAccent} />
     </Pressable>
   );
 }
@@ -23,9 +35,8 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F4F0FF",
+    backgroundColor: "#F8FAFC",
     borderWidth: 1,
-    borderColor: "#E9E5FF",
   },
   pressed: {
     opacity: 0.8,
