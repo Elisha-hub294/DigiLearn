@@ -86,7 +86,7 @@ export default function LessonPlayerScreen() {
       return;
     }
     await WebBrowser.openBrowserAsync(embedUrl, {
-      presentationStyle: WebBrowser.WebBrowserPresentationStyle.FullScreen,
+      presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
       controlsColor: "#3B82F6",
     });
   }

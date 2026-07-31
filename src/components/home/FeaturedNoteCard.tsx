@@ -2,6 +2,7 @@ import { Feather as Icon } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import { Image } from "expo-image";
 import * as IntentLauncher from "expo-intent-launcher";
+import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -50,7 +51,8 @@ const openPdfDocument = async (url: string) => {
   if (Platform.OS === "android") {
     try {
       const filename = url.split("/").pop()?.split("?")[0] || "document.pdf";
-      const localUri = `${FileSystem.cacheDirectory}${Date.now()}_${filename}`;
+      const cacheDir = (FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory || "";
+      const localUri = `${cacheDir}${Date.now()}_${filename}`;
 
       const downloadResult = await FileSystem.downloadAsync(url, localUri);
       const contentUri = await FileSystem.getContentUriAsync(
@@ -235,6 +237,7 @@ const FeaturedNoteItem = ({
   layout: string;
 }) => {
   const [hovered, setHovered] = useState(false);
+  const router = useRouter();
   const title = note.title ?? "Featured note";
   const description =
     (note.description?.length ?? 0) > 100
@@ -262,7 +265,15 @@ const FeaturedNoteItem = ({
       >
         <Pressable
           style={styles.previewWrap}
-          onPress={() => note.document && openPdfDocument(note.document)}
+          onPress={() =>
+            router.push({
+              pathname: "/page-preview",
+              params: {
+                id: note.id,
+                source: layout === "two-column" ? "library" : "home",
+              },
+            } as any)
+          }
         >
           {note.document ? (
             <PdfPreview uri={note.document} style={styles.preview} />

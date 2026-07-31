@@ -1,5 +1,11 @@
 import { Image } from "expo-image";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   FlatList,
   NativeScrollEvent,
@@ -85,11 +91,7 @@ const items = [
     title: "Luganda",
     image: `${SUPABASE_ICONS}/lug-3d.png`,
   },
-  {
-    id: "runyankole",
-    title: "Runyankole",
-    image: `${SUPABASE_ICONS}/runy-3d.png`,
-  },
+
   {
     id: "french",
     title: "French",

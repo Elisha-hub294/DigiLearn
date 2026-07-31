@@ -25,6 +25,10 @@ export default function RootLayout() {
             options={{ href: null, tabBarStyle: { display: "none" } }}
           />
           <Tabs.Screen
+            name="page-preview"
+            options={{ href: null, tabBarStyle: { display: "none" } }}
+          />
+          <Tabs.Screen
             name="lesson-player"
             options={{ href: null, tabBarStyle: { display: "none" } }}
           />

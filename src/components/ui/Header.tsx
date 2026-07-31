@@ -1,4 +1,5 @@
 import { Feather as Icon } from "@expo/vector-icons";
+import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
 
@@ -28,7 +29,7 @@ export const Header = ({
           <>
             <Text style={styles.date}>{date}</Text>
             <Text style={styles.greeting}>
-              Hi, <Text style={{ color: colors.primary }}>Elisha</Text>
+              Hi, <Text style={{ color: colors.primary }}>[Username]</Text>
             </Text>
           </>
         )}
