@@ -1,43 +1,73 @@
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Platform,
   Pressable,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from "react-native";
-import Pdf from "react-native-pdf";
+import { WebView } from "react-native-webview";
 import { colors, radius, spacing } from "../../constants/theme";
+
+// Fallback timeout: if onLoadEnd never fires (can happen with some PDFs),
+// hide the loading overlay after 20 seconds so the user isn't stuck.
+const LOAD_TIMEOUT_MS = 20_000;
 
 export function PdfReaderScreen() {
   const { uri, title } = useLocalSearchParams<{ uri: string; title?: string }>();
-  const { width, height } = useWindowDimensions();
 
-  const [totalPages, setTotalPages] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
-
+  const [loadError, setLoadError] = useState(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const animateProgress = (value: number) => {
-    Animated.timing(progressAnim, {
-      toValue: value,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
+  const decodedUri = uri ? decodeURIComponent(uri as string) : null;
+  const googleDocsUrl = decodedUri
+    ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(decodedUri)}`
+    : null;
+
+  // Animate the progress bar to a target value
+  const animateTo = (toValue: number, duration = 400) =>
+    Animated.timing(progressAnim, { toValue, duration, useNativeDriver: false }).start();
+
+  // Start a safety-net timer that dismisses the loading screen if the
+  // WebView never fires onLoadEnd (common with large PDFs / slow connections)
+  const startTimeout = () => {
+    clearTimeout(timeoutRef.current!);
+    timeoutRef.current = setTimeout(() => setLoaded(true), LOAD_TIMEOUT_MS);
+  };
+
+  useEffect(() => {
+    animateTo(0.3, 200); // immediately fill 30 % to show something is happening
+    startTimeout();
+    return () => clearTimeout(timeoutRef.current!);
+  }, []);
+
+  const handleLoadEnd = () => {
+    clearTimeout(timeoutRef.current!);
+    animateTo(1, 300);
+    setTimeout(() => setLoaded(true), 300);
+  };
+
+  const handleError = () => {
+    clearTimeout(timeoutRef.current!);
+    setLoaded(true);
+    setLoadError(true);
   };
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
   };
 
-  if (!uri) {
+  const progressBarWidth = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0%", "100%"],
+  });
+
+  if (!decodedUri || !googleDocsUrl) {
     return (
       <View style={styles.center}>
         <Feather name="alert-circle" size={48} color="#CBD5E1" />
@@ -48,11 +78,6 @@ export function PdfReaderScreen() {
       </View>
     );
   }
-
-  const progressBarWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0%", "100%"],
-  });
 
   return (
     <View style={styles.screen}>
@@ -66,85 +91,57 @@ export function PdfReaderScreen() {
           <Text style={styles.headerTitle} numberOfLines={1}>
             {title || "PDF Reader"}
           </Text>
-          {totalPages > 0 && (
-            <Text style={styles.headerSub}>
-              {currentPage} / {totalPages}
-            </Text>
-          )}
         </View>
 
         <View style={{ width: 40 }} />
       </View>
 
-      {/* ── Loading progress bar ── */}
+      {/* ── Animated progress bar ── */}
       {!loaded && (
         <View style={styles.progressTrack}>
           <Animated.View style={[styles.progressBar, { width: progressBarWidth }]} />
         </View>
       )}
 
+      {/* ── Loading overlay ── */}
+      {!loaded && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingCard}>
+            <Feather name="file-text" size={36} color={colors.primary} />
+            <Text style={styles.loadingLabel}>Opening PDF…</Text>
+            <View style={styles.loadingTrack}>
+              <Animated.View style={[styles.loadingFill, { width: progressBarWidth }]} />
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* ── Error state ── */}
-      {loadError ? (
+      {loadError && (
         <View style={styles.center}>
           <Feather name="alert-triangle" size={52} color="#F59E0B" />
           <Text style={styles.errorTitle}>Failed to load PDF</Text>
-          <Text style={styles.errorText}>{loadError}</Text>
+          <Text style={styles.errorText}>
+            The document could not be displayed.
+          </Text>
           <Pressable style={styles.backBtn} onPress={goBack}>
             <Text style={styles.backBtnText}>Go back</Text>
           </Pressable>
         </View>
-      ) : (
-        /* ── PDF Viewer ── */
-        <Pdf
-          source={{ uri, cache: true }}
-          style={[styles.pdf, { width, height: height - 72 }]}
-          fitPolicy={0}
-          enableAntialiasing
-          enableAnnotationRendering
-          trustAllCerts={false}
-          onLoadProgress={(percent) => {
-            setProgress(percent);
-            animateProgress(percent);
-          }}
-          onLoadComplete={(pages) => {
-            setTotalPages(pages);
-            setLoaded(true);
-            animateProgress(1);
-          }}
-          onPageChanged={(page, pages) => {
-            setCurrentPage(page);
-            setTotalPages(pages);
-          }}
-          onError={(error) => {
-            const msg =
-              typeof error === "object" && error !== null && "message" in error
-                ? String((error as any).message)
-                : "Unknown error";
-            setLoadError(msg);
-          }}
-          renderActivityIndicator={(p) => (
-            <View style={styles.loadingOverlay}>
-              <View style={styles.loadingCard}>
-                <Feather name="file-text" size={36} color={colors.primary} />
-                <Text style={styles.loadingLabel}>
-                  Loading PDF… {Math.round(p * 100)}%
-                </Text>
-                <View style={styles.loadingTrack}>
-                  <View style={[styles.loadingFill, { width: `${Math.round(p * 100)}%` }]} />
-                </View>
-              </View>
-            </View>
-          )}
-        />
       )}
 
-      {/* ── Page indicator pill (bottom) ── */}
-      {loaded && totalPages > 0 && (
-        <View style={styles.pagePill} pointerEvents="none">
-          <Text style={styles.pagePillText}>
-            {currentPage} / {totalPages}
-          </Text>
-        </View>
+      {/* ── WebView — always mounted so it loads in the background ── */}
+      {!loadError && (
+        <WebView
+          source={{ uri: googleDocsUrl }}
+          style={[styles.webview, !loaded && styles.webviewHidden]}
+          onLoadEnd={handleLoadEnd}
+          onError={handleError}
+          javaScriptEnabled
+          domStorageEnabled
+          startInLoadingState={false}
+          allowsFullscreenVideo={false}
+        />
       )}
     </View>
   );
@@ -193,11 +190,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.text,
   },
-  headerSub: {
-    fontSize: 11,
-    color: colors.subtitle,
-    marginTop: 1,
-  },
 
   // Progress bar
   progressTrack: {
@@ -209,13 +201,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
 
-  // PDF
-  pdf: {
+  // WebView
+  webview: {
     flex: 1,
     backgroundColor: "#1A1A2E",
   },
+  // Hide (but keep mounted) while loading, so it silently fetches in the background
+  webviewHidden: {
+    opacity: 0,
+    height: 0,
+    flex: 0,
+  },
 
-  // Loading overlay (custom renderActivityIndicator)
+  // Loading overlay
   loadingOverlay: {
     flex: 1,
     justifyContent: "center",
@@ -279,21 +277,5 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 14,
-  },
-
-  // Page indicator pill
-  pagePill: {
-    position: "absolute",
-    bottom: 16,
-    alignSelf: "center",
-    backgroundColor: "rgba(15,23,42,0.72)",
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  pagePillText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "600",
   },
 });
