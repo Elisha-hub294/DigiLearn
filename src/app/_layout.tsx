@@ -32,6 +32,10 @@ export default function RootLayout() {
             name="lesson-player"
             options={{ href: null, tabBarStyle: { display: "none" } }}
           />
+          <Tabs.Screen
+            name="pdf-reader"
+            options={{ href: null, tabBarStyle: { display: "none" } }}
+          />
         </Tabs>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -21,7 +21,8 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
   if (
     activeRoute?.name === "book-preview" ||
     activeRoute?.name === "page-preview" ||
-    activeRoute?.name === "lesson-player"
+    activeRoute?.name === "lesson-player" ||
+    activeRoute?.name === "pdf-reader"
   ) {
     return null;
   }

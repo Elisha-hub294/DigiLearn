@@ -1,14 +1,10 @@
 import { Feather } from "@expo/vector-icons";
-import * as FileSystem from "expo-file-system";
-import * as IntentLauncher from "expo-intent-launcher";
 import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Linking,
-  Platform,
   ScrollView,
   Share,
   StyleSheet,
@@ -72,37 +68,6 @@ function formatDate(createdAt: any): string {
   }
   return "Last updated • 2025";
 }
-
-const openPdfDocument = async (url?: string) => {
-  if (!url) {
-    Alert.alert("Notice", "No PDF document link is available for this note.");
-    return;
-  }
-
-  if (Platform.OS === "android") {
-    try {
-      const filename = url.split("/").pop()?.split("?")[0] || "document.pdf";
-      const cacheDir = (FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory || "";
-      const localUri = `${cacheDir}${Date.now()}_${filename}`;
-
-      const downloadResult = await FileSystem.downloadAsync(url, localUri);
-      const contentUri = await FileSystem.getContentUriAsync(
-        downloadResult.uri,
-      );
-
-      await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
-        data: contentUri,
-        type: "application/pdf",
-        flags: 1,
-      });
-    } catch (error) {
-      console.error("Failed to launch intent, opening in browser fallback:", error);
-      Linking.openURL(url).catch(console.error);
-    }
-  } else {
-    Linking.openURL(url).catch(console.error);
-  }
-};
 
 const extractAccentColor = (rawAccent: unknown): string => {
   if (!rawAccent) return "#000000";
@@ -358,7 +323,14 @@ export function PagePreviewScreen() {
   };
 
   const handleOpenPdf = () => {
-    void openPdfDocument(note.document);
+    if (!note.document) {
+      Alert.alert("Notice", "No PDF document link is available for this note.");
+      return;
+    }
+    router.push({
+      pathname: "/pdf-reader",
+      params: { uri: note.document, title: note.title ?? "PDF" },
+    } as any);
   };
 
   const subjectsList = normalizeArray(note.subject);
