@@ -1,8 +1,9 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated as RNAnimated,
   Linking,
   Pressable,
   StyleSheet,
@@ -149,12 +150,11 @@ export const TeacherPostCard = () => {
 
   if (loading) {
     return (
-      <Animated.View
-        entering={FadeInUp.duration(500)}
-        style={[styles.card, isWide && styles.cardWide]}
-      >
-        <Text style={styles.caption}>Loading teacher posts...</Text>
-      </Animated.View>
+      <View style={styles.list}>
+        {[0, 1].map((i) => (
+          <SkeletonTeacherPostCard key={i} />
+        ))}
+      </View>
     );
   }
 
@@ -285,6 +285,108 @@ const TeacherPostItem = ({
   );
 };
 
+const SkeletonTeacherPostCard = () => {
+  const pulseAnim = useRef(new RNAnimated.Value(0.3)).current;
+
+  useEffect(() => {
+    const pulse = RNAnimated.loop(
+      RNAnimated.sequence([
+        RNAnimated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        RNAnimated.timing(pulseAnim, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [pulseAnim]);
+
+  return (
+    <View style={[styles.card, { marginBottom: spacing.xl }]}>
+      {/* PDF preview block */}
+      <RNAnimated.View
+        style={[
+          styles.skeletonBox,
+          styles.skeletonPreview,
+          { opacity: pulseAnim },
+        ]}
+      />
+
+      {/* Header: avatar + name/time lines + badge */}
+      <View style={styles.header}>
+        <View style={styles.profileRow}>
+          <RNAnimated.View
+            style={[
+              styles.skeletonBox,
+              styles.skeletonAvatar,
+              { opacity: pulseAnim },
+            ]}
+          />
+          <View style={{ flex: 1 }}>
+            <RNAnimated.View
+              style={[
+                styles.skeletonBox,
+                styles.skeletonName,
+                { opacity: pulseAnim },
+              ]}
+            />
+            <RNAnimated.View
+              style={[
+                styles.skeletonBox,
+                styles.skeletonTime,
+                { opacity: pulseAnim },
+              ]}
+            />
+          </View>
+        </View>
+        <RNAnimated.View
+          style={[
+            styles.skeletonBox,
+            styles.skeletonBadge,
+            { opacity: pulseAnim },
+          ]}
+        />
+      </View>
+
+      {/* Caption lines */}
+      <RNAnimated.View
+        style={[
+          styles.skeletonBox,
+          styles.skeletonCaption,
+          { opacity: pulseAnim },
+        ]}
+      />
+      <RNAnimated.View
+        style={[
+          styles.skeletonBox,
+          styles.skeletonCaptionShort,
+          { opacity: pulseAnim },
+        ]}
+      />
+
+      {/* Action pills */}
+      <View style={styles.actions}>
+        {[0, 1, 2].map((i) => (
+          <RNAnimated.View
+            key={i}
+            style={[
+              styles.skeletonBox,
+              styles.skeletonAction,
+              { opacity: pulseAnim },
+            ]}
+          />
+        ))}
+      </View>
+    </View>
+  );
+};
+
 const Action = ({ icon, label }: { icon: any; label: string }) => (
   <View style={styles.actionItem}>
     <Icon name={icon} size={15} color={colors.subtitle} />
@@ -375,4 +477,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
+  // Skeleton styles
+  skeletonBox: { backgroundColor: "#EFEFEF", borderRadius: radius.sm },
+  skeletonPreview: {
+    height: 250,
+    marginBottom: spacing.xs,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+  },
+  skeletonAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    marginRight: spacing.sm,
+  },
+  skeletonName: { height: 14, width: "45%", marginBottom: 6 },
+  skeletonTime: { height: 11, width: "28%" },
+  skeletonBadge: { height: 28, width: 64, borderRadius: radius.pill },
+  skeletonCaption: { height: 13, width: "90%", marginBottom: 6 },
+  skeletonCaptionShort: { height: 13, width: "60%", marginBottom: spacing.sm },
+  skeletonAction: { height: 34, width: 70, borderRadius: 999 },
 });

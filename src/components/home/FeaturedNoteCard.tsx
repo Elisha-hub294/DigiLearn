@@ -265,6 +265,8 @@ const FeaturedNoteItem = ({
       >
         <Pressable
           style={styles.previewWrap}
+          onHoverIn={() => setHovered(true)}
+          onHoverOut={() => setHovered(false)}
           onPress={() =>
             router.push({
               pathname: "/page-preview",

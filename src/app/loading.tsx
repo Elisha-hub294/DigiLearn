@@ -24,7 +24,7 @@ export default function LoadingScreen() {
 
   return (
     <Animated.View style={styles.container}>
-      <Animated.Text style={[styles.title, animatedStyle]}>DigiLearn</Animated.Text>
+      <Animated.Text style={[styles.title, animatedStyle]}>OS Platform</Animated.Text>
     </Animated.View>
   );
 }
