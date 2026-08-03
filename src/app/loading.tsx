@@ -1,8 +1,12 @@
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { colors } from '../constants/theme';
+import { useRouter } from "expo-router";
+import { useEffect } from "react";
+import { StyleSheet } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { colors } from "../constants/theme";
 
 export default function LoadingScreen() {
   const router = useRouter();
@@ -13,7 +17,7 @@ export default function LoadingScreen() {
     opacity.value = withTiming(1, { duration: 600 });
     translateY.value = withTiming(0, { duration: 700 });
 
-    const timer = setTimeout(() => router.replace('/'), 1200);
+    const timer = setTimeout(() => router.replace("/"), 1200);
     return () => clearTimeout(timer);
   }, [opacity, router, translateY]);
 
@@ -24,7 +28,9 @@ export default function LoadingScreen() {
 
   return (
     <Animated.View style={styles.container}>
-      <Animated.Text style={[styles.title, animatedStyle]}>OS Platform</Animated.Text>
+      <Animated.Text style={[styles.title, animatedStyle]}>
+        DigiLearn
+      </Animated.Text>
     </Animated.View>
   );
 }
@@ -32,13 +38,13 @@ export default function LoadingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: colors.background,
   },
   title: {
     fontSize: 36,
-    fontWeight: '800',
+    fontWeight: "800",
     color: colors.primary,
     letterSpacing: 1,
   },
