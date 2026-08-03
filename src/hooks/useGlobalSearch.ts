@@ -9,27 +9,51 @@ const MAX_RECENT_ITEMS = 10;
 const FALLBACK_PDF_ICON =
   "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/pages-2d.png";
 
-export type SearchResultType = "topicalNote" | "pastPaper";
+export type SearchCategory =
+  | "All"
+  | "Notes"
+  | "Books"
+  | "Videos"
+  | "Teachers"
+  | "Past Papers";
+
+export type SearchResultType =
+  | "topicalNote"
+  | "pastPaper"
+  | "video"
+  | "book"
+  | "teacher";
 
 export type SearchResult = {
   id: string;
   type: SearchResultType;
   title: string;
-  description: string;
+  subtitle?: string;
+  description?: string;
+  author?: string;
+  teacher?: string;
+  subject?: string | string[];
   previewImage: string;
+  avatar?: string;
+  duration?: string;
+  uploadedAt?: string;
+  link?: string;
+  doc?: string;
   rawItem: any;
-  keywords?: string[];
-  subject?: string[];
 };
 
 export function useGlobalSearch() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<SearchCategory>("All");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [topicalNotes, setTopicalNotes] = useState<any[]>([]);
   const [pastPapers, setPastPapers] = useState<any[]>([]);
+  const [videos, setVideos] = useState<any[]>([]);
+  const [books, setBooks] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
   const [subjectsMap, setSubjectsMap] = useState<Record<string, string>>({});
   const [defaultPdfIcon, setDefaultPdfIcon] = useState<string>(FALLBACK_PDF_ICON);
 
@@ -60,7 +84,6 @@ export function useGlobalSearch() {
   useEffect(() => {
     let isMounted = true;
 
-    // Fetch subjects
     const unsubSubjects = onSnapshot(
       collection(db, "subject"),
       (snapshot) => {
@@ -77,7 +100,6 @@ export function useGlobalSearch() {
       (err) => console.warn("Error fetching subjects:", err)
     );
 
-    // Fetch default pdf icon from collection "default" where name == "pdf"
     (async () => {
       try {
         const defaultSnap = await getDocs(collection(db, "default"));
@@ -103,53 +125,56 @@ export function useGlobalSearch() {
     };
   }, []);
 
-  // 3. Subscribe to topicalNotesCards and pastPaper collections
+  // 3. Subscribe to Firestore collections simultaneously
   useEffect(() => {
     let isMounted = true;
-    let loadedNotes = false;
-    let loadedPapers = false;
-
-    const checkLoadingState = () => {
-      if (loadedNotes && loadedPapers && isMounted) {
-        setLoading(false);
-      }
-    };
 
     const unsubNotes = onSnapshot(
       collection(db, "topicalNotesCards"),
-      (snapshot) => {
+      (snap) => {
         if (!isMounted) return;
-        const notes = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setTopicalNotes(notes);
-        loadedNotes = true;
-        checkLoadingState();
+        setTopicalNotes(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       },
-      (err) => {
-        console.warn("Error fetching topicalNotesCards:", err);
-        loadedNotes = true;
-        checkLoadingState();
-      }
+      (err) => console.warn("Notes error:", err)
     );
 
     const unsubPapers = onSnapshot(
       collection(db, "pastPaper"),
-      (snapshot) => {
+      (snap) => {
         if (!isMounted) return;
-        const papers = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setPastPapers(papers);
-        loadedPapers = true;
-        checkLoadingState();
+        setPastPapers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
+      (err) => console.warn("Papers error:", err)
+    );
+
+    const unsubVideos = onSnapshot(
+      collection(db, "trendingLessons"),
+      (snap) => {
+        if (!isMounted) return;
+        setVideos(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
+      (err) => console.warn("Videos error:", err)
+    );
+
+    const unsubBooks = onSnapshot(
+      collection(db, "books"),
+      (snap) => {
+        if (!isMounted) return;
+        setBooks(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
+      (err) => console.warn("Books error:", err)
+    );
+
+    const unsubTeachers = onSnapshot(
+      collection(db, "teachers"),
+      (snap) => {
+        if (!isMounted) return;
+        setTeachers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        setLoading(false);
       },
       (err) => {
-        console.warn("Error fetching pastPaper:", err);
-        loadedPapers = true;
-        checkLoadingState();
+        console.warn("Teachers error:", err);
+        setLoading(false);
       }
     );
 
@@ -157,10 +182,13 @@ export function useGlobalSearch() {
       isMounted = false;
       unsubNotes();
       unsubPapers();
+      unsubVideos();
+      unsubBooks();
+      unsubTeachers();
     };
   }, []);
 
-  // 4. Debounce input query (~300ms)
+  // 4. Debounce search input (250–350 ms)
   const handleSetQuery = useCallback((text: string) => {
     setQuery(text);
     if (debounceTimerRef.current) {
@@ -171,19 +199,7 @@ export function useGlobalSearch() {
     }, 300);
   }, []);
 
-  // 5. Recent search persistence helpers
-  const saveRecentSearches = async (newSearches: string[]) => {
-    setRecentSearches(newSearches);
-    try {
-      await AsyncStorage.setItem(
-        RECENT_SEARCHES_KEY,
-        JSON.stringify(newSearches)
-      );
-    } catch (err) {
-      console.warn("Failed to save recent searches:", err);
-    }
-  };
-
+  // 5. Recent searches persistence
   const addRecentSearch = useCallback(
     async (term: string) => {
       const trimmed = term.trim();
@@ -207,7 +223,7 @@ export function useGlobalSearch() {
       setRecentSearches((prev) => {
         const updated = prev.filter((item) => item !== term);
         AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated)).catch(
-          (err) => console.warn("Failed to persist recent searches removal:", err)
+          (err) => console.warn("Failed to persist recent search removal:", err)
         );
         return updated;
       });
@@ -216,126 +232,226 @@ export function useGlobalSearch() {
   );
 
   const clearRecentSearches = useCallback(async () => {
-    await saveRecentSearches([]);
+    setRecentSearches([]);
+    await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify([]));
   }, []);
 
-  // Helper to determine topical note preview image by matching subject collection
-  const getTopicalNotePreview = useCallback(
+  // Helper to match subject image
+  const getNotePreview = useCallback(
     (item: any): string => {
-      const subjectProp = item.subject;
-      const subjects: string[] = Array.isArray(subjectProp)
-        ? subjectProp
-        : typeof subjectProp === "string"
-        ? [subjectProp]
+      const sub = item.subject;
+      const subjects: string[] = Array.isArray(sub)
+        ? sub
+        : typeof sub === "string"
+        ? [sub]
         : [];
-
-      for (const sub of subjects) {
-        const normalized = sub.toLowerCase().trim();
-        if (subjectsMap[normalized]) {
-          return subjectsMap[normalized];
-        }
+      for (const s of subjects) {
+        const norm = s.toLowerCase().trim();
+        if (subjectsMap[norm]) return subjectsMap[norm];
       }
-
-      if (item.preview) return item.preview;
-      if (item.avatar) return item.avatar;
-      return DEFAULT_SUBJECT_AVATAR;
+      return item.preview || item.avatar || DEFAULT_SUBJECT_AVATAR;
     },
     [subjectsMap]
   );
 
-  // 6. Search filtering & relevance ranking
+  // 6. Comprehensive filtering & Priority ranking
   const results = useMemo<SearchResult[]>(() => {
     const q = debouncedQuery.trim().toLowerCase();
-    if (q.length < 2) {
-      return [];
-    }
+    if (q.length < 2) return [];
 
-    const scoredResults: { score: number; item: SearchResult }[] = [];
+    const scored: { score: number; item: SearchResult }[] = [];
 
-    // Helper to evaluate item match score
-    const evaluateItem = (
+    const addScored = (
       rawItem: any,
       type: SearchResultType,
-      previewImage: string
+      title: string,
+      subtitle: string,
+      description: string,
+      author: string,
+      teacher: string,
+      subjectProp: any,
+      previewImage: string,
+      extra?: Partial<SearchResult>
     ) => {
-      const title = String(rawItem.title || "").trim();
-      const description = String(rawItem.description || "").trim();
+      const lowerTitle = title.toLowerCase();
+      const lowerAuthor = author.toLowerCase();
+      const lowerTeacher = teacher.toLowerCase();
 
-      const rawKeywords = rawItem.keywords;
-      const keywords: string[] = Array.isArray(rawKeywords)
-        ? rawKeywords.map((k) => String(k).toLowerCase())
-        : typeof rawKeywords === "string"
-        ? [rawKeywords.toLowerCase()]
-        : [];
-
-      const rawSub = rawItem.subject;
+      const rawSub = subjectProp;
       const subjects: string[] = Array.isArray(rawSub)
         ? rawSub.map((s) => String(s).toLowerCase())
         : typeof rawSub === "string"
         ? [rawSub.toLowerCase()]
         : [];
 
-      const lowerTitle = title.toLowerCase();
-      const lowerDesc = description.toLowerCase();
+      const rawKw = rawItem.keywords;
+      const keywords: string[] = Array.isArray(rawKw)
+        ? rawKw.map((k) => String(k).toLowerCase())
+        : typeof rawKw === "string"
+        ? [rawKw.toLowerCase()]
+        : [];
 
       let score = 0;
 
-      if (lowerTitle === q) {
-        score += 100;
-      } else if (lowerTitle.startsWith(q)) {
-        score += 80;
-      } else if (lowerTitle.includes(q)) {
-        score += 60;
-      }
-
-      if (keywords.some((k) => k.includes(q))) {
-        score += 40;
-      }
-
-      if (subjects.some((s) => s.includes(q))) {
-        score += 30;
-      }
-
-      if (lowerDesc.includes(q)) {
-        score += 20;
-      }
+      // Ranking Priority Rules:
+      // 1. Exact title/name match
+      if (lowerTitle === q) score += 1000;
+      // 2. Title starts with
+      else if (lowerTitle.startsWith(q)) score += 500;
+      // 3. Subject match
+      if (subjects.some((s) => s.includes(q))) score += 400;
+      // 4. Author match
+      if (lowerAuthor && lowerAuthor.includes(q)) score += 300;
+      // 5. Teacher match
+      if (lowerTeacher && lowerTeacher.includes(q)) score += 250;
+      // 6. Keyword match
+      if (keywords.some((k) => k.includes(q))) score += 200;
+      // 7. Partial title match
+      if (lowerTitle.includes(q) && score < 500) score += 150;
+      // 8. Description match
+      if (description.toLowerCase().includes(q)) score += 50;
 
       if (score > 0) {
-        scoredResults.push({
+        scored.push({
           score,
           item: {
-            id: rawItem.id,
+            id: String(rawItem.id || Math.random()),
             type,
             title,
+            subtitle,
             description,
+            author,
+            teacher,
+            subject: subjectProp,
             previewImage,
             rawItem,
-            keywords,
-            subject: subjects,
+            ...extra,
           },
         });
       }
     };
 
-    // Evaluate topical notes
-    topicalNotes.forEach((note) => {
-      evaluateItem(note, "topicalNote", getTopicalNotePreview(note));
-    });
-
-    // Evaluate past papers
-    pastPapers.forEach((paper) => {
-      evaluateItem(
-        paper,
-        "pastPaper",
-        paper.icon || paper.avatar || defaultPdfIcon
+    // Evaluate Notes
+    topicalNotes.forEach((n) => {
+      addScored(
+        n,
+        "topicalNote",
+        String(n.title || "Untitled Note"),
+        String(n.subject || "General"),
+        String(n.description || ""),
+        "",
+        "",
+        n.subject,
+        getNotePreview(n)
       );
     });
 
-    // Sort by relevance score descending
-    scoredResults.sort((a, b) => b.score - a.score);
+    // Evaluate Past Papers
+    pastPapers.forEach((p) => {
+      addScored(
+        p,
+        "pastPaper",
+        String(p.title || "Past Paper"),
+        String(p.subject || "UNEB"),
+        String(p.description || ""),
+        "",
+        "",
+        p.subject,
+        p.icon || p.avatar || defaultPdfIcon,
+        { doc: p.doc || p.pdf }
+      );
+    });
 
-    return scoredResults.map((r) => r.item);
-  }, [debouncedQuery, topicalNotes, pastPapers, defaultPdfIcon, getTopicalNotePreview]);
+    // Evaluate Videos
+    videos.forEach((v) => {
+      addScored(
+        v,
+        "video",
+        String(v.title || "Untitled Video"),
+        String(v.subject || "Lesson"),
+        "",
+        "",
+        String(v.teacher || "Teacher"),
+        v.subject,
+        typeof v.thumbnail === "string" ? v.thumbnail : "",
+        {
+          duration: v.duration || "10:00",
+          uploadedAt: v.uploadedAt ? String(v.uploadedAt) : "Recently",
+          avatar: typeof v.avatar === "string" ? v.avatar : "",
+          link: v.link || "",
+        }
+      );
+    });
+
+    // Evaluate Books
+    books.forEach((b) => {
+      addScored(
+        b,
+        "book",
+        String(b.title || "Untitled Book"),
+        String(b.author || "Unknown Author"),
+        String(b.description || ""),
+        String(b.author || ""),
+        "",
+        b.subject,
+        typeof b.image === "string"
+          ? b.image
+          : typeof b.avatar === "string"
+          ? b.avatar
+          : ""
+      );
+    });
+
+    // Evaluate Teachers
+    teachers.forEach((t) => {
+      addScored(
+        t,
+        "teacher",
+        String(t.name || "Teacher"),
+        String(t.subject || "Instructor"),
+        String(t.bio || t.description || `${t.subject || "Educator"} at ${t.school || "DigiLearn"}`),
+        "",
+        String(t.name || ""),
+        t.subject,
+        typeof t.image === "string"
+          ? t.image
+          : typeof t.avatar === "string"
+          ? t.avatar
+          : ""
+      );
+    });
+
+    // Sort by score descending
+    scored.sort((a, b) => b.score - a.score);
+
+    // Apply category filter if active
+    const mapped = scored.map((s) => s.item);
+    if (selectedCategory === "All") return mapped;
+
+    const categoryMap: Record<SearchCategory, SearchResultType | null> = {
+      All: null,
+      Notes: "topicalNote",
+      "Past Papers": "pastPaper",
+      Videos: "video",
+      Books: "book",
+      Teachers: "teacher",
+    };
+
+    const targetType = categoryMap[selectedCategory];
+    if (!targetType) return mapped;
+
+    return mapped.filter((i) => i.type === targetType);
+  }, [
+    debouncedQuery,
+    selectedCategory,
+    topicalNotes,
+    pastPapers,
+    videos,
+    books,
+    teachers,
+    defaultPdfIcon,
+    getNotePreview,
+  ]);
 
   const triggerManualSearch = useCallback(() => {
     setDebouncedQuery(query);
@@ -348,6 +464,8 @@ export function useGlobalSearch() {
     query,
     setQuery: handleSetQuery,
     debouncedQuery,
+    selectedCategory,
+    setSelectedCategory,
     results,
     recentSearches,
     loading,

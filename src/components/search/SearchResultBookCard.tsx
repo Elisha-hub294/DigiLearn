@@ -8,25 +8,20 @@ import Animated, {
 } from "react-native-reanimated";
 import { SearchResult } from "../../hooks/useGlobalSearch";
 
-type SearchResultCardProps = {
+type SearchResultBookCardProps = {
   item: SearchResult;
   query: string;
   onPress: (item: SearchResult) => void;
 };
 
-const BADGE_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  topicalNote: { bg: "#006EFF", text: "#FFFFFF", label: "Note" },
-  pastPaper: { bg: "#8B5CF6", text: "#FFFFFF", label: "Past Paper" },
-  book: { bg: "#F97316", text: "#FFFFFF", label: "Book" },
-  video: { bg: "#EF4444", text: "#FFFFFF", label: "Video" },
-  teacher: { bg: "#10B981", text: "#FFFFFF", label: "Teacher" },
-};
+const DEFAULT_BOOK_COVER =
+  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/images/lib.jpeg";
 
-export function SearchResultCard({
+export function SearchResultBookCard({
   item,
   query,
   onPress,
-}: SearchResultCardProps) {
+}: SearchResultBookCardProps) {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -41,12 +36,9 @@ export function SearchResultCard({
     scale.value = withSpring(1, { damping: 15, stiffness: 300 });
   };
 
-  const badgeInfo = BADGE_COLORS[item.type] || BADGE_COLORS.topicalNote;
-
-  const renderHighlightedTitle = () => {
+  const renderTitle = () => {
     const title = item.title || "";
     const trimmedQ = query.trim();
-
     if (!trimmedQ || trimmedQ.length < 2) {
       return (
         <Text style={styles.titleText} numberOfLines={2}>
@@ -54,7 +46,6 @@ export function SearchResultCard({
         </Text>
       );
     }
-
     try {
       const escaped = trimmedQ.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const regex = new RegExp(`(${escaped})`, "gi");
@@ -62,13 +53,10 @@ export function SearchResultCard({
 
       return (
         <Text style={styles.titleText} numberOfLines={2}>
-          {parts.map((part, index) => {
+          {parts.map((part, idx) => {
             const isMatch = part.toLowerCase() === trimmedQ.toLowerCase();
             return (
-              <Text
-                key={index}
-                style={isMatch ? styles.highlightedPart : undefined}
-              >
+              <Text key={idx} style={isMatch ? styles.highlightText : undefined}>
                 {part}
               </Text>
             );
@@ -85,36 +73,42 @@ export function SearchResultCard({
   };
 
   return (
-    <Animated.View style={[styles.wrapper, animatedStyle]}>
+    <Animated.View style={[styles.container, animatedStyle]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${badgeInfo.label}: ${item.title}`}
+        accessibilityLabel={`View book: ${item.title}`}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={() => onPress(item)}
         style={styles.card}
       >
-        <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: item.previewImage }}
-            style={styles.previewImage}
-            contentFit="contain"
-            transition={200}
-          />
+        <View style={styles.badgeWrap}>
+          <View style={[styles.badge, { backgroundColor: "#F97316" }]}>
+            <Text style={styles.badgeText}>Book</Text>
+          </View>
         </View>
 
-        <View style={styles.textContainer}>
-          <View style={[styles.badge, { backgroundColor: badgeInfo.bg }]}>
-            <Text style={[styles.badgeText, { color: badgeInfo.text }]}>
-              {badgeInfo.label}
-            </Text>
+        <View style={styles.cardBody}>
+          <View style={styles.coverWrapper}>
+            <Image
+              source={{ uri: item.previewImage || DEFAULT_BOOK_COVER }}
+              style={styles.coverImage}
+              contentFit="cover"
+              transition={200}
+            />
           </View>
-          {renderHighlightedTitle()}
-          {!!item.description && (
-            <Text style={styles.descriptionText} numberOfLines={2} ellipsizeMode="tail">
-              {item.description}
+
+          <View style={styles.textContainer}>
+            {renderTitle()}
+            <Text style={styles.authorText} numberOfLines={1}>
+              {item.author || item.subtitle || "Author"}
             </Text>
-          )}
+            {!!item.description && (
+              <Text style={styles.descText} numberOfLines={2}>
+                {item.description}
+              </Text>
+            )}
+          </View>
         </View>
       </Pressable>
     </Animated.View>
@@ -122,63 +116,75 @@ export function SearchResultCard({
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
+  container: {
     marginBottom: 16,
   },
   card: {
-    minHeight: 84,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
     backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 10,
+    borderRadius: 16,
+    padding: 14,
     borderWidth: 1,
     borderColor: "#E5E7EB",
   },
-  imageContainer: {
-    width: 80,
-    height: 64,
-    borderRadius: 8,
-    backgroundColor: "#F4F4F6",
-    overflow: "hidden",
-    alignItems: "center",
-    justifyContent: "center",
+  badgeWrap: {
+    marginBottom: 10,
   },
-  previewImage: {
+  badge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  cardBody: {
+    flexDirection: "row",
+    gap: 14,
+    alignItems: "center",
+  },
+  coverWrapper: {
+    width: 76,
+    height: 104,
+    borderRadius: 10,
+    overflow: "hidden",
+    backgroundColor: "#F3F4F6",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+  },
+  coverImage: {
     width: "100%",
     height: "100%",
   },
   textContainer: {
     flex: 1,
-    justifyContent: "center",
     gap: 4,
   },
-  badge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: "700",
-    textTransform: "uppercase",
-  },
   titleText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#202020",
-    lineHeight: 20,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#111111",
+    lineHeight: 22,
   },
-  highlightedPart: {
+  highlightText: {
     color: "#4D7CFE",
     fontWeight: "700",
   },
-  descriptionText: {
+  authorText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#006EFF",
+  },
+  descText: {
     fontSize: 13,
     fontWeight: "400",
-    color: "#8A8A8A",
+    color: "#6B7280",
     lineHeight: 18,
   },
 });
