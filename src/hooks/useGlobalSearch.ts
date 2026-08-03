@@ -5,7 +5,7 @@ import { db } from "../../firebaseConfig";
 import { DEFAULT_SUBJECT_AVATAR } from "../components/page/pageTypes";
 
 const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
-const MAX_RECENT_ITEMS = 20;
+const MAX_RECENT_ITEMS = 10;
 const FALLBACK_PDF_ICON =
   "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/pages-2d.png";
 const FALLBACK_TEACHER_AVATAR =
@@ -55,7 +55,7 @@ export function parseUploadedDate(value: unknown): Date | null {
       try {
         const d = candidate.toDate();
         if (d instanceof Date && !isNaN(d.getTime())) return d;
-      } catch {}
+      } catch { }
     }
   }
 
@@ -344,8 +344,8 @@ export function useGlobalSearch() {
       const subjects: string[] = Array.isArray(sub)
         ? sub
         : typeof sub === "string"
-        ? [sub]
-        : [];
+          ? [sub]
+          : [];
       for (const s of subjects) {
         const norm = s.toLowerCase().trim();
         if (subjectsMap[norm]) return subjectsMap[norm];
@@ -399,15 +399,15 @@ export function useGlobalSearch() {
       const subjects: string[] = Array.isArray(rawSub)
         ? rawSub.map((s) => String(s).toLowerCase())
         : typeof rawSub === "string"
-        ? [rawSub.toLowerCase()]
-        : [];
+          ? [rawSub.toLowerCase()]
+          : [];
 
       const rawKw = rawItem.keywords;
       const keywords: string[] = Array.isArray(rawKw)
         ? rawKw.map((k) => String(k).toLowerCase())
         : typeof rawKw === "string"
-        ? [rawKw.toLowerCase()]
-        : [];
+          ? [rawKw.toLowerCase()]
+          : [];
 
       let score = 0;
 
@@ -519,10 +519,10 @@ export function useGlobalSearch() {
         typeof b.cover === "string" && b.cover.trim()
           ? b.cover.trim()
           : typeof b.image === "string" && b.image.trim()
-          ? b.image.trim()
-          : typeof b.avatar === "string" && b.avatar.trim()
-          ? b.avatar.trim()
-          : ""
+            ? b.image.trim()
+            : typeof b.avatar === "string" && b.avatar.trim()
+              ? b.avatar.trim()
+              : ""
       );
     });
 

@@ -76,7 +76,7 @@ export default function HomeScreen() {
             }
           >
             <Header />
-            <SearchBar fromScreen="/" />
+            <SearchBar />
 
             <Animated.View
               entering={FadeInUp.duration(450)}

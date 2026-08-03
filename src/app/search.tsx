@@ -1,5 +1,5 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback } from "react";
+import { useRouter } from "expo-router";
+import { useCallback } from "react";
 import {
   FlatList,
   Pressable,
@@ -38,7 +38,6 @@ const CATEGORIES: SearchCategory[] = [
 export default function SearchScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
-  const { fromScreen } = useLocalSearchParams<{ fromScreen?: string }>();
 
   const {
     query,
@@ -56,7 +55,7 @@ export default function SearchScreen() {
 
   // Responsive max content width calculation
   const horizontalPadding =
-    width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 20 : 16;
+    width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 5 : 2;
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
 
   const isActivelySearching = debouncedQuery.trim().length >= 2;
@@ -199,7 +198,6 @@ export default function SearchScreen() {
           onChangeText={setQuery}
           onSubmit={triggerManualSearch}
           onClear={() => setQuery("")}
-          fromScreen={fromScreen}
           placeholder="Search pages, books, authors, teachers..."
         />
 

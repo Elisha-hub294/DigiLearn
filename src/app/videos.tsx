@@ -10,7 +10,7 @@ import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -202,7 +202,7 @@ export default function VideosScreen() {
             <View style={styles.dot} />
           </Pressable>
         </View>
-        <SearchBar fromScreen="/videos" />
+        <SearchBar />
         <View style={styles.filter}>
           <SubjectFilter selected={subject} onSelect={setSubject} />
         </View>
