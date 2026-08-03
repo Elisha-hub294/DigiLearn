@@ -1,5 +1,5 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
@@ -12,9 +12,11 @@ type SearchBarProps = {
   placeholder?: string;
   accessibilityLabel?: string;
   onPress?: () => void;
+  onBackPress?: () => void;
   isInput?: boolean;
   showBack?: boolean;
   autoFocus?: boolean;
+  fromScreen?: string;
 };
 
 export function SearchBar({
@@ -25,17 +27,52 @@ export function SearchBar({
   placeholder = "Search by subject, title, author, teacher...",
   accessibilityLabel = "Search input",
   onPress,
+  onBackPress,
   isInput = false,
   showBack = false,
   autoFocus = false,
+  fromScreen,
 }: SearchBarProps) {
   const router = useRouter();
+  const pathname = usePathname();
+
+  const getOriginScreen = () => {
+    if (fromScreen) return fromScreen;
+    if (pathname.includes("library")) return "/library";
+    if (pathname.includes("videos")) return "/videos";
+    return "/";
+  };
 
   const handlePress = () => {
     if (onPress) {
       onPress();
     } else {
-      router.push("/search" as never);
+      const origin = getOriginScreen();
+      router.push({
+        pathname: "/search",
+        params: { fromScreen: origin },
+      } as never);
+    }
+  };
+
+  const handleBack = () => {
+    if (onBackPress) {
+      onBackPress();
+      return;
+    }
+
+    const targetScreen = getOriginScreen();
+
+    if (targetScreen === "/library") {
+      router.navigate("/library" as never);
+    } else if (targetScreen === "/videos") {
+      router.navigate("/videos" as never);
+    } else if (targetScreen === "/") {
+      router.navigate("/" as never);
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.navigate("/" as never);
     }
   };
 
@@ -47,7 +84,7 @@ export function SearchBar({
             accessibilityRole="button"
             accessibilityLabel="Go back"
             hitSlop={8}
-            onPress={() => router.back()}
+            onPress={handleBack}
             style={styles.backButton}
           >
             <Icon name="arrow-left" size={22} color="#111111" />

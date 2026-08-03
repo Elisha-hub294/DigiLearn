@@ -202,7 +202,7 @@ export default function VideosScreen() {
             <View style={styles.dot} />
           </Pressable>
         </View>
-        <SearchBar />
+        <SearchBar fromScreen="/videos" />
         <View style={styles.filter}>
           <SubjectFilter selected={subject} onSelect={setSubject} />
         </View>

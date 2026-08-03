@@ -5,7 +5,7 @@ import { db } from "../../firebaseConfig";
 import { DEFAULT_SUBJECT_AVATAR } from "../components/page/pageTypes";
 
 const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
-const MAX_RECENT_ITEMS = 10;
+const MAX_RECENT_ITEMS = 20;
 const FALLBACK_PDF_ICON =
   "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/pages-2d.png";
 const FALLBACK_TEACHER_AVATAR =

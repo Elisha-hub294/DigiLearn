@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback } from "react";
 import {
   FlatList,
@@ -38,6 +38,7 @@ const CATEGORIES: SearchCategory[] = [
 export default function SearchScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
+  const { fromScreen } = useLocalSearchParams<{ fromScreen?: string }>();
 
   const {
     query,
@@ -198,6 +199,7 @@ export default function SearchScreen() {
           onChangeText={setQuery}
           onSubmit={triggerManualSearch}
           onClear={() => setQuery("")}
+          fromScreen={fromScreen}
           placeholder="Search pages, books, authors, teachers..."
         />
 

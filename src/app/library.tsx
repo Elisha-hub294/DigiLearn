@@ -123,7 +123,7 @@ export default function LibraryScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(360)}>
-          <SearchBar placeholder="Search by subject, title, etc" />
+          <SearchBar fromScreen="/library" placeholder="Search by subject, title, etc" />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(400)}>
