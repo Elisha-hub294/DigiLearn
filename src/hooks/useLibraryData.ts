@@ -4,6 +4,14 @@ import { db } from "../../firebaseConfig";
 
 type ImageSource = string;
 
+export type HeroSlideItem = {
+  id: string;
+  title: string;
+  description?: string;
+  image: ImageSource;
+  [key: string]: any;
+};
+
 export type TopSellingBook = {
   id: string;
   title: string;
@@ -58,9 +66,6 @@ const formatPages = (value: unknown): string => {
   return "12 Pages";
 };
 
-/**
- * Normalizes strings to lower case and trims whitespace to enable case-insensitive comparisons
- */
 const normalizeKey = (key: string): string => key.trim().toLowerCase();
 
 const resolveAuthorAvatar = (
@@ -92,6 +97,7 @@ export function useLibraryData() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const [heroSlides, setHeroSlides] = useState<HeroSlideItem[]>([]);
   const [topBooks, setTopBooks] = useState<TopSellingBook[]>([]);
   const [promos, setPromos] = useState<PromotionalBannerItem[]>([]);
   const [paperCollections, setPaperCollections] = useState<PaperSection[]>([]);
@@ -115,7 +121,6 @@ export function useLibraryData() {
       let defaultUserAvatar = "";
       let defaultPdfImage = "";
 
-      // Process default icon assets dynamically (case-insensitive checks)
       defaultSnapshot.docs.forEach((doc) => {
         const data = doc.data();
         const docName =
@@ -128,7 +133,6 @@ export function useLibraryData() {
         }
       });
 
-      // Map dynamic teacher avatars by normalized lowercase teacher name
       const teacherAvatars: Record<string, string> = {};
       teachersSnapshot.docs.forEach((doc) => {
         const data = doc.data();
@@ -178,6 +182,16 @@ export function useLibraryData() {
           };
         })
         .sort((a, b) => b.ratingValue - a.ratingValue);
+
+      // Derive Hero Slides from top books
+      const dynamicHeroSlides: HeroSlideItem[] = allBooks
+        .slice(0, 5)
+        .map((book) => ({
+          id: book.id,
+          title: book.title,
+          description: book.subtitle,
+          image: book.image,
+        }));
 
       const topSellingItems = allBooks.slice(0, 6).map((book) => ({
         id: book.id,
@@ -253,11 +267,13 @@ export function useLibraryData() {
         }),
       );
 
+      setHeroSlides(dynamicHeroSlides);
       setTopBooks(topSellingItems);
       setPromos(promotionalItems);
       setPaperCollections(sections);
     } catch (error) {
       console.error("Failed to load library data", error);
+      setHeroSlides([]);
       setTopBooks([]);
       setPromos([]);
       setPaperCollections([]);
@@ -279,6 +295,7 @@ export function useLibraryData() {
   return {
     loading,
     refreshing,
+    heroSlides,
     topBooks,
     promos,
     paperCollections,
