@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -102,9 +101,11 @@ export function SearchResultVideoCard({
           {/* 18-22% dark overlay for contrast */}
           <View style={styles.overlay} />
 
-          {/* Centered white play button */}
-          <View style={styles.playButton}>
-            <Feather name="play" size={20} color="#FFFFFF" style={{ marginLeft: 2 }} />
+          {/* Perfectly centered white play button container */}
+          <View style={styles.playButtonContainer} pointerEvents="none">
+            <View style={styles.playButton}>
+              <Feather name="play" size={20} color="#FFFFFF" style={{ marginLeft: 2 }} />
+            </View>
           </View>
 
           {/* Duration badge bottom-right */}
@@ -161,13 +162,11 @@ const styles = StyleSheet.create({
   },
   thumbWrapper: {
     width: "100%",
-    height: 180,
+    height: 300,
     borderRadius: 12,
     overflow: "hidden",
     position: "relative",
     backgroundColor: "#111111",
-    alignItems: "center",
-    justifyContent: "center",
   },
   thumbnail: {
     width: "100%",
@@ -177,16 +176,21 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.20)",
   },
+  playButtonContainer: {
+    ...StyleSheet.absoluteFill,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   playButton: {
-    width: 48,
-    height: 48,
+    width: 50,
+    height: 50,
     borderRadius: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    backgroundColor: "rgba(255, 0, 0, 0.8)",
     alignItems: "center",
     justifyContent: "center",
     elevation: 4,
     shadowColor: "#000",
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.4,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
   },

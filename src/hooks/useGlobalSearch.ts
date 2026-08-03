@@ -8,6 +8,8 @@ const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
 const MAX_RECENT_ITEMS = 10;
 const FALLBACK_PDF_ICON =
   "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/pages-2d.png";
+const FALLBACK_TEACHER_AVATAR =
+  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/opero-stephen.jpeg";
 
 export type SearchCategory =
   | "All"
@@ -55,6 +57,7 @@ export function useGlobalSearch() {
   const [books, setBooks] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [subjectsMap, setSubjectsMap] = useState<Record<string, string>>({});
+  const [teachersAvatarMap, setTeachersAvatarMap] = useState<Record<string, string>>({});
   const [defaultPdfIcon, setDefaultPdfIcon] = useState<string>(FALLBACK_PDF_ICON);
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -169,7 +172,18 @@ export function useGlobalSearch() {
       collection(db, "teachers"),
       (snap) => {
         if (!isMounted) return;
-        setTeachers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        const teacherList = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setTeachers(teacherList);
+
+        // Build name -> avatar map from teachers collection
+        const avatarMap: Record<string, string> = {};
+        teacherList.forEach((t: any) => {
+          if (t.name && (t.avatar || t.image)) {
+            const nameKey = String(t.name).toLowerCase().trim();
+            avatarMap[nameKey] = String(t.avatar || t.image).trim();
+          }
+        });
+        setTeachersAvatarMap(avatarMap);
         setLoading(false);
       },
       (err) => {
@@ -252,6 +266,23 @@ export function useGlobalSearch() {
       return item.preview || item.avatar || DEFAULT_SUBJECT_AVATAR;
     },
     [subjectsMap]
+  );
+
+  // Helper to resolve teacher avatar from teachers collection
+  const resolveTeacherAvatar = useCallback(
+    (teacherName?: string, rawAvatar?: any): string => {
+      if (typeof rawAvatar === "string" && rawAvatar.trim()) {
+        return rawAvatar.trim();
+      }
+      if (teacherName) {
+        const key = teacherName.toLowerCase().trim();
+        if (teachersAvatarMap[key]) {
+          return teachersAvatarMap[key];
+        }
+      }
+      return FALLBACK_TEACHER_AVATAR;
+    },
+    [teachersAvatarMap]
   );
 
   // 6. Comprehensive filtering & Priority ranking
@@ -364,6 +395,8 @@ export function useGlobalSearch() {
 
     // Evaluate Videos
     videos.forEach((v) => {
+      const teacherName = String(v.teacher || "Teacher");
+      const videoAvatar = resolveTeacherAvatar(teacherName, v.avatar);
       addScored(
         v,
         "video",
@@ -371,13 +404,13 @@ export function useGlobalSearch() {
         String(v.subject || "Lesson"),
         "",
         "",
-        String(v.teacher || "Teacher"),
+        teacherName,
         v.subject,
         typeof v.thumbnail === "string" ? v.thumbnail : "",
         {
           duration: v.duration || "10:00",
           uploadedAt: v.uploadedAt ? String(v.uploadedAt) : "Recently",
-          avatar: typeof v.avatar === "string" ? v.avatar : "",
+          avatar: videoAvatar,
           link: v.link || "",
         }
       );
@@ -402,22 +435,24 @@ export function useGlobalSearch() {
       );
     });
 
-    // Evaluate Teachers
+    // Evaluate Teachers (collect name and avatar from "teachers" collection)
     teachers.forEach((t) => {
+      const teacherName = String(t.name || "Teacher");
+      const teacherAvatar = resolveTeacherAvatar(teacherName, t.avatar || t.image);
+
       addScored(
         t,
         "teacher",
-        String(t.name || "Teacher"),
+        teacherName,
         String(t.subject || "Instructor"),
         String(t.bio || t.description || `${t.subject || "Educator"} at ${t.school || "DigiLearn"}`),
         "",
-        String(t.name || ""),
+        teacherName,
         t.subject,
-        typeof t.image === "string"
-          ? t.image
-          : typeof t.avatar === "string"
-          ? t.avatar
-          : ""
+        teacherAvatar,
+        {
+          avatar: teacherAvatar,
+        }
       );
     });
 
@@ -451,6 +486,7 @@ export function useGlobalSearch() {
     teachers,
     defaultPdfIcon,
     getNotePreview,
+    resolveTeacherAvatar,
   ]);
 
   const triggerManualSearch = useCallback(() => {

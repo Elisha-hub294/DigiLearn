@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -80,7 +79,14 @@ export function SearchResultTeacherCard({
         {/* Left: Large circular avatar (64px) */}
         <View style={styles.avatarWrapper}>
           <Image
-            source={{ uri: item.previewImage || DEFAULT_TEACHER_AVATAR }}
+            source={{
+              uri:
+                item.avatar ||
+                item.previewImage ||
+                item.rawItem?.avatar ||
+                item.rawItem?.image ||
+                DEFAULT_TEACHER_AVATAR,
+            }}
             style={styles.avatar}
             contentFit="cover"
             transition={200}
@@ -150,6 +156,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "700",
+    textTransform: "capitalize",
   },
   highlightText: {
     color: "#60A5FA",

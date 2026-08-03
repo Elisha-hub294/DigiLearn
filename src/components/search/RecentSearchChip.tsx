@@ -21,6 +21,9 @@ export function RecentSearchChip({
   const opacity = useSharedValue(1);
   const scale = useSharedValue(1);
 
+  const displayTerm =
+    term.length > 20 ? `${term.slice(0, 20)}...` : term;
+
   const handleRemove = () => {
     opacity.value = withTiming(0, { duration: 200 });
     scale.value = withTiming(0.8, { duration: 200 });
@@ -43,8 +46,8 @@ export function RecentSearchChip({
         onPress={() => onSelect(term)}
         style={styles.textArea}
       >
-        <Text style={styles.termText} numberOfLines={1}>
-          {term}
+        <Text style={styles.termText} numberOfLines={1} ellipsizeMode="tail">
+          {displayTerm}
         </Text>
       </Pressable>
 
@@ -74,10 +77,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 10,
     marginBottom: 10,
+    maxWidth: 240,
   },
   textArea: {
     justifyContent: "center",
     paddingRight: 6,
+    flexShrink: 1,
   },
   termText: {
     fontSize: 14,
