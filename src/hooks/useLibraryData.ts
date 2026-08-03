@@ -1,18 +1,8 @@
 import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
-import { ImageSourcePropType } from "react-native";
 import { db } from "../../firebaseConfig";
 
-type ImageSource = string | ImageSourcePropType;
-
-export type HeroBook = {
-  id: string;
-  title: string;
-  author: string;
-  subtitle: string;
-  image: ImageSource;
-  badge?: string;
-};
+type ImageSource = string;
 
 export type TopSellingBook = {
   id: string;
@@ -46,18 +36,11 @@ export type PaperSection = {
   items: PaperItem[];
 };
 
-const DEFAULT_HERO_IMAGE = require("../../assets/images/lib.jpeg");
-const DEFAULT_AVATAR = require("../../assets/images/user.png");
-const DEFAULT_PAPER_IMAGE = require("../../assets/images/pdf-preview.jpeg");
-
-const OPERO_STEPHEN_AVATAR =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/opero-stephen.jpeg";
-
 const pickString = (value: unknown, fallback = ""): string => {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 };
 
-const pickImage = (value: unknown, fallback: ImageSource): ImageSource => {
+const pickImage = (value: unknown, fallback: string): string => {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 };
 
@@ -75,11 +58,21 @@ const formatPages = (value: unknown): string => {
   return "12 Pages";
 };
 
-const resolveAuthorAvatar = (authorName: string): ImageSource => {
-  if (authorName.trim().toLowerCase() === "opero stephen") {
-    return OPERO_STEPHEN_AVATAR;
+/**
+ * Normalizes strings to lower case and trims whitespace to enable case-insensitive comparisons
+ */
+const normalizeKey = (key: string): string => key.trim().toLowerCase();
+
+const resolveAuthorAvatar = (
+  authorName: string,
+  teacherAvatars: Record<string, string>,
+  defaultUserAvatar: string,
+): string => {
+  const normalizedAuthor = normalizeKey(authorName);
+  if (teacherAvatars[normalizedAuthor]) {
+    return teacherAvatars[normalizedAuthor];
   }
-  return DEFAULT_AVATAR;
+  return defaultUserAvatar;
 };
 
 const getRatingValue = (value: unknown): number => {
@@ -99,18 +92,50 @@ export function useLibraryData() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [heroSlides, setHeroSlides] = useState<HeroBook[]>([]);
   const [topBooks, setTopBooks] = useState<TopSellingBook[]>([]);
   const [promos, setPromos] = useState<PromotionalBannerItem[]>([]);
   const [paperCollections, setPaperCollections] = useState<PaperSection[]>([]);
 
   const loadLibraryData = useCallback(async () => {
     try {
-      const [booksSnapshot, promoSnapshot, papersSnapshot] = await Promise.all([
+      const [
+        booksSnapshot,
+        promoSnapshot,
+        papersSnapshot,
+        teachersSnapshot,
+        defaultSnapshot,
+      ] = await Promise.all([
         getDocs(collection(db, "books")),
         getDocs(collection(db, "promotionalBanner")),
         getDocs(collection(db, "pastPaper")),
+        getDocs(collection(db, "teachers")),
+        getDocs(collection(db, "default")),
       ]);
+
+      let defaultUserAvatar = "";
+      let defaultPdfImage = "";
+
+      // Process default icon assets dynamically (case-insensitive checks)
+      defaultSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        const docName =
+          typeof data.name === "string" ? normalizeKey(data.name) : "";
+        if (docName === "user" && typeof data.icon === "string") {
+          defaultUserAvatar = data.icon;
+        }
+        if (docName === "pdf" && typeof data.icon === "string") {
+          defaultPdfImage = data.icon;
+        }
+      });
+
+      // Map dynamic teacher avatars by normalized lowercase teacher name
+      const teacherAvatars: Record<string, string> = {};
+      teachersSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        if (typeof data.name === "string" && typeof data.avatar === "string") {
+          teacherAvatars[normalizeKey(data.name)] = data.avatar;
+        }
+      });
 
       const allBooks = booksSnapshot.docs
         .map((doc, index) => {
@@ -137,30 +162,22 @@ export function useLibraryData() {
             ),
             image: pickImage(
               data.image || data.coverImage || data.cover || data.thumbnail,
-              DEFAULT_HERO_IMAGE,
+              "",
             ),
             badge: pickString(
               data.badge || (isTop ? "Featured" : data.type),
               isTop ? "Featured" : "New",
             ),
-            avatar: resolveAuthorAvatar(authorName),
+            avatar: resolveAuthorAvatar(
+              authorName,
+              teacherAvatars,
+              defaultUserAvatar,
+            ),
             ratingValue: ratingVal,
             isTop,
           };
         })
         .sort((a, b) => b.ratingValue - a.ratingValue);
-
-      const featuredBooks = allBooks.filter((book) => book.isTop);
-      const heroItems = (featuredBooks.length > 0 ? featuredBooks : allBooks)
-        .slice(0, 6)
-        .map(({ id, title, author, subtitle, image, badge }) => ({
-          id,
-          title,
-          author,
-          subtitle,
-          image,
-          badge,
-        }));
 
       const topSellingItems = allBooks.slice(0, 6).map((book) => ({
         id: book.id,
@@ -185,11 +202,11 @@ export function useLibraryData() {
           ),
           image: pickImage(
             data.cover || data.image || data.coverImage || data.thumbnail,
-            DEFAULT_HERO_IMAGE,
+            "",
           ),
           avatar: pickImage(
             data.avatar || data.authorAvatar || data.userImage,
-            DEFAULT_AVATAR,
+            defaultUserAvatar,
           ),
         };
       });
@@ -219,7 +236,7 @@ export function useLibraryData() {
           pages,
           image: pickImage(
             data.image || data.coverImage || data.thumbnail,
-            DEFAULT_PAPER_IMAGE,
+            defaultPdfImage,
           ),
           document: pickString(
             data.doc || data.document || data.pdf || data.url,
@@ -236,13 +253,11 @@ export function useLibraryData() {
         }),
       );
 
-      setHeroSlides(heroItems);
       setTopBooks(topSellingItems);
       setPromos(promotionalItems);
       setPaperCollections(sections);
     } catch (error) {
       console.error("Failed to load library data", error);
-      setHeroSlides([]);
       setTopBooks([]);
       setPromos([]);
       setPaperCollections([]);
@@ -264,7 +279,6 @@ export function useLibraryData() {
   return {
     loading,
     refreshing,
-    heroSlides,
     topBooks,
     promos,
     paperCollections,

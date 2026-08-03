@@ -1,9 +1,11 @@
-import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { AuthorCard } from "./AuthorCard";
 
-export function AuthorsCarousel({ authors }: { authors: string[] }) {
+type AuthorItem = string | { name: string; avatar?: string };
+
+export function AuthorsCarousel({ authors }: { authors: AuthorItem[] }) {
   const visibleAuthors = authors.length ? authors : ["Unknown author"];
+
   return (
     <View style={styles.section}>
       <Text style={styles.heading}>Authors</Text>
@@ -12,13 +14,24 @@ export function AuthorsCarousel({ authors }: { authors: string[] }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.list}
       >
-        {visibleAuthors.map((author, index) => (
-          <AuthorCard key={`${author}-${index}`} name={author} index={index} />
-        ))}
+        {visibleAuthors.map((item, index) => {
+          const name = typeof item === "string" ? item : item.name;
+          const avatar = typeof item === "string" ? undefined : item.avatar;
+
+          return (
+            <AuthorCard
+              key={`${name}-${index}`}
+              name={name}
+              avatar={avatar}
+              index={index}
+            />
+          );
+        })}
       </ScrollView>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   section: { marginTop: 30 },
   heading: {

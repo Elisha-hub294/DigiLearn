@@ -55,7 +55,7 @@ export function parseUploadedDate(value: unknown): Date | null {
       try {
         const d = candidate.toDate();
         if (d instanceof Date && !isNaN(d.getTime())) return d;
-      } catch { }
+      } catch {}
     }
   }
 
@@ -135,7 +135,8 @@ export function formatUploadedAt(value: unknown): string {
 export function useGlobalSearch() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<SearchCategory>("All");
+  const [selectedCategory, setSelectedCategory] =
+    useState<SearchCategory>("All");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -145,8 +146,11 @@ export function useGlobalSearch() {
   const [books, setBooks] = useState<any[]>([]);
   const [teachers, setTeachers] = useState<any[]>([]);
   const [subjectsMap, setSubjectsMap] = useState<Record<string, string>>({});
-  const [teachersAvatarMap, setTeachersAvatarMap] = useState<Record<string, string>>({});
-  const [defaultPdfIcon, setDefaultPdfIcon] = useState<string>(FALLBACK_PDF_ICON);
+  const [teachersAvatarMap, setTeachersAvatarMap] = useState<
+    Record<string, string>
+  >({});
+  const [defaultPdfIcon, setDefaultPdfIcon] =
+    useState<string>(FALLBACK_PDF_ICON);
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -188,7 +192,7 @@ export function useGlobalSearch() {
         });
         setSubjectsMap(map);
       },
-      (err) => console.warn("Error fetching subjects:", err)
+      (err) => console.warn("Error fetching subjects:", err),
     );
 
     (async () => {
@@ -221,12 +225,12 @@ export function useGlobalSearch() {
     let isMounted = true;
 
     const unsubNotes = onSnapshot(
-      collection(db, "topicalNotesCards"),
+      collection(db, "pages"),
       (snap) => {
         if (!isMounted) return;
         setTopicalNotes(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       },
-      (err) => console.warn("Notes error:", err)
+      (err) => console.warn("Notes error:", err),
     );
 
     const unsubPapers = onSnapshot(
@@ -235,7 +239,7 @@ export function useGlobalSearch() {
         if (!isMounted) return;
         setPastPapers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       },
-      (err) => console.warn("Papers error:", err)
+      (err) => console.warn("Papers error:", err),
     );
 
     const unsubVideos = onSnapshot(
@@ -244,7 +248,7 @@ export function useGlobalSearch() {
         if (!isMounted) return;
         setVideos(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       },
-      (err) => console.warn("Videos error:", err)
+      (err) => console.warn("Videos error:", err),
     );
 
     const unsubBooks = onSnapshot(
@@ -253,7 +257,7 @@ export function useGlobalSearch() {
         if (!isMounted) return;
         setBooks(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       },
-      (err) => console.warn("Books error:", err)
+      (err) => console.warn("Books error:", err),
     );
 
     const unsubTeachers = onSnapshot(
@@ -276,7 +280,7 @@ export function useGlobalSearch() {
       (err) => {
         console.warn("Teachers error:", err);
         setLoading(false);
-      }
+      },
     );
 
     return () => {
@@ -301,36 +305,30 @@ export function useGlobalSearch() {
   }, []);
 
   // 5. Recent searches persistence
-  const addRecentSearch = useCallback(
-    async (term: string) => {
-      const trimmed = term.trim();
-      if (!trimmed) return;
-      setRecentSearches((prev) => {
-        const filtered = prev.filter(
-          (item) => item.toLowerCase() !== trimmed.toLowerCase()
-        );
-        const updated = [trimmed, ...filtered].slice(0, MAX_RECENT_ITEMS);
-        AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated)).catch(
-          (err) => console.warn("Failed to persist recent search:", err)
-        );
-        return updated;
-      });
-    },
-    []
-  );
+  const addRecentSearch = useCallback(async (term: string) => {
+    const trimmed = term.trim();
+    if (!trimmed) return;
+    setRecentSearches((prev) => {
+      const filtered = prev.filter(
+        (item) => item.toLowerCase() !== trimmed.toLowerCase(),
+      );
+      const updated = [trimmed, ...filtered].slice(0, MAX_RECENT_ITEMS);
+      AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated)).catch(
+        (err) => console.warn("Failed to persist recent search:", err),
+      );
+      return updated;
+    });
+  }, []);
 
-  const removeRecentSearch = useCallback(
-    async (term: string) => {
-      setRecentSearches((prev) => {
-        const updated = prev.filter((item) => item !== term);
-        AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated)).catch(
-          (err) => console.warn("Failed to persist recent search removal:", err)
-        );
-        return updated;
-      });
-    },
-    []
-  );
+  const removeRecentSearch = useCallback(async (term: string) => {
+    setRecentSearches((prev) => {
+      const updated = prev.filter((item) => item !== term);
+      AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated)).catch(
+        (err) => console.warn("Failed to persist recent search removal:", err),
+      );
+      return updated;
+    });
+  }, []);
 
   const clearRecentSearches = useCallback(async () => {
     setRecentSearches([]);
@@ -352,7 +350,7 @@ export function useGlobalSearch() {
       }
       return item.preview || item.avatar || DEFAULT_SUBJECT_AVATAR;
     },
-    [subjectsMap]
+    [subjectsMap],
   );
 
   // Helper to resolve teacher avatar from teachers collection
@@ -369,7 +367,7 @@ export function useGlobalSearch() {
       }
       return FALLBACK_TEACHER_AVATAR;
     },
-    [teachersAvatarMap]
+    [teachersAvatarMap],
   );
 
   // 6. Comprehensive filtering & Priority ranking
@@ -389,7 +387,7 @@ export function useGlobalSearch() {
       teacher: string,
       subjectProp: any,
       previewImage: string,
-      extra?: Partial<SearchResult>
+      extra?: Partial<SearchResult>,
     ) => {
       const lowerTitle = title.toLowerCase();
       const lowerAuthor = author.toLowerCase();
@@ -460,7 +458,7 @@ export function useGlobalSearch() {
         "",
         "",
         n.subject,
-        getNotePreview(n)
+        getNotePreview(n),
       );
     });
 
@@ -476,7 +474,7 @@ export function useGlobalSearch() {
         "",
         p.subject,
         p.icon || p.avatar || defaultPdfIcon,
-        { doc: p.doc || p.pdf }
+        { doc: p.doc || p.pdf },
       );
     });
 
@@ -501,7 +499,7 @@ export function useGlobalSearch() {
           uploadedAt: cleanUploadedAt,
           avatar: videoAvatar,
           link: v.link || "",
-        }
+        },
       );
     });
 
@@ -522,28 +520,35 @@ export function useGlobalSearch() {
             ? b.image.trim()
             : typeof b.avatar === "string" && b.avatar.trim()
               ? b.avatar.trim()
-              : ""
+              : "",
       );
     });
 
     // Evaluate Teachers
     teachers.forEach((t) => {
       const teacherName = String(t.name || "Teacher");
-      const teacherAvatar = resolveTeacherAvatar(teacherName, t.avatar || t.image);
+      const teacherAvatar = resolveTeacherAvatar(
+        teacherName,
+        t.avatar || t.image,
+      );
 
       addScored(
         t,
         "teacher",
         teacherName,
         String(t.subject || "Instructor"),
-        String(t.bio || t.description || `${t.subject || "Educator"} at ${t.school || "DigiLearn"}`),
+        String(
+          t.bio ||
+            t.description ||
+            `${t.subject || "Educator"} at ${t.school || "DigiLearn"}`,
+        ),
         "",
         teacherName,
         t.subject,
         teacherAvatar,
         {
           avatar: teacherAvatar,
-        }
+        },
       );
     });
 

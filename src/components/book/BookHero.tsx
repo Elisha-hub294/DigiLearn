@@ -1,7 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
 import {
   Pressable,
   StyleSheet,
@@ -11,7 +10,7 @@ import {
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { FavoriteButton } from "./FavoriteButton";
-import { Book, FALLBACK_COVER } from "./bookTypes";
+import { Book } from "./bookTypes";
 
 export function BookHero({
   book,
@@ -26,23 +25,31 @@ export function BookHero({
 }) {
   const { height } = useWindowDimensions();
   const heroHeight = Math.min(Math.max(height * 0.46, 330), 520);
+  const hasCover = Boolean(book.cover && book.cover.trim());
+
   return (
     <Animated.View
       entering={FadeIn.duration(450)}
       style={[styles.hero, { height: heroHeight }]}
     >
-      <Image
-        source={book.cover}
-        placeholder={FALLBACK_COVER}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-        transition={250}
-      />
+      {/* Fallback background block in case cover is empty/loading */}
+      <View style={styles.fallbackBackground} />
+
+      {hasCover && (
+        <Image
+          source={{ uri: book.cover }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={250}
+        />
+      )}
+
       <LinearGradient
         colors={["rgba(0,0,0,.05)", "rgba(0,0,0,.2)", "rgba(0,0,0,.75)"]}
         locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
+
       <View style={styles.nav}>
         <Pressable
           onPress={onBack}
@@ -54,6 +61,7 @@ export function BookHero({
         </Pressable>
         <FavoriteButton selected={favourite} onPress={onFavourite} />
       </View>
+
       <Animated.View
         entering={FadeInUp.duration(480).delay(100)}
         style={styles.copy}
@@ -68,8 +76,13 @@ export function BookHero({
     </Animated.View>
   );
 }
+
 const styles = StyleSheet.create({
-  hero: { width: "100%", overflow: "hidden" },
+  hero: { width: "100%", overflow: "hidden", backgroundColor: "#1D2B36" },
+  fallbackBackground: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "#223340",
+  },
   nav: {
     flexDirection: "row",
     justifyContent: "space-between",

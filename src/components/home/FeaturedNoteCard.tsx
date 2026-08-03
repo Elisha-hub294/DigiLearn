@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import * as IntentLauncher from "expo-intent-launcher";
 import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Linking,
   Platform,
@@ -25,25 +25,11 @@ type TopicalNote = {
   title?: string;
   description?: string;
   subject?: string;
+  author?: string;
   document?: string;
 };
 
-const AVATARS: Record<string, string> = {
-  Mathematics: "math",
-  Physics: "phy",
-  Biology: "bio",
-  Chemistry: "chem",
-  Art: "art",
-  Economics: "econ",
-  Entrepreneurship: "ent",
-  Computer: "ict",
-  Geography: "geo",
-  History: "hist",
-  English: "lang",
-};
-
-const getAvatar = (sub?: string) =>
-  `https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/${AVATARS[sub || ""] || "default"}-2d.png`;
+const normalizeKey = (str: string) => str.trim().toLowerCase();
 
 const openPdfDocument = async (url: string) => {
   if (!url) return;
@@ -51,7 +37,10 @@ const openPdfDocument = async (url: string) => {
   if (Platform.OS === "android") {
     try {
       const filename = url.split("/").pop()?.split("?")[0] || "document.pdf";
-      const cacheDir = (FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory || "";
+      const cacheDir =
+        (FileSystem as any).cacheDirectory ||
+        (FileSystem as any).documentDirectory ||
+        "";
       const localUri = `${cacheDir}${Date.now()}_${filename}`;
 
       const downloadResult = await FileSystem.downloadAsync(url, localUri);
@@ -85,22 +74,61 @@ export const FeaturedNoteCard = ({
   const isWide = width >= 900;
   const useTwoColumns = isWide && layout === "two-column";
   const [notes, setNotes] = useState<TopicalNote[]>([]);
+  const [subjectAvatars, setSubjectAvatars] = useState<Record<string, string>>(
+    {},
+  );
+  const [defaultAvatar, setDefaultAvatar] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    getDocs(
-      query(collection(db, "topicalNotesCards"), orderBy("createdAt", "desc")),
-    )
-      .then(
-        (snap) =>
-          active &&
-          setNotes(
-            snap.docs.map((d) => ({ id: d.id, ...d.data() }) as TopicalNote),
-          ),
-      )
-      .catch(() => active && setNotes([]))
+
+    Promise.all([
+      getDocs(query(collection(db, "pages"), orderBy("createdAt", "desc"))),
+      getDocs(collection(db, "subject")),
+      getDocs(collection(db, "default")),
+    ])
+      .then(([notesSnap, subjectsSnap, defaultSnap]) => {
+        if (!active) return;
+
+        // Parse default user icon
+        let userDefaultIcon = "";
+        defaultSnap.docs.forEach((d) => {
+          const data = d.data();
+          if (
+            typeof data.name === "string" &&
+            normalizeKey(data.name) === "user" &&
+            typeof data.icon === "string"
+          ) {
+            userDefaultIcon = data.icon.trim();
+          }
+        });
+        setDefaultAvatar(userDefaultIcon);
+
+        // Map subject names to avatars from 'subjects' collection
+        const subjectMap: Record<string, string> = {};
+        subjectsSnap.docs.forEach((d) => {
+          const data = d.data();
+          if (
+            typeof data.name === "string" &&
+            typeof data.avatar === "string"
+          ) {
+            subjectMap[normalizeKey(data.name)] = data.avatar.trim();
+          }
+        });
+        setSubjectAvatars(subjectMap);
+
+        // Parse notes
+        setNotes(
+          notesSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as TopicalNote),
+        );
+      })
+      .catch((e) => {
+        console.error("Error loading featured notes:", e);
+        if (active) setNotes([]);
+      })
       .finally(() => active && setLoading(false));
+
     return () => {
       active = false;
     };
@@ -139,6 +167,8 @@ export const FeaturedNoteCard = ({
         <FeaturedNoteItem
           key={note.id}
           note={note}
+          subjectAvatars={subjectAvatars}
+          defaultAvatar={defaultAvatar}
           isWide={useTwoColumns}
           layout={layout}
         />
@@ -229,10 +259,14 @@ const SkeletonNoteCard = ({
 
 const FeaturedNoteItem = ({
   note,
+  subjectAvatars,
+  defaultAvatar,
   isWide,
   layout,
 }: {
   note: TopicalNote;
+  subjectAvatars: Record<string, string>;
+  defaultAvatar: string;
   isWide: boolean;
   layout: string;
 }) => {
@@ -243,6 +277,10 @@ const FeaturedNoteItem = ({
     (note.description?.length ?? 0) > 100
       ? `${note.description?.slice(0, 100)}...`
       : (note.description ?? "A fresh study note will appear here.");
+
+  // Resolve avatar priority: subject match in 'subjects' -> default avatar -> undefined
+  const subjectKey = note.subject ? normalizeKey(note.subject) : "";
+  const avatarUri = subjectAvatars[subjectKey] || defaultAvatar || undefined;
 
   return (
     <Animated.View
@@ -291,7 +329,7 @@ const FeaturedNoteItem = ({
 
         <View style={styles.content}>
           <Image
-            source={{ uri: getAvatar(note.subject) }}
+            source={avatarUri ? { uri: avatarUri } : undefined}
             style={styles.avatar}
             contentFit="cover"
           />
@@ -358,7 +396,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#f6f8fb",
   },
-  avatar: { width: 42, height: 42, borderRadius: 21, marginRight: spacing.sm },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    marginRight: spacing.sm,
+    backgroundColor: "#E8EDF0",
+  },
   previewWrap: {
     overflow: "hidden",
     position: "relative",

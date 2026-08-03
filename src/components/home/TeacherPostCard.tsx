@@ -1,11 +1,14 @@
 import { Feather as Icon } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system";
 import { Image } from "expo-image";
+import * as IntentLauncher from "expo-intent-launcher";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Animated as RNAnimated,
   Linking,
+  Platform,
   Pressable,
+  Animated as RNAnimated,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -24,13 +27,6 @@ type TeacherPost = {
   hasPdf?: boolean;
   createdAt?: unknown;
   document?: string;
-};
-
-const getTeacherAvatar = (teacher?: string) => {
-  if (teacher === "Opero Stephen") {
-    return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/opero-stephen.jpeg";
-  }
-  return "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png";
 };
 
 const normalizeTeacherPost = (doc: {
@@ -82,6 +78,33 @@ const normalizeTeacherPost = (doc: {
   } satisfies TeacherPost;
 };
 
+const openPdfDocument = async (url: string) => {
+  if (!url) return;
+
+  if (Platform.OS === "android") {
+    try {
+      const filename = url.split("/").pop()?.split("?")[0] || "document.pdf";
+      const fileUri = `${FileSystem.cacheDirectory}${Date.now()}_${filename}`;
+
+      const downloadResult = await FileSystem.downloadAsync(url, fileUri);
+      const contentUri = await FileSystem.getContentUriAsync(
+        downloadResult.uri,
+      );
+
+      await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
+        data: contentUri,
+        type: "application/pdf",
+        flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
+      });
+    } catch (error) {
+      console.error("Error launching PDF intent:", error);
+      Linking.openURL(url).catch(console.error);
+    }
+  } else {
+    Linking.openURL(url).catch(console.error);
+  }
+};
+
 const teacherPostCollections = [
   "teacherPosts",
   "teacherPostsCards",
@@ -94,9 +117,64 @@ export const TeacherPostCard = () => {
   const [posts, setPosts] = useState<TeacherPost[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Database assets states
+  const [teacherAvatars, setTeacherAvatars] = useState<Record<string, string>>(
+    {},
+  );
+  const [defaultUserAvatar, setDefaultUserAvatar] = useState<string | null>(
+    null,
+  );
+  const [defaultPdfImage, setDefaultPdfImage] = useState<string | null>(null);
+
   useEffect(() => {
     let isMounted = true;
 
+    // Fetch default icons (user & pdf)
+    const fetchDefaultIcons = async () => {
+      try {
+        const defaultRef = collection(db, "default");
+        const defaultSnap = await getDocs(defaultRef);
+
+        defaultSnap.docs.forEach((doc) => {
+          const data = doc.data();
+          if (data.name === "user" && typeof data.icon === "string") {
+            if (isMounted) setDefaultUserAvatar(data.icon);
+          }
+          if (data.name === "pdf" && typeof data.icon === "string") {
+            if (isMounted) setDefaultPdfImage(data.icon);
+          }
+        });
+      } catch (err) {
+        console.warn("Could not fetch default icons", err);
+      }
+    };
+
+    // Fetch teachers list for avatars mapping
+    const fetchTeachersAvatars = async () => {
+      try {
+        const teachersRef = collection(db, "teachers");
+        const teachersSnap = await getDocs(teachersRef);
+        const avatarMap: Record<string, string> = {};
+
+        teachersSnap.docs.forEach((doc) => {
+          const data = doc.data();
+          if (
+            typeof data.name === "string" &&
+            typeof data.avatar === "string"
+          ) {
+            avatarMap[data.name] = data.avatar;
+          }
+        });
+
+        if (isMounted) {
+          setTeacherAvatars(avatarMap);
+        }
+      } catch (err) {
+        console.warn("Could not fetch teachers list", err);
+      }
+    };
+
+    // Fetch posts
     const fetchTeacherPost = async () => {
       try {
         for (const collectionName of teacherPostCollections) {
@@ -105,9 +183,7 @@ export const TeacherPostCard = () => {
             const postsQuery = query(postsRef, orderBy("createdAt", "desc"));
             const snapshot = await getDocs(postsQuery);
 
-            if (!isMounted) {
-              return;
-            }
+            if (!isMounted) return;
 
             const fetchedPosts = snapshot.docs.map((doc) =>
               normalizeTeacherPost(doc),
@@ -141,6 +217,8 @@ export const TeacherPostCard = () => {
       }
     };
 
+    fetchDefaultIcons();
+    fetchTeachersAvatars();
     fetchTeacherPost();
 
     return () => {
@@ -177,6 +255,9 @@ export const TeacherPostCard = () => {
           postItem={postItem}
           index={index}
           isWide={isWide}
+          teacherAvatars={teacherAvatars}
+          defaultUserAvatar={defaultUserAvatar}
+          defaultPdfImage={defaultPdfImage}
         />
       ))}
     </View>
@@ -187,20 +268,31 @@ const TeacherPostItem = ({
   postItem,
   index,
   isWide,
+  teacherAvatars,
+  defaultUserAvatar,
+  defaultPdfImage,
 }: {
   postItem: TeacherPost;
   index: number;
   isWide: boolean;
+  teacherAvatars: Record<string, string>;
+  defaultUserAvatar: string | null;
+  defaultPdfImage: string | null;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  const teacherName = postItem.teacher
-    ? `Tr. ${postItem.teacher}`
-    : "Tr. Teacher";
+  const rawTeacherName = postItem.teacher || "Teacher";
+  const teacherName = `Tr. ${rawTeacherName}`;
   const subject = postItem.subject ?? "Physics";
   const description =
     postItem.description ?? "No teacher update available yet.";
   const showPreview = postItem.hasPdf ?? true;
+
+  // Resolve Teacher Avatar from DB or Fallback
+  const resolvedAvatar =
+    (postItem.teacher && teacherAvatars[postItem.teacher]) ||
+    defaultUserAvatar ||
+    "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png";
 
   return (
     <Animated.View
@@ -231,9 +323,7 @@ const TeacherPostItem = ({
             style={styles.previewWrap}
             onPress={() => {
               if (postItem.document) {
-                Linking.openURL(postItem.document).catch((err) =>
-                  console.error("Couldn't load page", err),
-                );
+                openPdfDocument(postItem.document);
               }
             }}
           >
@@ -241,7 +331,11 @@ const TeacherPostItem = ({
               <PdfPreview uri={postItem.document} style={styles.preview} />
             ) : (
               <Image
-                source={require("../../../assets/images/pdf-preview.jpeg")}
+                source={
+                  defaultPdfImage
+                    ? { uri: defaultPdfImage }
+                    : require("../../../assets/images/pdf-preview.jpeg")
+                }
                 style={styles.preview}
                 contentFit="cover"
               />
@@ -256,7 +350,7 @@ const TeacherPostItem = ({
         <View style={styles.header}>
           <View style={styles.profileRow}>
             <Image
-              source={{ uri: getTeacherAvatar(postItem.teacher) }}
+              source={{ uri: resolvedAvatar }}
               style={styles.avatar}
               contentFit="cover"
             />
@@ -309,7 +403,6 @@ const SkeletonTeacherPostCard = () => {
 
   return (
     <View style={[styles.card, { marginBottom: spacing.xl }]}>
-      {/* PDF preview block */}
       <RNAnimated.View
         style={[
           styles.skeletonBox,
@@ -318,7 +411,6 @@ const SkeletonTeacherPostCard = () => {
         ]}
       />
 
-      {/* Header: avatar + name/time lines + badge */}
       <View style={styles.header}>
         <View style={styles.profileRow}>
           <RNAnimated.View
@@ -354,7 +446,6 @@ const SkeletonTeacherPostCard = () => {
         />
       </View>
 
-      {/* Caption lines */}
       <RNAnimated.View
         style={[
           styles.skeletonBox,
@@ -370,7 +461,6 @@ const SkeletonTeacherPostCard = () => {
         ]}
       />
 
-      {/* Action pills */}
       <View style={styles.actions}>
         {[0, 1, 2].map((i) => (
           <RNAnimated.View
@@ -477,7 +567,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
-  // Skeleton styles
   skeletonBox: { backgroundColor: "#EFEFEF", borderRadius: radius.sm },
   skeletonPreview: {
     height: 250,

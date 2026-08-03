@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -13,7 +13,7 @@ import { db } from "../../../firebaseConfig";
 import { AuthorsCarousel } from "./AuthorsCarousel";
 import { BookHero } from "./BookHero";
 import { BookOverview } from "./BookOverview";
-import { Book, FALLBACK_COVER } from "./bookTypes";
+import { Book, normalizeKey, resolveAuthorAvatar } from "./bookTypes";
 import { BottomActionBar } from "./BottomActionBar";
 import { SimilarBooks } from "./SimilarBooks";
 
@@ -25,6 +25,7 @@ const gradients = [
   ["#F857A6", "#FF5858"],
   ["#4FACFE", "#00F2FE"],
 ] as const;
+
 const getHorizontalPadding = (width: number) => {
   if (width >= 1200) return 64;
   if (width >= 900) return 48;
@@ -32,18 +33,21 @@ const getHorizontalPadding = (width: number) => {
   if (width >= 400) return 0;
   return 5;
 };
+
 const strings = (v: unknown) =>
   Array.isArray(v)
     ? v.filter((x): x is string => typeof x === "string")
     : typeof v === "string"
       ? [v]
       : [];
+
 const asNumber = (v: unknown) =>
   typeof v === "number"
     ? v
     : typeof v === "string"
       ? Number(v) || undefined
       : undefined;
+
 function mapBook(id: string, d: Record<string, unknown>): Book {
   return {
     id,
@@ -55,11 +59,11 @@ function mapBook(id: string, d: Record<string, unknown>): Book {
           ? d.summary
           : "",
     cover:
-      typeof d.cover === "string"
-        ? d.cover
-        : typeof d.image === "string"
-          ? d.image
-          : FALLBACK_COVER,
+      typeof d.cover === "string" && d.cover.trim()
+        ? d.cover.trim()
+        : typeof d.image === "string" && d.image.trim()
+          ? d.image.trim()
+          : "",
     year:
       typeof d.year === "string" || typeof d.year === "number"
         ? String(d.year)
@@ -85,6 +89,10 @@ export function BookPreviewScreen() {
   }>();
   const [book, setBook] = useState<Book>();
   const [allBooks, setAllBooks] = useState<Book[]>([]);
+  const [teacherAvatars, setTeacherAvatars] = useState<Record<string, string>>(
+    {},
+  );
+  const [defaultUserAvatar, setDefaultUserAvatar] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [favourite, setFavourite] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -92,23 +100,55 @@ export function BookPreviewScreen() {
   const [gradient] = useState(
     () => gradients[Math.floor(Math.random() * gradients.length)],
   );
+
   useEffect(() => {
     let active = true;
     setLoading(true);
     (async () => {
       try {
-        const [selected, snapshot] = await Promise.all([
-          getDoc(doc(db, "books", id)),
-          getDocs(collection(db, "books")),
-        ]);
+        const [selected, booksSnapshot, teachersSnapshot, defaultSnapshot] =
+          await Promise.all([
+            getDoc(doc(db, "books", id)),
+            getDocs(collection(db, "books")),
+            getDocs(collection(db, "teachers")),
+            getDocs(collection(db, "default")),
+          ]);
+
         if (!active) return;
+
+        // Extract default user avatar from 'default' collection
+        let defaultAvatar = "";
+        defaultSnapshot.docs.forEach((docSnap) => {
+          const data = docSnap.data();
+          const docName =
+            typeof data.name === "string" ? normalizeKey(data.name) : "";
+          if (docName === "user" && typeof data.icon === "string") {
+            defaultAvatar = data.icon.trim();
+          }
+        });
+        setDefaultUserAvatar(defaultAvatar);
+
+        // Map teacher names (normalized lowercase) to their avatar URLs
+        const avatarsMap: Record<string, string> = {};
+        teachersSnapshot.docs.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (
+            typeof data.name === "string" &&
+            typeof data.avatar === "string"
+          ) {
+            avatarsMap[normalizeKey(data.name)] = data.avatar.trim();
+          }
+        });
+        setTeacherAvatars(avatarsMap);
+
+        // Set Book Data
         setBook(
           selected.exists()
             ? mapBook(selected.id, selected.data() as Record<string, unknown>)
             : undefined,
         );
         setAllBooks(
-          snapshot.docs.map((d) =>
+          booksSnapshot.docs.map((d) =>
             mapBook(d.id, d.data() as Record<string, unknown>),
           ),
         );
@@ -126,6 +166,19 @@ export function BookPreviewScreen() {
       active = false;
     };
   }, [id]);
+
+  const authorsWithAvatars = useMemo(() => {
+    if (!book) return [];
+    return book.author.map((authorName) => ({
+      name: authorName,
+      avatar: resolveAuthorAvatar(
+        authorName,
+        teacherAvatars,
+        defaultUserAvatar,
+      ),
+    }));
+  }, [book, teacherAvatars, defaultUserAvatar]);
+
   const similar = useMemo(
     () =>
       book
@@ -141,6 +194,7 @@ export function BookPreviewScreen() {
         : [],
     [allBooks, book],
   );
+
   if (loading || !book)
     return (
       <View style={styles.loading} accessibilityLabel="Loading book preview">
@@ -154,11 +208,17 @@ export function BookPreviewScreen() {
         <ActivityIndicator style={styles.loader} color="#147B5B" />
       </View>
     );
+
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
   const goBack = () => router.replace(source === "home" ? "/" : "/library");
+
   return (
-    <Animated.View key={id} entering={FadeIn.duration(260)} style={styles.screen}>
+    <Animated.View
+      key={id}
+      entering={FadeIn.duration(260)}
+      style={styles.screen}
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 110 }]}
@@ -178,7 +238,7 @@ export function BookPreviewScreen() {
             ]}
           >
             <BookOverview book={book} />
-            <AuthorsCarousel authors={book.author} />
+            <AuthorsCarousel authors={authorsWithAvatars} />
             <SimilarBooks
               books={similar}
               onSelect={(nextId) =>
@@ -203,6 +263,7 @@ export function BookPreviewScreen() {
     </Animated.View>
   );
 }
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#fff" },
   scrollContent: { flexGrow: 1, alignItems: "center" },

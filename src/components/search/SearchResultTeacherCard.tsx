@@ -54,7 +54,10 @@ export function SearchResultTeacherCard({
           {parts.map((part, idx) => {
             const isMatch = part.toLowerCase() === trimmedQ.toLowerCase();
             return (
-              <Text key={idx} style={isMatch ? styles.highlightText : undefined}>
+              <Text
+                key={idx}
+                style={isMatch ? styles.highlightText : undefined}
+              >
                 {part}
               </Text>
             );
@@ -68,40 +71,40 @@ export function SearchResultTeacherCard({
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Teacher profile: ${item.title}`}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        onPress={() => onPress(item)}
-        style={styles.card}
-      >
-        {/* Left: Large circular avatar (64px) */}
-        <View style={styles.avatarWrapper}>
-          <Image
-            source={{
-              uri:
-                item.avatar ||
-                item.previewImage ||
-                item.rawItem?.avatar ||
-                item.rawItem?.image ||
-                DEFAULT_TEACHER_AVATAR,
-            }}
-            style={styles.avatar}
-            contentFit="cover"
-            transition={200}
-          />
-        </View>
-
-        {/* Center: Name with black pill background + 2-line bio */}
-        <View style={styles.centerInfo}>
-          <View style={styles.namePill}>
-            {renderName()}
+      <View style={styles.card}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Teacher profile: ${item.title}`}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          onPress={() => onPress(item)}
+          style={styles.cardPressable}
+        >
+          {/* Left: Large circular avatar (64px) */}
+          <View style={styles.avatarWrapper}>
+            <Image
+              source={{
+                uri:
+                  item.avatar ||
+                  item.previewImage ||
+                  item.rawItem?.avatar ||
+                  item.rawItem?.image ||
+                  DEFAULT_TEACHER_AVATAR,
+              }}
+              style={styles.avatar}
+              contentFit="cover"
+              transition={200}
+            />
           </View>
-          <Text style={styles.bioText} numberOfLines={2}>
-            {item.description || `${item.subtitle || "Teacher"} at DigiLearn`}
-          </Text>
-        </View>
+
+          {/* Center: Name with black pill background + 2-line bio */}
+          <View style={styles.centerInfo}>
+            <View style={styles.namePill}>{renderName()}</View>
+            <Text style={styles.bioText} numberOfLines={2}>
+              {item.description || `${item.subtitle || "Teacher"} at DigiLearn`}
+            </Text>
+          </View>
+        </Pressable>
 
         {/* Right side: Reserved space for future Follow button */}
         <View style={styles.rightAction}>
@@ -109,7 +112,7 @@ export function SearchResultTeacherCard({
             <Feather name="plus" size={16} color="#111111" />
           </Pressable>
         </View>
-      </Pressable>
+      </View>
     </Animated.View>
   );
 }
@@ -125,6 +128,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E5E7EB",
     paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  cardPressable: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,

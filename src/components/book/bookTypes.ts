@@ -1,10 +1,8 @@
-import { ImageSourcePropType } from "react-native";
-
 export type Book = {
   id: string;
   title: string;
   description: string;
-  cover: string | ImageSourcePropType;
+  cover: string;
   year?: string;
   edition?: string;
   author: string[];
@@ -14,8 +12,19 @@ export type Book = {
   saves?: number;
 };
 
-export const FALLBACK_COVER = require("../../../assets/images/lib.jpeg");
-export const DEFAULT_AUTHOR_AVATAR =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png";
-export const OPERO_AVATAR =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/opero-stephen.jpeg";
+/**
+ * Normalizes strings to lower case and trims whitespace for case-insensitive comparisons
+ */
+export const normalizeKey = (key: string): string => key.trim().toLowerCase();
+
+/**
+ * Resolves an author's avatar URL dynamically against fetched teacher profiles from Firestore.
+ */
+export const resolveAuthorAvatar = (
+  authorName: string,
+  teacherAvatars: Record<string, string>,
+  defaultUserAvatar: string,
+): string => {
+  const normalizedAuthor = normalizeKey(authorName);
+  return teacherAvatars[normalizedAuthor] || defaultUserAvatar;
+};

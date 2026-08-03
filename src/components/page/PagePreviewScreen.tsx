@@ -1,7 +1,6 @@
-import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -33,7 +32,9 @@ const getHorizontalPadding = (width: number) => {
 const normalizeArray = (val: unknown): string[] => {
   if (!val) return [];
   if (Array.isArray(val)) {
-    return val.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
+    return val.filter(
+      (x): x is string => typeof x === "string" && x.trim().length > 0,
+    );
   }
   if (typeof val === "string" && val.trim()) {
     return [val.trim()];
@@ -45,7 +46,10 @@ function formatDate(createdAt: any): string {
   if (!createdAt) return "Last updated • 2025";
   try {
     let date: Date | null = null;
-    if (typeof createdAt === "object" && typeof createdAt.seconds === "number") {
+    if (
+      typeof createdAt === "object" &&
+      typeof createdAt.seconds === "number"
+    ) {
       date = new Date(createdAt.seconds * 1000);
     } else if (createdAt instanceof Date) {
       date = createdAt;
@@ -56,8 +60,18 @@ function formatDate(createdAt: any): string {
     if (date && !isNaN(date.getTime())) {
       const year = date.getFullYear();
       const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
       ];
       const day = date.getDate();
       const monthStr = monthNames[date.getMonth()];
@@ -73,7 +87,11 @@ const extractAccentColor = (rawAccent: unknown): string => {
   if (!rawAccent) return "#000000";
   if (typeof rawAccent === "string" && rawAccent.trim()) {
     const trimmed = rawAccent.trim();
-    if (trimmed.startsWith("#") || trimmed.startsWith("rgb") || trimmed.toLowerCase() === "black") {
+    if (
+      trimmed.startsWith("#") ||
+      trimmed.startsWith("rgb") ||
+      trimmed.toLowerCase() === "black"
+    ) {
       return trimmed;
     }
     if (/^[0-9A-Fa-f]{6}$/.test(trimmed) || /^[0-9A-Fa-f]{3}$/.test(trimmed)) {
@@ -102,7 +120,9 @@ export function PagePreviewScreen() {
   const [note, setNote] = useState<TopicalNote>();
   const [allNotes, setAllNotes] = useState<TopicalNote[]>([]);
   const [sourceBooks, setSourceBooks] = useState<SourceBook[]>([]);
-  const [subjectAvatar, setSubjectAvatar] = useState<string>(DEFAULT_SUBJECT_AVATAR);
+  const [subjectAvatar, setSubjectAvatar] = useState<string>(
+    DEFAULT_SUBJECT_AVATAR,
+  );
   const [subjectAccent, setSubjectAccent] = useState<string>("#000000");
   const [loading, setLoading] = useState(true);
   const [bookmarked, setBookmarked] = useState(false);
@@ -119,8 +139,8 @@ export function PagePreviewScreen() {
 
         const [selectedSnap, notesSnap, booksSnap, subjectsSnap] =
           await Promise.all([
-            getDoc(doc(db, "topicalNotesCards", id)),
-            getDocs(collection(db, "topicalNotesCards")),
+            getDoc(doc(db, "pages", id)),
+            getDocs(collection(db, "pages")),
             getDocs(collection(db, "books")),
             getDocs(collection(db, "subject")),
           ]);
@@ -132,14 +152,20 @@ export function PagePreviewScreen() {
           const data = selectedSnap.data() as Record<string, unknown>;
           currentDoc = {
             id: selectedSnap.id,
-            title: typeof data.title === "string" ? data.title : "Untitled note",
-            description: typeof data.description === "string" ? data.description : "",
-            preview: typeof data.preview === "string" ? data.preview : undefined,
-            document: typeof data.document === "string" ? data.document : undefined,
+            title:
+              typeof data.title === "string" ? data.title : "Untitled note",
+            description:
+              typeof data.description === "string" ? data.description : "",
+            preview:
+              typeof data.preview === "string" ? data.preview : undefined,
+            document:
+              typeof data.document === "string" ? data.document : undefined,
             createdAt: data.createdAt,
             subject: normalizeArray(data.subject),
             book: normalizeArray(data.book),
-            pages: (data.pages ?? data.pageCount ?? data.pagesCount) as string | number,
+            pages: (data.pages ?? data.pageCount ?? data.pagesCount) as
+              | string
+              | number,
             isRecommended: Boolean(data.isRecommended || data.featured),
           };
           setNote(currentDoc);
@@ -150,10 +176,14 @@ export function PagePreviewScreen() {
           const data = d.data() as Record<string, unknown>;
           return {
             id: d.id,
-            title: typeof data.title === "string" ? data.title : "Untitled note",
-            description: typeof data.description === "string" ? data.description : "",
-            preview: typeof data.preview === "string" ? data.preview : undefined,
-            document: typeof data.document === "string" ? data.document : undefined,
+            title:
+              typeof data.title === "string" ? data.title : "Untitled note",
+            description:
+              typeof data.description === "string" ? data.description : "",
+            preview:
+              typeof data.preview === "string" ? data.preview : undefined,
+            document:
+              typeof data.document === "string" ? data.document : undefined,
             createdAt: data.createdAt,
             subject: normalizeArray(data.subject),
             book: normalizeArray(data.book),
@@ -163,7 +193,9 @@ export function PagePreviewScreen() {
         setAllNotes(mappedNotes);
 
         // Subject Avatar & Accent Lookup
-        const currentSubjects = currentDoc?.subject ? normalizeArray(currentDoc.subject) : [];
+        const currentSubjects = currentDoc?.subject
+          ? normalizeArray(currentDoc.subject)
+          : [];
         let matchedAvatar = DEFAULT_SUBJECT_AVATAR;
         let matchedAccent = "#000000";
 
@@ -192,7 +224,9 @@ export function PagePreviewScreen() {
         setSubjectAccent(matchedAccent);
 
         // Source Books Lookup
-        const pageBookTitles = currentDoc?.book ? normalizeArray(currentDoc.book) : [];
+        const pageBookTitles = currentDoc?.book
+          ? normalizeArray(currentDoc.book)
+          : [];
         if (pageBookTitles.length > 0 && !booksSnap.empty) {
           const matchedBooks: SourceBook[] = [];
           booksSnap.docs.forEach((bDoc) => {
@@ -213,7 +247,8 @@ export function PagePreviewScreen() {
                     : typeof bData.image === "string"
                       ? bData.image
                       : FALLBACK_COVER,
-                author: typeof bData.author === "string" ? bData.author : undefined,
+                author:
+                  typeof bData.author === "string" ? bData.author : undefined,
               });
             }
           });
@@ -257,13 +292,19 @@ export function PagePreviewScreen() {
       .slice(0, 10);
   }, [allNotes, note]);
 
-  const dateFormatted = useMemo(() => formatDate(note?.createdAt), [note?.createdAt]);
+  const dateFormatted = useMemo(
+    () => formatDate(note?.createdAt),
+    [note?.createdAt],
+  );
 
   const isRecentlyUpdated = useMemo(() => {
     if (!note?.createdAt) return false;
     try {
       let d: Date | null = null;
-      if (typeof note.createdAt === "object" && typeof note.createdAt.seconds === "number") {
+      if (
+        typeof note.createdAt === "object" &&
+        typeof note.createdAt.seconds === "number"
+      ) {
         d = new Date(note.createdAt.seconds * 1000);
       } else if (note.createdAt instanceof Date) {
         d = note.createdAt;
@@ -280,7 +321,10 @@ export function PagePreviewScreen() {
 
   if (loading || !note) {
     return (
-      <View style={styles.loadingContainer} accessibilityLabel="Loading page preview">
+      <View
+        style={styles.loadingContainer}
+        accessibilityLabel="Loading page preview"
+      >
         <View style={styles.skeletonHero} />
         <View style={styles.skeletonSheet}>
           <View style={styles.skeletonAvatarRow}>
@@ -336,7 +380,11 @@ export function PagePreviewScreen() {
   const subjectsList = normalizeArray(note.subject);
 
   return (
-    <Animated.View key={id} entering={FadeIn.duration(260)} style={styles.screen}>
+    <Animated.View
+      key={id}
+      entering={FadeIn.duration(260)}
+      style={styles.screen}
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
