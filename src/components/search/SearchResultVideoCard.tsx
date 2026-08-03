@@ -6,7 +6,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { SearchResult } from "../../hooks/useGlobalSearch";
+import { formatUploadedAt, SearchResult } from "../../hooks/useGlobalSearch";
 
 type SearchResultVideoCardProps = {
   item: SearchResult;
@@ -125,7 +125,7 @@ export function SearchResultVideoCard({
             </Text>
             <Text style={styles.bulletText}>•</Text>
             <Text style={styles.uploadText} numberOfLines={1}>
-              {item.uploadedAt || "Recently added"}
+              {formatUploadedAt(item.uploadedAt)}
             </Text>
           </View>
         </View>

@@ -44,6 +44,94 @@ export type SearchResult = {
   rawItem: any;
 };
 
+export function parseUploadedDate(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+
+  // Handle Firestore Timestamp object with toDate()
+  if (typeof value === "object" && value !== null && "toDate" in value) {
+    const candidate = value as { toDate?: () => Date };
+    if (typeof candidate.toDate === "function") {
+      try {
+        const d = candidate.toDate();
+        if (d instanceof Date && !isNaN(d.getTime())) return d;
+      } catch {}
+    }
+  }
+
+  // Handle object with seconds property { seconds: number }
+  if (typeof value === "object" && value !== null && "seconds" in value) {
+    const candidate = value as { seconds?: number };
+    if (typeof candidate.seconds === "number") {
+      const d = new Date(candidate.seconds * 1000);
+      if (!isNaN(d.getTime())) return d;
+    }
+  }
+
+  // Handle string like "Timestamp(seconds=1784627982, nanoseconds=...)"
+  if (typeof value === "string") {
+    const tsMatch = value.match(/seconds\s*=\s*(\d+)/i);
+    if (tsMatch && tsMatch[1]) {
+      const sec = parseInt(tsMatch[1], 10);
+      if (!isNaN(sec)) {
+        const d = new Date(sec * 1000);
+        if (!isNaN(d.getTime())) return d;
+      }
+    }
+
+    // Standard string date parsing
+    const parsed = new Date(value);
+    if (!isNaN(parsed.getTime())) return parsed;
+  }
+
+  // Handle numeric timestamp
+  if (typeof value === "number" && !isNaN(value)) {
+    const d = new Date(value > 1e11 ? value : value * 1000);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  return null;
+}
+
+export function formatUploadedAt(value: unknown): string {
+  if (!value) return "Recently added";
+
+  // If it's already a clean string like "2 days ago", "Today", or "Oct 12, 2025"
+  if (
+    typeof value === "string" &&
+    !value.includes("Timestamp") &&
+    !value.includes("seconds=")
+  ) {
+    if (value.trim()) return value.trim();
+  }
+
+  const parsed = parseUploadedDate(value);
+  if (!parsed) {
+    return "Recently added";
+  }
+
+  const diffMs = Date.now() - parsed.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays <= 0) {
+    return "Today";
+  }
+  if (diffDays === 1) {
+    return "1 day ago";
+  }
+  if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  }
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+  }
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export function useGlobalSearch() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -175,7 +263,6 @@ export function useGlobalSearch() {
         const teacherList = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setTeachers(teacherList);
 
-        // Build name -> avatar map from teachers collection
         const avatarMap: Record<string, string> = {};
         teacherList.forEach((t: any) => {
           if (t.name && (t.avatar || t.image)) {
@@ -397,6 +484,8 @@ export function useGlobalSearch() {
     videos.forEach((v) => {
       const teacherName = String(v.teacher || "Teacher");
       const videoAvatar = resolveTeacherAvatar(teacherName, v.avatar);
+      const cleanUploadedAt = formatUploadedAt(v.uploadedAt);
+
       addScored(
         v,
         "video",
@@ -409,7 +498,7 @@ export function useGlobalSearch() {
         typeof v.thumbnail === "string" ? v.thumbnail : "",
         {
           duration: v.duration || "10:00",
-          uploadedAt: v.uploadedAt ? String(v.uploadedAt) : "Recently",
+          uploadedAt: cleanUploadedAt,
           avatar: videoAvatar,
           link: v.link || "",
         }
@@ -427,15 +516,17 @@ export function useGlobalSearch() {
         String(b.author || ""),
         "",
         b.subject,
-        typeof b.image === "string"
-          ? b.image
-          : typeof b.avatar === "string"
-          ? b.avatar
+        typeof b.cover === "string" && b.cover.trim()
+          ? b.cover.trim()
+          : typeof b.image === "string" && b.image.trim()
+          ? b.image.trim()
+          : typeof b.avatar === "string" && b.avatar.trim()
+          ? b.avatar.trim()
           : ""
       );
     });
 
-    // Evaluate Teachers (collect name and avatar from "teachers" collection)
+    // Evaluate Teachers
     teachers.forEach((t) => {
       const teacherName = String(t.name || "Teacher");
       const teacherAvatar = resolveTeacherAvatar(teacherName, t.avatar || t.image);

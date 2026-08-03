@@ -91,7 +91,14 @@ export function SearchResultBookCard({
         <View style={styles.cardBody}>
           <View style={styles.coverWrapper}>
             <Image
-              source={{ uri: item.previewImage || DEFAULT_BOOK_COVER }}
+              source={{
+                uri:
+                  item.rawItem?.cover ||
+                  item.previewImage ||
+                  item.rawItem?.image ||
+                  item.rawItem?.avatar ||
+                  DEFAULT_BOOK_COVER,
+              }}
               style={styles.coverImage}
               contentFit="cover"
               transition={200}
