@@ -12,7 +12,7 @@ import {
 import { db } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 
-export type FormType = "book" | "banner" | "paper";
+export type FormType = "book" | "banner" | "paper" | "page";
 
 type FormState = {
   title: string;
@@ -24,6 +24,11 @@ type FormState = {
   isTop: boolean;
   pages: string;
   doc: string;
+  subject: string;
+  description: string;
+  document: string;
+  createdAt: string;
+  book: string;
 };
 
 const INITIAL_FORM_STATE: FormState = {
@@ -36,6 +41,11 @@ const INITIAL_FORM_STATE: FormState = {
   isTop: false,
   pages: "",
   doc: "",
+  subject: "",
+  description: "",
+  document: "",
+  createdAt: "",
+  book: "",
 };
 
 const FALLBACK_ICON_URL =
@@ -92,6 +102,30 @@ export function AddItemModal({
           image: FALLBACK_ICON_URL,
           avatar: FALLBACK_ICON_URL,
         });
+      } else if (formType === "page") {
+        const trimmedCreatedAt = formData.createdAt.trim();
+        const parsedCreatedAt = trimmedCreatedAt
+          ? new Date(trimmedCreatedAt)
+          : null;
+        const bookList = formData.book
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
+
+        await addDoc(collection(db, "pages"), {
+          title: formData.title.trim() || "Untitled note",
+          subject: formData.subject.trim() || "General",
+          description:
+            formData.description.trim() ||
+            "Added directly from the library screen",
+          document: formData.document.trim() || "",
+          preview: formData.document.trim() || "",
+          book: bookList,
+          createdAt: parsedCreatedAt && !Number.isNaN(parsedCreatedAt.getTime())
+            ? parsedCreatedAt
+            : serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
       } else {
         await addDoc(collection(db, "pastPaper"), {
           ...payload,
@@ -131,7 +165,9 @@ export function AddItemModal({
               ? "Add a book"
               : formType === "banner"
                 ? "Add a banner"
-                : "Add a past paper"}
+                : formType === "page"
+                  ? "Add a page"
+                  : "Add a past paper"}
           </Text>
 
           <Text style={styles.fieldLabel}>Title</Text>
@@ -225,6 +261,48 @@ export function AddItemModal({
                 placeholder="Short description"
                 value={formData.subtitle}
                 onChangeText={(val) => updateField("subtitle", val)}
+              />
+            </>
+          )}
+
+          {formType === "page" && (
+            <>
+              <Text style={styles.fieldLabel}>Subject</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Subject"
+                value={formData.subject}
+                onChangeText={(val) => updateField("subject", val)}
+              />
+              <Text style={styles.fieldLabel}>Description</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Page description"
+                value={formData.description}
+                onChangeText={(val) => updateField("description", val)}
+                multiline
+                numberOfLines={4}
+              />
+              <Text style={styles.fieldLabel}>Document URL</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="https://example.com/document.pdf"
+                value={formData.document}
+                onChangeText={(val) => updateField("document", val)}
+              />
+              <Text style={styles.fieldLabel}>Created At</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD"
+                value={formData.createdAt}
+                onChangeText={(val) => updateField("createdAt", val)}
+              />
+              <Text style={styles.fieldLabel}>Book</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Book A, Book B, Book C"
+                value={formData.book}
+                onChangeText={(val) => updateField("book", val)}
               />
             </>
           )}
@@ -327,6 +405,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     marginBottom: spacing.md,
     color: colors.text,
+  },
+  textArea: {
+    minHeight: 96,
+    textAlignVertical: "top",
   },
   modalActions: {
     flexDirection: "row",

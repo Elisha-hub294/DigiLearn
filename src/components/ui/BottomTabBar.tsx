@@ -23,7 +23,8 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     activeRoute?.name === "page-preview" ||
     activeRoute?.name === "lesson-player" ||
     activeRoute?.name === "pdf-reader" ||
-    activeRoute?.name === "search"
+    activeRoute?.name === "search" ||
+    activeRoute?.name === "pages"
   ) {
     return null;
   }

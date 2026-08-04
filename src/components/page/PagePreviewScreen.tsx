@@ -112,9 +112,11 @@ const extractAccentColor = (rawAccent: unknown): string => {
 };
 
 export function PagePreviewScreen() {
-  const { id, source } = useLocalSearchParams<{
+  const { id, source, returnTo, title } = useLocalSearchParams<{
     id: string;
-    source?: "home" | "library";
+    source?: "home" | "library" | "pages";
+    returnTo?: string;
+    title?: string;
   }>();
 
   const [note, setNote] = useState<TopicalNote>();
@@ -347,6 +349,18 @@ export function PagePreviewScreen() {
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   const goBack = () => {
+    const shouldReturnToPages = source === "pages" || returnTo === "/pages";
+
+    if (shouldReturnToPages) {
+      router.replace({
+        pathname: "/pages",
+        params: {
+          title: typeof title === "string" && title.trim() ? title : "Pages",
+        },
+      } as never);
+      return;
+    }
+
     if (router.canGoBack()) {
       router.back();
     } else {

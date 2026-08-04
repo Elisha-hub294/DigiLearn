@@ -407,8 +407,19 @@ export default function PagesScreen() {
                 <FeaturedNoteCard
                   layout="stack"
                   subject={pageTitle}
-                  notes={visibleNotes}
+                  notes={visibleNotes.map((note) => ({
+                    ...note,
+                    subject:
+                      Array.isArray(note.subject) && note.subject.length > 0
+                        ? note.subject[0]
+                        : note.subject,
+                    book:
+                      Array.isArray(note.book) && note.book.length > 0
+                        ? note.book[0]
+                        : note.book,
+                  }))}
                   loading={false}
+                  source="pages"
                 />
               </Animated.View>
             )}

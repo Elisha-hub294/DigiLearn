@@ -25,10 +25,10 @@ type TopicalNote = {
   id: string;
   title?: string;
   description?: string;
-  subject?: string;
+  subject?: string | string[];
   author?: string;
   document?: string;
-  book?: string;
+  book?: string | string[];
   createdAt?: any;
   updatedAt?: any;
   level?: string;
@@ -40,8 +40,23 @@ type TopicalNote = {
 type FeaturedNoteCardProps = {
   layout?: "stack" | "two-column";
   subject?: string;
-  notes?: TopicalNote[];
+  notes?: Array<{
+    id: string;
+    title?: string;
+    description?: string;
+    subject?: string | string[];
+    author?: string;
+    document?: string;
+    book?: string | string[];
+    createdAt?: any;
+    updatedAt?: any;
+    level?: string;
+    readStatus?: string;
+    isRead?: boolean;
+    progress?: number;
+  }>;
   loading?: boolean;
+  source?: "home" | "library" | "pages";
 };
 
 const normalizeKey = (str: string) => str.trim().toLowerCase();
@@ -85,6 +100,7 @@ export const FeaturedNoteCard = ({
   subject,
   notes: providedNotes,
   loading: externalLoading,
+  source = "home",
 }: FeaturedNoteCardProps) => {
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
@@ -97,59 +113,74 @@ export const FeaturedNoteCard = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
+    const loadMetadata = async () => {
+      const [notesSnap, subjectsSnap, defaultSnap] = await Promise.all([
+        getDocs(query(collection(db, "pages"), orderBy("createdAt", "desc"))),
+        getDocs(collection(db, "subject")),
+        getDocs(collection(db, "default")),
+      ]);
+
+      if (!active) return;
+
+      let userDefaultIcon = "";
+      defaultSnap.docs.forEach((d) => {
+        const data = d.data();
+        if (
+          typeof data.name === "string" &&
+          normalizeKey(data.name) === "user" &&
+          typeof data.icon === "string"
+        ) {
+          userDefaultIcon = data.icon.trim();
+        }
+      });
+      setDefaultAvatar(userDefaultIcon);
+
+      const subjectMap: Record<string, string> = {};
+      subjectsSnap.docs.forEach((d) => {
+        const data = d.data();
+        if (typeof data.name === "string" && typeof data.avatar === "string") {
+          subjectMap[normalizeKey(data.name)] = data.avatar.trim();
+        }
+      });
+      setSubjectAvatars(subjectMap);
+
+      const allNotes = notesSnap.docs.map(
+        (d) => ({ id: d.id, ...d.data() }) as TopicalNote,
+      );
+      const filteredNotes = subject
+        ? allNotes.filter((note) => {
+            const noteSubjects = Array.isArray(note.subject)
+              ? note.subject
+              : [note.subject ?? ""];
+            return noteSubjects.some(
+              (entry) => normalizeKey(entry) === normalizeKey(subject),
+            );
+          })
+        : allNotes;
+
+      if (providedNotes) {
+        setNotes(providedNotes);
+      } else {
+        setNotes(filteredNotes);
+      }
+    };
+
     if (providedNotes) {
       setNotes(providedNotes);
       setLoading(Boolean(externalLoading));
-      return;
+      loadMetadata().catch((e) => {
+        console.error("Error loading featured note metadata:", e);
+        if (active) setNotes([]);
+      });
+      return () => {
+        active = false;
+      };
     }
 
-    let active = true;
-
-    Promise.all([
-      getDocs(query(collection(db, "pages"), orderBy("createdAt", "desc"))),
-      getDocs(collection(db, "subject")),
-      getDocs(collection(db, "default")),
-    ])
-      .then(([notesSnap, subjectsSnap, defaultSnap]) => {
-        if (!active) return;
-
-        let userDefaultIcon = "";
-        defaultSnap.docs.forEach((d) => {
-          const data = d.data();
-          if (
-            typeof data.name === "string" &&
-            normalizeKey(data.name) === "user" &&
-            typeof data.icon === "string"
-          ) {
-            userDefaultIcon = data.icon.trim();
-          }
-        });
-        setDefaultAvatar(userDefaultIcon);
-
-        const subjectMap: Record<string, string> = {};
-        subjectsSnap.docs.forEach((d) => {
-          const data = d.data();
-          if (
-            typeof data.name === "string" &&
-            typeof data.avatar === "string"
-          ) {
-            subjectMap[normalizeKey(data.name)] = data.avatar.trim();
-          }
-        });
-        setSubjectAvatars(subjectMap);
-
-        const allNotes = notesSnap.docs.map(
-          (d) => ({ id: d.id, ...d.data() }) as TopicalNote,
-        );
-        const filteredNotes = subject
-          ? allNotes.filter(
-              (note) =>
-                normalizeKey(note.subject ?? "") === normalizeKey(subject),
-            )
-          : allNotes;
-
-        setNotes(filteredNotes);
-      })
+    setLoading(true);
+    loadMetadata()
       .catch((e) => {
         console.error("Error loading featured notes:", e);
         if (active) setNotes([]);
@@ -207,6 +238,8 @@ export const FeaturedNoteCard = ({
             defaultAvatar={defaultAvatar}
             isWide={useTwoColumns}
             layout={layout}
+            source={source}
+            subject={subject}
           />
         )}
       />
@@ -300,12 +333,16 @@ const FeaturedNoteItem = ({
   defaultAvatar,
   isWide,
   layout,
+  source,
+  subject,
 }: {
   note: TopicalNote;
   subjectAvatars: Record<string, string>;
   defaultAvatar: string;
   isWide: boolean;
   layout: string;
+  source: "home" | "library" | "pages";
+  subject?: string;
 }) => {
   const [hovered, setHovered] = useState(false);
   const router = useRouter();
@@ -315,9 +352,28 @@ const FeaturedNoteItem = ({
       ? `${note.description?.slice(0, 100)}...`
       : (note.description ?? "A fresh study note will appear here.");
 
-  // Resolve avatar priority: subject match in 'subjects' -> default avatar -> undefined
-  const subjectKey = note.subject ? normalizeKey(note.subject) : "";
-  const avatarUri = subjectAvatars[subjectKey] || defaultAvatar || undefined;
+  const subjectValues = Array.isArray(note.subject)
+    ? note.subject
+    : note.subject
+      ? [note.subject]
+      : [];
+  const avatarUri =
+    subjectValues
+      .map((entry) => normalizeKey(entry))
+      .map((entry) => subjectAvatars[entry])
+      .find(Boolean) ||
+    (subject ? subjectAvatars[normalizeKey(subject)] : undefined) ||
+    defaultAvatar ||
+    undefined;
+
+  const previewSource =
+    source ?? (layout === "two-column" ? "library" : "home");
+  const routeTitle =
+    typeof subject === "string" && subject.trim().length > 0
+      ? subject
+      : typeof note.subject === "string" && note.subject.trim().length > 0
+        ? note.subject
+        : "Pages";
 
   return (
     <Animated.View
@@ -330,22 +386,10 @@ const FeaturedNoteItem = ({
             : styles.itemWrapperWide),
       ]}
     >
-      <Pressable
-        onHoverIn={() => setHovered(true)}
-        onHoverOut={() => setHovered(false)}
-        onPress={() =>
-          router.push({
-            pathname: "/page-preview",
-            params: {
-              id: note.id,
-              source: layout === "two-column" ? "library" : "home",
-            },
-          } as any)
-        }
-        style={({ pressed }) => [
-          styles.card,
-          (pressed || hovered) && styles.cardHovered,
-        ]}
+      <View
+        onPointerEnter={() => setHovered(true)}
+        onPointerLeave={() => setHovered(false)}
+        style={[styles.card, hovered && styles.cardHovered]}
       >
         <Pressable
           style={styles.previewWrap}
@@ -356,7 +400,9 @@ const FeaturedNoteItem = ({
               pathname: "/page-preview",
               params: {
                 id: note.id,
-                source: layout === "two-column" ? "library" : "home",
+                source: previewSource,
+                returnTo: previewSource === "pages" ? "/pages" : undefined,
+                title: routeTitle,
               },
             } as any)
           }
@@ -395,7 +441,7 @@ const FeaturedNoteItem = ({
           <Action icon="bookmark" label="Save" />
           <Action icon="share-2" label="Share" />
         </View>
-      </Pressable>
+      </View>
     </Animated.View>
   );
 };
@@ -461,7 +507,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
   },
-  preview: { width: "100%", height: 250 },
+  preview: {
+    width: "100%",
+    height: 320,
+  },
   overlay: {
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.1)",

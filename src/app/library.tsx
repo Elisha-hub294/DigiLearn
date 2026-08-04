@@ -204,9 +204,9 @@ export default function LibraryScreen() {
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Add a new past paper"
+        accessibilityLabel="Add a new page"
         style={styles.fabSecondary}
-        onPress={() => openForm("paper")}
+        onPress={() => openForm("page")}
       >
         <Icon name="file-text" size={22} color={colors.white} />
       </Pressable>
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: "#ec4899",
+    backgroundColor: colors.purple,
     alignItems: "center",
     justifyContent: "center",
     elevation: 8,
