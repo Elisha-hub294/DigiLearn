@@ -143,7 +143,8 @@ export const FeaturedNoteCard = ({
         );
         const filteredNotes = subject
           ? allNotes.filter(
-              (note) => normalizeKey(note.subject ?? "") === normalizeKey(subject),
+              (note) =>
+                normalizeKey(note.subject ?? "") === normalizeKey(subject),
             )
           : allNotes;
 
@@ -197,9 +198,7 @@ export const FeaturedNoteCard = ({
         showsVerticalScrollIndicator={false}
         scrollEnabled={false}
         numColumns={useTwoColumns ? 2 : 1}
-        columnWrapperStyle={
-          useTwoColumns ? styles.columnWrapper : undefined
-        }
+        columnWrapperStyle={useTwoColumns ? styles.columnWrapper : undefined}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <FeaturedNoteItem

@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import React, {
+import {
   useCallback,
   useEffect,
   useMemo,

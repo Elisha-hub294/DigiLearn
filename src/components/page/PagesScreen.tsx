@@ -1,18 +1,22 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Feather as Icon } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
-import Animated, { FadeIn, FadeInUp, SlideInDown } from "react-native-reanimated";
+import Animated, {
+    FadeIn,
+    FadeInUp,
+    SlideInDown,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
@@ -66,7 +70,10 @@ const normalizeArray = (value: unknown): string[] => {
   if (!value) return [];
   if (Array.isArray(value)) {
     return value
-      .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+      .filter(
+        (item): item is string =>
+          typeof item === "string" && item.trim().length > 0,
+      )
       .map((item) => item.trim().toLowerCase());
   }
   if (typeof value === "string" && value.trim()) {
@@ -101,7 +108,9 @@ const sortNotes = (notes: PageNote[], sortBy: string) => {
   const list = [...notes];
   switch (sortBy) {
     case "Oldest":
-      return list.sort((a, b) => formatCreatedAt(a.createdAt) - formatCreatedAt(b.createdAt));
+      return list.sort(
+        (a, b) => formatCreatedAt(a.createdAt) - formatCreatedAt(b.createdAt),
+      );
     case "Most Read":
       return list.sort(
         (a, b) =>
@@ -127,7 +136,8 @@ const sortNotes = (notes: PageNote[], sortBy: string) => {
 
 const filterByReadStatus = (note: PageNote, readingStatus: string) => {
   if (readingStatus === "All") return true;
-  const isRead = Boolean(note.isRead) || normalizeText(note.readStatus) === "read";
+  const isRead =
+    Boolean(note.isRead) || normalizeText(note.readStatus) === "read";
   const inProgress = Number(note.progress ?? 0) > 0;
 
   switch (readingStatus) {
@@ -171,13 +181,17 @@ export default function PagesScreen() {
   const contentMaxWidth = Math.min(1080, width - horizontalPadding * 2);
 
   const activeFilterCount = useMemo(() => {
-    return Object.values(filters).filter((option) => option !== "All" && option !== "Newest").length;
+    return Object.values(filters).filter(
+      (option) => option !== "All" && option !== "Newest",
+    ).length;
   }, [filters]);
 
   const loadNotes = useCallback(async () => {
     try {
       setLoading(true);
-      const snapshot = await getDocs(query(collection(db, "pages"), orderBy("createdAt", "desc")));
+      const snapshot = await getDocs(
+        query(collection(db, "pages"), orderBy("createdAt", "desc")),
+      );
       const allNotes = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as Record<string, unknown>),
@@ -204,7 +218,9 @@ export default function PagesScreen() {
   useEffect(() => {
     const loadPersistedFilters = async () => {
       try {
-        const saved = await AsyncStorage.getItem(`digilearn-pages-filters:${pageTitle}`);
+        const saved = await AsyncStorage.getItem(
+          `digilearn-pages-filters:${pageTitle}`,
+        );
         if (saved) {
           const parsed = JSON.parse(saved) as FilterState;
           setFilters({ ...DEFAULT_FILTERS, ...parsed });
@@ -221,7 +237,10 @@ export default function PagesScreen() {
 
   useEffect(() => {
     if (!isLoadedFilters) return;
-    AsyncStorage.setItem(`digilearn-pages-filters:${pageTitle}`, JSON.stringify(filters));
+    AsyncStorage.setItem(
+      `digilearn-pages-filters:${pageTitle}`,
+      JSON.stringify(filters),
+    );
   }, [filters, isLoadedFilters, pageTitle]);
 
   const visibleNotes = useMemo(() => {
@@ -233,13 +252,21 @@ export default function PagesScreen() {
         const title = normalizeText(note.title);
         const description = normalizeText(note.description);
         const books = normalizeArray(note.book).join(" ");
-        return title.includes(query) || description.includes(query) || books.includes(query);
+        return (
+          title.includes(query) ||
+          description.includes(query) ||
+          books.includes(query)
+        );
       });
     }
 
-    filtered = filtered.filter((note) => filterByReadStatus(note, filters.readingStatus));
+    filtered = filtered.filter((note) =>
+      filterByReadStatus(note, filters.readingStatus),
+    );
     filtered = filtered.filter((note) => filterByLevel(note, filters.level));
-    filtered = filtered.filter((note) => filterByAttachments(note, filters.attachments));
+    filtered = filtered.filter((note) =>
+      filterByAttachments(note, filters.attachments),
+    );
 
     return sortNotes(filtered, filters.sortBy);
   }, [filters, notes, searchQuery]);
@@ -282,9 +309,17 @@ export default function PagesScreen() {
         <Pressable
           key={option}
           onPress={() => updateFilter(key, option)}
-          style={[styles.filterOption, isSelected && styles.filterOptionSelected]}
+          style={[
+            styles.filterOption,
+            isSelected && styles.filterOptionSelected,
+          ]}
         >
-          <Text style={[styles.filterOptionText, isSelected && styles.filterOptionTextSelected]}>
+          <Text
+            style={[
+              styles.filterOptionText,
+              isSelected && styles.filterOptionTextSelected,
+            ]}
+          >
             {option}
           </Text>
         </Pressable>
@@ -296,7 +331,9 @@ export default function PagesScreen() {
     <SafeAreaView style={styles.safeArea}>
       <Animated.View entering={FadeInUp.duration(420)} style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
-          <View style={[styles.headerRow, { paddingHorizontal: horizontalPadding }]}> 
+          <View
+            style={[styles.headerRow, { paddingHorizontal: horizontalPadding }]}
+          >
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Go back"
@@ -309,7 +346,12 @@ export default function PagesScreen() {
             <Text style={styles.pageTitle}>{pageTitle}</Text>
           </View>
 
-          <View style={[styles.searchSection, { paddingHorizontal: horizontalPadding }]}> 
+          <View
+            style={[
+              styles.searchSection,
+              { paddingHorizontal: horizontalPadding },
+            ]}
+          >
             <View style={styles.searchBarWrap}>
               <SearchBar
                 value={searchText}
@@ -333,11 +375,19 @@ export default function PagesScreen() {
             </Pressable>
           </View>
 
-          <View style={[styles.listSection, { paddingHorizontal: horizontalPadding }]}> 
+          <View
+            style={[
+              styles.listSection,
+              { paddingHorizontal: horizontalPadding },
+            ]}
+          >
             {loading ? (
               <FeaturedNoteCard loading={true} layout="stack" />
             ) : visibleNotes.length === 0 ? (
-              <Animated.View entering={FadeIn.duration(240)} style={styles.emptyState}>
+              <Animated.View
+                entering={FadeIn.duration(240)}
+                style={styles.emptyState}
+              >
                 <Text style={styles.emptyTitle}>No matching notes found</Text>
                 <Text style={styles.emptySubtitle}>
                   Try a different keyword or adjust your filters.
@@ -347,8 +397,13 @@ export default function PagesScreen() {
                 </Pressable>
               </Animated.View>
             ) : (
-              <Animated.View entering={FadeIn.duration(260)} style={styles.notesWrap}>
-                <Text style={styles.itemsCount}>{visibleNotes.length} items</Text>
+              <Animated.View
+                entering={FadeIn.duration(260)}
+                style={styles.notesWrap}
+              >
+                <Text style={styles.itemsCount}>
+                  {visibleNotes.length} items
+                </Text>
                 <FeaturedNoteCard
                   layout="stack"
                   subject={pageTitle}
@@ -360,39 +415,72 @@ export default function PagesScreen() {
           </View>
         </View>
 
-        <Modal transparent visible={showFilters} animationType="slide" onRequestClose={() => setShowFilters(false)}>
-          <Animated.View entering={FadeIn.duration(180)} style={styles.modalBackdrop}>
-            <Pressable style={styles.backdropPress} onPress={() => setShowFilters(false)} />
-            <Animated.View entering={SlideInDown.duration(280)} style={styles.sheet}>
+        <Modal
+          transparent
+          visible={showFilters}
+          animationType="slide"
+          onRequestClose={() => setShowFilters(false)}
+        >
+          <Animated.View
+            entering={FadeIn.duration(180)}
+            style={styles.modalBackdrop}
+          >
+            <Pressable
+              style={styles.backdropPress}
+              onPress={() => setShowFilters(false)}
+            />
+            <Animated.View
+              entering={SlideInDown.duration(280)}
+              style={styles.sheet}
+            >
               <View style={styles.handle} />
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sheetContent}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.sheetContent}
+              >
                 <Text style={styles.sheetTitle}>Filter notes</Text>
 
                 <View style={styles.filterGroup}>
                   <Text style={styles.filterLabel}>Sort By</Text>
-                  <View style={styles.filterOptionGrid}>{renderFilterOptions("sortBy")}</View>
+                  <View style={styles.filterOptionGrid}>
+                    {renderFilterOptions("sortBy")}
+                  </View>
                 </View>
 
                 <View style={styles.filterGroup}>
                   <Text style={styles.filterLabel}>Reading Status</Text>
-                  <View style={styles.filterOptionGrid}>{renderFilterOptions("readingStatus")}</View>
+                  <View style={styles.filterOptionGrid}>
+                    {renderFilterOptions("readingStatus")}
+                  </View>
                 </View>
 
                 <View style={styles.filterGroup}>
                   <Text style={styles.filterLabel}>Level</Text>
-                  <View style={styles.filterOptionGrid}>{renderFilterOptions("level")}</View>
+                  <View style={styles.filterOptionGrid}>
+                    {renderFilterOptions("level")}
+                  </View>
                 </View>
 
                 <View style={styles.filterGroup}>
                   <Text style={styles.filterLabel}>Attachments</Text>
-                  <View style={styles.filterOptionGrid}>{renderFilterOptions("attachments")}</View>
+                  <View style={styles.filterOptionGrid}>
+                    {renderFilterOptions("attachments")}
+                  </View>
                 </View>
 
                 <View style={styles.sheetActions}>
-                  <Pressable onPress={resetFilters} style={styles.secondaryAction}>
-                    <Text style={styles.secondaryActionText}>Reset Filters</Text>
+                  <Pressable
+                    onPress={resetFilters}
+                    style={styles.secondaryAction}
+                  >
+                    <Text style={styles.secondaryActionText}>
+                      Reset Filters
+                    </Text>
                   </Pressable>
-                  <Pressable onPress={applyFilters} style={styles.primaryAction}>
+                  <Pressable
+                    onPress={applyFilters}
+                    style={styles.primaryAction}
+                  >
                     <Text style={styles.primaryActionText}>Apply</Text>
                   </Pressable>
                 </View>
