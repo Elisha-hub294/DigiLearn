@@ -2,7 +2,7 @@ import { Feather as Icon } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
     Modal,
     Pressable,
@@ -80,6 +80,42 @@ const normalizeArray = (value: unknown): string[] => {
     return [value.trim().toLowerCase()];
   }
   return [];
+};
+
+const extractAccentColor = (rawAccent: unknown): string => {
+  if (!rawAccent) return "#000000";
+
+  if (typeof rawAccent === "string" && rawAccent.trim()) {
+    const trimmed = rawAccent.trim();
+
+    if (trimmed.startsWith("#") || trimmed.startsWith("rgb")) {
+      return trimmed;
+    }
+
+    if (trimmed.toLowerCase() === "black") {
+      return "#000000";
+    }
+
+    if (/^[0-9A-Fa-f]{3}$/.test(trimmed) || /^[0-9A-Fa-f]{6}$/.test(trimmed)) {
+      return `#${trimmed}`;
+    }
+
+    return trimmed;
+  }
+
+  if (typeof rawAccent === "object" && rawAccent !== null) {
+    const accentObject = rawAccent as Record<string, unknown>;
+
+    if (typeof accentObject.color === "string" && accentObject.color.trim()) {
+      return accentObject.color.trim();
+    }
+
+    if (typeof accentObject.hex === "string" && accentObject.hex.trim()) {
+      return accentObject.hex.trim();
+    }
+  }
+
+  return "#000000";
 };
 
 const formatCreatedAt = (value: unknown) => {
@@ -174,6 +210,7 @@ export default function PagesScreen() {
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [isLoadedFilters, setIsLoadedFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [subjectAccent, setSubjectAccent] = useState("#000000");
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { width } = useWindowDimensions();
@@ -186,34 +223,68 @@ export default function PagesScreen() {
     ).length;
   }, [filters]);
 
-  const loadNotes = useCallback(async () => {
-    try {
-      setLoading(true);
-      const snapshot = await getDocs(
-        query(collection(db, "pages"), orderBy("createdAt", "desc")),
-      );
-      const allNotes = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Record<string, unknown>),
-      })) as PageNote[];
-
-      const topicNotes = allNotes.filter((note) => {
-        const noteSubjects = normalizeArray(note.subject);
-        return noteSubjects.includes(normalizeText(pageTitle));
-      });
-
-      setNotes(topicNotes);
-    } catch (error) {
-      console.error("Failed to load notes for pages screen", error);
-      setNotes([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [pageTitle]);
+  const isPageDataReady = !loading;
 
   useEffect(() => {
-    loadNotes();
-  }, [loadNotes]);
+    let cancelled = false;
+
+    const hydratePageData = async () => {
+      try {
+        setLoading(true);
+
+        const [subjectsSnapshot, pagesSnapshot] = await Promise.all([
+          getDocs(collection(db, "subject")),
+          getDocs(query(collection(db, "pages"), orderBy("createdAt", "desc"))),
+        ]);
+
+        if (cancelled) return;
+
+        const matchedSubject = subjectsSnapshot.docs.find((subjectDoc) => {
+          const subjectData = subjectDoc.data() as { name?: unknown };
+          return (
+            normalizeText(
+              typeof subjectData.name === "string"
+                ? subjectData.name
+                : undefined,
+            ) === normalizeText(pageTitle)
+          );
+        });
+
+        const accent = matchedSubject
+          ? extractAccentColor(
+              (matchedSubject.data() as { accent?: unknown }).accent,
+            )
+          : "#000000";
+
+        const allNotes = pagesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Record<string, unknown>),
+        })) as PageNote[];
+
+        const topicNotes = allNotes.filter((note) => {
+          const noteSubjects = normalizeArray(note.subject);
+          return noteSubjects.includes(normalizeText(pageTitle));
+        });
+
+        setNotes(topicNotes);
+        setSubjectAccent(accent);
+      } catch (error) {
+        console.error("Failed to load pages screen data", error);
+        setNotes([]);
+        setSubjectAccent("#000000");
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void hydratePageData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pageTitle]);
 
   useEffect(() => {
     const loadPersistedFilters = async () => {
@@ -311,7 +382,7 @@ export default function PagesScreen() {
           onPress={() => updateFilter(key, option)}
           style={[
             styles.filterOption,
-            isSelected && styles.filterOptionSelected,
+            isSelected && { backgroundColor: subjectAccent },
           ]}
         >
           <Text
@@ -326,6 +397,19 @@ export default function PagesScreen() {
       );
     });
   };
+
+  if (!isPageDataReady) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.skeletonPage}>
+          <View style={styles.skeletonHeaderRow} />
+          <View style={styles.skeletonSearchRow} />
+          <View style={styles.skeletonCard} />
+          <View style={styles.skeletonCard} />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -343,7 +427,9 @@ export default function PagesScreen() {
               <Icon name="chevron-left" size={26} color="#111111" />
             </Pressable>
 
-            <Text style={styles.pageTitle}>{pageTitle}</Text>
+            <Text style={[styles.pageTitle, { color: subjectAccent }]}>
+              {pageTitle}
+            </Text>
           </View>
 
           <View
@@ -368,7 +454,7 @@ export default function PagesScreen() {
               accessibilityRole="button"
               accessibilityLabel="Open filters"
               onPress={() => setShowFilters(true)}
-              style={styles.filterButton}
+              style={[styles.filterButton, { backgroundColor: subjectAccent }]}
             >
               <Icon name="sliders" size={18} color="#FFFFFF" />
               {activeFilterCount > 0 && <View style={styles.badge} />}
@@ -381,18 +467,26 @@ export default function PagesScreen() {
               { paddingHorizontal: horizontalPadding },
             ]}
           >
-            {loading ? (
+            {!isPageDataReady ? (
               <FeaturedNoteCard loading={true} layout="stack" />
             ) : visibleNotes.length === 0 ? (
               <Animated.View
                 entering={FadeIn.duration(240)}
                 style={styles.emptyState}
               >
-                <Text style={styles.emptyTitle}>No matching notes found</Text>
+                <Text style={[styles.emptyTitle, { color: subjectAccent }]}>
+                  No matching notes found
+                </Text>
                 <Text style={styles.emptySubtitle}>
                   Try a different keyword or adjust your filters.
                 </Text>
-                <Pressable onPress={resetFilters} style={styles.emptyButton}>
+                <Pressable
+                  onPress={resetFilters}
+                  style={[
+                    styles.emptyButton,
+                    { backgroundColor: subjectAccent },
+                  ]}
+                >
                   <Text style={styles.emptyButtonText}>Clear Filters</Text>
                 </Pressable>
               </Animated.View>
@@ -484,13 +578,21 @@ export default function PagesScreen() {
                     onPress={resetFilters}
                     style={styles.secondaryAction}
                   >
-                    <Text style={styles.secondaryActionText}>
+                    <Text
+                      style={[
+                        styles.secondaryActionText,
+                        { color: subjectAccent },
+                      ]}
+                    >
                       Reset Filters
                     </Text>
                   </Pressable>
                   <Pressable
                     onPress={applyFilters}
-                    style={styles.primaryAction}
+                    style={[
+                      styles.primaryAction,
+                      { backgroundColor: subjectAccent },
+                    ]}
                   >
                     <Text style={styles.primaryActionText}>Apply</Text>
                   </Pressable>
@@ -513,6 +615,33 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     backgroundColor: colors.white,
+  },
+  skeletonPage: {
+    flex: 1,
+    paddingHorizontal: 14,
+    paddingTop: spacing.xl,
+    backgroundColor: colors.white,
+  },
+  skeletonHeaderRow: {
+    width: 180,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#ECEFF3",
+    marginBottom: 20,
+  },
+  skeletonSearchRow: {
+    width: "100%",
+    height: 46,
+    borderRadius: 999,
+    backgroundColor: "#F1F3F5",
+    marginBottom: 20,
+  },
+  skeletonCard: {
+    width: "100%",
+    height: 160,
+    borderRadius: 18,
+    backgroundColor: "#F1F3F5",
+    marginBottom: 16,
   },
   contentContainer: {
     width: "100%",
@@ -551,7 +680,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "#7FA5A9",
+    backgroundColor: "#000000",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",

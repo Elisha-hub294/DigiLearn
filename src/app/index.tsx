@@ -82,10 +82,10 @@ export default function HomeScreen() {
               entering={FadeInUp.duration(450)}
               style={styles.section}
             >
-              <SectionHeader
+              {/* <SectionHeader
                 title="Topical notes"
                 onSeeAll={() => router.push("/library")}
-              />
+              /> */}
               <TopicalNotesSlider />
             </Animated.View>
 

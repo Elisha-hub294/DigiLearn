@@ -1,12 +1,6 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
   NativeScrollEvent,
@@ -24,7 +18,7 @@ const SUPABASE_ICONS =
   "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons";
 
 const items = [
-  { id: "math", title: "Math", image: `${SUPABASE_ICONS}/math-3d.png` },
+  { id: "math", title: "Mathematics", image: `${SUPABASE_ICONS}/math-3d.png` },
   { id: "physics", title: "Physics", image: `${SUPABASE_ICONS}/phys-3d.png` },
   {
     id: "chemistry",
