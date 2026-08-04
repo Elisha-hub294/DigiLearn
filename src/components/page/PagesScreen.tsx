@@ -1,0 +1,603 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Feather as Icon } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import Animated, { FadeIn, FadeInUp, SlideInDown } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { db } from "../../../firebaseConfig";
+import { colors, radius, spacing } from "../../constants/theme";
+import { FeaturedNoteCard } from "../home/FeaturedNoteCard";
+import { SearchBar } from "../ui/SearchBar";
+
+type PageNote = {
+  id: string;
+  title?: string;
+  description?: string;
+  subject?: string | string[];
+  book?: string | string[];
+  createdAt?: unknown;
+  updatedAt?: unknown;
+  level?: string;
+  readStatus?: string;
+  isRead?: boolean;
+  progress?: number;
+  document?: string;
+};
+
+type FilterState = {
+  sortBy: string;
+  readingStatus: string;
+  level: string;
+  attachments: string;
+};
+
+const DEFAULT_FILTERS: FilterState = {
+  sortBy: "Newest",
+  readingStatus: "All",
+  level: "All",
+  attachments: "All",
+};
+
+const FILTER_OPTIONS = {
+  sortBy: [
+    "Newest",
+    "Oldest",
+    "Most Read",
+    "Recently Updated",
+    "Alphabetical (A–Z)",
+  ],
+  readingStatus: ["All", "Unread", "Read", "Continue Reading"],
+  level: ["All", "Primary", "O level", "A level"],
+  attachments: ["All", "With Books", "Without Books"],
+} as const;
+
+const normalizeText = (value?: string) => value?.trim().toLowerCase() ?? "";
+const normalizeArray = (value: unknown): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+      .map((item) => item.trim().toLowerCase());
+  }
+  if (typeof value === "string" && value.trim()) {
+    return [value.trim().toLowerCase()];
+  }
+  return [];
+};
+
+const formatCreatedAt = (value: unknown) => {
+  if (!value) return 0;
+  if (typeof value === "object" && value && "seconds" in value) {
+    const seconds = Number((value as { seconds?: number }).seconds ?? 0);
+    return seconds * 1000;
+  }
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "string" || typeof value === "number") {
+    const num = Number(value);
+    if (!Number.isNaN(num)) return num;
+  }
+  return 0;
+};
+
+const getHorizontalPadding = (width: number) => {
+  if (width >= 1200) return 64;
+  if (width >= 900) return 48;
+  if (width >= 600) return 32;
+  if (width >= 400) return 20;
+  return 14;
+};
+
+const sortNotes = (notes: PageNote[], sortBy: string) => {
+  const list = [...notes];
+  switch (sortBy) {
+    case "Oldest":
+      return list.sort((a, b) => formatCreatedAt(a.createdAt) - formatCreatedAt(b.createdAt));
+    case "Most Read":
+      return list.sort(
+        (a, b) =>
+          (Number(b.progress ?? 0) || 0) - (Number(a.progress ?? 0) || 0),
+      );
+    case "Recently Updated":
+      return list.sort(
+        (a, b) => formatCreatedAt(b.updatedAt) - formatCreatedAt(a.updatedAt),
+      );
+    case "Alphabetical (A–Z)":
+      return list.sort((a, b) =>
+        (a.title ?? "").localeCompare(b.title ?? "", undefined, {
+          sensitivity: "base",
+        }),
+      );
+    case "Newest":
+    default:
+      return list.sort(
+        (a, b) => formatCreatedAt(b.createdAt) - formatCreatedAt(a.createdAt),
+      );
+  }
+};
+
+const filterByReadStatus = (note: PageNote, readingStatus: string) => {
+  if (readingStatus === "All") return true;
+  const isRead = Boolean(note.isRead) || normalizeText(note.readStatus) === "read";
+  const inProgress = Number(note.progress ?? 0) > 0;
+
+  switch (readingStatus) {
+    case "Unread":
+      return !isRead && !inProgress;
+    case "Read":
+      return isRead;
+    case "Continue Reading":
+      return inProgress && !isRead;
+    default:
+      return true;
+  }
+};
+
+const filterByLevel = (note: PageNote, level: string) => {
+  if (level === "All") return true;
+  return normalizeText(note.level) === normalizeText(level);
+};
+
+const filterByAttachments = (note: PageNote, attachments: string) => {
+  if (attachments === "All") return true;
+  const hasBooks = normalizeArray(note.book).length > 0;
+  return attachments === "With Books" ? hasBooks : !hasBooks;
+};
+
+export default function PagesScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ title?: string }>();
+  const pageTitle = typeof params.title === "string" ? params.title : "Pages";
+  const [notes, setNotes] = useState<PageNote[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [isLoadedFilters, setIsLoadedFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { width } = useWindowDimensions();
+  const horizontalPadding = getHorizontalPadding(width);
+  const contentMaxWidth = Math.min(1080, width - horizontalPadding * 2);
+
+  const activeFilterCount = useMemo(() => {
+    return Object.values(filters).filter((option) => option !== "All" && option !== "Newest").length;
+  }, [filters]);
+
+  const loadNotes = useCallback(async () => {
+    try {
+      setLoading(true);
+      const snapshot = await getDocs(query(collection(db, "pages"), orderBy("createdAt", "desc")));
+      const allNotes = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Record<string, unknown>),
+      })) as PageNote[];
+
+      const topicNotes = allNotes.filter((note) => {
+        const noteSubjects = normalizeArray(note.subject);
+        return noteSubjects.includes(normalizeText(pageTitle));
+      });
+
+      setNotes(topicNotes);
+    } catch (error) {
+      console.error("Failed to load notes for pages screen", error);
+      setNotes([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [pageTitle]);
+
+  useEffect(() => {
+    loadNotes();
+  }, [loadNotes]);
+
+  useEffect(() => {
+    const loadPersistedFilters = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(`digilearn-pages-filters:${pageTitle}`);
+        if (saved) {
+          const parsed = JSON.parse(saved) as FilterState;
+          setFilters({ ...DEFAULT_FILTERS, ...parsed });
+        }
+      } catch (error) {
+        console.error("Failed to load persisted page filters", error);
+      } finally {
+        setIsLoadedFilters(true);
+      }
+    };
+
+    loadPersistedFilters();
+  }, [pageTitle]);
+
+  useEffect(() => {
+    if (!isLoadedFilters) return;
+    AsyncStorage.setItem(`digilearn-pages-filters:${pageTitle}`, JSON.stringify(filters));
+  }, [filters, isLoadedFilters, pageTitle]);
+
+  const visibleNotes = useMemo(() => {
+    let filtered = [...notes];
+
+    if (searchQuery.trim().length >= 2) {
+      const query = searchQuery.trim().toLowerCase();
+      filtered = filtered.filter((note) => {
+        const title = normalizeText(note.title);
+        const description = normalizeText(note.description);
+        const books = normalizeArray(note.book).join(" ");
+        return title.includes(query) || description.includes(query) || books.includes(query);
+      });
+    }
+
+    filtered = filtered.filter((note) => filterByReadStatus(note, filters.readingStatus));
+    filtered = filtered.filter((note) => filterByLevel(note, filters.level));
+    filtered = filtered.filter((note) => filterByAttachments(note, filters.attachments));
+
+    return sortNotes(filtered, filters.sortBy);
+  }, [filters, notes, searchQuery]);
+
+  useEffect(() => {
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
+
+    searchTimeout.current = setTimeout(() => {
+      setSearchQuery(searchText.trim());
+    }, 300);
+
+    return () => {
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+      }
+    };
+  }, [searchText]);
+
+  const resetFilters = () => {
+    setFilters(DEFAULT_FILTERS);
+    setSearchText("");
+    setShowFilters(false);
+  };
+
+  const applyFilters = () => {
+    setShowFilters(false);
+  };
+
+  const updateFilter = (key: keyof FilterState, value: string) => {
+    setFilters((current) => ({ ...current, [key]: value }));
+  };
+
+  const renderFilterOptions = (key: keyof FilterState) => {
+    const options = FILTER_OPTIONS[key] ?? [];
+    return options.map((option) => {
+      const isSelected = filters[key] === option;
+      return (
+        <Pressable
+          key={option}
+          onPress={() => updateFilter(key, option)}
+          style={[styles.filterOption, isSelected && styles.filterOptionSelected]}
+        >
+          <Text style={[styles.filterOptionText, isSelected && styles.filterOptionTextSelected]}>
+            {option}
+          </Text>
+        </Pressable>
+      );
+    });
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <Animated.View entering={FadeInUp.duration(420)} style={styles.page}>
+        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+          <View style={[styles.headerRow, { paddingHorizontal: horizontalPadding }]}> 
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              onPress={() => router.back()}
+              style={styles.backButton}
+            >
+              <Icon name="chevron-left" size={26} color="#111111" />
+            </Pressable>
+
+            <Text style={styles.pageTitle}>{pageTitle}</Text>
+          </View>
+
+          <View style={[styles.searchSection, { paddingHorizontal: horizontalPadding }]}> 
+            <View style={styles.searchBarWrap}>
+              <SearchBar
+                value={searchText}
+                placeholder={`Search in ${pageTitle}`}
+                accessibilityLabel={`Search within ${pageTitle}`}
+                onChangeText={setSearchText}
+                onClear={() => setSearchText("")}
+                isInput
+                variant="topic"
+              />
+            </View>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open filters"
+              onPress={() => setShowFilters(true)}
+              style={styles.filterButton}
+            >
+              <Icon name="sliders" size={18} color="#FFFFFF" />
+              {activeFilterCount > 0 && <View style={styles.badge} />}
+            </Pressable>
+          </View>
+
+          <View style={[styles.listSection, { paddingHorizontal: horizontalPadding }]}> 
+            {loading ? (
+              <FeaturedNoteCard loading={true} layout="stack" />
+            ) : visibleNotes.length === 0 ? (
+              <Animated.View entering={FadeIn.duration(240)} style={styles.emptyState}>
+                <Text style={styles.emptyTitle}>No matching notes found</Text>
+                <Text style={styles.emptySubtitle}>
+                  Try a different keyword or adjust your filters.
+                </Text>
+                <Pressable onPress={resetFilters} style={styles.emptyButton}>
+                  <Text style={styles.emptyButtonText}>Clear Filters</Text>
+                </Pressable>
+              </Animated.View>
+            ) : (
+              <Animated.View entering={FadeIn.duration(260)} style={styles.notesWrap}>
+                <Text style={styles.itemsCount}>{visibleNotes.length} items</Text>
+                <FeaturedNoteCard
+                  layout="stack"
+                  subject={pageTitle}
+                  notes={visibleNotes}
+                  loading={false}
+                />
+              </Animated.View>
+            )}
+          </View>
+        </View>
+
+        <Modal transparent visible={showFilters} animationType="slide" onRequestClose={() => setShowFilters(false)}>
+          <Animated.View entering={FadeIn.duration(180)} style={styles.modalBackdrop}>
+            <Pressable style={styles.backdropPress} onPress={() => setShowFilters(false)} />
+            <Animated.View entering={SlideInDown.duration(280)} style={styles.sheet}>
+              <View style={styles.handle} />
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sheetContent}>
+                <Text style={styles.sheetTitle}>Filter notes</Text>
+
+                <View style={styles.filterGroup}>
+                  <Text style={styles.filterLabel}>Sort By</Text>
+                  <View style={styles.filterOptionGrid}>{renderFilterOptions("sortBy")}</View>
+                </View>
+
+                <View style={styles.filterGroup}>
+                  <Text style={styles.filterLabel}>Reading Status</Text>
+                  <View style={styles.filterOptionGrid}>{renderFilterOptions("readingStatus")}</View>
+                </View>
+
+                <View style={styles.filterGroup}>
+                  <Text style={styles.filterLabel}>Level</Text>
+                  <View style={styles.filterOptionGrid}>{renderFilterOptions("level")}</View>
+                </View>
+
+                <View style={styles.filterGroup}>
+                  <Text style={styles.filterLabel}>Attachments</Text>
+                  <View style={styles.filterOptionGrid}>{renderFilterOptions("attachments")}</View>
+                </View>
+
+                <View style={styles.sheetActions}>
+                  <Pressable onPress={resetFilters} style={styles.secondaryAction}>
+                    <Text style={styles.secondaryActionText}>Reset Filters</Text>
+                  </Pressable>
+                  <Pressable onPress={applyFilters} style={styles.primaryAction}>
+                    <Text style={styles.primaryActionText}>Apply</Text>
+                  </Pressable>
+                </View>
+              </ScrollView>
+            </Animated.View>
+          </Animated.View>
+        </Modal>
+      </Animated.View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+  page: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: colors.white,
+  },
+  contentContainer: {
+    width: "100%",
+    alignItems: "stretch",
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.md,
+    marginBottom: 28,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.md,
+  },
+  pageTitle: {
+    fontSize: 34,
+    fontWeight: "700",
+    color: "#111111",
+    flexShrink: 1,
+  },
+  searchSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: spacing.xl,
+  },
+  searchBarWrap: {
+    flex: 1,
+  },
+  filterButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#7FA5A9",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  badge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#111111",
+  },
+  listSection: {
+    flex: 1,
+  },
+  itemsCount: {
+    fontSize: 14,
+    color: colors.subtitle,
+    marginBottom: spacing.md,
+  },
+  notesWrap: {
+    width: "100%",
+  },
+  emptyState: {
+    paddingVertical: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.lg,
+    backgroundColor: "#F8F9FB",
+  },
+  emptyTitle: {
+    color: "#111111",
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: spacing.sm,
+  },
+  emptySubtitle: {
+    color: colors.subtitle,
+    fontSize: 14,
+    textAlign: "center",
+    maxWidth: 320,
+    marginBottom: spacing.xl,
+  },
+  emptyButton: {
+    backgroundColor: "#111111",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 999,
+  },
+  emptyButtonText: {
+    color: colors.white,
+    fontWeight: "700",
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+  },
+  backdropPress: {
+    ...StyleSheet.absoluteFill,
+  },
+  sheet: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingBottom: spacing.xxl,
+    maxHeight: "80%",
+  },
+  handle: {
+    width: 56,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#D9D9D9",
+    alignSelf: "center",
+    marginTop: spacing.md,
+  },
+  sheetContent: {
+    paddingHorizontal: 20,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  sheetTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#111111",
+    marginBottom: spacing.xl,
+  },
+  filterGroup: {
+    marginBottom: spacing.xl,
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#111111",
+    marginBottom: spacing.md,
+  },
+  filterOptionGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  filterOption: {
+    backgroundColor: "#F5F7F8",
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  filterOptionSelected: {
+    backgroundColor: "#7FA5A9",
+  },
+  filterOptionText: {
+    color: "#333333",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  filterOptionTextSelected: {
+    color: colors.white,
+  },
+  sheetActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: spacing.lg,
+  },
+  secondaryAction: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    borderRadius: 999,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  secondaryActionText: {
+    color: "#111111",
+    fontWeight: "700",
+  },
+  primaryAction: {
+    flex: 1,
+    backgroundColor: "#111111",
+    borderRadius: 999,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  primaryActionText: {
+    color: colors.white,
+    fontWeight: "700",
+  },
+});

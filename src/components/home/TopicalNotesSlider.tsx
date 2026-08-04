@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import React, {
   useCallback,
   useEffect,
@@ -114,6 +115,7 @@ const RESUME_DELAY_MS = 3000;
 const CARD_GAP = spacing.lg; // marginRight on each card
 
 export const TopicalNotesSlider = () => {
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const cardWidth = width >= 900 ? 128 : 110;
   const itemStep = cardWidth + CARD_GAP;
@@ -228,6 +230,12 @@ export const TopicalNotesSlider = () => {
             style={styles.card}
             accessibilityRole="button"
             accessibilityLabel={item.title}
+            onPress={() =>
+              router.push({
+                pathname: "/pages",
+                params: { title: item.title },
+              } as any)
+            }
           >
             <View style={styles.imageWrap}>
               <Image

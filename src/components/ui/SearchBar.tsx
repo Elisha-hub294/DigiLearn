@@ -14,6 +14,12 @@ type SearchBarProps = {
   isInput?: boolean;
   showBack?: boolean;
   autoFocus?: boolean;
+  containerStyle?: any;
+  inputContainerStyle?: any;
+  inputStyle?: any;
+  placeholderTextColor?: string;
+  searchIconColor?: string;
+  variant?: "default" | "topic";
 };
 
 export function SearchBar({
@@ -27,6 +33,12 @@ export function SearchBar({
   isInput = false,
   showBack = false,
   autoFocus = false,
+  containerStyle,
+  inputContainerStyle,
+  inputStyle,
+  placeholderTextColor = "#8A8A8A",
+  searchIconColor = "#8A8A8A",
+  variant = "default",
 }: SearchBarProps) {
   const router = useRouter();
 
@@ -53,16 +65,27 @@ export function SearchBar({
           </Pressable>
         )}
 
-        <View style={styles.inputContainer}>
-          <Icon name="search" size={18} color="#8A8A8A" style={styles.searchIcon} />
+        <View
+          style={[
+            styles.inputContainer,
+            variant === "topic" && styles.topicInputContainer,
+            inputContainerStyle,
+          ]}
+        >
+          <Icon
+            name="search"
+            size={18}
+            color={searchIconColor}
+            style={styles.searchIcon}
+          />
           <TextInput
             accessibilityLabel={accessibilityLabel}
             value={value}
             onChangeText={onChangeText}
             onSubmitEditing={onSubmit}
             placeholder={placeholder}
-            placeholderTextColor="#8A8A8A"
-            style={styles.input}
+            placeholderTextColor={placeholderTextColor}
+            style={[styles.input, inputStyle]}
             returnKeyType="search"
             autoCapitalize="none"
             autoCorrect={false}
@@ -151,6 +174,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1.5,
     borderColor: "#111111",
+  },
+  topicInputContainer: {
+    height: 48,
+    borderRadius: 24,
+    borderColor: "#D9D9D9",
+    backgroundColor: colors.white,
   },
   searchIcon: {
     marginRight: 6,

@@ -4,8 +4,9 @@ import { Image } from "expo-image";
 import * as IntentLauncher from "expo-intent-launcher";
 import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  FlatList,
   Linking,
   Platform,
   Pressable,
@@ -27,6 +28,20 @@ type TopicalNote = {
   subject?: string;
   author?: string;
   document?: string;
+  book?: string;
+  createdAt?: any;
+  updatedAt?: any;
+  level?: string;
+  readStatus?: string;
+  isRead?: boolean;
+  progress?: number;
+};
+
+type FeaturedNoteCardProps = {
+  layout?: "stack" | "two-column";
+  subject?: string;
+  notes?: TopicalNote[];
+  loading?: boolean;
 };
 
 const normalizeKey = (str: string) => str.trim().toLowerCase();
@@ -67,9 +82,10 @@ const openPdfDocument = async (url: string) => {
 
 export const FeaturedNoteCard = ({
   layout = "stack",
-}: {
-  layout?: "stack" | "two-column";
-}) => {
+  subject,
+  notes: providedNotes,
+  loading: externalLoading,
+}: FeaturedNoteCardProps) => {
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
   const useTwoColumns = isWide && layout === "two-column";
@@ -81,6 +97,12 @@ export const FeaturedNoteCard = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (providedNotes) {
+      setNotes(providedNotes);
+      setLoading(Boolean(externalLoading));
+      return;
+    }
+
     let active = true;
 
     Promise.all([
@@ -91,7 +113,6 @@ export const FeaturedNoteCard = ({
       .then(([notesSnap, subjectsSnap, defaultSnap]) => {
         if (!active) return;
 
-        // Parse default user icon
         let userDefaultIcon = "";
         defaultSnap.docs.forEach((d) => {
           const data = d.data();
@@ -105,7 +126,6 @@ export const FeaturedNoteCard = ({
         });
         setDefaultAvatar(userDefaultIcon);
 
-        // Map subject names to avatars from 'subjects' collection
         const subjectMap: Record<string, string> = {};
         subjectsSnap.docs.forEach((d) => {
           const data = d.data();
@@ -118,10 +138,16 @@ export const FeaturedNoteCard = ({
         });
         setSubjectAvatars(subjectMap);
 
-        // Parse notes
-        setNotes(
-          notesSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as TopicalNote),
+        const allNotes = notesSnap.docs.map(
+          (d) => ({ id: d.id, ...d.data() }) as TopicalNote,
         );
+        const filteredNotes = subject
+          ? allNotes.filter(
+              (note) => normalizeKey(note.subject ?? "") === normalizeKey(subject),
+            )
+          : allNotes;
+
+        setNotes(filteredNotes);
       })
       .catch((e) => {
         console.error("Error loading featured notes:", e);
@@ -132,9 +158,11 @@ export const FeaturedNoteCard = ({
     return () => {
       active = false;
     };
-  }, []);
+  }, [externalLoading, providedNotes, subject]);
 
-  if (loading) {
+  const listData = useMemo(() => notes, [notes]);
+
+  if (loading || externalLoading) {
     const skeletonCount = useTwoColumns ? 2 : 1;
     return (
       <View
@@ -154,7 +182,7 @@ export const FeaturedNoteCard = ({
     );
   }
 
-  if (!notes.length) return null;
+  if (!listData.length) return null;
 
   return (
     <View
@@ -163,16 +191,26 @@ export const FeaturedNoteCard = ({
         useTwoColumns ? styles.listTwoColumns : isWide && styles.listWide,
       ]}
     >
-      {notes.map((note) => (
-        <FeaturedNoteItem
-          key={note.id}
-          note={note}
-          subjectAvatars={subjectAvatars}
-          defaultAvatar={defaultAvatar}
-          isWide={useTwoColumns}
-          layout={layout}
-        />
-      ))}
+      <FlatList
+        data={listData}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
+        numColumns={useTwoColumns ? 2 : 1}
+        columnWrapperStyle={
+          useTwoColumns ? styles.columnWrapper : undefined
+        }
+        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => (
+          <FeaturedNoteItem
+            note={item}
+            subjectAvatars={subjectAvatars}
+            defaultAvatar={defaultAvatar}
+            isWide={useTwoColumns}
+            layout={layout}
+          />
+        )}
+      />
     </View>
   );
 };
@@ -296,6 +334,15 @@ const FeaturedNoteItem = ({
       <Pressable
         onHoverIn={() => setHovered(true)}
         onHoverOut={() => setHovered(false)}
+        onPress={() =>
+          router.push({
+            pathname: "/page-preview",
+            params: {
+              id: note.id,
+              source: layout === "two-column" ? "library" : "home",
+            },
+          } as any)
+        }
         style={({ pressed }) => [
           styles.card,
           (pressed || hovered) && styles.cardHovered,
@@ -363,7 +410,12 @@ const Action = ({ icon, label }: { icon: any; label: string }) => (
 
 const styles = StyleSheet.create({
   list: { width: "100%" },
+  listContent: { paddingBottom: spacing.xl },
   listWide: { flexDirection: "column", gap: spacing.md },
+  columnWrapper: {
+    justifyContent: "space-between",
+    gap: spacing.md,
+  },
   listTwoColumns: {
     flexDirection: "row",
     flexWrap: "wrap",

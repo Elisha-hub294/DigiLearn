@@ -40,6 +40,10 @@ export default function RootLayout() {
             name="search"
             options={{ href: null, tabBarStyle: { display: "none" } }}
           />
+          <Tabs.Screen
+            name="pages"
+            options={{ href: null, tabBarStyle: { display: "none" } }}
+          />
         </Tabs>
       </SafeAreaProvider>
     </GestureHandlerRootView>
