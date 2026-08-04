@@ -1,11 +1,11 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  View,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -133,7 +133,7 @@ export default function LibraryScreen() {
         <Animated.View entering={FadeInUp.duration(440)} style={styles.section}>
           <SectionHeader
             title="Categories"
-            onSeeAll={() => { }}
+            onSeeAll={() => {}}
             actionLabel=""
           />
           <CategorySlider items={CATEGORIES} />
@@ -142,7 +142,7 @@ export default function LibraryScreen() {
         <Animated.View entering={FadeInUp.duration(480)} style={styles.section}>
           <SectionHeader
             title="Featured notes"
-            onSeeAll={() => { }}
+            onSeeAll={() => {}}
             actionLabel="More"
           />
           <FeaturedNoteCard layout="two-column" />
@@ -151,7 +151,7 @@ export default function LibraryScreen() {
         <Animated.View entering={FadeInUp.duration(560)} style={styles.section}>
           <SectionHeader
             title="Text Books"
-            onSeeAll={() => { }}
+            onSeeAll={() => {}}
             actionLabel="See all"
           />
           <TopSellingBooks items={topBooks} />
@@ -174,7 +174,7 @@ export default function LibraryScreen() {
           >
             <SectionHeader
               title={section.title}
-              onSeeAll={() => { }}
+              onSeeAll={() => {}}
               actionLabel="See all"
             />
             <PaperCarousel items={section.items} />

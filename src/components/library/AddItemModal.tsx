@@ -1,5 +1,5 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
     Alert,
     Modal,
@@ -121,9 +121,10 @@ export function AddItemModal({
           document: formData.document.trim() || "",
           preview: formData.document.trim() || "",
           book: bookList,
-          createdAt: parsedCreatedAt && !Number.isNaN(parsedCreatedAt.getTime())
-            ? parsedCreatedAt
-            : serverTimestamp(),
+          createdAt:
+            parsedCreatedAt && !Number.isNaN(parsedCreatedAt.getTime())
+              ? parsedCreatedAt
+              : serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
       } else {
