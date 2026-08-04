@@ -24,7 +24,7 @@ export function BookHero({
   onBack: () => void;
 }) {
   const { height } = useWindowDimensions();
-  const heroHeight = Math.min(Math.max(height * 0.46, 330), 520);
+  const heroHeight = Math.min(Math.max(height * 0.5, 330), 520);
   const hasCover = Boolean(book.cover && book.cover.trim());
 
   return (

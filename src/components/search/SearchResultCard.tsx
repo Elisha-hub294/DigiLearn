@@ -1,5 +1,4 @@
 import { Image } from "expo-image";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -14,7 +13,10 @@ type SearchResultCardProps = {
   onPress: (item: SearchResult) => void;
 };
 
-const BADGE_COLORS: Record<string, { bg: string; text: string; label: string }> = {
+const BADGE_COLORS: Record<
+  string,
+  { bg: string; text: string; label: string }
+> = {
   topicalNote: { bg: "#006EFF", text: "#FFFFFF", label: "Note" },
   pastPaper: { bg: "#8B5CF6", text: "#FFFFFF", label: "Past Paper" },
   book: { bg: "#F97316", text: "#FFFFFF", label: "Book" },
@@ -111,7 +113,11 @@ export function SearchResultCard({
           </View>
           {renderHighlightedTitle()}
           {!!item.description && (
-            <Text style={styles.descriptionText} numberOfLines={2} ellipsizeMode="tail">
+            <Text
+              style={styles.descriptionText}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
               {item.description}
             </Text>
           )}
@@ -139,7 +145,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: 80,
     height: 64,
-    borderRadius: 8,
+    borderRadius: 10,
     backgroundColor: "#F4F4F6",
     overflow: "hidden",
     alignItems: "center",

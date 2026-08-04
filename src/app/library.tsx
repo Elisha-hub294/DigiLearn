@@ -1,11 +1,11 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    View,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -140,11 +140,7 @@ export default function LibraryScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(480)} style={styles.section}>
-          <SectionHeader
-            title="Featured notes"
-            onSeeAll={() => {}}
-            actionLabel="More"
-          />
+          <SectionHeader title="Pages" onSeeAll={() => {}} actionLabel="" />
           <FeaturedNoteCard layout="two-column" />
         </Animated.View>
 
@@ -234,7 +230,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: dimensions.screenPaddingHorizontal,
     paddingTop: spacing.xl,
     paddingBottom: spacing.xxl,
-    maxWidth: Math.min(1120, dimensions.width - 32),
+    maxWidth: Math.min(1120, dimensions.width - 5),
     alignSelf: "center",
     width: "100%",
   },

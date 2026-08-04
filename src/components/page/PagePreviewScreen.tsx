@@ -346,7 +346,7 @@ export function PagePreviewScreen() {
   }
 
   const horizontalPadding = getHorizontalPadding(width);
-  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
+  const contentMaxWidth = Math.min(1100, width);
 
   const goBack = () => {
     const shouldReturnToPages = source === "pages" || returnTo === "/pages";
@@ -492,15 +492,10 @@ const styles = StyleSheet.create({
   sheet: {
     marginTop: -30,
     paddingTop: 28,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     backgroundColor: "#FFFFFF",
     minHeight: 520,
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 6,
   },
   actionContainer: {
     position: "absolute",

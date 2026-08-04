@@ -45,8 +45,8 @@ const styles = StyleSheet.create({
   textContainer: { flex: 1 },
   title: {
     color: colors.dark,
-    fontSize: 25,
-    fontWeight: "500",
+    fontSize: 20,
+    fontWeight: "600",
   },
   subtitle: {
     color: colors.text,

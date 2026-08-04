@@ -1,4 +1,3 @@
-import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { spacing } from "../../constants/theme";
 import { CategoryCard } from "./CategoryCard";
@@ -31,7 +30,6 @@ export function CategorySlider({ items }: CategorySliderProps) {
 
 const styles = StyleSheet.create({
   content: {
-    paddingRight: spacing.lg,
     paddingBottom: spacing.xs,
   },
 });

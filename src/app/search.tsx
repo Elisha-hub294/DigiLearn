@@ -55,7 +55,7 @@ export default function SearchScreen() {
 
   // Responsive max content width calculation
   const horizontalPadding =
-    width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 5 : 2;
+    width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 10 : 5;
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
 
   const isActivelySearching = debouncedQuery.trim().length >= 2;
@@ -77,7 +77,8 @@ export default function SearchScreen() {
             params: {
               title: item.title,
               teacher: item.teacher || "Teacher",
-              subject: typeof item.subject === "string" ? item.subject : "General",
+              subject:
+                typeof item.subject === "string" ? item.subject : "General",
               duration: item.duration || "10:00",
               uploadedAt: item.uploadedAt || "Recently",
               link: item.link || "",
@@ -127,21 +128,23 @@ export default function SearchScreen() {
           break;
       }
     },
-    [addRecentSearch, query, router]
+    [addRecentSearch, query, router],
   );
 
   const handleChipSelect = useCallback(
     (term: string) => {
       setQuery(term);
     },
-    [setQuery]
+    [setQuery],
   );
 
   const renderResultCard = useCallback(
     ({ item, index }: { item: SearchResult; index: number }) => {
       const cardKey = `${item.type}-${item.id}-${index}`;
       return (
-        <Animated.View entering={FadeInUp.delay(Math.min(index * 40, 240)).duration(280)}>
+        <Animated.View
+          entering={FadeInUp.delay(Math.min(index * 40, 240)).duration(280)}
+        >
           {item.type === "video" ? (
             <SearchResultVideoCard
               key={cardKey}
@@ -174,7 +177,7 @@ export default function SearchScreen() {
         </Animated.View>
       );
     },
-    [debouncedQuery, handleResultPress]
+    [debouncedQuery, handleResultPress],
   );
 
   return (
@@ -203,7 +206,10 @@ export default function SearchScreen() {
 
         {/* Dynamic Search Header Count: Results for "[search text]" ([count]) */}
         {isActivelySearching && (
-          <Animated.View entering={FadeInUp.duration(200)} style={styles.resultHeaderWrap}>
+          <Animated.View
+            entering={FadeInUp.duration(200)}
+            style={styles.resultHeaderWrap}
+          >
             <Text style={styles.resultHeaderText}>
               Results for &quot;{debouncedQuery.trim()}&quot; ({results.length})
             </Text>
@@ -224,9 +230,17 @@ export default function SearchScreen() {
                   key={cat}
                   accessibilityRole="button"
                   onPress={() => setSelectedCategory(cat)}
-                  style={[styles.categoryChip, active && styles.categoryChipActive]}
+                  style={[
+                    styles.categoryChip,
+                    active && styles.categoryChipActive,
+                  ]}
                 >
-                  <Text style={[styles.categoryText, active && styles.categoryTextActive]}>
+                  <Text
+                    style={[
+                      styles.categoryText,
+                      active && styles.categoryTextActive,
+                    ]}
+                  >
                     {cat}
                   </Text>
                 </Pressable>
@@ -239,7 +253,10 @@ export default function SearchScreen() {
         <View style={styles.contentBody}>
           {/* Recent Searches Section */}
           {recentSearches.length > 0 && !isActivelySearching && (
-            <Animated.View entering={FadeInUp.duration(280)} style={styles.recentSection}>
+            <Animated.View
+              entering={FadeInUp.duration(280)}
+              style={styles.recentSection}
+            >
               <Text style={styles.sectionTitle}>Recent</Text>
               <View style={styles.chipsWrap}>
                 {recentSearches.map((term) => (

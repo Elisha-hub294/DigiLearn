@@ -210,7 +210,7 @@ export function BookPreviewScreen() {
     );
 
   const horizontalPadding = getHorizontalPadding(width);
-  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
+  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 1);
   const goBack = () => router.replace(source === "home" ? "/" : "/library");
 
   return (
@@ -234,7 +234,7 @@ export function BookPreviewScreen() {
             entering={FadeInUp.duration(430)}
             style={[
               styles.sheet,
-              { paddingHorizontal: 20 + horizontalPadding },
+              { paddingHorizontal: 10 + horizontalPadding },
             ]}
           >
             <BookOverview book={book} />
@@ -308,15 +308,10 @@ const styles = StyleSheet.create({
   sheet: {
     marginTop: -28,
     paddingTop: 32,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     backgroundColor: "#fff",
     minHeight: 520,
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 6,
   },
   action: {
     position: "absolute",

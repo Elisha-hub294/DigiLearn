@@ -1,7 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
 import {
   Pressable,
   StyleSheet,
@@ -26,7 +25,7 @@ export function PageHero({
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  const heroHeight = Math.min(Math.max(height * 0.44, 320), 500);
+  const heroHeight = Math.min(Math.max(height * 0.5, 320), 500);
   const previewUri = note.preview || FALLBACK_DOC_PREVIEW;
 
   return (
@@ -48,11 +47,7 @@ export function PageHero({
       )}
 
       <LinearGradient
-        colors={[
-          "rgba(0,0,0,0.25)",
-          "rgba(0,0,0,0.35)",
-          "rgba(0,0,0,0.82)",
-        ]}
+        colors={["rgba(0,0,0,0.25)", "rgba(0,0,0,0.35)", "rgba(0,0,0,0.82)"]}
         locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"

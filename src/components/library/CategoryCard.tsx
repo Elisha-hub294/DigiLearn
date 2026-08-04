@@ -1,12 +1,12 @@
 import { Image } from "expo-image";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 
 type CategoryItem = {
   id: string;
@@ -53,10 +53,7 @@ export function CategoryCard({ item }: CategoryCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    width: 110,
-    minHeight: 118,
-    marginRight: spacing.sm,
-    ...shadows.soft,
+    marginRight: spacing.lg,
   },
   touchTarget: {
     flex: 1,
@@ -72,7 +69,7 @@ const styles = StyleSheet.create({
   icon: {
     width: 70,
     height: 70,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
   },
   label: {
     color: colors.text,
