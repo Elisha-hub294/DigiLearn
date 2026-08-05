@@ -1,12 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-    collection,
-    getDocs,
-    orderBy,
-    query
-} from "firebase/firestore";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Alert,
@@ -19,18 +14,13 @@ import {
     StyleSheet,
     Text,
     useWindowDimensions,
-    View
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
 import { SearchBar } from "../components/ui/SearchBar";
-import {
-    colors,
-    radius,
-    shadows,
-    spacing
-} from "../constants/theme";
+import { colors, radius, shadows, spacing } from "../constants/theme";
 
 type TeacherRecord = {
   id: string;
@@ -111,7 +101,6 @@ export default function TeacherProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TeacherTab>("All");
-  const [booksMap, setBooksMap] = useState<Record<string, string[]>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const pulseAnim = useRef(new RNAnimated.Value(0.45)).current;
 
@@ -154,53 +143,41 @@ export default function TeacherProfileScreen() {
     }
   }, [normalizedTeacherName, teacherName]);
 
-  const fetchBooksMeta = useCallback(async () => {
-    const snapshot = await getDocs(collection(db, "books"));
-    const titleMap: Record<string, string[]> = {};
-
-    snapshot.docs.forEach((doc) => {
-      const data = doc.data() as Record<string, unknown>;
-      const title = pickString(data.title);
-      const authors = pickArray(data.author);
-      if (title) {
-        titleMap[normalizeKey(title)] = authors;
-      }
-    });
-
-    setBooksMap(titleMap);
-  }, []);
-
   const fetchTeacherResources = useCallback(async () => {
     if (!teacherName) return;
 
     try {
-      const [pagesSnap, booksSnap, postsSnap, lessonsSnap] = await Promise.all([
-        getDocs(query(collection(db, "pages"), orderBy("createdAt", "desc"))),
-        getDocs(query(collection(db, "books"), orderBy("createdAt", "desc"))),
-        Promise.all([
-          getDocs(
-            query(collection(db, "teacherPosts"), orderBy("createdAt", "desc")),
-          ),
+      const [pagesSnap, booksSnap, postSnapshots, lessonsSnap] =
+        await Promise.all([
+          getDocs(query(collection(db, "pages"), orderBy("createdAt", "desc"))),
+          getDocs(query(collection(db, "books"), orderBy("createdAt", "desc"))),
+          Promise.all([
+            getDocs(
+              query(
+                collection(db, "teacherPosts"),
+                orderBy("createdAt", "desc"),
+              ),
+            ),
+            getDocs(
+              query(
+                collection(db, "teacherPostsCards"),
+                orderBy("createdAt", "desc"),
+              ),
+            ),
+            getDocs(
+              query(
+                collection(db, "teacherUpdates"),
+                orderBy("createdAt", "desc"),
+              ),
+            ),
+          ]),
           getDocs(
             query(
-              collection(db, "teacherPostsCards"),
+              collection(db, "trendingLessons"),
               orderBy("createdAt", "desc"),
             ),
           ),
-          getDocs(
-            query(
-              collection(db, "teacherUpdates"),
-              orderBy("createdAt", "desc"),
-            ),
-          ),
-        ]),
-        getDocs(
-          query(
-            collection(db, "trendingLessons"),
-            orderBy("createdAt", "desc"),
-          ),
-        ),
-      ]);
+        ]);
 
       const allBooks = booksSnap.docs.map((doc) => ({
         id: doc.id,
@@ -271,9 +248,9 @@ export default function TeacherProfileScreen() {
           author: pickArray((entry as Record<string, unknown>).author),
         }));
 
-      const postCollections = postsSnap
-        .flat()
-        .filter((doc) => doc.exists !== false);
+      const postCollections = postSnapshots.flatMap(
+        (snapshot) => snapshot.docs,
+      );
       const announcementResources: ResourceItem[] = postCollections
         .map((doc) => {
           const data = doc.data() as Record<string, unknown>;
@@ -343,13 +320,9 @@ export default function TeacherProfileScreen() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    await Promise.all([
-      fetchTeacherProfile(),
-      fetchBooksMeta(),
-      fetchTeacherResources(),
-    ]);
+    await Promise.all([fetchTeacherProfile(), fetchTeacherResources()]);
     setLoading(false);
-  }, [fetchBooksMeta, fetchTeacherProfile, fetchTeacherResources]);
+  }, [fetchTeacherProfile, fetchTeacherResources]);
 
   useEffect(() => {
     void loadData();
@@ -439,10 +412,16 @@ export default function TeacherProfileScreen() {
   }, [teacher]);
 
   const openYoutubePrompt = useCallback(() => {
-    if (!teacher?.youtube) return;
+    const youtube = teacher?.youtube;
+    if (!youtube) return;
     const firstName = teacher.name.split(" ")[0] || "Teacher";
     Alert.alert(`Visit ${firstName}'s YouTube channel?`, "", [
-      { text: "Confirm", onPress: () => Linking.openURL(teacher.youtube) },
+      {
+        text: "Confirm",
+        onPress: () => {
+          Linking.openURL(youtube);
+        },
+      },
       { text: "Cancel", style: "cancel" },
     ]);
   }, [teacher]);
@@ -634,196 +613,206 @@ export default function TeacherProfileScreen() {
           { maxWidth: contentMaxWidth, paddingHorizontal: horizontalPadding },
         ]}
       >
-        <View style={styles.headerWrap}>
-          <View
-            style={[styles.headerPanel, { backgroundColor: accentColor }]}
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Icon name="arrow-left" size={20} color="#ffffff" />
-          </Pressable>
-
-          <View style={styles.avatarShell}>
-            <Image
-              source={{
-                uri:
-                  teacher?.avatar ||
-                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png",
-              }}
-              style={styles.avatar}
-              contentFit="cover"
+        <FlatList
+          data={filteredResources}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.resourceList}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={accentColor}
             />
-          </View>
-        </View>
-
-        <View style={styles.profileBody}>
-          <View style={styles.nameRow}>
-            <Text style={[styles.nameText, { color: accentColor }]}>
-              {teacher?.name || teacherName}
-            </Text>
-            {teacher?.verified ? (
-              <View style={styles.verifiedBadge}>
-                <Text style={styles.verifiedText}>Verified</Text>
-              </View>
-            ) : null}
-          </View>
-
-          <Text style={styles.bioText} numberOfLines={3}>
-            {teacher?.bio || "Teacher at DigiLearn."}
-          </Text>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statChip}>
-              <Text style={styles.statValue}>
-                {formatRelativeCount(stats.pages)}
-              </Text>
-              <Text style={styles.statLabel}>Pages</Text>
-            </View>
-            <View style={styles.statChip}>
-              <Text style={styles.statValue}>
-                {formatRelativeCount(stats.books)}
-              </Text>
-              <Text style={styles.statLabel}>Books</Text>
-            </View>
-            <View style={styles.statChip}>
-              <Text style={styles.statValue}>
-                {formatRelativeCount(stats.lessons)}
-              </Text>
-              <Text style={styles.statLabel}>Lessons</Text>
-            </View>
-            <View style={styles.statChip}>
-              <Text style={styles.statValue}>
-                {formatRelativeCount(stats.announcements)}
-              </Text>
-              <Text style={styles.statLabel}>Updates</Text>
-            </View>
-          </View>
-
-          {teacher?.subjects?.length ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.subjectRow}
-            >
-              {teacher.subjects.map((subject) => (
+          }
+          ListHeaderComponent={() => (
+            <>
+              <View style={styles.headerWrap}>
                 <View
-                  key={subject}
-                  style={[styles.subjectChip, { borderColor: accentColor }]}
-                >
-                  <Text
-                    style={[styles.subjectChipText, { color: accentColor }]}
-                  >
-                    {subject}
-                  </Text>
-                </View>
-              ))}
-            </ScrollView>
-          ) : null}
-
-          <View style={styles.contactRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Contact teacher"
-              style={[styles.contactButton, { backgroundColor: accentColor }]}
-              onPress={openContactSheet}
-            >
-              <Text style={styles.contactButtonText}>Contact</Text>
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Visit teacher YouTube"
-              style={styles.iconButton}
-              onPress={openYoutubePrompt}
-            >
-              <Icon name="youtube" size={22} color={accentColor} />
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Email teacher"
-              style={styles.iconButton}
-              onPress={openEmailPrompt}
-            >
-              <Icon name="mail" size={22} color={accentColor} />
-            </Pressable>
-          </View>
-
-          <Text style={styles.sectionTitle}>Resources</Text>
-
-          <SearchBar
-            isInput={true}
-            showBack={false}
-            value={search}
-            onChangeText={setSearch}
-            placeholder={`Search ${teacher?.name?.split(" ")[0] || "teacher"}'s resources`}
-            autoFocus={false}
-            searchIconColor={accentColor}
-            inputContainerStyle={{ borderColor: accentColor }}
-            containerStyle={styles.searchBarOuter}
-          />
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tabRow}
-          >
-            {teacherTabOptions.map((tab) => {
-              const isActive = activeTab === tab;
-              return (
+                  style={[styles.headerPanel, { backgroundColor: accentColor }]}
+                />
                 <Pressable
-                  key={tab}
                   accessibilityRole="button"
-                  accessibilityLabel={`Filter resources by ${tab}`}
-                  onPress={() => setActiveTab(tab)}
-                  style={[
-                    styles.tabButton,
-                    isActive && { backgroundColor: accentColor },
-                  ]}
+                  accessibilityLabel="Go back"
+                  style={styles.backButton}
+                  onPress={() => router.back()}
                 >
-                  <Text
-                    style={[
-                      styles.tabButtonText,
-                      isActive ? styles.tabButtonTextActive : null,
-                    ]}
-                  >
-                    {tab}
-                  </Text>
+                  <Icon name="arrow-left" size={20} color="#ffffff" />
                 </Pressable>
-              );
-            })}
-          </ScrollView>
 
-          <View style={styles.resourceListWrap}>
-            {filteredResources.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Icon name="inbox" size={38} color={accentColor} />
-                <Text style={styles.emptyText}>
-                  No matching resources found for this teacher.
-                </Text>
-              </View>
-            ) : (
-              <FlatList
-                data={filteredResources}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false}
-                contentContainerStyle={styles.resourceList}
-                refreshControl={
-                  <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                    tintColor={accentColor}
+                <View style={styles.avatarShell}>
+                  <Image
+                    source={{
+                      uri:
+                        teacher?.avatar ||
+                        "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png",
+                    }}
+                    style={[styles.avatar, { borderColor: accentColor }]}
+                    contentFit="cover"
                   />
-                }
-                renderItem={renderResourceCard}
-              />
-            )}
-          </View>
-        </View>
+                </View>
+              </View>
+
+              <View style={styles.profileBody}>
+                <View style={styles.nameRow}>
+                  <Text style={[styles.nameText, { color: accentColor }]}>
+                    {teacher?.name || teacherName}
+                  </Text>
+                  {teacher?.verified ? (
+                    <View style={styles.verifiedBadge}>
+                      <Text style={styles.verifiedText}>Verified</Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <Text style={styles.bioText} numberOfLines={3}>
+                  {teacher?.bio || "Teacher at DigiLearn."}
+                </Text>
+
+                <View style={styles.statsRow}>
+                  <View style={styles.statChip}>
+                    <Text style={styles.statValue}>
+                      {formatRelativeCount(stats.pages)}
+                    </Text>
+                    <Text style={styles.statLabel}>Pages</Text>
+                  </View>
+                  <View style={styles.statChip}>
+                    <Text style={styles.statValue}>
+                      {formatRelativeCount(stats.books)}
+                    </Text>
+                    <Text style={styles.statLabel}>Books</Text>
+                  </View>
+                  <View style={styles.statChip}>
+                    <Text style={styles.statValue}>
+                      {formatRelativeCount(stats.lessons)}
+                    </Text>
+                    <Text style={styles.statLabel}>Lessons</Text>
+                  </View>
+                  <View style={styles.statChip}>
+                    <Text style={styles.statValue}>
+                      {formatRelativeCount(stats.announcements)}
+                    </Text>
+                    <Text style={styles.statLabel}>Updates</Text>
+                  </View>
+                </View>
+
+                {teacher?.subjects?.length ? (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.subjectRow}
+                  >
+                    {teacher.subjects.map((subject) => (
+                      <View
+                        key={subject}
+                        style={[
+                          styles.subjectChip,
+                          { borderColor: accentColor },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.subjectChipText,
+                            { color: accentColor },
+                          ]}
+                        >
+                          {subject}
+                        </Text>
+                      </View>
+                    ))}
+                  </ScrollView>
+                ) : null}
+
+                <View style={styles.contactRow}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Contact teacher"
+                    style={[
+                      styles.contactButton,
+                      { backgroundColor: accentColor },
+                    ]}
+                    onPress={openContactSheet}
+                  >
+                    <Text style={styles.contactButtonText}>Contact</Text>
+                  </Pressable>
+
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Visit teacher YouTube"
+                    style={styles.iconButton}
+                    onPress={openYoutubePrompt}
+                  >
+                    <Icon name="youtube" size={22} color={accentColor} />
+                  </Pressable>
+
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Email teacher"
+                    style={styles.iconButton}
+                    onPress={openEmailPrompt}
+                  >
+                    <Icon name="mail" size={22} color={accentColor} />
+                  </Pressable>
+                </View>
+
+                <Text style={styles.sectionTitle}>Resources</Text>
+
+                <SearchBar
+                  isInput={true}
+                  showBack={false}
+                  value={search}
+                  onChangeText={setSearch}
+                  placeholder={`Search ${teacher?.name?.split(" ")[0] || "teacher"}'s resources`}
+                  autoFocus={false}
+                  searchIconColor={accentColor}
+                  inputContainerStyle={{ borderColor: accentColor }}
+                  containerStyle={styles.searchBarOuter}
+                />
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.tabRow}
+                >
+                  {teacherTabOptions.map((tab) => {
+                    const isActive = activeTab === tab;
+                    return (
+                      <Pressable
+                        key={tab}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Filter resources by ${tab}`}
+                        onPress={() => setActiveTab(tab)}
+                        style={[
+                          styles.tabButton,
+                          isActive && { backgroundColor: accentColor },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.tabButtonText,
+                            isActive ? styles.tabButtonTextActive : null,
+                          ]}
+                        >
+                          {tab}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            </>
+          )}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyState}>
+              <Icon name="inbox" size={38} color={accentColor} />
+              <Text style={styles.emptyText}>
+                {errorMessage ||
+                  "No matching resources found for this teacher."}
+              </Text>
+            </View>
+          )}
+          renderItem={renderResourceCard}
+        />
       </Animated.View>
     </SafeAreaView>
   );

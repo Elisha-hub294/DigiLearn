@@ -85,7 +85,8 @@ const openPdfDocument = async (url: string) => {
   if (Platform.OS === "android") {
     try {
       const filename = url.split("/").pop()?.split("?")[0] || "document.pdf";
-      const fileUri = `${FileSystem.cacheDirectory}${Date.now()}_${filename}`;
+      const cacheDir = (FileSystem as any).cacheDirectory || "";
+      const fileUri = `${cacheDir}${Date.now()}_${filename}`;
 
       const downloadResult = await FileSystem.downloadAsync(url, fileUri);
       const contentUri = await FileSystem.getContentUriAsync(

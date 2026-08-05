@@ -7,7 +7,8 @@ type ImageSource = string;
 export type HeroSlideItem = {
   id: string;
   title: string;
-  description?: string;
+  author: string;
+  subtitle: string;
   image: ImageSource;
   [key: string]: any;
 };
@@ -189,7 +190,8 @@ export function useLibraryData() {
         .map((book) => ({
           id: book.id,
           title: book.title,
-          description: book.subtitle,
+          author: book.author,
+          subtitle: book.subtitle,
           image: book.image,
         }));
 
