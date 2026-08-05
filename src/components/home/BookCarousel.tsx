@@ -151,11 +151,23 @@ export const BookCarousel = () => {
               } as any)
             }
           >
-            <Image
-              source={item.image}
-              style={styles.image}
-              contentFit="cover"
-            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Open teacher profile: ${item.author}`}
+              onPress={(event) => {
+                event.stopPropagation?.();
+                router.push({
+                  pathname: "/teacher-profile",
+                  params: { name: item.author },
+                } as never);
+              }}
+            >
+              <Image
+                source={item.image}
+                style={styles.image}
+                contentFit="cover"
+              />
+            </Pressable>
             <View style={styles.body}>
               <Text style={styles.title}>{item.title}</Text>
               <Pressable

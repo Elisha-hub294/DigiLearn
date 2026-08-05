@@ -20,7 +20,7 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
 import { SearchBar } from "../components/ui/SearchBar";
-import { colors, radius, shadows, spacing } from "../constants/theme";
+import { colors, radius, spacing } from "../constants/theme";
 
 type TeacherRecord = {
   id: string;
@@ -92,7 +92,7 @@ export default function TeacherProfileScreen() {
   const params = useLocalSearchParams<{ name?: string }>();
   const { width } = useWindowDimensions();
   const horizontalPadding =
-    width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 20 : 14;
+    width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 5 : 3;
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
 
   const [teacher, setTeacher] = useState<TeacherRecord | null>(null);
@@ -446,6 +446,166 @@ export default function TeacherProfileScreen() {
     setRefreshing(false);
   }, [loadData]);
 
+  const renderHeader = useCallback(
+    () => (
+      <>
+        <View style={styles.headerWrap}>
+          <View
+            style={[styles.headerPanel, { backgroundColor: accentColor }]}
+          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Icon name="arrow-left" size={20} color="#ffffff" />
+          </Pressable>
+
+          <View style={styles.avatarShell}>
+            <Image
+              source={{
+                uri:
+                  teacher?.avatar ||
+                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png",
+              }}
+              style={[styles.avatar, { borderColor: accentColor }]}
+              contentFit="cover"
+            />
+          </View>
+        </View>
+
+        <View style={styles.profileBody}>
+          <View style={styles.nameRow}>
+            <Text style={[styles.nameText, { color: accentColor }]}>
+              {teacher?.name || teacherName}
+            </Text>
+          </View>
+
+          <Text style={styles.bioText} numberOfLines={3}>
+            {teacher?.bio || "Teacher at DigiLearn."}
+          </Text>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statChip}>
+              <Text style={styles.statValue}>
+                {formatRelativeCount(stats.pages)}
+              </Text>
+              <Text style={styles.statLabel}>Pages</Text>
+            </View>
+            <View style={styles.statChip}>
+              <Text style={styles.statValue}>
+                {formatRelativeCount(stats.books)}
+              </Text>
+              <Text style={styles.statLabel}>Books</Text>
+            </View>
+            <View style={styles.statChip}>
+              <Text style={styles.statValue}>
+                {formatRelativeCount(stats.lessons)}
+              </Text>
+              <Text style={styles.statLabel}>Lessons</Text>
+            </View>
+            <View style={styles.statChip}>
+              <Text style={styles.statValue}>
+                {formatRelativeCount(stats.announcements)}
+              </Text>
+              <Text style={styles.statLabel}>Updates</Text>
+            </View>
+          </View>
+
+          <View style={styles.contactRow}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Contact teacher"
+              style={[styles.contactButton, { backgroundColor: accentColor }]}
+              onPress={openContactSheet}
+            >
+              <Text style={styles.contactButtonText}>Contact</Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Visit teacher YouTube"
+              style={styles.iconButton}
+              onPress={openYoutubePrompt}
+            >
+              <Icon name="youtube" size={22} color={accentColor} />
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Email teacher"
+              style={styles.iconButton}
+              onPress={openEmailPrompt}
+            >
+              <Icon name="mail" size={22} color={accentColor} />
+            </Pressable>
+          </View>
+
+          <Text style={styles.sectionTitle}>Resources</Text>
+
+          <SearchBar
+            isInput={true}
+            showBack={false}
+            value={search}
+            onChangeText={setSearch}
+            placeholder={`Search ${teacher?.name?.split(" ")[0] || "teacher"}'s resources`}
+            autoFocus={false}
+            searchIconColor={accentColor}
+            inputContainerStyle={{ borderColor: accentColor }}
+            containerStyle={styles.searchBarOuter}
+          />
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabRow}
+          >
+            {teacherTabOptions.map((tab) => {
+              const isActive = activeTab === tab;
+              return (
+                <Pressable
+                  key={tab}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filter resources by ${tab}`}
+                  onPress={() => setActiveTab(tab)}
+                  style={[
+                    styles.tabButton,
+                    isActive && { backgroundColor: accentColor },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tabButtonText,
+                      isActive ? styles.tabButtonTextActive : null,
+                    ]}
+                  >
+                    {tab}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </>
+    ),
+    [
+      accentColor,
+      activeTab,
+      openContactSheet,
+      openEmailPrompt,
+      openYoutubePrompt,
+      router,
+      search,
+      stats.announcements,
+      stats.books,
+      stats.lessons,
+      stats.pages,
+      teacher,
+      teacherName,
+    ],
+  );
+
   const renderResourceCard = useCallback(
     ({ item }: { item: ResourceItem }) => {
       if (item.type === "page") {
@@ -456,7 +616,12 @@ export default function TeacherProfileScreen() {
             onPress={() =>
               router.push({
                 pathname: "/page-preview",
-                params: { id: item.id },
+                params: {
+                  id: item.id,
+                  source: "teacher-profile",
+                  returnTo: "/teacher-profile",
+                  teacherName: teacher?.name || teacherName,
+                },
               } as never)
             }
             style={styles.resourceCard}
@@ -465,9 +630,9 @@ export default function TeacherProfileScreen() {
               <View style={styles.resourceBadge}>
                 <Text style={styles.resourceBadgeText}>Page</Text>
               </View>
-              <Text style={styles.resourceMeta}>
+              {/* <Text style={styles.resourceMeta}>
                 {item.subject || "Featured note"}
-              </Text>
+              </Text> */}
             </View>
             <Text style={styles.resourceTitle}>{item.title}</Text>
             {item.description ? (
@@ -487,7 +652,12 @@ export default function TeacherProfileScreen() {
             onPress={() =>
               router.push({
                 pathname: "/book-preview",
-                params: { id: item.id, source: "teacher-profile" },
+                params: {
+                  id: item.id,
+                  source: "teacher-profile",
+                  returnTo: "/teacher-profile",
+                  teacherName: teacher?.name || teacherName,
+                },
               } as never)
             }
             style={styles.resourceCard}
@@ -496,9 +666,9 @@ export default function TeacherProfileScreen() {
               <View style={styles.resourceBadge}>
                 <Text style={styles.resourceBadgeText}>Book</Text>
               </View>
-              <Text style={styles.resourceMeta}>
+              {/* <Text style={styles.resourceMeta}>
                 {item.author?.[0] || "Teacher authored"}
-              </Text>
+              </Text> */}
             </View>
             <Text style={styles.resourceTitle}>{item.title}</Text>
             {item.image ? (
@@ -528,11 +698,11 @@ export default function TeacherProfileScreen() {
               <View style={styles.resourceBadge}>
                 <Text style={styles.resourceBadgeText}>Announcement</Text>
               </View>
-              <Text style={styles.resourceMeta}>
+              {/* <Text style={styles.resourceMeta}>
                 {item.subject || "Update"}
-              </Text>
+              </Text> */}
             </View>
-            <Text style={styles.resourceTitle}>{item.title}</Text>
+            {/* <Text style={styles.resourceTitle}>{item.title}</Text> */}
             {item.description ? (
               <Text style={styles.resourceDescription} numberOfLines={3}>
                 {item.description}
@@ -617,6 +787,7 @@ export default function TeacherProfileScreen() {
           data={filteredResources}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.resourceList}
           refreshControl={
             <RefreshControl
@@ -625,183 +796,7 @@ export default function TeacherProfileScreen() {
               tintColor={accentColor}
             />
           }
-          ListHeaderComponent={() => (
-            <>
-              <View style={styles.headerWrap}>
-                <View
-                  style={[styles.headerPanel, { backgroundColor: accentColor }]}
-                />
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Go back"
-                  style={styles.backButton}
-                  onPress={() => router.back()}
-                >
-                  <Icon name="arrow-left" size={20} color="#ffffff" />
-                </Pressable>
-
-                <View style={styles.avatarShell}>
-                  <Image
-                    source={{
-                      uri:
-                        teacher?.avatar ||
-                        "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png",
-                    }}
-                    style={[styles.avatar, { borderColor: accentColor }]}
-                    contentFit="cover"
-                  />
-                </View>
-              </View>
-
-              <View style={styles.profileBody}>
-                <View style={styles.nameRow}>
-                  <Text style={[styles.nameText, { color: accentColor }]}>
-                    {teacher?.name || teacherName}
-                  </Text>
-                  {teacher?.verified ? (
-                    <View style={styles.verifiedBadge}>
-                      <Text style={styles.verifiedText}>Verified</Text>
-                    </View>
-                  ) : null}
-                </View>
-
-                <Text style={styles.bioText} numberOfLines={3}>
-                  {teacher?.bio || "Teacher at DigiLearn."}
-                </Text>
-
-                <View style={styles.statsRow}>
-                  <View style={styles.statChip}>
-                    <Text style={styles.statValue}>
-                      {formatRelativeCount(stats.pages)}
-                    </Text>
-                    <Text style={styles.statLabel}>Pages</Text>
-                  </View>
-                  <View style={styles.statChip}>
-                    <Text style={styles.statValue}>
-                      {formatRelativeCount(stats.books)}
-                    </Text>
-                    <Text style={styles.statLabel}>Books</Text>
-                  </View>
-                  <View style={styles.statChip}>
-                    <Text style={styles.statValue}>
-                      {formatRelativeCount(stats.lessons)}
-                    </Text>
-                    <Text style={styles.statLabel}>Lessons</Text>
-                  </View>
-                  <View style={styles.statChip}>
-                    <Text style={styles.statValue}>
-                      {formatRelativeCount(stats.announcements)}
-                    </Text>
-                    <Text style={styles.statLabel}>Updates</Text>
-                  </View>
-                </View>
-
-                {teacher?.subjects?.length ? (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.subjectRow}
-                  >
-                    {teacher.subjects.map((subject) => (
-                      <View
-                        key={subject}
-                        style={[
-                          styles.subjectChip,
-                          { borderColor: accentColor },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.subjectChipText,
-                            { color: accentColor },
-                          ]}
-                        >
-                          {subject}
-                        </Text>
-                      </View>
-                    ))}
-                  </ScrollView>
-                ) : null}
-
-                <View style={styles.contactRow}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Contact teacher"
-                    style={[
-                      styles.contactButton,
-                      { backgroundColor: accentColor },
-                    ]}
-                    onPress={openContactSheet}
-                  >
-                    <Text style={styles.contactButtonText}>Contact</Text>
-                  </Pressable>
-
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Visit teacher YouTube"
-                    style={styles.iconButton}
-                    onPress={openYoutubePrompt}
-                  >
-                    <Icon name="youtube" size={22} color={accentColor} />
-                  </Pressable>
-
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Email teacher"
-                    style={styles.iconButton}
-                    onPress={openEmailPrompt}
-                  >
-                    <Icon name="mail" size={22} color={accentColor} />
-                  </Pressable>
-                </View>
-
-                <Text style={styles.sectionTitle}>Resources</Text>
-
-                <SearchBar
-                  isInput={true}
-                  showBack={false}
-                  value={search}
-                  onChangeText={setSearch}
-                  placeholder={`Search ${teacher?.name?.split(" ")[0] || "teacher"}'s resources`}
-                  autoFocus={false}
-                  searchIconColor={accentColor}
-                  inputContainerStyle={{ borderColor: accentColor }}
-                  containerStyle={styles.searchBarOuter}
-                />
-
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.tabRow}
-                >
-                  {teacherTabOptions.map((tab) => {
-                    const isActive = activeTab === tab;
-                    return (
-                      <Pressable
-                        key={tab}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Filter resources by ${tab}`}
-                        onPress={() => setActiveTab(tab)}
-                        style={[
-                          styles.tabButton,
-                          isActive && { backgroundColor: accentColor },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.tabButtonText,
-                            isActive ? styles.tabButtonTextActive : null,
-                          ]}
-                        >
-                          {tab}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            </>
-          )}
+          ListHeaderComponent={renderHeader}
           ListEmptyComponent={() => (
             <View style={styles.emptyState}>
               <Icon name="inbox" size={38} color={accentColor} />
@@ -830,17 +825,16 @@ const styles = StyleSheet.create({
   },
   headerWrap: {
     position: "relative",
-    height: 260,
-    marginBottom: 56,
+    height: 220,
   },
   headerPanel: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    height: 240,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
+    height: 150,
+    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 20,
   },
   backButton: {
     position: "absolute",
@@ -852,27 +846,21 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.3)",
   },
   avatarShell: {
     position: "absolute",
-    bottom: -52,
+    bottom: 0,
     left: 0,
     right: 0,
     alignItems: "center",
     zIndex: 3,
   },
   avatar: {
-    width: 126,
-    height: 126,
-    borderRadius: 63,
+    width: 150,
+    height: 150,
+    borderRadius: 100,
     borderWidth: 5,
-    borderColor: colors.white,
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 7 },
-    elevation: 6,
   },
   profileBody: {
     paddingTop: 14,
@@ -888,17 +876,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "800",
     textAlign: "center",
-  },
-  verifiedBadge: {
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-  },
-  verifiedText: {
-    color: colors.primary,
-    fontSize: 11,
-    fontWeight: "700",
   },
   bioText: {
     marginTop: spacing.sm,
@@ -923,7 +900,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   statValue: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "800",
     color: colors.text,
   },
@@ -931,21 +908,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.subtitle,
     marginTop: 2,
-  },
-  subjectRow: {
-    gap: 8,
-    paddingVertical: spacing.md,
-  },
-  subjectChip: {
-    borderWidth: 1,
-    borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: "#FFFFFF",
-  },
-  subjectChipText: {
-    fontSize: 12,
-    fontWeight: "700",
   },
   contactRow: {
     flexDirection: "row",
@@ -963,7 +925,7 @@ const styles = StyleSheet.create({
   contactButtonText: {
     color: colors.white,
     fontSize: 15,
-    fontWeight: "800",
+    fontWeight: "500",
   },
   iconButton: {
     width: 54,
@@ -980,7 +942,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     color: colors.text,
     fontSize: 22,
-    fontWeight: "800",
+    fontWeight: "600",
   },
   searchBarOuter: {
     marginBottom: spacing.md,
@@ -1000,7 +962,7 @@ const styles = StyleSheet.create({
   tabButtonText: {
     color: "#6B7280",
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "500",
   },
   tabButtonTextActive: {
     color: colors.white,
@@ -1018,7 +980,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: "#E5E7EB",
-    ...shadows.soft,
+    width: "auto",
   },
   cardRow: {
     flexDirection: "row",
@@ -1035,28 +997,27 @@ const styles = StyleSheet.create({
   resourceBadgeText: {
     color: colors.primary,
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "500",
   },
   resourceMeta: {
-    color: colors.subtitle,
+    color: "red",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "500",
   },
   resourceTitle: {
     color: colors.text,
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "500",
     marginBottom: 6,
   },
   resourceDescription: {
-    color: colors.subtitle,
-    fontSize: 13,
-    lineHeight: 18,
+    color: colors.text,
+    fontSize: 20,
   },
   bookImage: {
     width: "100%",
-    height: 160,
-    borderRadius: 12,
+    height: 250,
+    borderRadius: 5,
     marginTop: 10,
   },
   lessonImage: {
@@ -1087,19 +1048,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   skeletonHeader: {
-    height: 280,
+    height: 250,
     backgroundColor: "#E5E7EB",
   },
   loadingBody: {
     alignItems: "center",
-    marginTop: -42,
+    marginTop: -70,
   },
   skeletonAvatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 150,
+    height: 150,
+    borderRadius: 100,
     backgroundColor: "#D1D5DB",
-    marginBottom: 18,
+    marginBottom: 20,
   },
   skeletonTitle: {
     width: 180,

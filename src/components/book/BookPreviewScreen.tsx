@@ -2,11 +2,11 @@ import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  View,
-  useWindowDimensions,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    View,
+    useWindowDimensions,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
@@ -83,9 +83,11 @@ function mapBook(id: string, d: Record<string, unknown>): Book {
 }
 
 export function BookPreviewScreen() {
-  const { id, source } = useLocalSearchParams<{
+  const { id, source, returnTo, teacherName } = useLocalSearchParams<{
     id: string;
-    source?: "home" | "library";
+    source?: string;
+    returnTo?: string;
+    teacherName?: string;
   }>();
   const [book, setBook] = useState<Book>();
   const [allBooks, setAllBooks] = useState<Book[]>([]);
@@ -211,7 +213,32 @@ export function BookPreviewScreen() {
 
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 1);
-  const goBack = () => router.replace(source === "home" ? "/" : "/library");
+  const goBack = () => {
+    if (
+      typeof returnTo === "string" &&
+      returnTo.trim() === "/teacher-profile" &&
+      typeof teacherName === "string" &&
+      teacherName.trim()
+    ) {
+      router.replace({
+        pathname: "/teacher-profile",
+        params: { name: teacherName.trim() },
+      } as any);
+      return;
+    }
+
+    if (typeof returnTo === "string" && returnTo.trim()) {
+      router.replace(returnTo as any);
+      return;
+    }
+
+    if (source === "home") {
+      router.replace("/" as any);
+      return;
+    }
+
+    router.replace("/library" as any);
+  };
 
   return (
     <Animated.View
@@ -244,7 +271,16 @@ export function BookPreviewScreen() {
               onSelect={(nextId) =>
                 router.replace({
                   pathname: "/book-preview",
-                  params: { id: nextId, source: source ?? "library" },
+                  params: {
+                    id: nextId,
+                    source: source ?? "library",
+                    returnTo:
+                      typeof returnTo === "string"
+                        ? returnTo
+                        : source === "home"
+                          ? "/"
+                          : "/library",
+                  },
                 } as any)
               }
             />

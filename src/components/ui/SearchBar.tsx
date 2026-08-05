@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: colors.white,
     borderWidth: 1.5,
-    borderColor: "#111111",
+    borderColor: "#3f3f3f",
   },
   topicInputContainer: {
     height: 48,
@@ -188,8 +188,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: "100%",
     color: "#111111",
-    fontSize: 15,
-    fontWeight: "500",
+    fontSize: 12,
     paddingVertical: 0,
   },
   clearBtn: {

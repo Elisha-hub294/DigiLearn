@@ -352,11 +352,22 @@ const TeacherPostItem = ({
 
         <View style={styles.header}>
           <View style={styles.profileRow}>
-            <Image
-              source={{ uri: resolvedAvatar }}
-              style={styles.avatar}
-              contentFit="cover"
-            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Open teacher profile: ${rawTeacherName}`}
+              onPress={() =>
+                router.push({
+                  pathname: "/teacher-profile",
+                  params: { name: rawTeacherName },
+                } as never)
+              }
+            >
+              <Image
+                source={{ uri: resolvedAvatar }}
+                style={styles.avatar}
+                contentFit="cover"
+              />
+            </Pressable>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Open teacher profile: ${rawTeacherName}`}

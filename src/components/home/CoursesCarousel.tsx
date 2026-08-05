@@ -1,13 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
@@ -188,15 +182,27 @@ export const CoursesCarousel = () => {
               }
             >
               <View style={styles.imageWrap}>
-                {item.thumbnail ? (
-                  <Image
-                    source={{ uri: item.thumbnail }}
-                    style={styles.image}
-                    contentFit="cover"
-                  />
-                ) : (
-                  <View style={[styles.image, styles.imagePlaceholder]} />
-                )}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open teacher profile: ${item.teacher}`}
+                  onPress={(event) => {
+                    event.stopPropagation?.();
+                    router.push({
+                      pathname: "/teacher-profile",
+                      params: { name: item.teacher },
+                    } as never);
+                  }}
+                >
+                  {item.thumbnail ? (
+                    <Image
+                      source={{ uri: item.thumbnail }}
+                      style={styles.image}
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <View style={[styles.image, styles.imagePlaceholder]} />
+                  )}
+                </Pressable>
                 <View style={styles.overlay} />
                 <View style={styles.playButton}>
                   <Text style={styles.playText}>
