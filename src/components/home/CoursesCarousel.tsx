@@ -1,23 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    FlatList,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, radius, spacing } from "../../constants/theme";
@@ -213,9 +213,20 @@ export const CoursesCarousel = () => {
                 <Text style={styles.title} numberOfLines={2}>
                   {displayTitle}
                 </Text>
-                <Text style={styles.teacher} numberOfLines={1}>
-                  {item.teacher}
-                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open teacher profile: ${item.teacher}`}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/teacher-profile",
+                      params: { name: item.teacher },
+                    } as never)
+                  }
+                >
+                  <Text style={styles.teacher} numberOfLines={1}>
+                    {item.teacher}
+                  </Text>
+                </Pressable>
               </View>
             </Pressable>
           );

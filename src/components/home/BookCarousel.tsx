@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
-import { collection, getDocs } from "firebase/firestore";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import {
     FlatList,
     Pressable,
@@ -144,7 +144,12 @@ export const BookCarousel = () => {
             style={[styles.card, { width: cardWidth }]}
             accessibilityRole="button"
             accessibilityLabel={`Open ${item.title}`}
-            onPress={() => router.push({ pathname: "/book-preview", params: { id: item.id, source: "home" } } as any)}
+            onPress={() =>
+              router.push({
+                pathname: "/book-preview",
+                params: { id: item.id, source: "home" },
+              } as any)
+            }
           >
             <Image
               source={item.image}
@@ -153,7 +158,18 @@ export const BookCarousel = () => {
             />
             <View style={styles.body}>
               <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.author}>{item.author}</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Open teacher profile: ${item.author}`}
+                onPress={() =>
+                  router.push({
+                    pathname: "/teacher-profile",
+                    params: { name: item.author },
+                  } as never)
+                }
+              >
+                <Text style={styles.author}>{item.author}</Text>
+              </Pressable>
               <View style={styles.row}>
                 <Text style={styles.rating}>★ {item.rating}</Text>
                 <View style={styles.buttonWrap}>

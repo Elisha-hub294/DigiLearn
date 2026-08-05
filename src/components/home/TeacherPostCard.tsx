@@ -2,17 +2,18 @@ import { Feather as Icon } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import { Image } from "expo-image";
 import * as IntentLauncher from "expo-intent-launcher";
+import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {
-  Linking,
-  Platform,
-  Pressable,
-  Animated as RNAnimated,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    Linking,
+    Platform,
+    Pressable,
+    Animated as RNAnimated,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
@@ -279,6 +280,7 @@ const TeacherPostItem = ({
   defaultUserAvatar: string | null;
   defaultPdfImage: string | null;
 }) => {
+  const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
 
   const rawTeacherName = postItem.teacher || "Teacher";
@@ -354,13 +356,24 @@ const TeacherPostItem = ({
               style={styles.avatar}
               contentFit="cover"
             />
-            <View>
-              <View style={styles.nameRow}>
-                <Text style={styles.name}>{teacherName}</Text>
-                <Icon name="check-circle" size={14} color={colors.primary} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Open teacher profile: ${rawTeacherName}`}
+              onPress={() =>
+                router.push({
+                  pathname: "/teacher-profile",
+                  params: { name: rawTeacherName },
+                } as never)
+              }
+            >
+              <View>
+                <View style={styles.nameRow}>
+                  <Text style={styles.name}>{teacherName}</Text>
+                  <Icon name="check-circle" size={14} color={colors.primary} />
+                </View>
+                <Text style={styles.time}>Recently shared</Text>
               </View>
-              <Text style={styles.time}>Recently shared</Text>
-            </View>
+            </Pressable>
           </View>
           <View style={[styles.badge, { backgroundColor: "#001172" }]}>
             <Text style={styles.badgeText}>{subject}</Text>

@@ -43,6 +43,10 @@ export default function RootLayout() {
             name="pages"
             options={{ href: null, tabBarStyle: { display: "none" } }}
           />
+          <Tabs.Screen
+            name="teacher-profile"
+            options={{ href: null, tabBarStyle: { display: "none" } }}
+          />
         </Tabs>
       </SafeAreaProvider>
     </GestureHandlerRootView>
