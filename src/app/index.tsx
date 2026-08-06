@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BookCarousel } from "../components/home/BookCarousel";
 import { CoursesCarousel } from "../components/home/CoursesCarousel";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
+import { FloatingAssistantButton } from "../components/home/FloatingAssistantButton";
 import { TeacherPostCard } from "../components/home/TeacherPostCard";
 import { TopicalNotesSlider } from "../components/home/TopicalNotesSlider";
 import { Header } from "../components/ui/Header";
@@ -139,6 +140,7 @@ export default function HomeScreen() {
               <GradientAnnouncement />
             </Animated.View>
           </ScrollView>
+          <FloatingAssistantButton />
         </View>
       </Animated.View>
     </SafeAreaView>
