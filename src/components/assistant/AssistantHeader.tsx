@@ -2,10 +2,10 @@ import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 
 import { colors, radius, spacing } from "../../constants/theme";
@@ -13,9 +13,11 @@ import { colors, radius, spacing } from "../../constants/theme";
 export function AssistantHeader({
   title,
   subtitle,
+  onBack,
 }: {
   title: string;
   subtitle: string;
+  onBack?: () => void;
 }) {
   const router = useRouter();
   const scale = useSharedValue(1);
@@ -25,6 +27,11 @@ export function AssistantHeader({
   }));
 
   const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+
     if (router.canGoBack()) {
       router.back();
       return;
@@ -86,6 +93,7 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 20,
     fontWeight: "700",
+    marginTop: -5,
   },
   headerTextWrap: {
     flex: 1,

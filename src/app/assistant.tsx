@@ -1,8 +1,8 @@
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -53,16 +53,17 @@ export default function AssistantScreen() {
     const loadScreenData = async () => {
       try {
         const [content, cachedConversations] = await Promise.all([
-          getAssistantContent(),
+          getAssistantContent(true),
           getCachedConversations(),
         ]);
         if (!active) {
           return;
         }
 
-        setAssistantAvatar(content.avatar ?? null);
+        const resolvedAvatar = content.avatar ?? fallbackAvatar;
+        setAssistantAvatar(resolvedAvatar);
         setSuggestions(content.messages.slice(0, 6));
-        setGifUri(content.avatar ?? null);
+        setGifUri(typeof resolvedAvatar === "string" ? resolvedAvatar : null);
         const history = await loadConversationHistory();
         if (active) {
           setConversations(history);
@@ -185,6 +186,24 @@ export default function AssistantScreen() {
     setErrorText(null);
   };
 
+  const handleBackToMain = () => {
+    if (hasStartedConversation) {
+      setMessages([]);
+      setMessage("");
+      setIsTyping(false);
+      setErrorText(null);
+      setActiveConversationId(null);
+      return;
+    }
+
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/");
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -197,7 +216,11 @@ export default function AssistantScreen() {
             contentMaxWidth ? { maxWidth: contentMaxWidth } : null,
           ]}
         >
-          <AssistantHeader title="DigiLearn AI" subtitle="Study support" />
+          <AssistantHeader
+            title="DigiLearn AI"
+            subtitle="Study support"
+            onBack={handleBackToMain}
+          />
 
           {isLoading ? (
             <View style={styles.loadingState}>
@@ -209,30 +232,47 @@ export default function AssistantScreen() {
           ) : (
             <>
               {!hasStartedConversation ? (
-                <View style={styles.heroArea}>
-                  <View style={styles.avatarGlow} />
-                  <Image
-                    source={gifUri ? { uri: gifUri } : fallbackAvatar}
-                    style={styles.avatar}
-                    contentFit="contain"
-                  />
-                  <Text style={styles.greeting}>How can I help you today?</Text>
-                  <View style={styles.suggestionWrap}>
-                    {suggestions.map((suggestion) => (
-                      <PromptChip
-                        key={suggestion}
-                        label={suggestion}
-                        onPress={() => handleSend(suggestion)}
-                      />
-                    ))}
+                <ScrollView
+                  style={styles.bodyScroll}
+                  contentContainerStyle={styles.bodyContent}
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                >
+                  <View style={styles.heroArea}>
+                    <View style={styles.avatarGlow} />
+                    <Image
+                      source={gifUri ? { uri: gifUri } : fallbackAvatar}
+                      style={styles.avatar}
+                      resizeMode="contain"
+                    />
+                    <Text style={styles.greeting}>
+                      How can I help you today?
+                    </Text>
+                    <View style={styles.suggestionWrap}>
+                      {suggestions.map((suggestion) => (
+                        <PromptChip
+                          key={suggestion}
+                          label={suggestion}
+                          onPress={() => handleSend(suggestion)}
+                        />
+                      ))}
+                    </View>
                   </View>
-                </View>
+
+                  <View style={styles.conversationSection}>
+                    <ConversationList
+                      conversations={conversations}
+                      onSelectConversation={handleSelectConversation}
+                    />
+                  </View>
+                </ScrollView>
               ) : (
                 <View style={styles.chatArea}>
                   <ScrollView
                     ref={scrollViewRef}
                     style={styles.messagesArea}
                     contentContainerStyle={styles.messagesContent}
+                    showsVerticalScrollIndicator={false}
                   >
                     {messages.map((item) => (
                       <ChatBubble
@@ -247,12 +287,13 @@ export default function AssistantScreen() {
                         <View style={styles.avatarWrapSmall}>
                           <Image
                             source={
-                              assistantAvatar
+                              assistantAvatar &&
+                              typeof assistantAvatar === "string"
                                 ? { uri: assistantAvatar }
                                 : fallbackAvatar
                             }
                             style={styles.avatarSmall}
-                            contentFit="contain"
+                            resizeMode="contain"
                           />
                         </View>
                         <View style={styles.typingBubble}>
@@ -263,15 +304,6 @@ export default function AssistantScreen() {
                   </ScrollView>
                 </View>
               )}
-
-              {!hasStartedConversation ? (
-                <View style={styles.conversationSection}>
-                  <ConversationList
-                    conversations={conversations}
-                    onSelectConversation={handleSelectConversation}
-                  />
-                </View>
-              ) : null}
 
               {errorText ? (
                 <View style={styles.errorCard}>
@@ -324,11 +356,19 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     color: colors.subtitle,
   },
-  heroArea: {
+  bodyScroll: {
     flex: 1,
+    minHeight: 0,
+  },
+  bodyContent: {
+    flexGrow: 1,
+    paddingBottom: spacing.lg,
+  },
+  heroArea: {
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: spacing.xl,
+    justifyContent: "flex-start",
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
   },
   avatarGlow: {
     position: "absolute",
@@ -348,12 +388,16 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     marginTop: spacing.md,
+    width: "100%",
+    maxWidth: 320,
+    paddingHorizontal: spacing.md,
+    flexShrink: 1,
   },
   suggestionWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
   },
   chatArea: {
     flex: 1,
@@ -390,6 +434,7 @@ const styles = StyleSheet.create({
   },
   conversationSection: {
     marginTop: spacing.md,
+    width: "100%",
   },
   errorCard: {
     backgroundColor: "#FEF2F2",

@@ -15,6 +15,27 @@ let cachedLastMessage: string | null = null;
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
 
+const getAvatarFromData = (data: Record<string, unknown>): string | null => {
+  const candidates = [
+    data.avatar,
+    data.Avatar,
+    data.avatarUrl,
+    data.avatar_url,
+    data.image,
+    data.imageUrl,
+    data.image_url,
+    data.gif,
+    data.Gif,
+    data.gifUrl,
+    data.gif_url,
+    data.photo,
+    data.photoUrl,
+    data.photo_url,
+  ];
+
+  return candidates.find(isNonEmptyString) ?? null;
+};
+
 const normalizeMessages = (data: Record<string, unknown>): string[] => {
   const explicitMessage = data.message;
   if (Array.isArray(data.Message)) {
@@ -56,7 +77,7 @@ export async function getAssistantContent(
     const assistantEntries = assistantSnapshot.docs
       .map((doc) => {
         const data = doc.data() as Record<string, unknown>;
-        const avatar = isNonEmptyString(data.avatar) ? data.avatar : null;
+        const avatar = getAvatarFromData(data);
         const messages = normalizeMessages(data);
 
         return { avatar, messages };

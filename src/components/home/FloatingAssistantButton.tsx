@@ -31,7 +31,8 @@ import {
 } from "../../services/aiAssistantService";
 
 const TYPING_INTERVAL_MS = 32;
-const MESSAGE_PAUSE_MS = 50000;
+const MESSAGE_PAUSE_MS = 8000;
+const MESSAGE_HIDDEN_MS = 20000;
 const IDLE_FLOAT_DURATION_MS = 2600;
 const MIN_TOUCH_SIZE = 44;
 
@@ -119,8 +120,9 @@ export function FloatingAssistantButton() {
       return;
     }
 
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    let animationFrame: ReturnType<typeof setTimeout> | undefined;
+    let visiblePauseTimeout: ReturnType<typeof setTimeout> | undefined;
+    let hiddenPauseTimeout: ReturnType<typeof setTimeout> | undefined;
+    let hideAnimationTimeout: ReturnType<typeof setTimeout> | undefined;
     let typingTimer: ReturnType<typeof setTimeout> | undefined;
 
     const animateMessageCycle = () => {
@@ -130,7 +132,7 @@ export function FloatingAssistantButton() {
       }
 
       setCachedAssistantMessage(nextMessage);
-      setActiveMessage(nextMessage);
+      setActiveMessage("");
       currentMessage.value = nextMessage;
       typingIndex.value = 0;
       bubbleOpacity.value = 1;
@@ -142,7 +144,7 @@ export function FloatingAssistantButton() {
         }
 
         if (typingIndex.value >= nextMessage.length) {
-          timeoutId = setTimeout(() => {
+          visiblePauseTimeout = setTimeout(() => {
             bubbleOpacity.value = withTiming(0, {
               duration: 300,
               easing: Easing.in(Easing.ease),
@@ -151,9 +153,10 @@ export function FloatingAssistantButton() {
               duration: 300,
               easing: Easing.in(Easing.ease),
             });
-            animationFrame = setTimeout(() => {
-              setActiveMessage(nextMessage);
-              animateMessageCycle();
+            hideAnimationTimeout = setTimeout(() => {
+              hiddenPauseTimeout = setTimeout(() => {
+                animateMessageCycle();
+              }, MESSAGE_HIDDEN_MS);
             }, 400);
           }, MESSAGE_PAUSE_MS);
           return;
@@ -171,11 +174,14 @@ export function FloatingAssistantButton() {
     animateMessageCycle();
 
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (visiblePauseTimeout) {
+        clearTimeout(visiblePauseTimeout);
       }
-      if (animationFrame) {
-        clearTimeout(animationFrame);
+      if (hideAnimationTimeout) {
+        clearTimeout(hideAnimationTimeout);
+      }
+      if (hiddenPauseTimeout) {
+        clearTimeout(hiddenPauseTimeout);
       }
       if (typingTimer) {
         clearTimeout(typingTimer);
@@ -228,7 +234,7 @@ export function FloatingAssistantButton() {
     router.push("/assistant");
   };
 
-  const safeBottom = insets.bottom + 20;
+  const safeBottom = insets.bottom;
 
   return (
     <Animated.View
@@ -236,7 +242,7 @@ export function FloatingAssistantButton() {
       exiting={FadeOut.duration(220)}
       style={[
         styles.wrapper,
-        { bottom: safeBottom, right: 24, maxWidth: width - 32 },
+        { bottom: safeBottom, right: 5, maxWidth: width - 32 },
       ]}
     >
       <Animated.View style={[styles.container, animatedContainerStyle]}>
@@ -309,7 +315,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   bubbleWrapper: {
-    marginRight: -8,
+    marginRight: -17,
     marginBottom: 10,
     zIndex: 2,
   },
@@ -338,6 +344,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "transparent",
+    zIndex: 3,
   },
   avatarFrame: {
     width: 84,
@@ -356,6 +363,5 @@ const styles = StyleSheet.create({
   avatar: {
     width: 84,
     height: 84,
-    borderRadius: 42,
   },
 });

@@ -7,6 +7,7 @@ import {
     FlatList,
     NativeScrollEvent,
     NativeSyntheticEvent,
+    Platform,
     Pressable,
     StyleSheet,
     Text,
@@ -163,11 +164,16 @@ export const CoursesCarousel = () => {
               : item.title;
 
           return (
-            <Pressable
+            <View
               style={[styles.card, { width: cardWidth }]}
-              accessibilityRole="button"
-              accessibilityLabel={`Open lesson: ${item.title}`}
-              onPress={() =>
+              {...(Platform.OS !== "web"
+                ? {
+                    accessibilityRole: "button",
+                    accessibilityLabel: `Open lesson: ${item.title}`,
+                  }
+                : {})}
+              onStartShouldSetResponder={() => true}
+              onResponderRelease={() =>
                 router.push({
                   pathname: "/lesson-player",
                   params: {
@@ -222,19 +228,20 @@ export const CoursesCarousel = () => {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Open teacher profile: ${item.teacher}`}
-                  onPress={() =>
+                  onPress={(event) => {
+                    event.stopPropagation?.();
                     router.push({
                       pathname: "/teacher-profile",
                       params: { name: item.teacher },
-                    } as never)
-                  }
+                    } as never);
+                  }}
                 >
                   <Text style={styles.teacher} numberOfLines={1}>
                     {item.teacher}
                   </Text>
                 </Pressable>
               </View>
-            </Pressable>
+            </View>
           );
         }}
         contentContainerStyle={styles.list}

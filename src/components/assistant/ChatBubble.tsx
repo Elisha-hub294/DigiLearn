@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
 
 const markdownStyles: Record<string, any> = {
   body: {
-    color: "#222222",
+    color: "#2e2e2e",
     fontSize: 14,
     lineHeight: 22,
   },
@@ -100,7 +100,7 @@ const markdownStyles: Record<string, any> = {
   },
   strong: {
     fontWeight: "700",
-    color: "#111827",
+    color: "#0e2d70",
   },
   bullet_list: {
     marginBottom: 6,

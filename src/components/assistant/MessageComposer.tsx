@@ -1,9 +1,9 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 
 import { colors, radius, shadows, spacing } from "../../constants/theme";
@@ -36,7 +36,18 @@ export function MessageComposer({
           style={styles.input}
           multiline
           maxLength={500}
-          returnKeyType="send"
+          returnKeyType="default"
+          blurOnSubmit={false}
+          onKeyPress={({ nativeEvent }) => {
+            if (nativeEvent.key === "Enter") {
+              if (nativeEvent.shiftKey) {
+                return;
+              }
+              if (!disabled) {
+                onSend();
+              }
+            }
+          }}
           onSubmitEditing={() => {
             if (!disabled) {
               onSend();
@@ -74,7 +85,7 @@ const styles = StyleSheet.create({
   composer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.white,
+    backgroundColor: "#ffffff",
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -86,6 +97,8 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 14,
     paddingVertical: 0,
+    textAlignVertical: "center",
+    textAlign: "left",
   },
   sendButton: {
     width: 44,
@@ -102,5 +115,7 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 16,
     fontWeight: "700",
+    marginTop: -2,
+    marginLeft: 2,
   },
 });
