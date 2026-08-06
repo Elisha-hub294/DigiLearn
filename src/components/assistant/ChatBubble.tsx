@@ -2,8 +2,8 @@ import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
 import Markdown from "react-native-markdown-display";
 
-import { colors, radius, spacing } from "../../constants/theme";
 import fallbackAvatar from "../../../assets/images/tr-default.png";
+import { colors, spacing } from "../../constants/theme";
 
 export function ChatBubble({
   role,
@@ -17,14 +17,25 @@ export function ChatBubble({
   const isUser = role === "user";
 
   return (
-    <View style={[styles.wrap, isUser ? styles.userWrap : styles.assistantWrap]}>
+    <View
+      style={[styles.wrap, isUser ? styles.userWrap : styles.assistantWrap]}
+    >
       {!isUser ? (
         <View style={styles.avatarWrap}>
-          <Image source={avatar ? { uri: avatar } : fallbackAvatar} style={styles.avatar} contentFit="cover" />
+          <Image
+            source={avatar ? { uri: avatar } : fallbackAvatar}
+            style={styles.avatar}
+            contentFit="cover"
+          />
         </View>
       ) : null}
 
-      <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
+      <View
+        style={[
+          styles.bubble,
+          isUser ? styles.userBubble : styles.assistantBubble,
+        ]}
+      >
         {isUser ? (
           <Text style={styles.userText}>{message}</Text>
         ) : (

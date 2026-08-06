@@ -1,11 +1,22 @@
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
+} from "react-native-reanimated";
 
 import { colors, radius, spacing } from "../../constants/theme";
 
-export function AssistantHeader({ title, subtitle }: { title: string; subtitle: string }) {
+export function AssistantHeader({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle: string;
+}) {
   const router = useRouter();
   const scale = useSharedValue(1);
 
@@ -37,7 +48,11 @@ export function AssistantHeader({ title, subtitle }: { title: string; subtitle: 
           onPress={handleBack}
           style={styles.backButton}
         >
-          <BlurView intensity={24} tint="light" style={StyleSheet.absoluteFill} />
+          <BlurView
+            intensity={24}
+            tint="light"
+            style={StyleSheet.absoluteFill}
+          />
           <Text style={styles.backIcon}>←</Text>
         </Pressable>
       </Animated.View>

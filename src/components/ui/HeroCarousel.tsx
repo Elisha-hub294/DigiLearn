@@ -1,20 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    FlatList,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, {
-  Extrapolate,
-  interpolate,
-  useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
+    Extrapolate,
+    interpolate,
+    useAnimatedScrollHandler,
+    useAnimatedStyle,
+    useSharedValue,
+    withSequence,
+    withTiming,
 } from "react-native-reanimated";
 import { carouselData, CarouselItem } from "../../constants/data";
 import { colors, radius, spacing, typography } from "../../constants/theme";
@@ -47,7 +47,7 @@ export const HeroCarousel = () => {
   const flatRef = useRef<FlatList<CarouselItem>>(null);
   const [isInteracting, setIsInteracting] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const autoplayRef = useRef<number | null>(null);
+  const autoplayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const entranceOpacity = useSharedValue(0);
   const entranceTranslateY = useSharedValue(18);
 

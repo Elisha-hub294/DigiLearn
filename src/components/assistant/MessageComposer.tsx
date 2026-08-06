@@ -1,5 +1,10 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
+} from "react-native-reanimated";
 
 import { colors, radius, shadows, spacing } from "../../constants/theme";
 
@@ -16,7 +21,9 @@ export function MessageComposer({
 }) {
   const scale = useSharedValue(1);
 
-  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   return (
     <View style={styles.wrapper}>
