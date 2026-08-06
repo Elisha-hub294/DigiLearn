@@ -1,26 +1,33 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { AppState, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import {
+    AppState,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
+} from "react-native";
 import Animated, {
-  Easing,
-  FadeIn,
-  FadeOut,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
+    Easing,
+    FadeIn,
+    FadeOut,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radius, shadows, spacing } from "../../constants/theme";
 import fallbackAvatar from "../../../assets/images/tr-default.png";
+import { colors, radius, shadows, spacing } from "../../constants/theme";
 import {
-  getAssistantContent,
-  getCachedAssistantMessage,
-  setCachedAssistantMessage,
+    getAssistantContent,
+    getCachedAssistantMessage,
+    setCachedAssistantMessage,
 } from "../../services/aiAssistantService";
 
 const TYPING_INTERVAL_MS = 32;
@@ -28,17 +35,22 @@ const MESSAGE_PAUSE_MS = 50000;
 const IDLE_FLOAT_DURATION_MS = 2600;
 const MIN_TOUCH_SIZE = 44;
 
-const getBubbleWidth = (width: number) => Math.min(190, Math.max(150, width * 0.4));
+const getBubbleWidth = (width: number) =>
+  Math.min(190, Math.max(150, width * 0.4));
 
 export function FloatingAssistantButton() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<string[]>([]);
-  const [activeMessage, setActiveMessage] = useState("Need help with your studies?");
+  const [activeMessage, setActiveMessage] = useState(
+    "Need help with your studies?",
+  );
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [isScreenActive, setIsScreenActive] = useState(AppState.currentState === "active");
+  const [isScreenActive, setIsScreenActive] = useState(
+    AppState.currentState === "active",
+  );
 
   const bubbleWidth = useMemo(() => getBubbleWidth(width), [width]);
 
@@ -62,7 +74,10 @@ export function FloatingAssistantButton() {
         }
 
         const cachedMessage = getCachedAssistantMessage();
-        const initialMessage = cachedMessage ?? content.messages[0] ?? "Need help with your studies?";
+        const initialMessage =
+          cachedMessage ??
+          content.messages[0] ??
+          "Need help with your studies?";
 
         setMessages(content.messages);
         setActiveMessage(initialMessage);
@@ -128,8 +143,14 @@ export function FloatingAssistantButton() {
 
         if (typingIndex.value >= nextMessage.length) {
           timeoutId = setTimeout(() => {
-            bubbleOpacity.value = withTiming(0, { duration: 300, easing: Easing.in(Easing.ease) });
-            bubbleScale.value = withTiming(0.96, { duration: 300, easing: Easing.in(Easing.ease) });
+            bubbleOpacity.value = withTiming(0, {
+              duration: 300,
+              easing: Easing.in(Easing.ease),
+            });
+            bubbleScale.value = withTiming(0.96, {
+              duration: 300,
+              easing: Easing.in(Easing.ease),
+            });
             animationFrame = setTimeout(() => {
               setActiveMessage(nextMessage);
               animateMessageCycle();
@@ -160,16 +181,24 @@ export function FloatingAssistantButton() {
         clearTimeout(typingTimer);
       }
     };
-  }, [isVisible, messages, bubbleOpacity, bubbleScale, currentMessage, typingIndex, isScreenActive]);
+  }, [
+    isVisible,
+    messages,
+    bubbleOpacity,
+    bubbleScale,
+    currentMessage,
+    typingIndex,
+    isScreenActive,
+  ]);
 
   useEffect(() => {
     avatarTranslateY.value = withRepeat(
       withSequence(
         withTiming(-3, { duration: 1600, easing: Easing.inOut(Easing.ease) }),
-        withTiming(3, { duration: 1600, easing: Easing.inOut(Easing.ease) })
+        withTiming(3, { duration: 1600, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
-      true
+      true,
     );
   }, [avatarTranslateY]);
 
@@ -205,7 +234,10 @@ export function FloatingAssistantButton() {
     <Animated.View
       entering={FadeIn.duration(600)}
       exiting={FadeOut.duration(220)}
-      style={[styles.wrapper, { bottom: safeBottom, right: 24, maxWidth: width - 32 }]}
+      style={[
+        styles.wrapper,
+        { bottom: safeBottom, right: 24, maxWidth: width - 32 },
+      ]}
     >
       <Animated.View style={[styles.container, animatedContainerStyle]}>
         <Pressable

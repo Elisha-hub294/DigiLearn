@@ -36,7 +36,9 @@ const normalizeMessages = (data: Record<string, unknown>): string[] => {
   return [];
 };
 
-export async function getAssistantContent(forceRefresh = false): Promise<AssistantContent> {
+export async function getAssistantContent(
+  forceRefresh = false,
+): Promise<AssistantContent> {
   if (!forceRefresh && assistantContentCache) {
     return assistantContentCache;
   }
@@ -62,16 +64,19 @@ export async function getAssistantContent(forceRefresh = false): Promise<Assista
       .filter((entry) => entry.avatar || entry.messages.length > 0);
 
     const fallbackAvatar = null;
-    const firstAvatar = assistantEntries.find((entry) => entry.avatar)?.avatar ?? fallbackAvatar;
+    const firstAvatar =
+      assistantEntries.find((entry) => entry.avatar)?.avatar ?? fallbackAvatar;
     const allMessages = assistantEntries.flatMap((entry) => entry.messages);
 
-    const geminiApiKey = configSnapshot.docs
-      .map((doc) => (doc.data() as Record<string, unknown>).gemini_api_key)
-      .find(isNonEmptyString) ?? null;
+    const geminiApiKey =
+      configSnapshot.docs
+        .map((doc) => (doc.data() as Record<string, unknown>).gemini_api_key)
+        .find(isNonEmptyString) ?? null;
 
     const content = {
       avatar: firstAvatar,
-      messages: allMessages.length > 0 ? allMessages : ["Need help with your studies?"],
+      messages:
+        allMessages.length > 0 ? allMessages : ["Need help with your studies?"],
       geminiApiKey,
     };
 
