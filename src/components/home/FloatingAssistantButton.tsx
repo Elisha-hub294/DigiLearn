@@ -2,32 +2,32 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-    AppState,
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  AppState,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, {
-    Easing,
-    FadeIn,
-    FadeOut,
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withSequence,
-    withSpring,
-    withTiming,
+  Easing,
+  FadeIn,
+  FadeOut,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import fallbackAvatar from "../../../assets/images/tr-default.png";
+import fallbackAvatar from "../../../assets/images/panda.png";
 import { colors, radius, shadows, spacing } from "../../constants/theme";
 import {
-    getAssistantContent,
-    getCachedAssistantMessage,
-    setCachedAssistantMessage,
+  getAssistantContent,
+  getCachedAssistantMessage,
+  setCachedAssistantMessage,
 } from "../../services/aiAssistantService";
 
 const TYPING_INTERVAL_MS = 32;
@@ -228,7 +228,7 @@ export function FloatingAssistantButton() {
     router.push("/assistant");
   };
 
-  const safeBottom = insets.bottom + 96;
+  const safeBottom = insets.bottom + 20;
 
   return (
     <Animated.View
@@ -264,11 +264,19 @@ export function FloatingAssistantButton() {
           </Animated.View>
 
           <Animated.View style={[styles.avatarWrapper, animatedAvatarStyle]}>
-            <Image
-              source={avatarUri ? { uri: avatarUri } : fallbackAvatar}
-              contentFit="contain"
-              style={styles.avatar}
-            />
+            <View style={styles.avatarFrame}>
+              <Image
+                source={avatarUri ? { uri: avatarUri } : fallbackAvatar}
+                contentFit="contain"
+                style={[styles.avatar, styles.avatarShadow]}
+                blurRadius={10}
+              />
+              <Image
+                source={avatarUri ? { uri: avatarUri } : fallbackAvatar}
+                contentFit="contain"
+                style={styles.avatar}
+              />
+            </View>
           </Animated.View>
         </Pressable>
       </Animated.View>
@@ -329,14 +337,25 @@ const styles = StyleSheet.create({
     borderRadius: 42,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: colors.dark,
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 6,
+    backgroundColor: "transparent",
+  },
+  avatarFrame: {
+    width: 84,
+    height: 84,
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarShadow: {
+    position: "absolute",
+    left: 3,
+    top: 5,
+    opacity: 0.24,
+    transform: [{ scale: 1.02 }],
   },
   avatar: {
     width: 84,
     height: 84,
+    borderRadius: 42,
   },
 });

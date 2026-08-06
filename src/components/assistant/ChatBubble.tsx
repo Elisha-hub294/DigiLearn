@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
 import Markdown from "react-native-markdown-display";
 
-import fallbackAvatar from "../../../assets/images/tr-default.png";
+import fallbackAvatar from "../../../assets/images/panda.png";
 import { colors, spacing } from "../../constants/theme";
 
 export function ChatBubble({
@@ -62,7 +62,6 @@ const styles = StyleSheet.create({
   avatarWrap: {
     width: 32,
     height: 32,
-    borderRadius: 16,
     overflow: "hidden",
     marginRight: spacing.sm,
   },

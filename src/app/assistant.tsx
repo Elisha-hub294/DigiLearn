@@ -2,18 +2,18 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import fallbackAvatar from "../../assets/images/tr-default.png";
+import fallbackAvatar from "../../assets/images/panda.png";
 import { AssistantHeader } from "../components/assistant/AssistantHeader";
 import { ChatBubble } from "../components/assistant/ChatBubble";
 import { ConversationList } from "../components/assistant/ConversationList";
@@ -23,12 +23,12 @@ import { TypingIndicator } from "../components/assistant/TypingIndicator";
 import { colors, radius, spacing } from "../constants/theme";
 import { getAssistantContent } from "../services/aiAssistantService";
 import {
-    generateAssistantReply,
-    getCachedConversations,
-    loadConversationHistory,
-    persistConversation,
-    type ChatMessage,
-    type ConversationRecord,
+  generateAssistantReply,
+  getCachedConversations,
+  loadConversationHistory,
+  persistConversation,
+  type ChatMessage,
+  type ConversationRecord,
 } from "../services/assistantChatService";
 
 export default function AssistantScreen() {
