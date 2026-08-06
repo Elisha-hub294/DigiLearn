@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
     addDoc,
@@ -174,13 +174,12 @@ export async function generateAssistantReply(
   ].join(" ");
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const response = await model.generateContent(`${systemPrompt}\n\nConversation:\n${history}\n\nUser prompt:\n${prompt}`);
-
-    const text =
-      response.text ??
-      "I couldn't generate a response right now. Please check your connection and try again.";
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `${systemPrompt}\n\nConversation:\n${history}\n\nUser prompt:\n${prompt}`,
+    });
+    const text = response.text ?? "I couldn't generate a response right now. Please check your connection and try again.";
     return text;
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
