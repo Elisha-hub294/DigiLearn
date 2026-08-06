@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   assistantBubble: {
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#ededf5",
   },
   userText: {
     color: colors.white,
@@ -99,8 +99,8 @@ const markdownStyles: Record<string, any> = {
     marginBottom: 6,
   },
   strong: {
-    fontWeight: "700",
-    color: "#0e2d70",
+    fontWeight: "600",
+    color: "#001b5a",
   },
   bullet_list: {
     marginBottom: 6,
