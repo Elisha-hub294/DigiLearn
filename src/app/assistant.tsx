@@ -164,9 +164,11 @@ export default function AssistantScreen() {
       ]);
     } catch (error) {
       setIsTyping(false);
-      setErrorText(
-        "I couldn't generate a response right now. Please check your connection and try again.",
-      );
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "I couldn't generate a response right now. Please check your connection and try again.";
+      setErrorText(message);
     }
   };
 

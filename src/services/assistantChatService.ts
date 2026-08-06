@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
     addDoc,
@@ -173,15 +173,21 @@ export async function generateAssistantReply(
     "Format with markdown and short paragraphs.",
   ].join(" ");
 
-  const ai = new GoogleGenAI({ apiKey });
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const response = await model.generateContent(`${systemPrompt}\n\nConversation:\n${history}\n\nUser prompt:\n${prompt}`);
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: `${systemPrompt}\n\nConversation:\n${history}\n\nUser prompt:\n${prompt}`,
-  });
-
-  const text =
-    response.text ??
-    "I couldn't generate a response right now. Please check your connection and try again.";
-  return text;
+    const text =
+      response.text ??
+      "I couldn't generate a response right now. Please check your connection and try again.";
+    return text;
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      detail.includes("API key") || detail.includes("permission")
+        ? "The Gemini API key is missing or invalid. Please update the configuration in Firestore."
+        : `Gemini request failed: ${detail}`,
+    );
+  }
 }
