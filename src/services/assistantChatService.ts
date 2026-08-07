@@ -11,7 +11,10 @@ import {
 } from "firebase/firestore";
 
 import { db } from "../../firebaseConfig";
-import { getAssistantContent } from "./aiAssistantService";
+import {
+    getAssistantContent,
+    getDigiLearnKnowledgeContext,
+} from "./aiAssistantService";
 
 export type ChatMessage = {
   id: string;
@@ -152,6 +155,7 @@ export async function generateAssistantReply(
   previousMessages: ChatMessage[],
 ) {
   const content = await getAssistantContent();
+  const knowledge = await getDigiLearnKnowledgeContext();
   const apiKey = content.geminiApiKey;
 
   if (!apiKey) {
@@ -165,12 +169,18 @@ export async function generateAssistantReply(
         `${message.role === "user" ? "User" : "Assistant"}: ${message.content}`,
     )
     .join("\n");
+  const knowledgeBlock = knowledge.appOverview
+    ? `DigiLearn application knowledge from Firestore:\n${knowledge.appOverview}`
+    : 'DigiLearn application knowledge from Firestore: No app overview information is available in the Firestore "ai knowledge" collection yet.';
+
   const systemPrompt = [
     "You are DigiLearn's academic study assistant.",
     "Help with math, biology, chemistry, physics, ICT, geography, history, English, literature, economics, entrepreneurship, art, exams, revision, study planning, notes, past papers, marking guides, textbooks, courses, and teacher explanations.",
-    "Refuse unrelated requests politely and redirect to academic learning.",
+    "Use the Firestore knowledge block as the primary source for DigiLearn-specific information and capabilities.",
+    "Do not invent DigiLearn database information. If the requested information or resource is not present in the provided knowledge or other DigiLearn Firestore data, say clearly that it could not be found.",
     "When appropriate, suggest DigiLearn resources in a concise way.",
     "Format with markdown and short paragraphs.",
+    knowledgeBlock,
   ].join(" ");
 
   try {
@@ -179,7 +189,9 @@ export async function generateAssistantReply(
       model: "gemini-3-flash-preview",
       contents: `${systemPrompt}\n\nConversation:\n${history}\n\nUser prompt:\n${prompt}`,
     });
-    const text = response.text ?? "I couldn't generate a response right now. Please check your connection and try again.";
+    const text =
+      response.text ??
+      "I couldn't generate a response right now. Please check your connection and try again.";
     return text;
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);

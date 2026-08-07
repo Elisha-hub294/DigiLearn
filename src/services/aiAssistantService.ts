@@ -8,8 +8,15 @@ export type AssistantContent = {
   geminiApiKey: string | null;
 };
 
+export type AppKnowledgeContext = {
+  appOverview: string | null;
+  knowledge: Record<string, string>;
+};
+
 let assistantContentCache: AssistantContent | null = null;
 let assistantContentPromise: Promise<AssistantContent> | null = null;
+let appKnowledgeCache: AppKnowledgeContext | null = null;
+let appKnowledgePromise: Promise<AppKnowledgeContext> | null = null;
 let cachedLastMessage: string | null = null;
 
 const isNonEmptyString = (value: unknown): value is string =>
@@ -55,6 +62,71 @@ const normalizeMessages = (data: Record<string, unknown>): string[] => {
   }
 
   return [];
+};
+
+const normalizeKnowledgeKey = (value: unknown): string => {
+  if (!isNonEmptyString(value)) {
+    return "";
+  }
+
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+const coerceKnowledgeText = (value: unknown): string | null => {
+  if (isNonEmptyString(value)) {
+    return value.trim();
+  }
+
+  if (Array.isArray(value)) {
+    const joined = value
+      .map((entry) => coerceKnowledgeText(entry))
+      .filter(isNonEmptyString)
+      .join("\n");
+    return joined || null;
+  }
+
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    const direct = [
+      record.text,
+      record.content,
+      record.summary,
+      record.description,
+    ]
+      .map((entry) => coerceKnowledgeText(entry))
+      .find(isNonEmptyString);
+    return direct ?? null;
+  }
+
+  return null;
+};
+
+const extractKnowledgeValue = (
+  data: Record<string, unknown>,
+  labels: string[],
+): string | null => {
+  const normalizedEntries = Object.entries(data).map(([key, value]) => ({
+    key: normalizeKnowledgeKey(key),
+    value,
+  }));
+
+  for (const label of labels) {
+    const normalizedLabel = normalizeKnowledgeKey(label);
+    const match = normalizedEntries.find(
+      (entry) => entry.key === normalizedLabel,
+    );
+    const resolved = match ? coerceKnowledgeText(match.value) : null;
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return null;
 };
 
 export async function getAssistantContent(
@@ -113,6 +185,59 @@ export async function getAssistantContent(
     return await assistantContentPromise;
   } finally {
     assistantContentPromise = null;
+  }
+}
+
+export async function getDigiLearnKnowledgeContext(
+  forceRefresh = false,
+): Promise<AppKnowledgeContext> {
+  if (!forceRefresh && appKnowledgeCache) {
+    return appKnowledgeCache;
+  }
+
+  if (!forceRefresh && appKnowledgePromise) {
+    return appKnowledgePromise;
+  }
+
+  appKnowledgePromise = (async () => {
+    const snapshot = await getDocs(collection(db, "ai knowledge"));
+
+    const knowledge: Record<string, string> = {};
+    snapshot.docs.forEach((doc) => {
+      const data = doc.data() as Record<string, unknown>;
+      Object.entries(data).forEach(([key, value]) => {
+        const normalizedKey = normalizeKnowledgeKey(key);
+        if (!normalizedKey) {
+          return;
+        }
+
+        const text = coerceKnowledgeText(value);
+        if (text && !knowledge[normalizedKey]) {
+          knowledge[normalizedKey] = text;
+        }
+      });
+    });
+
+    const appOverview = extractKnowledgeValue({ ...knowledge }, [
+      "app overview",
+      "app overview text",
+      "app_overview",
+      "appOverview",
+    ]);
+
+    const context = {
+      appOverview,
+      knowledge,
+    };
+
+    appKnowledgeCache = context;
+    return context;
+  })();
+
+  try {
+    return await appKnowledgePromise;
+  } finally {
+    appKnowledgePromise = null;
   }
 }
 
