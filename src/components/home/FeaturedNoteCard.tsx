@@ -6,15 +6,15 @@ import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  FlatList,
-  Linking,
-  Platform,
-  Pressable,
-  Animated as RNAnimated,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    FlatList,
+    Linking,
+    Platform,
+    Pressable,
+    Animated as RNAnimated,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
@@ -40,6 +40,7 @@ type TopicalNote = {
 type FeaturedNoteCardProps = {
   layout?: "stack" | "two-column";
   subject?: string;
+  hideAvatar?: boolean;
   notes?: Array<{
     id: string;
     title?: string;
@@ -98,6 +99,7 @@ const openPdfDocument = async (url: string) => {
 export const FeaturedNoteCard = ({
   layout = "stack",
   subject,
+  hideAvatar = false,
   notes: providedNotes,
   loading: externalLoading,
   source = "home",
@@ -240,6 +242,7 @@ export const FeaturedNoteCard = ({
             layout={layout}
             source={source}
             subject={subject}
+            hideAvatar={hideAvatar}
           />
         )}
       />
@@ -335,6 +338,7 @@ const FeaturedNoteItem = ({
   layout,
   source,
   subject,
+  hideAvatar,
 }: {
   note: TopicalNote;
   subjectAvatars: Record<string, string>;
@@ -343,6 +347,7 @@ const FeaturedNoteItem = ({
   layout: string;
   source: "home" | "library" | "pages";
   subject?: string;
+  hideAvatar?: boolean;
 }) => {
   const [hovered, setHovered] = useState(false);
   const router = useRouter();
@@ -374,6 +379,10 @@ const FeaturedNoteItem = ({
       : typeof note.subject === "string" && note.subject.trim().length > 0
         ? note.subject
         : "Pages";
+  const subjectName =
+    typeof subject === "string" && subject.trim().length > 0
+      ? subject
+      : (subjectValues.find(Boolean) ?? routeTitle);
 
   return (
     <Animated.View
@@ -420,12 +429,31 @@ const FeaturedNoteItem = ({
         </Pressable>
 
         <View style={styles.content}>
-          <Image
-            source={avatarUri ? { uri: avatarUri } : undefined}
-            style={styles.avatar}
-            contentFit="cover"
-          />
-          <View style={styles.contentData}>
+          {!hideAvatar && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${subjectName} profile`}
+              onPress={() =>
+                router.push({
+                  pathname: "/subject-profile",
+                  params: { subject: subjectName },
+                } as any)
+              }
+              style={styles.avatarPressable}
+            >
+              <Image
+                source={avatarUri ? { uri: avatarUri } : undefined}
+                style={styles.avatar}
+                contentFit="cover"
+              />
+            </Pressable>
+          )}
+          <View
+            style={[
+              styles.contentData,
+              hideAvatar && styles.contentDataNoAvatar,
+            ]}
+          >
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.description}>{description}</Text>
           </View>
@@ -492,11 +520,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#f6f8fb",
   },
+  avatarPressable: {
+    marginRight: spacing.sm,
+  },
   avatar: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    marginRight: spacing.sm,
     backgroundColor: "#E8EDF0",
   },
   previewWrap: {
@@ -520,6 +550,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   contentData: { flex: 1 },
+  contentDataNoAvatar: { marginLeft: 0 },
   title: {
     color: colors.text,
     fontSize: 14,

@@ -1,9 +1,9 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 
 import { colors, radius, shadows, spacing } from "../../constants/theme";
@@ -40,7 +40,7 @@ export function MessageComposer({
           blurOnSubmit={false}
           onKeyPress={({ nativeEvent }) => {
             if (nativeEvent.key === "Enter") {
-              if (nativeEvent.shiftKey) {
+              if ((nativeEvent as any).shiftKey) {
                 return;
               }
               if (!disabled) {
