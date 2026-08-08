@@ -1,7 +1,6 @@
 import { Image } from "expo-image";
-import React from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, spacing } from "../../constants/theme";
 import PdfPreview from "../home/PdfPreview";
 
 type PaperCardProps = {
@@ -57,10 +56,8 @@ const styles = StyleSheet.create({
   card: {
     width: 220,
     marginRight: spacing.md,
-    borderRadius: radius.md,
     backgroundColor: colors.white,
     overflow: "hidden",
-    ...shadows.card,
   },
   previewContainer: {
     width: "100%",

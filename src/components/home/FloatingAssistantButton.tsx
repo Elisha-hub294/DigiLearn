@@ -32,7 +32,7 @@ import {
 
 const TYPING_INTERVAL_MS = 32;
 const MESSAGE_PAUSE_MS = 8000;
-const MESSAGE_HIDDEN_MS = 20000;
+const MESSAGE_HIDDEN_MS = 40000;
 const IDLE_FLOAT_DURATION_MS = 2600;
 const MIN_TOUCH_SIZE = 44;
 
@@ -242,7 +242,7 @@ export function FloatingAssistantButton() {
       exiting={FadeOut.duration(220)}
       style={[
         styles.wrapper,
-        { bottom: safeBottom, right: 5, maxWidth: width - 32 },
+        { bottom: safeBottom, right: 40, maxWidth: width - 32 },
       ]}
     >
       <Animated.View style={[styles.container, animatedContainerStyle]}>

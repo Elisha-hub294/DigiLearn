@@ -1,5 +1,4 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
 
@@ -69,8 +68,8 @@ const styles = StyleSheet.create({
   },
   libraryTitle: {
     color: colors.dark,
-    fontSize: 32,
-    fontWeight: "700",
+    fontSize: 30,
+    fontWeight: "600",
     letterSpacing: -0.6,
   },
   actions: {

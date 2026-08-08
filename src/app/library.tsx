@@ -1,72 +1,38 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { BookCarousel } from "@/components/home/BookCarousel";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
 import { AddItemModal, FormType } from "../components/library/AddItemModal";
-import { CategorySlider } from "../components/library/CategorySlider";
 import { HeroBookCarousel } from "../components/library/HeroBookCarousel";
 import { PaperCarousel } from "../components/library/PaperCarousel";
 import { PromotionalBanner } from "../components/library/PromotionalBanner";
-import { TopSellingBooks } from "../components/library/TopSellingBooks";
 import { Header } from "../components/ui/Header";
 import { SearchBar } from "../components/ui/SearchBar";
 import { SectionHeader } from "../components/ui/SectionHeader";
-import { colors, dimensions, radius, spacing } from "../constants/theme";
+import { colors, radius, spacing } from "../constants/theme";
 import { useLibraryData } from "../hooks/useLibraryData";
 
-const CATEGORIES = [
-  {
-    id: "pages",
-    label: "Pages",
-    icon: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/pages-2d.png",
-  },
-  {
-    id: "uneb",
-    label: "UNEB",
-    icon: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/uneb-2d.png",
-  },
-  {
-    id: "mock",
-    label: "MOCK",
-    icon: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/exam-2d.png",
-  },
-  {
-    id: "umta",
-    label: "UMTA",
-    icon: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/umta-2d.png",
-  },
-  {
-    id: "exam",
-    label: "Exam",
-    icon: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/exam-2d.png",
-  },
-  {
-    id: "test",
-    label: "Test",
-    icon: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/exam-2d.png",
-  },
-  {
-    id: "buganda",
-    label: "Buganda",
-    icon: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/exam-2d.png",
-  },
-  {
-    id: "jinja",
-    label: "Jinja",
-    icon: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/exam-2d.png",
-  },
-];
+const getHorizontalPadding = (width: number) => {
+  if (width >= 1200) return 150;
+  if (width >= 900) return 50;
+  if (width >= 600) return 30;
+  if (width >= 400) return 5;
+  return 5;
+};
 
 export default function LibraryScreen() {
+  const { width } = useWindowDimensions();
   const {
     loading,
     refreshing,
@@ -78,6 +44,78 @@ export default function LibraryScreen() {
     onRefresh,
   } = useLibraryData();
 
+  const [shuffleSeed, setShuffleSeed] = useState(0);
+
+  const shuffledPromos = useMemo(() => {
+    const shuffled = [...promos];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }, [shuffleSeed, promos]);
+
+  const shuffledPaperCollections = useMemo(() => {
+    const shuffled = [...paperCollections];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }, [shuffleSeed, paperCollections]);
+
+  const pageSections = useMemo(
+    () => [
+      {
+        key: "featuredNote",
+        content: <FeaturedNoteCard />,
+      },
+      {
+        key: "books",
+        content: (
+          <>
+            <SectionHeader
+              title="Books"
+              onSeeAll={() => {}}
+              actionLabel="See all"
+            />
+            <BookCarousel />
+          </>
+        ),
+      },
+      ...shuffledPromos.map((promo, index) => ({
+        key: `promo-${promo.title}-${index}`,
+        content: <PromotionalBanner {...promo} />,
+      })),
+      ...shuffledPaperCollections.map((section, index) => ({
+        key: `collection-${section.title}-${index}`,
+        content: (
+          <>
+            <SectionHeader
+              title={section.title}
+              onSeeAll={() => {}}
+              actionLabel="See all"
+            />
+            <PaperCarousel items={section.items} />
+          </>
+        ),
+      })),
+    ],
+    [shuffledPaperCollections, shuffledPromos],
+  );
+
+  const shuffledSections = useMemo(() => {
+    const shuffled = [...pageSections];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }, [pageSections, shuffleSeed]);
+
+  const horizontalPadding = getHorizontalPadding(width);
+  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
+
   const [showModal, setShowModal] = useState(false);
   const [formType, setFormType] = useState<FormType>("book");
 
@@ -86,10 +124,20 @@ export default function LibraryScreen() {
     setShowModal(true);
   };
 
+  const handleRefresh = () => {
+    setShuffleSeed((prev) => prev + 1);
+    onRefresh();
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.skeletonContent}>
+        <View
+          style={[
+            styles.skeletonContent,
+            { paddingHorizontal: horizontalPadding, maxWidth: contentMaxWidth },
+          ]}
+        >
           <View style={styles.skeletonHeader} />
           <View style={styles.skeletonSearch} />
           <View style={styles.skeletonHero} />
@@ -103,90 +151,48 @@ export default function LibraryScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-          />
-        }
-      >
-        <Animated.View
-          entering={FadeInUp.duration(320)}
-          style={styles.headerWrap}
-        >
-          <Header title="Library" rightIconName="book-open" />
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(360)}>
-          <SearchBar placeholder="Search by subject, title, etc" />
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(400)}>
-          <HeroBookCarousel data={heroSlides} />
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(440)} style={styles.section}>
-          <SectionHeader
-            title="Categories"
-            onSeeAll={() => {}}
-            actionLabel=""
-          />
-          <CategorySlider items={CATEGORIES} />
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(480)} style={styles.section}>
-          <SectionHeader title="Pages" onSeeAll={() => {}} actionLabel="" />
-          <FeaturedNoteCard />
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.duration(560)} style={styles.section}>
-          <SectionHeader
-            title="Text Books"
-            onSeeAll={() => {}}
-            actionLabel="See all"
-          />
-          <TopSellingBooks items={topBooks} />
-        </Animated.View>
-
-        {promos[0] && (
-          <Animated.View
-            entering={FadeInUp.duration(600)}
-            style={styles.section}
-          >
-            <PromotionalBanner {...promos[0]} />
-          </Animated.View>
-        )}
-
-        {paperCollections.map((section, index) => (
-          <Animated.View
-            key={`${section.title}-${index}`}
-            entering={FadeInUp.duration(640 + index * 40)}
-            style={styles.section}
-          >
-            <SectionHeader
-              title={section.title}
-              onSeeAll={() => {}}
-              actionLabel="See all"
+      <View style={[styles.page, { maxWidth: contentMaxWidth }]}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.content,
+            { paddingHorizontal: horizontalPadding },
+          ]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
             />
-            <PaperCarousel items={section.items} />
-          </Animated.View>
-        ))}
-
-        {promos.slice(1).map((promo, index) => (
+          }
+        >
           <Animated.View
-            key={`${promo.title}-${index}`}
-            entering={FadeInUp.duration(760 + index * 40)}
-            style={styles.section}
+            entering={FadeInUp.duration(320)}
+            style={styles.headerWrap}
           >
-            <PromotionalBanner {...promo} />
+            <Header title="Library" rightIconName="book-open" />
           </Animated.View>
-        ))}
-      </ScrollView>
+
+          <Animated.View entering={FadeInUp.duration(360)}>
+            <SearchBar placeholder="Search by subject, title, etc" />
+          </Animated.View>
+
+          <Animated.View entering={FadeInUp.duration(400)}>
+            <HeroBookCarousel data={heroSlides} />
+          </Animated.View>
+
+          {shuffledSections.map((section, index) => (
+            <Animated.View
+              key={section.key}
+              entering={FadeInUp.duration(480 + index * 40)}
+              style={styles.section}
+            >
+              {section.content}
+            </Animated.View>
+          ))}
+        </ScrollView>
+      </View>
 
       {/* Floating Action Buttons */}
       <Pressable
@@ -223,15 +229,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  page: {
+    flex: 1,
+    width: "100%",
+    alignSelf: "center",
+  },
   scrollView: {
     flex: 1,
   },
   content: {
-    paddingHorizontal: dimensions.screenPaddingHorizontal,
     paddingTop: spacing.xl,
     paddingBottom: spacing.xxl,
-    maxWidth: Math.min(1120, dimensions.width - 5),
-    alignSelf: "center",
     width: "100%",
   },
   headerWrap: {
@@ -275,9 +283,10 @@ const styles = StyleSheet.create({
   },
   skeletonContent: {
     flex: 1,
-    paddingHorizontal: dimensions.screenPaddingHorizontal,
     paddingTop: spacing.xl,
     paddingBottom: spacing.xxl,
+    width: "100%",
+    alignSelf: "center",
   },
   skeletonHeader: {
     width: 140,
