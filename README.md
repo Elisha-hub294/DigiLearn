@@ -1,77 +1,149 @@
 # DigiLearn
 
-**DigiLearn** is a cross-platform mobile application built with React Native and Expo that connects students with academic resources, video lessons, and educators.
-Designed in Figma, the app's development was accelerated using **GPT-5.6** and **Codex** to translate design files into production-ready React Native code, handle Firebase integrations, and build responsive interfaces.
+**DigiLearn** is an AI-powered cross-platform educational application built with **React Native and Expo**, designed to give students easier access to academic resources, learning materials, video lessons, educators, and intelligent academic assistance.
+
+DigiLearn brings together **past examination papers, topical notes, textbooks, marking guides, video lessons, teachers, and AI-powered assistance** in one platform.
+
+The application UI was designed in **Figma** and developed with the assistance of **GPT-5.6, OpenAI Codex, and GitHub Copilot**, which helped accelerate the translation of UI designs into production-ready React Native code, Firebase integration, responsive interfaces, and AI functionality.
 
 ---
 
-## Features
+## ✨ Features
 
-* **Academic Resource Hub:** Access past examination papers, detailed class notes, and online textbooks.
-* **Interactive Lessons Screen:** Watch educational video content powered by an embedded YouTube iFrame.
-* **Responsive User Profile:** Manage personal information, settings, and learning progress.
-* **Teacher Connection:** Reach out directly to educators for study guidance and support.
-* **Cross-Platform Support:** Runs natively on both Android and iOS via Expo.
+### 📚 Academic Resource Hub
+
+Access a centralized collection of academic resources, including:
+
+* Topical class notes
+* UNEB past examination papers
+* MOCS past examination papers
+* Marking guides
+* Recommended textbooks
+* Educational resources organized by subject
+
+### 🤖 AI-Powered Learning Assistant
+
+DigiLearn includes an AI assistant designed to help learners and teachers interact with the platform more intelligently.
+
+The AI can use structured **DigiLearn app knowledge** to understand the application's resources and provid
+
+### 👨‍🏫 Teacher Connection
+
+Students can discover educator profiles and access teacher information for additional academic guidance and support.
+
+### 👤 Responsive User Profiles
+
+Users can manage their profile information and interact with their learning experience through a responsive profile interface.
+
+### 🔎 Resource Discovery
+
+DigiLearn provides search and discovery functionality across different types of educational content, including:
+
+* Notes
+* Books
+* Teachers
+* Lessons
+* Past papers
+* Other academic resources
+
+### 📱 Cross-Platform
+
+Built with React Native and Expo, DigiLearn is designed to run across:
+
+* Android
+* iOS
 
 ---
 
-## Tech Stack & AI Assistance
+# 🚀 Built with GPT-5.6, Codex & GitHub Copilot
 
-* **Mobile Framework:** React Native (Expo)
-* **Backend & Database:** Firebase (Firestore)
-* **Media Integration:** YouTube iFrame (`react-native-youtube-iframe`)
-* **UI Design:** Figma
-* **AI Tooling:** GPT-5.6, OpenAI Codex, and Github Copilot
+AI tools were integrated directly into the development workflow.
+
+### 1. Figma → React Native
+
+**GPT-5.6** was used to analyze UI designs and help extract:
+
+* Layout structures
+* Component relationships
+* Spacing
+* Styling
+* Colors
+* Responsive design requirements
+
+This design context was then used with **Codex** to accelerate implementation in React Native.
+
+### 2. Rapid UI Development
+
+**OpenAI Codex** was used to accelerate development of production-ready React Native components and interfaces.
+
+### 3. Firebase Integration
+
+Codex assisted with implementing Firebase Firestore integration and the application logic required to retrieve and display live educational data.
+
+### 4. AI Knowledge System
+
+GPT-5.6 was also used to help design the application's AI knowledge architecture, enabling the assistant to use structured DigiLearn-specific information when responding to users.
 
 ---
 
-## Built with Github Copilot, GPT-5.6 & Codex
+# 🚀 Getting Started
 
-**Github Copilot**, **GPT-5.6** and **Codex** were embedded directly into the development workflow to speed up building, styling, and integrating features:
+## Prerequisites
 
-### 1. Figma-to-Code Pipeline
+Make sure you have the following installed:
 
-* **GPT-5.6** was used to parse and extract raw structural data, layout properties, and styling specs directly from Figma UI designs.
-* This extracted design context was fed into **Codex**, which automatically generated clean, structured React Native components matching the original designs.
+* [Node.js](https://nodejs.org/) v18 or higher
+* Expo development environment
+* [Expo Go](https://expo.dev/go) on your mobile device, or an Android/iOS emulator
 
-### 2. Rapid Interface Development
+## Installation
 
-* **Codex** rapidly scaffolded responsive components for the core **Lessons** and **User Profile** screens, cutting down manual layout time.
+### 1. Clone the repository
 
-### 3. Firebase & Media Integration
-
-* **Codex** wrote the integration logic to hook up the UI components directly to **Firebase Firestore** for live data retrieval.
-* **GPT-5.6** assisted in suggesting production-ready app features.
-
----
-
-## Getting Started
-
-### Prerequisites
-
-* [Node.js](https://nodejs.org/) (v18 or higher)
-* [Expo Go](https://expo.dev/go) app installed on your phone (or an active Android/iOS emulator)
-
-### Installation
-
-1. **Clone the repository:**
 ```bash
 git clone https://github.com/your-username/digilearn.git
 cd digilearn
-
 ```
 
-2. **Install dependencies:**
+### 2. Install dependencies
+
 ```bash
 npm install
-
 ```
 
-3. **Start the development server:**
+### 3. Start the development server
+
 ```bash
 npx expo start
-
 ```
 
+### 4. Launch DigiLearn
 
-4. **Launch application:** Scan the generated QR code using **Expo Go** (Android) or the **Camera app** (iOS).
+Scan the generated QR code using **Expo Go** on Android or the Camera app on iOS.
+
+Alternatively, launch the application using an available Android or iOS emulator.
+
+---
+
+# 🌱 Future Development
+
+DigiLearn is intended to continue evolving into a more intelligent learning platform.
+
+Potential areas of development include:
+
+* Assist more students and teachers in africa
+* Expanded educational content
+* More teacher-student interaction
+* Personalized learning progress
+
+---
+
+## 👨‍💻 Built with passion
+
+DigiLearn was created as a real-world educational technology project with the goal of solving practical problems faced by learners.
+
+Built with:
+
+**React Native · Expo · Firebase · Figma · GPT-5.6 · OpenAI Codex · GitHub Copilot**
+
+---
