@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -38,6 +38,8 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const [refreshing, setRefreshing] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
+  // Seed to trigger reshuffle on refresh
+  const [shuffleSeed, setShuffleSeed] = useState(0);
 
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
@@ -49,8 +51,53 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    // Increment seed to reshuffle sections on refresh
+    setShuffleSeed(prev => prev + 1);
     setTimeout(() => setRefreshing(false), 900);
   }, []);
+
+  // Define sections to display
+  const sections = useMemo(() => [
+    {
+      key: 'featuredNote',
+      content: (
+        <View style={styles.stack}>
+          <FeaturedNoteCard />
+          <TeacherPostCard />
+        </View>
+      ),
+    },
+    {
+      key: 'popularCourses',
+      content: (
+        <>
+          <SectionHeader title="Popular courses" onSeeAll={() => router.push("/videos")} />
+          <CoursesCarousel />
+        </>
+      ),
+    },
+    {
+      key: 'books',
+      content: (
+        <>
+          <SectionHeader title="Books" onSeeAll={() => router.push("/library")} />
+          <BookCarousel />
+        </>
+      ),
+    },
+  ], [router]);
+
+  // Shuffle sections whenever shuffleSeed changes, keeping TopicalNotesSlider in place
+  const shuffledSections = useMemo(() => {
+    const first = sections.find(s => s.key === 'topicalNotes');
+    const rest = sections.filter(s => s.key !== 'topicalNotes');
+    // Fisher-Yates shuffle on rest
+    for (let i = rest.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rest[i], rest[j]] = [rest[j], rest[i]];
+    }
+    return first ? [first, ...rest] : rest;
+  }, [shuffleSeed]);
 
   if (showLoading) {
     return <LoadingScreen />;
@@ -106,34 +153,17 @@ export default function HomeScreen() {
               </View>
             </Animated.View>
 
-            <Animated.View
-              entering={FadeInUp.duration(550)}
-              style={styles.section}
-            >
-              <SectionHeader
-                title="Popular courses"
-                onSeeAll={() => router.push("/videos")}
-              />
-              <CoursesCarousel />
-            </Animated.View>
+            {shuffledSections.map((section, idx) => (
+              <Animated.View
+                key={section.key}
+                entering={FadeInUp.duration(500 + idx * 50)}
+                style={styles.section}
+              >
+                {section.content}
+              </Animated.View>
+            ))}
 
-            <Animated.View
-              entering={FadeInUp.duration(700)}
-              style={styles.section}
-            >
-              <SectionHeader
-                title="Textbooks"
-                onSeeAll={() => router.push("/library")}
-              />
-              <BookCarousel />
-            </Animated.View>
 
-            <Animated.View
-              entering={FadeInUp.duration(750)}
-              style={styles.section}
-            >
-              <GradientAnnouncement />
-            </Animated.View>
           </ScrollView>
           <FloatingAssistantButton />
         </View>
