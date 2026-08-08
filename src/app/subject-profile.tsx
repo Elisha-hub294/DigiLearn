@@ -96,19 +96,21 @@ function SubjectProfileScreen() {
   const [subject, setSubject] = useState<SubjectRecord | null>(null);
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [subjectReady, setSubjectReady] = useState(false);
+  const [resourcesReady, setResourcesReady] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("All");
   const [visibleCount, setVisibleCount] = useState(6);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const subjectCacheRef = useRef<Record<string, SubjectRecord | null>>({});
   const requestIdRef = useRef(0);
   const scale = useSharedValue(1);
 
   const selectedSubject = pickString(params.subject, "").trim() || "Economics";
   const normalizedSubject = normalizeKey(selectedSubject);
   const accentColor = subject?.accent || colors.primary;
+  const screenLoading = !subjectReady || !resourcesReady;
   const horizontalPadding = width >= 1024 ? 48 : width >= 768 ? 32 : 24;
   const contentMaxWidth = Math.min(860, width - horizontalPadding * 2);
   const sheetPaddingHorizontal = width >= 1024 ? 34 : width >= 768 ? 26 : 20;
@@ -121,13 +123,13 @@ function SubjectProfileScreen() {
   }));
 
   const loadSubjectProfile = useCallback(async () => {
-    if (!selectedSubject) return;
-    const cacheKey = normalizeKey(selectedSubject);
-    const cached = subjectCacheRef.current[cacheKey];
-    if (cached) {
-      setSubject(cached);
+    setSubjectReady(false);
+    if (!selectedSubject) {
+      setSubjectReady(true);
       return;
     }
+
+    const cacheKey = normalizeKey(selectedSubject);
 
     try {
       const snapshot = await getDocs(collection(db, "subject"));
@@ -141,12 +143,11 @@ function SubjectProfileScreen() {
           id: `${cacheKey}-fallback`,
           name: selectedSubject,
           avatar: "",
-          description:
-            "Study resources for this subject will appear here soon.",
-          accent: colors.primary,
+          description: "",
+          accent: "",
         };
-        subjectCacheRef.current[cacheKey] = fallback;
         setSubject(fallback);
+        setSubjectReady(true);
         return;
       }
 
@@ -155,25 +156,22 @@ function SubjectProfileScreen() {
         id: match.id,
         name: pickString(data.name, selectedSubject),
         avatar: pickString(data.avatar),
-        description: pickString(
-          data.description,
-          "Study resources for this subject will appear here soon.",
-        ),
-        accent: pickString(data.accent, colors.primary),
+        description: pickString(data.description),
+        accent: pickString(data.accent),
       };
-      subjectCacheRef.current[cacheKey] = profile;
       setSubject(profile);
+      setSubjectReady(true);
     } catch (error) {
       console.error("Failed to load subject profile:", error);
       const fallback: SubjectRecord = {
         id: `${cacheKey}-fallback`,
         name: selectedSubject,
         avatar: "",
-        description: "Study resources for this subject will appear here soon.",
-        accent: colors.primary,
+        description: "",
+        accent: "",
       };
-      subjectCacheRef.current[cacheKey] = fallback;
       setSubject(fallback);
+      setSubjectReady(true);
     }
   }, [selectedSubject]);
 
@@ -181,6 +179,7 @@ function SubjectProfileScreen() {
     if (!selectedSubject) return;
     const requestId = ++requestIdRef.current;
     setLoading(true);
+    setResourcesReady(false);
     setErrorMessage(null);
 
     try {
@@ -204,7 +203,7 @@ function SubjectProfileScreen() {
             return {
               id: entry.id,
               type: "page" as const,
-              title: pickString(data.title, "Untitled page"),
+              title: pickString(data.title),
               description: pickString(data.description),
               createdAt: data.createdAt,
               subject: pickString(data.subject),
@@ -234,7 +233,7 @@ function SubjectProfileScreen() {
             return {
               id: entry.id,
               type: "book" as const,
-              title: pickString(data.title, "Untitled book"),
+              title: pickString(data.title),
               description: pickString(data.description),
               createdAt: data.createdAt,
               subject: pickString(data.subject),
@@ -262,7 +261,7 @@ function SubjectProfileScreen() {
             return {
               id: entry.id,
               type: "paper" as const,
-              title: pickString(data.title, "Untitled past paper"),
+              title: pickString(data.title),
               description: pickString(data.description),
               createdAt: data.createdAt,
               subject: pickString(data.subject),
@@ -295,8 +294,8 @@ function SubjectProfileScreen() {
             return {
               id: entry.id,
               type: "lesson" as const,
-              title: pickString(data.title, "Untitled lesson"),
-              description: pickString(data.subject),
+              title: pickString(data.title),
+              description: pickString(data.description),
               createdAt: data.createdAt,
               subject: pickString(data.subject),
               teacher: pickString(data.teacher),
@@ -336,21 +335,16 @@ function SubjectProfileScreen() {
       if (requestId !== requestIdRef.current) return;
       setResources(nextResources);
       setVisibleCount(6);
-      setErrorMessage(
-        nextResources.length === 0
-          ? `No ${selectedSubject.toLowerCase()} resources yet.`
-          : null,
-      );
+      setErrorMessage(nextResources.length === 0 ? "" : null);
     } catch (error) {
       console.error("Failed to load subject resources:", error);
       if (requestId !== requestIdRef.current) return;
       setResources([]);
       setVisibleCount(6);
-      setErrorMessage(
-        "We could not load resources for this subject right now.",
-      );
+      setErrorMessage("");
     } finally {
       if (requestId === requestIdRef.current) {
+        setResourcesReady(true);
         setLoading(false);
         setRefreshing(false);
       }
@@ -438,8 +432,8 @@ function SubjectProfileScreen() {
       const bookItem = {
         id: item.id,
         title: item.title,
-        description: item.description || "Fresh study resource",
-        author: item.author || "DigiLearn",
+        description: item.description || "",
+        author: item.author || "",
         rating: "4.8 ★",
         subject: item.subject || selectedSubject,
         image: item.image || "",
@@ -462,8 +456,8 @@ function SubjectProfileScreen() {
           <PaperCard
             title={item.title}
             subject={item.subject || selectedSubject}
-            year={item.year || "Latest"}
-            pages={item.pages || "12 Pages"}
+            year={item.year || ""}
+            pages={item.pages || ""}
             image={item.image || ""}
             document={item.document}
           />
@@ -478,9 +472,9 @@ function SubjectProfileScreen() {
             id: item.id,
             title: item.title,
             subject: item.subject || selectedSubject,
-            teacher: item.teacher || "DigiLearn",
-            uploadedAt: "New",
-            duration: item.duration || "10 min",
+            teacher: item.teacher || "",
+            uploadedAt: "",
+            duration: item.duration || "",
             thumbnail: item.thumbnail || "",
             link: item.link || "",
           }}
@@ -491,32 +485,7 @@ function SubjectProfileScreen() {
   };
 
   const emptyState = () => {
-    const subjectLabel = subject?.name || selectedSubject;
-    if (search.trim().length >= 2) {
-      return (
-        <View style={styles.emptyState}>
-          <Icon name="search" size={28} color={accentColor} />
-          <Text style={styles.emptyTitle}>
-            No resources found for "{search.trim()}"
-          </Text>
-          <Text style={styles.emptySubtitle}>
-            Try another keyword for {subjectLabel}.
-          </Text>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.emptyState}>
-        <Icon name="book-open" size={28} color={accentColor} />
-        <Text style={styles.emptyTitle}>
-          No {subjectLabel} {activeTab.toLowerCase()} yet
-        </Text>
-        <Text style={styles.emptySubtitle}>
-          Check back soon for new learning resources.
-        </Text>
-      </View>
-    );
+    return null;
   };
 
   return (
@@ -546,7 +515,18 @@ function SubjectProfileScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Go back"
-              onPress={() => router.back()}
+              onPress={() => {
+                setSubject(null);
+                setResources([]);
+                setSearch("");
+                setDebouncedSearch("");
+                setVisibleCount(6);
+                setErrorMessage("");
+                setResourcesReady(false);
+                setSubjectReady(false);
+                setLoading(true);
+                router.back();
+              }}
               onPressIn={() => {
                 scale.value = withSpring(0.94);
               }}
@@ -598,8 +578,7 @@ function SubjectProfileScreen() {
                 style={[styles.subjectDescription, { color: accentColor }]}
                 numberOfLines={4}
               >
-                {subject?.description ||
-                  "Study resources for this subject will appear here soon."}
+                {subject?.description || ""}
               </Text>
             </Animated.View>
 
@@ -660,7 +639,7 @@ function SubjectProfileScreen() {
               </Text>
             </Animated.View>
 
-            {loading ? (
+            {screenLoading ? (
               <Animated.View
                 entering={FadeInUp.duration(650)}
                 style={styles.skeletonWrap}
@@ -707,8 +686,6 @@ const styles = StyleSheet.create({
     height: 168,
     backgroundColor: colors.white,
     position: "relative",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
     overflow: "hidden",
   },
   heroOverlay: {
@@ -724,7 +701,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: "rgba(0, 0, 0, 0.28)",
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -737,23 +714,22 @@ const styles = StyleSheet.create({
   sheet: {
     width: "100%",
     marginTop: -36,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     paddingTop: 72,
     paddingBottom: 24,
     backgroundColor: colors.white,
   },
   avatarWrap: {
     alignItems: "center",
-    marginTop: -92,
+    marginTop: -140,
   },
   avatar: {
     width: 132,
     height: 132,
     borderRadius: 66,
-    borderWidth: 6,
+    borderWidth: 5,
     borderColor: colors.white,
-    backgroundColor: colors.lightBackground,
   },
   headerCopy: {
     alignItems: "center",

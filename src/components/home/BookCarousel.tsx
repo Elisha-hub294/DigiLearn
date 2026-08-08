@@ -7,6 +7,7 @@ import {
     Pressable,
     StyleSheet,
     Text,
+    TouchableWithoutFeedback,
     useWindowDimensions,
     View,
 } from "react-native";
@@ -151,8 +152,7 @@ export const BookCarousel = () => {
               } as any)
             }
           >
-            <Pressable
-              accessibilityRole="button"
+            <TouchableWithoutFeedback
               accessibilityLabel={`Open teacher profile: ${item.author}`}
               onPress={(event) => {
                 event.stopPropagation?.();
@@ -162,16 +162,17 @@ export const BookCarousel = () => {
                 } as never);
               }}
             >
-              <Image
-                source={item.image}
-                style={styles.image}
-                contentFit="cover"
-              />
-            </Pressable>
+              <View>
+                <Image
+                  source={item.image}
+                  style={styles.image}
+                  contentFit="cover"
+                />
+              </View>
+            </TouchableWithoutFeedback>
             <View style={styles.body}>
               <Text style={styles.title}>{item.title}</Text>
-              <Pressable
-                accessibilityRole="button"
+              <TouchableWithoutFeedback
                 accessibilityLabel={`Open teacher profile: ${item.author}`}
                 onPress={() =>
                   router.push({
@@ -180,8 +181,10 @@ export const BookCarousel = () => {
                   } as never)
                 }
               >
-                <Text style={styles.author}>{item.author}</Text>
-              </Pressable>
+                <View>
+                  <Text style={styles.author}>{item.author}</Text>
+                </View>
+              </TouchableWithoutFeedback>
               <View style={styles.row}>
                 <Text style={styles.rating}>★ {item.rating}</Text>
                 <View style={styles.buttonWrap}>
