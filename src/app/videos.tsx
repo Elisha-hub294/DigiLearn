@@ -5,6 +5,7 @@ import { SubjectFilter } from "@/components/ui/SubjectFilter";
 import { TrendingCarousel } from "@/components/ui/TrendingCarousel";
 import { VideoLesson } from "@/components/ui/TrendingVideoCard";
 import { videoColors } from "@/components/ui/videoDesign";
+import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
@@ -24,7 +25,6 @@ import {
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
-import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { dimensions } from "../constants/theme";
 
 type FirestoreLesson = {
@@ -271,14 +271,14 @@ export default function VideosScreen() {
             )}
             keyExtractor={(item) => item.id}
             ListHeaderComponent={header}
-            ListFooterComponent={
-              <Image
-                source={require("../../assets/images/lib.jpeg")}
-                contentFit="contain"
-                style={styles.footerImage}
-                accessibilityLabel="Learning together illustration"
-              />
-            }
+            // ListFooterComponent={
+            //   <Image
+            //     source={require("../../assets/images/lib.jpeg")}
+            //     contentFit="contain"
+            //     style={styles.footerImage}
+            //     accessibilityLabel="Learning together illustration"
+            //   />
+            // }
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             refreshControl={

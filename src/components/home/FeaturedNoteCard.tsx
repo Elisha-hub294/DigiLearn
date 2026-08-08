@@ -29,7 +29,6 @@ type TopicalNote = {
   author?: string;
   document?: string;
   book?: string | string[];
-  createdAt?: any;
   updatedAt?: any;
   level?: string;
   readStatus?: string;
@@ -48,7 +47,6 @@ type FeaturedNoteCardProps = {
     author?: string;
     document?: string;
     book?: string | string[];
-    createdAt?: any;
     updatedAt?: any;
     level?: string;
     readStatus?: string;
@@ -116,7 +114,7 @@ export const FeaturedNoteCard = ({
 
     const loadMetadata = async () => {
       const [notesSnap, subjectsSnap, defaultSnap] = await Promise.all([
-        getDocs(query(collection(db, "pages"), orderBy("createdAt", "desc"))),
+        getDocs(query(collection(db, "pages"), orderBy("updatedAt", "desc"))),
         getDocs(collection(db, "subject")),
         getDocs(collection(db, "default")),
       ]);

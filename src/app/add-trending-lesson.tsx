@@ -1,25 +1,25 @@
+import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
-    addDoc,
-    collection,
-    doc,
-    serverTimestamp,
-    setDoc,
+  addDoc,
+  collection,
+  doc,
+  serverTimestamp,
+  setDoc,
 } from "firebase/firestore";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
-import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { db } from "../../firebaseConfig";
 import { subjects } from "../components/ui/SubjectFilter";
 
@@ -43,7 +43,7 @@ export default function AddTrendingLessonScreen() {
     try {
       const finalThumbnail = getVideoThumbnailUrl(
         thumbnail.trim(),
-        link.trim()
+        link.trim(),
       );
 
       const lessonRef = await addDoc(collection(db, "trendingLessons"), {
@@ -84,7 +84,10 @@ export default function AddTrendingLessonScreen() {
         <Pressable onPress={() => router.back()} style={styles.iconButton}>
           <Ionicons name="arrow-back" size={22} color="#111" />
         </Pressable>
-        <Text style={styles.title}>Add trending lesson</Text>
+        <Text style={styles.title}>
+          ~ADMIN~ With a brand new day spending its heat, I have it here: get a
+          flash district.Add trending lesson
+        </Text>
       </View>
 
       <ScrollView

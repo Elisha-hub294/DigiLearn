@@ -1,6 +1,5 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 
@@ -45,7 +44,7 @@ export function PromotionalBanner({
 const styles = StyleSheet.create({
   card: {
     height: 220,
-    // borderRadius: radius.lg,
+    borderRadius: radius.md,
     overflow: "hidden",
     marginBottom: spacing.xl,
   },
