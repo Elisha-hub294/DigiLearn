@@ -3,17 +3,17 @@ import { router } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    FlatList,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableWithoutFeedback,
-    useWindowDimensions,
-    View,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
-import { colors, radius, spacing } from "../../constants/theme";
+import { colors, spacing } from "../../constants/theme";
 
 type BookItem = {
   id: string;
@@ -82,10 +82,13 @@ export const BookCarousel = () => {
                 data.title || data.name || data.bookTitle,
                 "Untitled book",
               ),
-              author: pickString(
-                data.author || data.writer || data.publisher,
-                "Unknown author",
-              ),
+              author: (() => {
+                const rawAuthor = data.author || data.writer || data.publisher;
+                if (Array.isArray(rawAuthor) && rawAuthor.length > 0) {
+                  return String(rawAuthor[0]);
+                }
+                return pickString(rawAuthor, "");
+              })(),
               rating: formatRating(ratingValue),
               image: pickImage(
                 data.image || data.coverImage || data.cover || data.thumbnail,
@@ -97,7 +100,13 @@ export const BookCarousel = () => {
             (a, b) => Number.parseFloat(b.rating) - Number.parseFloat(a.rating),
           );
 
-        setBooks(fetchedBooks);
+        // Shuffle fetched books to randomize order
+        const shuffled = [...fetchedBooks];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        setBooks(shuffled);
       } catch (error) {
         console.error("Failed to load textbooks", error);
         if (isMounted) {
@@ -187,9 +196,6 @@ export const BookCarousel = () => {
               </TouchableWithoutFeedback>
               <View style={styles.row}>
                 <Text style={styles.rating}>★ {item.rating}</Text>
-                <View style={styles.buttonWrap}>
-                  <Text style={styles.buttonText}>Open Library</Text>
-                </View>
               </View>
             </View>
           </Pressable>
@@ -207,17 +213,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     paddingVertical: spacing.sm,
   },
-  list: { paddingRight: spacing.md, paddingVertical: spacing.lg },
+  list: { paddingRight: spacing.md },
   card: {
     marginRight: spacing.md,
     backgroundColor: colors.white,
-    borderRadius: 10,
+    borderRadius: 5,
     overflow: "hidden",
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   image: { width: "100%", height: 170 },
-  body: { padding: spacing.md },
+  body: { paddingVertical: spacing.xs },
   title: {
     color: colors.text,
     fontSize: 14,
@@ -229,12 +233,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  rating: { color: colors.text, fontSize: 12, fontWeight: "700" },
-  buttonWrap: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    backgroundColor: "#EFF6FF",
-  },
-  buttonText: { color: colors.primary, fontSize: 10, fontWeight: "700" },
+  rating: { color: "#c59211ff", fontSize: 12, fontWeight: "700" },
+
 });

@@ -115,7 +115,7 @@ export const TopicalNotesSlider = () => {
   const itemStep = cardWidth + CARD_GAP;
 
   // Triple the shuffled list for an infinite-loop illusion
-  const shuffled = useMemo(() => shuffle(items), []);
+  const shuffled = items; // keep original order
   const data = useMemo(
     () => [
       ...shuffled.map((i) => ({ ...i, _key: `a-${i.id}` })),

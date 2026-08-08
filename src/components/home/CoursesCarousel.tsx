@@ -59,14 +59,20 @@ export const CoursesCarousel = () => {
   const cardWidth = width >= 900 ? 240 : 220;
   const itemStep = cardWidth + CARD_GAP;
 
-  // Triple the lessons array for an infinite-loop illusion
+  // Shuffle lessons to display in random order each load
+  const shuffledLessons = useMemo(() => {
+    const arr = [...lessons];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, [lessons]);
+
+  // Use shuffled lessons for a single list (no duplication)
   const data = useMemo(
-    () => [
-      ...lessons.map((l, i) => ({ ...l, _key: `a-${l.id}-${i}` })),
-      ...lessons.map((l, i) => ({ ...l, _key: `b-${l.id}-${i}` })),
-      ...lessons.map((l, i) => ({ ...l, _key: `c-${l.id}-${i}` })),
-    ],
-    [lessons],
+    () => shuffledLessons.map((l, i) => ({ ...l, _key: `a-${l.id}-${i}` })),
+    [shuffledLessons],
   );
 
   const listRef = useRef<FlatList>(null);
@@ -76,15 +82,11 @@ export const CoursesCarousel = () => {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [ready, setReady] = useState(false);
 
-  // On first layout jump into the middle third
+  // No special layout needed for single list
   const onLayout = useCallback(() => {
-    if (!ready && lessons.length > 0) {
-      const midOffset = lessons.length * itemStep;
-      offsetRef.current = midOffset;
-      listRef.current?.scrollToOffset({ offset: midOffset, animated: false });
-      setReady(true);
-    }
-  }, [ready, lessons.length, itemStep]);
+    // Ensure ready is true after first render
+    if (!ready) setReady(true);
+  }, [ready]);
 
   const startAutoScroll = useCallback(() => {
     if (intervalRef.current) return;
