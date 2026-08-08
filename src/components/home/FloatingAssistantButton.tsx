@@ -242,7 +242,7 @@ export function FloatingAssistantButton() {
       exiting={FadeOut.duration(220)}
       style={[
         styles.wrapper,
-        { bottom: safeBottom, right: 40, maxWidth: width - 32 },
+        { bottom: safeBottom, right: 5, maxWidth: width - 32 },
       ]}
     >
       <Animated.View style={[styles.container, animatedContainerStyle]}>

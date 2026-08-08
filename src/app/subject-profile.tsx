@@ -4,19 +4,19 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, {
-    FadeInUp,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  FadeInUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
@@ -111,7 +111,7 @@ function SubjectProfileScreen() {
   const normalizedSubject = normalizeKey(selectedSubject);
   const accentColor = subject?.accent || colors.primary;
   const screenLoading = !subjectReady || !resourcesReady;
-  const horizontalPadding = width >= 1024 ? 48 : width >= 768 ? 32 : 24;
+  const horizontalPadding = width >= 1024 ? 48 : width >= 768 ? 32 : 0;
   const contentMaxWidth = Math.min(860, width - horizontalPadding * 2);
   const sheetPaddingHorizontal = width >= 1024 ? 34 : width >= 768 ? 26 : 20;
   const defaultAvatarSource = subject?.avatar
