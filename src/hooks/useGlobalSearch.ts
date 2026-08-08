@@ -3,6 +3,7 @@ import { collection, getDocs, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { db } from "../../firebaseConfig";
 import { DEFAULT_SUBJECT_AVATAR } from "../components/page/pageTypes";
+import { getVideoThumbnailUrl } from "../utils/videoUtils";
 
 const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
 const MAX_RECENT_ITEMS = 10;
@@ -493,7 +494,10 @@ export function useGlobalSearch() {
         "",
         teacherName,
         v.subject,
-        typeof v.thumbnail === "string" ? v.thumbnail : "",
+        getVideoThumbnailUrl(
+          typeof v.thumbnail === "string" ? v.thumbnail : undefined,
+          typeof v.link === "string" ? v.link : undefined
+        ),
         {
           duration: v.duration || "10:00",
           uploadedAt: cleanUploadedAt,

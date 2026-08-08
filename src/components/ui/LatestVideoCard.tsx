@@ -1,3 +1,4 @@
+import { resolveVideoImageSource } from "@/utils/videoUtils";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -8,22 +9,6 @@ import { PlayButton } from "./PlayButton";
 import { TeacherInfo } from "./TeacherInfo";
 import { VideoLesson } from "./TrendingVideoCard";
 import { videoRadii } from "./videoDesign";
-
-function resolveImageSource(source?: number | string) {
-  if (!source) {
-    return require("../../../assets/images/thumb-1.jpeg");
-  }
-  // Safely check for remote or base64 URLs
-  if (typeof source === "string") {
-    if (source.startsWith("http") || source.startsWith("data:")) {
-      return { uri: source };
-    }
-    // Fall back to default if it's a local string path
-    return require("../../../assets/images/thumb-1.jpeg");
-  }
-  // Numeric require(...) module reference
-  return source;
-}
 
 export function LatestVideoCard({
   item,
@@ -45,7 +30,7 @@ export function LatestVideoCard({
         subject: item.subject,
         duration: item.duration,
         uploadedAt: item.uploadedAt,
-        link: (item as VideoLesson & { link?: string }).link ?? "",
+        link: item.link ?? "",
         thumbnail: typeof item.thumbnail === "string" ? item.thumbnail : "",
         avatar: typeof item.avatar === "string" ? item.avatar : "",
       },
@@ -60,7 +45,7 @@ export function LatestVideoCard({
       <Pressable onPress={openLesson}>
         <View style={styles.thumbnail}>
           <Image
-            source={resolveImageSource(item.thumbnail)}
+            source={resolveVideoImageSource(item.thumbnail, item.link)}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             transition={250}

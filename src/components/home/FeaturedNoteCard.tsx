@@ -6,15 +6,15 @@ import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-    FlatList,
-    Linking,
-    Platform,
-    Pressable,
-    Animated as RNAnimated,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  FlatList,
+  Linking,
+  Platform,
+  Pressable,
+  Animated as RNAnimated,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
@@ -38,7 +38,6 @@ type TopicalNote = {
 };
 
 type FeaturedNoteCardProps = {
-  layout?: "stack" | "two-column";
   subject?: string;
   hideAvatar?: boolean;
   notes?: Array<{
@@ -97,7 +96,6 @@ const openPdfDocument = async (url: string) => {
 };
 
 export const FeaturedNoteCard = ({
-  layout = "stack",
   subject,
   hideAvatar = false,
   notes: providedNotes,
@@ -106,7 +104,6 @@ export const FeaturedNoteCard = ({
 }: FeaturedNoteCardProps) => {
   const { width } = useWindowDimensions();
   const isWide = width >= 900;
-  const useTwoColumns = isWide && layout === "two-column";
   const [notes, setNotes] = useState<TopicalNote[]>([]);
   const [subjectAvatars, setSubjectAvatars] = useState<Record<string, string>>(
     {},
@@ -153,13 +150,13 @@ export const FeaturedNoteCard = ({
       );
       const filteredNotes = subject
         ? allNotes.filter((note) => {
-            const noteSubjects = Array.isArray(note.subject)
-              ? note.subject
-              : [note.subject ?? ""];
-            return noteSubjects.some(
-              (entry) => normalizeKey(entry) === normalizeKey(subject),
-            );
-          })
+          const noteSubjects = Array.isArray(note.subject)
+            ? note.subject
+            : [note.subject ?? ""];
+          return noteSubjects.some(
+            (entry) => normalizeKey(entry) === normalizeKey(subject),
+          );
+        })
         : allNotes;
 
       if (providedNotes) {
@@ -197,21 +194,9 @@ export const FeaturedNoteCard = ({
   const listData = useMemo(() => notes, [notes]);
 
   if (loading || externalLoading) {
-    const skeletonCount = useTwoColumns ? 2 : 1;
     return (
-      <View
-        style={[
-          styles.list,
-          useTwoColumns ? styles.listTwoColumns : isWide && styles.listWide,
-        ]}
-      >
-        {Array.from({ length: skeletonCount }).map((_, index) => (
-          <SkeletonNoteCard
-            key={index}
-            isWide={useTwoColumns}
-            layout={layout}
-          />
-        ))}
+      <View style={[styles.list, isWide && styles.listWide]}>
+        <SkeletonNoteCard isWide={isWide} />
       </View>
     );
   }
@@ -219,27 +204,19 @@ export const FeaturedNoteCard = ({
   if (!listData.length) return null;
 
   return (
-    <View
-      style={[
-        styles.list,
-        useTwoColumns ? styles.listTwoColumns : isWide && styles.listWide,
-      ]}
-    >
+    <View style={[styles.list, isWide && styles.listWide]}>
       <FlatList
         data={listData}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         scrollEnabled={false}
-        numColumns={useTwoColumns ? 2 : 1}
-        columnWrapperStyle={useTwoColumns ? styles.columnWrapper : undefined}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <FeaturedNoteItem
             note={item}
             subjectAvatars={subjectAvatars}
             defaultAvatar={defaultAvatar}
-            isWide={useTwoColumns}
-            layout={layout}
+            isWide={isWide}
             source={source}
             subject={subject}
             hideAvatar={hideAvatar}
@@ -250,13 +227,7 @@ export const FeaturedNoteCard = ({
   );
 };
 
-const SkeletonNoteCard = ({
-  isWide,
-  layout,
-}: {
-  isWide: boolean;
-  layout: string;
-}) => {
+const SkeletonNoteCard = ({ isWide }: { isWide: boolean }) => {
   const pulseAnim = useRef(new RNAnimated.Value(0.3)).current;
 
   useEffect(() => {
@@ -279,15 +250,7 @@ const SkeletonNoteCard = ({
   }, [pulseAnim]);
 
   return (
-    <View
-      style={[
-        styles.itemWrapper,
-        isWide &&
-          (layout === "two-column"
-            ? styles.itemWrapperTwoColumns
-            : styles.itemWrapperWide),
-      ]}
-    >
+    <View style={[styles.itemWrapper, isWide && styles.itemWrapperWide]}>
       <View style={styles.card}>
         <RNAnimated.View
           style={[
@@ -335,7 +298,6 @@ const FeaturedNoteItem = ({
   subjectAvatars,
   defaultAvatar,
   isWide,
-  layout,
   source,
   subject,
   hideAvatar,
@@ -344,7 +306,6 @@ const FeaturedNoteItem = ({
   subjectAvatars: Record<string, string>;
   defaultAvatar: string;
   isWide: boolean;
-  layout: string;
   source: "home" | "library" | "pages";
   subject?: string;
   hideAvatar?: boolean;
@@ -371,8 +332,7 @@ const FeaturedNoteItem = ({
     defaultAvatar ||
     undefined;
 
-  const previewSource =
-    source ?? (layout === "two-column" ? "library" : "home");
+  const previewSource = source ?? "home";
   const routeTitle =
     typeof subject === "string" && subject.trim().length > 0
       ? subject
@@ -387,13 +347,7 @@ const FeaturedNoteItem = ({
   return (
     <Animated.View
       entering={FadeInUp.duration(420)}
-      style={[
-        styles.itemWrapper,
-        isWide &&
-          (layout === "two-column"
-            ? styles.itemWrapperTwoColumns
-            : styles.itemWrapperWide),
-      ]}
+      style={[styles.itemWrapper, isWide && styles.itemWrapperWide]}
     >
       <View
         onPointerEnter={() => setHovered(true)}
@@ -485,32 +439,16 @@ const styles = StyleSheet.create({
   list: { width: "100%" },
   listContent: { paddingBottom: spacing.xl },
   listWide: { flexDirection: "column", gap: spacing.md },
-  columnWrapper: {
-    justifyContent: "space-between",
-    gap: spacing.md,
-  },
-  listTwoColumns: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: spacing.md,
-  },
   itemWrapper: { width: "100%" },
   itemWrapperWide: { width: "100%" },
-  itemWrapperTwoColumns: { width: "48%" },
   card: {
-    width: "100%",
+    width: "80%",
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
-    borderRadius: radius.lg,
-    borderColor: "#ffffff",
-    borderWidth: 1,
   },
   cardHovered: {
-    backgroundColor: "#f0f0f0",
-    borderWidth: 1,
-    borderColor: "#d8d8d8",
+    backgroundColor: "#f0f0f0ff",
   },
   menuButton: {
     width: 36,
@@ -532,9 +470,7 @@ const styles = StyleSheet.create({
   previewWrap: {
     overflow: "hidden",
     position: "relative",
-    marginBottom: spacing.sm,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
+    marginBottom: spacing.xs,
   },
   preview: {
     width: "100%",
@@ -546,7 +482,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: "row",
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     paddingBottom: spacing.sm,
   },
   contentData: { flex: 1 },

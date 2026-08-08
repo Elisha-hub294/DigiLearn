@@ -2,13 +2,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,9 +26,9 @@ import { colors, spacing } from "../constants/theme";
 import LoadingScreen from "./loading";
 
 const getHorizontalPadding = (width: number) => {
-  if (width >= 1200) return 64;
-  if (width >= 900) return 48;
-  if (width >= 600) return 32;
+  if (width >= 1200) return 100;
+  if (width >= 900) return 50;
+  if (width >= 600) return 30;
   if (width >= 400) return 5;
   return 5;
 };
@@ -39,7 +39,6 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
 
-  const isWideLayout = width >= 900;
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
@@ -78,6 +77,13 @@ export default function HomeScreen() {
           >
             <Header />
             <SearchBar />
+            {/* 
+            <Animated.View
+              entering={FadeInUp.duration(470)}
+              style={styles.section}
+            >
+              <HeroCarousel />
+            </Animated.View> */}
 
             <Animated.View
               entering={FadeInUp.duration(450)}
@@ -94,21 +100,10 @@ export default function HomeScreen() {
               entering={FadeInUp.duration(400)}
               style={styles.section}
             >
-              {isWideLayout ? (
-                <View style={styles.dualColumnLayout}>
-                  <View style={styles.dualColumnItem}>
-                    <FeaturedNoteCard />
-                  </View>
-                  <View style={styles.dualColumnItem}>
-                    <TeacherPostCard />
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.stack}>
-                  <FeaturedNoteCard />
-                  <TeacherPostCard />
-                </View>
-              )}
+              <View style={styles.stack}>
+                <FeaturedNoteCard />
+                <TeacherPostCard />
+              </View>
             </Animated.View>
 
             <Animated.View
@@ -201,15 +196,6 @@ const styles = StyleSheet.create({
   stack: {
     width: "100%",
     gap: spacing.sm,
-  },
-  dualColumnLayout: {
-    flexDirection: "row",
-    gap: spacing.sm,
-    alignItems: "flex-start",
-  },
-  dualColumnItem: {
-    flex: 1,
-    minWidth: 0,
   },
   gradientCard: {
     borderRadius: 10,

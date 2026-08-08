@@ -1,6 +1,7 @@
 import { collection, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../firebaseConfig";
+import { getVideoThumbnailUrl } from "../utils/videoUtils";
 
 export type TrendingLesson = {
   id: string;
@@ -29,14 +30,16 @@ function toTrendingLesson(
   docId: string,
   index: number
 ): TrendingLesson {
+  const link = raw.link ?? "";
+  const thumbnail = getVideoThumbnailUrl(raw.thumbnail, link);
   return {
     id: raw.id ?? docId ?? `lesson-${index}`,
     title: raw.title ?? "Untitled lesson",
     teacher: raw.teacher ?? "Teacher",
     duration: raw.duration ?? "00:00",
-    thumbnail: raw.thumbnail ?? "",
+    thumbnail,
     subject: raw.subject ?? "General",
-    link: raw.link ?? "",
+    link,
   };
 }
 

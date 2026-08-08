@@ -6,14 +6,14 @@ import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {
-    Linking,
-    Platform,
-    Pressable,
-    Animated as RNAnimated,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Linking,
+  Platform,
+  Pressable,
+  Animated as RNAnimated,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
@@ -242,7 +242,7 @@ export const TeacherPostCard = () => {
     return (
       <Animated.View
         entering={FadeInUp.duration(500)}
-        style={[styles.card, isWide && styles.cardWide]}
+        style={[styles.card]}
       >
         <Text style={styles.caption}>No teacher updates available yet.</Text>
       </Animated.View>
@@ -309,11 +309,8 @@ const TeacherPostItem = ({
         } as any)}
         style={({ pressed, hovered }: any) => [
           styles.card,
-          isWide && styles.cardWide,
           (pressed || hovered || isHovered) && {
             backgroundColor: "#f0f0f0",
-            borderWidth: 1,
-            borderColor: "#d8d8d8",
           },
         ]}
       >
@@ -387,15 +384,12 @@ const TeacherPostItem = ({
               </View>
             </Pressable>
           </View>
-          <View style={[styles.badge, { backgroundColor: "#001172" }]}>
-            <Text style={styles.badgeText}>{subject}</Text>
-          </View>
+
         </View>
 
         <Text style={styles.caption}>{description}</Text>
 
         <View style={styles.actions}>
-          <Action icon="star" label="Like" />
           <Action icon="bookmark" label="Save" />
           <Action icon="share-2" label="Share" />
         </View>
@@ -514,24 +508,18 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   card: {
-    width: "100%",
+    width: "80%",
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
-    padding: 7,
-    borderRadius: radius.lg,
-    borderColor: "#fff",
-    borderWidth: 1,
-  },
-  cardWide: {
-    width: "100%",
-    maxWidth: "100%",
+
+
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   profileRow: { flexDirection: "row", alignItems: "center", flex: 1 },
   avatar: {
@@ -543,12 +531,7 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   name: { color: colors.text, fontSize: 14, fontWeight: "500" },
   time: { color: colors.subtitle, fontSize: 12, marginTop: 2 },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-  },
-  badgeText: { color: colors.white, fontSize: 11, fontWeight: "700" },
+
   caption: {
     color: colors.text,
     fontSize: 14,
@@ -558,8 +541,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
     marginBottom: spacing.xs,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
   },
   preview: { width: "100%", height: 250 },
   overlay: {

@@ -499,7 +499,6 @@ export default function PagesScreen() {
                   {visibleNotes.length} items
                 </Text>
                 <FeaturedNoteCard
-                  layout="stack"
                   subject={pageTitle}
                   notes={visibleNotes.map((note) => ({
                     ...note,

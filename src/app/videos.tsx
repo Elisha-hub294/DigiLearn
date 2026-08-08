@@ -24,6 +24,7 @@ import {
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
+import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { dimensions } from "../constants/theme";
 
 type FirestoreLesson = {
@@ -110,6 +111,8 @@ function isNewLesson(value: unknown): boolean {
 function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
   const uploadedAtValue = item.uploadedAt;
   const uploadedAtDate = parseUploadedDate(uploadedAtValue);
+  const link = item.link ?? "";
+  const thumbnail = getVideoThumbnailUrl(item.thumbnail, link);
   return {
     id: item.id ?? `${item.title ?? "lesson"}-${index}`,
     title: item.title ?? "Untitled lesson",
@@ -117,9 +120,9 @@ function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
     teacher: item.teacher ?? "Teacher",
     uploadedAt: formatUploadedAt(uploadedAtValue),
     duration: item.duration ?? "00:00",
-    thumbnail: item.thumbnail ?? "",
+    thumbnail,
     avatar: item.avatar ?? "",
-    link: item.link ?? "",
+    link,
     isNew: isNewLesson(uploadedAtValue),
     _uploadedAtDate: uploadedAtDate ?? undefined,
   };

@@ -17,10 +17,40 @@ import {
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useTrendingLessons } from "../../hooks/useTrendingLessons";
+import { resolveVideoImageSource } from "../../utils/videoUtils";
 
 const AUTO_SCROLL_INTERVAL_MS = 4500;
 const RESUME_DELAY_MS = 5000;
 const CARD_GAP = spacing.md; // matches marginRight on each card
+
+const CourseCardImage = ({
+  thumbnail,
+  link,
+}: {
+  thumbnail?: string;
+  link?: string;
+}) => {
+  const primarySource = useMemo(
+    () => resolveVideoImageSource(thumbnail, link),
+    [thumbnail, link]
+  );
+  const [source, setSource] = useState(primarySource);
+
+  useEffect(() => {
+    setSource(primarySource);
+  }, [primarySource]);
+
+  return (
+    <Image
+      source={source}
+      style={styles.image}
+      contentFit="cover"
+      onError={() => {
+        setSource(require("../../../assets/images/thumb-1.jpeg"));
+      }}
+    />
+  );
+};
 
 export const CoursesCarousel = () => {
   const router = useRouter();
@@ -189,6 +219,7 @@ export const CoursesCarousel = () => {
             >
               <View style={styles.imageWrap}>
                 <Pressable
+                  style={styles.imagePressable}
                   accessibilityRole="button"
                   accessibilityLabel={`Open teacher profile: ${item.teacher}`}
                   onPress={(event) => {
@@ -199,15 +230,10 @@ export const CoursesCarousel = () => {
                     } as never);
                   }}
                 >
-                  {item.thumbnail ? (
-                    <Image
-                      source={{ uri: item.thumbnail }}
-                      style={styles.image}
-                      contentFit="cover"
-                    />
-                  ) : (
-                    <View style={[styles.image, styles.imagePlaceholder]} />
-                  )}
+                  <CourseCardImage
+                    thumbnail={item.thumbnail}
+                    link={item.link}
+                  />
                 </Pressable>
                 <View style={styles.overlay} />
                 <View style={styles.playButton}>
@@ -277,6 +303,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   imageWrap: { height: 132, position: "relative" },
+  imagePressable: { width: "100%", height: "100%" },
   image: { width: "100%", height: "100%" },
   imagePlaceholder: { backgroundColor: "#E2E8F0" },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.2)" },

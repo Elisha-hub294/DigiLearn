@@ -19,6 +19,7 @@ import {
     TextInput,
     View,
 } from "react-native";
+import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { db } from "../../firebaseConfig";
 import { subjects } from "../components/ui/SubjectFilter";
 
@@ -40,6 +41,11 @@ export default function AddTrendingLessonScreen() {
 
     setLoading(true);
     try {
+      const finalThumbnail = getVideoThumbnailUrl(
+        thumbnail.trim(),
+        link.trim()
+      );
+
       const lessonRef = await addDoc(collection(db, "trendingLessons"), {
         id: "",
         title: title.trim(),
@@ -47,7 +53,7 @@ export default function AddTrendingLessonScreen() {
         teacher: teacher.trim(),
         uploadedAt: serverTimestamp(),
         duration: duration.trim(),
-        thumbnail: thumbnail.trim(),
+        thumbnail: finalThumbnail,
         link: link.trim(),
         avatar: "",
       });
@@ -59,7 +65,7 @@ export default function AddTrendingLessonScreen() {
         teacher: teacher.trim(),
         uploadedAt: serverTimestamp(),
         duration: duration.trim(),
-        thumbnail: thumbnail.trim(),
+        thumbnail: finalThumbnail,
         link: link.trim(),
         avatar: "",
       });

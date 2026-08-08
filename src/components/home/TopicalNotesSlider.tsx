@@ -260,10 +260,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.sm,
   },
-  image: { width: 94, height: 94, borderRadius: radius.sm },
+  image: { width: 80, height: 80, borderRadius: radius.sm },
   title: {
     color: colors.text,
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "500",
   },
 });

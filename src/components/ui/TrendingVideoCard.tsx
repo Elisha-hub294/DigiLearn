@@ -1,3 +1,4 @@
+import { resolveVideoImageSource } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -10,7 +11,8 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { DurationBadge } from "./DurationBadge";
-import { videoRadii, videoShadows } from "./videoDesign";
+import { TeacherInfo } from "./TeacherInfo";
+import { videoColors, videoRadii, videoShadows } from "./videoDesign";
 
 export type VideoLesson = {
   id: string;
@@ -26,22 +28,6 @@ export type VideoLesson = {
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-function resolveImageSource(source?: number | string) {
-  if (!source) {
-    return require("../../../assets/images/thumb-1.jpeg");
-  }
-  // Check if string is a remote URL or a base64 string
-  if (typeof source === "string") {
-    if (source.startsWith("http") || source.startsWith("data:")) {
-      return { uri: source };
-    }
-    // If it's a local string path, fallback to default asset to prevent broken render
-    return require("../../../assets/images/thumb-1.jpeg");
-  }
-  // Numeric require(...) module reference
-  return source;
-}
 
 export function TrendingVideoCard({
   item,
@@ -65,7 +51,7 @@ export function TrendingVideoCard({
         subject: item.subject,
         duration: item.duration,
         uploadedAt: item.uploadedAt,
-        link: (item as VideoLesson & { link?: string }).link ?? "",
+        link: item.link ?? "",
         thumbnail: typeof item.thumbnail === "string" ? item.thumbnail : "",
         avatar: typeof item.avatar === "string" ? item.avatar : "",
       },
@@ -75,20 +61,20 @@ export function TrendingVideoCard({
   return (
     <AnimatedPressable
       entering={FadeIn.duration(450)}
-      accessibilityLabel={`Open ${item.title}`}
+      accessibilityLabel={`Watch trending video: ${item.title}`}
       accessibilityRole="button"
       onPressIn={() => {
-        scale.value = withSpring(0.985);
+        scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
       }}
       onPressOut={() => {
-        scale.value = withSpring(1);
+        scale.value = withSpring(1, { damping: 15, stiffness: 300 });
       }}
       onPress={openLesson}
       style={[styles.card, { width }, animatedStyle]}
     >
       <View style={styles.thumbnail}>
         <Image
-          source={resolveImageSource(item.thumbnail)}
+          source={resolveVideoImageSource(item.thumbnail, item.link)}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           transition={250}
