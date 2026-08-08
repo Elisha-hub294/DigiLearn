@@ -4,21 +4,25 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Linking,
-    Pressable,
-    RefreshControl,
-    Animated as RNAnimated,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Alert,
+  FlatList,
+  Linking,
+  Pressable,
+  RefreshControl,
+  Animated as RNAnimated,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
+import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
+import { BookCard } from "../components/library/BookCard";
+import { TeacherPostCard } from "../components/TeacherPostCard";
+import { LatestVideoCard } from "../components/ui/LatestVideoCard";
 import { SearchBar } from "../components/ui/SearchBar";
 import { colors, radius, spacing } from "../constants/theme";
 
@@ -75,6 +79,20 @@ const getCreatedAt = (value: unknown) => {
   return 0;
 };
 
+const formatResourceTime = (value: unknown) => {
+  const date =
+    typeof value === "number"
+      ? new Date(value)
+      : typeof value === "string"
+        ? new Date(value)
+        : new Date();
+  if (Number.isNaN(date.getTime())) return "Today";
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+};
+
 const formatRelativeCount = (value: number) =>
   value > 999 ? `${(value / 1000).toFixed(1)}k` : `${value}`;
 
@@ -92,7 +110,7 @@ export default function TeacherProfileScreen() {
   const params = useLocalSearchParams<{ name?: string }>();
   const { width } = useWindowDimensions();
   const horizontalPadding =
-    width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 5 : 3;
+    width >= 1024 ? 120 : width >= 768 ? 32 : width >= 400 ? 5 : 3;
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
 
   const [teacher, setTeacher] = useState<TeacherRecord | null>(null);
@@ -607,154 +625,104 @@ export default function TeacherProfileScreen() {
   );
 
   const renderResourceCard = useCallback(
-    ({ item }: { item: ResourceItem }) => {
+    ({ item, index }: { item: ResourceItem; index: number }) => {
       if (item.type === "page") {
         return (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Open page: ${item.title}`}
-            onPress={() =>
-              router.push({
-                pathname: "/page-preview",
-                params: {
-                  id: item.id,
-                  source: "teacher-profile",
-                  returnTo: "/teacher-profile",
-                  teacherName: teacher?.name || teacherName,
-                },
-              } as never)
-            }
-            style={styles.resourceCard}
-          >
-            <View style={styles.cardRow}>
-              <View style={styles.resourceBadge}>
-                <Text style={styles.resourceBadgeText}>Page</Text>
-              </View>
-              {/* <Text style={styles.resourceMeta}>
-                {item.subject || "Featured note"}
-              </Text> */}
-            </View>
-            <Text style={styles.resourceTitle}>{item.title}</Text>
-            {item.description ? (
-              <Text style={styles.resourceDescription} numberOfLines={2}>
-                {item.description}
-              </Text>
-            ) : null}
-          </Pressable>
+          <FeaturedNoteCard
+            notes={[
+              {
+                id: item.id,
+                title: item.title,
+                description: item.description,
+                subject: item.subject,
+                document: item.document,
+                book: item.book,
+                createdAt: item.createdAt,
+              },
+            ]}
+            source="pages"
+          />
         );
       }
 
       if (item.type === "book") {
         return (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Open book: ${item.title}`}
-            onPress={() =>
-              router.push({
-                pathname: "/book-preview",
-                params: {
-                  id: item.id,
-                  source: "teacher-profile",
-                  returnTo: "/teacher-profile",
-                  teacherName: teacher?.name || teacherName,
-                },
-              } as never)
-            }
-            style={styles.resourceCard}
-          >
-            <View style={styles.cardRow}>
-              <View style={styles.resourceBadge}>
-                <Text style={styles.resourceBadgeText}>Book</Text>
-              </View>
-              {/* <Text style={styles.resourceMeta}>
-                {item.author?.[0] || "Teacher authored"}
-              </Text> */}
-            </View>
-            <Text style={styles.resourceTitle}>{item.title}</Text>
-            {item.image ? (
-              <Image
-                source={{ uri: item.image }}
-                style={styles.bookImage}
-                contentFit="cover"
-              />
-            ) : null}
-          </Pressable>
+          <BookCard
+            item={{
+              id: item.id,
+              title: item.title,
+              author: Array.isArray(item.author)
+                ? item.author[0] || "Unknown author"
+                : item.author || "Unknown author",
+              description: item.description || "",
+              image: item.image
+                ? { uri: item.image }
+                : require("../../assets/images/pdf-preview.jpeg"),
+            }}
+          />
         );
       }
 
       if (item.type === "announcement") {
         return (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Open announcement: ${item.title}`}
-            onPress={() => {
-              if (item.document) {
-                Linking.openURL(item.document);
-              }
+          <TeacherPostCard
+            post={{
+              id: item.id,
+              teacherName: teacher?.name || teacherName,
+              teacherImage: {
+                uri:
+                  teacher?.avatar ||
+                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png",
+              },
+              verified: teacher?.verified ?? false,
+              time: formatResourceTime(item.createdAt),
+              content: item.description || item.title,
+              previewImage: {
+                uri:
+                  item.image ||
+                  teacher?.avatar ||
+                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png",
+              },
+              type: "announcement",
+              subject: (item.subject as any) || "English",
             }}
-            style={styles.resourceCard}
-          >
-            <View style={styles.cardRow}>
-              <View style={styles.resourceBadge}>
-                <Text style={styles.resourceBadgeText}>Announcement</Text>
-              </View>
-              {/* <Text style={styles.resourceMeta}>
-                {item.subject || "Update"}
-              </Text> */}
-            </View>
-            {/* <Text style={styles.resourceTitle}>{item.title}</Text> */}
-            {item.description ? (
-              <Text style={styles.resourceDescription} numberOfLines={3}>
-                {item.description}
-              </Text>
-            ) : null}
-          </Pressable>
+            hidePreview={true}
+            hideActions={true}
+          />
         );
       }
 
       return (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Open lesson: ${item.title}`}
-          onPress={() =>
-            router.push({
-              pathname: "/lesson-player",
-              params: {
-                title: item.title,
-                teacher: item.teacher,
-                subject: item.subject,
-                duration: item.duration,
-                link: item.link,
-                thumbnail: item.thumbnail,
-              },
-            } as never)
-          }
-          style={styles.resourceCard}
-        >
-          <View style={styles.cardRow}>
-            <View style={styles.resourceBadge}>
-              <Text style={styles.resourceBadgeText}>Lesson</Text>
-            </View>
-            <Text style={styles.resourceMeta}>{item.duration || "Video"}</Text>
-          </View>
-          <Text style={styles.resourceTitle}>{item.title}</Text>
-          {item.thumbnail ? (
-            <Image
-              source={{ uri: item.thumbnail }}
-              style={styles.lessonImage}
-              contentFit="cover"
-            />
-          ) : null}
-        </Pressable>
+        <LatestVideoCard
+          item={{
+            id: item.id,
+            title: item.title,
+            subject: item.subject || "",
+            teacher: item.teacher || teacher?.name || teacherName,
+            uploadedAt: formatResourceTime(item.createdAt),
+            duration: item.duration || "0:00",
+            thumbnail: item.thumbnail || item.image || "",
+            avatar: teacher?.avatar,
+            link: item.link || "",
+            isNew: false,
+          }}
+          index={index}
+        />
       );
     },
-    [router],
+    [teacher, teacherName],
   );
 
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.loadingContainer}>
+        <Animated.View
+          entering={FadeInUp.duration(420)}
+          style={[
+            styles.loadingContainer,
+            { maxWidth: contentMaxWidth, paddingHorizontal: horizontalPadding },
+          ]}
+        >
           <Animated.View
             style={[styles.skeletonHeader, { opacity: pulseAnim }]}
           />
@@ -768,8 +736,14 @@ export default function TeacherProfileScreen() {
             <Animated.View
               style={[styles.skeletonBio, { opacity: pulseAnim }]}
             />
+            <Animated.View
+              style={[styles.skeletonLine, { opacity: pulseAnim }]}
+            />
+            <Animated.View
+              style={[styles.skeletonLineShort, { opacity: pulseAnim }]}
+            />
           </View>
-        </View>
+        </Animated.View>
       </SafeAreaView>
     );
   }
@@ -833,8 +807,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 150,
-    borderBottomRightRadius: 20,
-    borderBottomLeftRadius: 20,
   },
   backButton: {
     position: "absolute",
@@ -901,7 +873,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 16,
-    fontWeight: "800",
+    fontWeight: "600",
     color: colors.text,
   },
   statLabel: {
@@ -920,7 +892,7 @@ const styles = StyleSheet.create({
     height: 52,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 10,
   },
   contactButtonText: {
     color: colors.white,
@@ -930,7 +902,7 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 54,
     height: 54,
-    borderRadius: 14,
+    borderRadius: 10,
     borderWidth: 1.5,
     borderColor: "#D1D5DB",
     justifyContent: "center",
@@ -974,58 +946,6 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingBottom: spacing.xxl,
   },
-  resourceCard: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    width: "auto",
-  },
-  cardRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  resourceBadge: {
-    backgroundColor: "#EFF6FF",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  resourceBadgeText: {
-    color: colors.primary,
-    fontSize: 11,
-    fontWeight: "500",
-  },
-  resourceMeta: {
-    color: "red",
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  resourceTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 6,
-  },
-  resourceDescription: {
-    color: colors.text,
-    fontSize: 20,
-  },
-  bookImage: {
-    width: "100%",
-    height: 250,
-    borderRadius: 5,
-    marginTop: 10,
-  },
-  lessonImage: {
-    width: "100%",
-    height: 160,
-    borderRadius: 12,
-    marginTop: 10,
-  },
   emptyState: {
     alignItems: "center",
     justifyContent: "center",
@@ -1045,6 +965,8 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
+    width: "100%",
+    alignSelf: "center",
     backgroundColor: colors.background,
   },
   skeletonHeader: {
@@ -1071,6 +993,20 @@ const styles = StyleSheet.create({
   },
   skeletonBio: {
     width: 260,
+    height: 14,
+    borderRadius: 999,
+    backgroundColor: "#E5E7EB",
+    marginBottom: 6,
+  },
+  skeletonLine: {
+    width: 200,
+    height: 14,
+    borderRadius: 999,
+    backgroundColor: "#E5E7EB",
+    marginBottom: 6,
+  },
+  skeletonLineShort: {
+    width: 140,
     height: 14,
     borderRadius: 999,
     backgroundColor: "#E5E7EB",

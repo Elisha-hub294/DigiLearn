@@ -141,7 +141,7 @@ export default function LibraryScreen() {
 
         <Animated.View entering={FadeInUp.duration(480)} style={styles.section}>
           <SectionHeader title="Pages" onSeeAll={() => {}} actionLabel="" />
-          <FeaturedNoteCard layout="two-column" />
+          <FeaturedNoteCard />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.duration(560)} style={styles.section}>

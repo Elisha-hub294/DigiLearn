@@ -94,19 +94,19 @@ export type AnnouncementItem = {
 };
 
 const imageImports = {
-  math: require("../../assets/images/math.png"),
-  physics: require("../../assets/images/physics.png"),
-  chemistry: require("../../assets/images/chemistry.png"),
+  // math: require("../../assets/images/math.png"),
+  // physics: require("../../assets/images/physics.png"),
+  // chemistry: require("../../assets/images/chemistry.png"),
   pdfPreview: require("../../assets/images/pdf-preview.jpeg"),
-  thumb1: require("../../assets/images/thumb-1.jpeg"),
-  thumb2: require("../../assets/images/thumb-2.jpeg"),
-  thumb4: require("../../assets/images/thumb-4.jpeg"),
-  book1: require("../../assets/images/book1.jpg"),
-  book2: require("../../assets/images/book2.png"),
-  book3: require("../../assets/images/book3.jpeg"),
-  tr1: require("../../assets/images/tr-1.webp"),
-  tr2: require("../../assets/images/tr-2.jpg"),
-  tr3: require("../../assets/images/tr-3.jpg"),
+  // thumb1: require("../../assets/images/thumb-1.jpeg"),
+  // thumb2: require("../../assets/images/thumb-2.jpeg"),
+  // thumb4: require("../../assets/images/thumb-4.jpeg"),
+  // book1: require("../../assets/images/book1.jpg"),
+  // book2: require("../../assets/images/book2.png"),
+  // book3: require("../../assets/images/book3.jpeg"),
+  // tr1: require("../../assets/images/tr-1.webp"),
+  // tr2: require("../../assets/images/tr-2.jpg"),
+  // tr3: require("../../assets/images/tr-3.jpg"),
   trDefault: require("../../assets/images/tr-default.png"),
 };
 

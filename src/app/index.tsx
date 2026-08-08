@@ -1,12 +1,9 @@
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -26,7 +23,7 @@ import { colors, spacing } from "../constants/theme";
 import LoadingScreen from "./loading";
 
 const getHorizontalPadding = (width: number) => {
-  if (width >= 1200) return 100;
+  if (width >= 1200) return 150;
   if (width >= 900) return 50;
   if (width >= 600) return 30;
   if (width >= 400) return 5;
@@ -52,52 +49,57 @@ export default function HomeScreen() {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     // Increment seed to reshuffle sections on refresh
-    setShuffleSeed(prev => prev + 1);
+    setShuffleSeed((prev) => prev + 1);
     setTimeout(() => setRefreshing(false), 900);
   }, []);
 
   // Define sections to display
-  const sections = useMemo(() => [
-    {
-      key: 'featuredNote',
-      content: (
-        <View style={styles.stack}>
-          <FeaturedNoteCard />
-          <TeacherPostCard />
-        </View>
-      ),
-    },
-    {
-      key: 'popularCourses',
-      content: (
-        <>
-          <SectionHeader title="Popular courses" onSeeAll={() => router.push("/videos")} />
-          <CoursesCarousel />
-        </>
-      ),
-    },
-    {
-      key: 'books',
-      content: (
-        <>
-          <SectionHeader title="Books" onSeeAll={() => router.push("/library")} />
-          <BookCarousel />
-        </>
-      ),
-    },
-  ], [router]);
+  const sections = useMemo(
+    () => [
+      {
+        key: "featuredNote",
+        content: <FeaturedNoteCard />,
+      },
+      {
+        key: "teacherPost",
+        content: <TeacherPostCard />,
+      },
+      {
+        key: "popularCourses",
+        content: (
+          <>
+            <SectionHeader
+              title="Popular courses"
+              onSeeAll={() => router.push("/videos")}
+            />
+            <CoursesCarousel />
+          </>
+        ),
+      },
+      {
+        key: "books",
+        content: (
+          <>
+            <SectionHeader
+              title="Books"
+              onSeeAll={() => router.push("/library")}
+            />
+            <BookCarousel />
+          </>
+        ),
+      },
+    ],
+    [router],
+  );
 
-  // Shuffle sections whenever shuffleSeed changes, keeping TopicalNotesSlider in place
   const shuffledSections = useMemo(() => {
-    const first = sections.find(s => s.key === 'topicalNotes');
-    const rest = sections.filter(s => s.key !== 'topicalNotes');
-    // Fisher-Yates shuffle on rest
-    for (let i = rest.length - 1; i > 0; i--) {
+    const shuffled = [...sections];
+    for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [rest[i], rest[j]] = [rest[j], rest[i]];
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    return first ? [first, ...rest] : rest;
-  }, [shuffleSeed]);
+    return shuffled;
+  }, [shuffleSeed, sections]);
 
   if (showLoading) {
     return <LoadingScreen />;
@@ -143,16 +145,6 @@ export default function HomeScreen() {
               <TopicalNotesSlider />
             </Animated.View>
 
-            <Animated.View
-              entering={FadeInUp.duration(400)}
-              style={styles.section}
-            >
-              <View style={styles.stack}>
-                <FeaturedNoteCard />
-                <TeacherPostCard />
-              </View>
-            </Animated.View>
-
             {shuffledSections.map((section, idx) => (
               <Animated.View
                 key={section.key}
@@ -162,8 +154,6 @@ export default function HomeScreen() {
                 {section.content}
               </Animated.View>
             ))}
-
-
           </ScrollView>
           <FloatingAssistantButton />
         </View>
@@ -171,31 +161,6 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
-
-const GradientAnnouncement = () => (
-  <LinearGradient
-    colors={["#3B82F6", "#f65cee"]}
-    start={{ x: 0, y: 0 }}
-    end={{ x: 1, y: 1 }}
-    style={styles.gradientCard}
-  >
-    <View style={styles.gradientContent}>
-      <View style={styles.gradientTextBlock}>
-        <Text style={styles.gradientEyebrow}>Study sprint</Text>
-        <Text style={styles.gradientTitle}>
-          Stay consistent with your weekly plan
-        </Text>
-        <Text style={styles.gradientBody}>
-          New revision prompts are published each day to keep your learning
-          momentum strong.
-        </Text>
-      </View>
-      <Pressable style={styles.gradientButton} accessibilityRole="button">
-        <Text style={styles.gradientButtonText}>View plan</Text>
-      </Pressable>
-    </View>
-  </LinearGradient>
-);
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -226,10 +191,6 @@ const styles = StyleSheet.create({
   stack: {
     width: "100%",
     gap: spacing.sm,
-  },
-  gradientCard: {
-    borderRadius: 10,
-    padding: spacing.lg,
   },
   gradientContent: {
     flexDirection: "row",

@@ -150,13 +150,13 @@ export const FeaturedNoteCard = ({
       );
       const filteredNotes = subject
         ? allNotes.filter((note) => {
-          const noteSubjects = Array.isArray(note.subject)
-            ? note.subject
-            : [note.subject ?? ""];
-          return noteSubjects.some(
-            (entry) => normalizeKey(entry) === normalizeKey(subject),
-          );
-        })
+            const noteSubjects = Array.isArray(note.subject)
+              ? note.subject
+              : [note.subject ?? ""];
+            return noteSubjects.some(
+              (entry) => normalizeKey(entry) === normalizeKey(subject),
+            );
+          })
         : allNotes;
 
       if (providedNotes) {
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
   itemWrapper: { width: "100%" },
   itemWrapperWide: { width: "100%" },
   card: {
-    width: "80%",
+    width: "100%",
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,

@@ -240,10 +240,7 @@ export const TeacherPostCard = () => {
 
   if (posts.length === 0) {
     return (
-      <Animated.View
-        entering={FadeInUp.duration(500)}
-        style={[styles.card]}
-      >
+      <Animated.View entering={FadeInUp.duration(500)} style={[styles.card]}>
         <Text style={styles.caption}>No teacher updates available yet.</Text>
       </Animated.View>
     );
@@ -384,7 +381,6 @@ const TeacherPostItem = ({
               </View>
             </Pressable>
           </View>
-
         </View>
 
         <Text style={styles.caption}>{description}</Text>
@@ -508,12 +504,10 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   card: {
-    width: "80%",
+    width: "100%",
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
-
-
   },
   header: {
     flexDirection: "row",

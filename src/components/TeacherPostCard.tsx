@@ -3,10 +3,22 @@ import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { subjectColors, type TeacherPost } from "../constants/homeData";
-import { colors, radius, shadows, spacing } from "../constants/theme";
+import { colors, radius, spacing } from "../constants/theme";
 
-export const TeacherPostCard = ({ post }: { post: TeacherPost }) => {
+export const TeacherPostCard = ({
+  post,
+  hidePreview = false,
+  hideActions = false,
+}: {
+  post: TeacherPost;
+  hidePreview?: boolean;
+  hideActions?: boolean;
+}) => {
   const accent = subjectColors[post.subject] ?? "#3B82F6";
+  const contentStyle = [
+    styles.content,
+    post.type === "announcement" && styles.announcementContent,
+  ];
 
   return (
     <Animated.View entering={FadeInUp.duration(500)} style={styles.card}>
@@ -27,41 +39,39 @@ export const TeacherPostCard = ({ post }: { post: TeacherPost }) => {
             <Text style={styles.time}>{post.time}</Text>
           </View>
         </View>
-        <View style={[styles.subjectBadge, { backgroundColor: accent }]}>
-          <Text style={styles.subjectBadgeText}>{post.subject}</Text>
-        </View>
       </View>
-      <Text style={styles.content}>{post.content}</Text>
-      <View style={styles.previewWrap}>
-        <Image
-          source={post.previewImage}
-          style={styles.preview}
-          contentFit="cover"
-        />
-        <View style={styles.overlay} />
-        <View style={styles.previewBadge}>
-          <Icon
-            name={
-              post.type === "pdf"
-                ? "file-text"
-                : post.type === "image"
-                  ? "image"
-                  : "message-circle"
-            }
-            size={16}
-            color={colors.white}
+      <Text style={contentStyle}>{post.content}</Text>
+      {!hidePreview && (
+        <View style={styles.previewWrap}>
+          <Image
+            source={post.previewImage}
+            style={styles.preview}
+            contentFit="cover"
           />
-          <Text style={styles.previewText}>{post.type.toUpperCase()}</Text>
+          <View style={styles.overlay} />
+          <View style={styles.previewBadge}>
+            <Icon
+              name={
+                post.type === "pdf"
+                  ? "file-text"
+                  : post.type === "image"
+                    ? "image"
+                    : "message-circle"
+              }
+              size={16}
+              color={colors.white}
+            />
+            <Text style={styles.previewText}>{post.type.toUpperCase()}</Text>
+          </View>
         </View>
-      </View>
-      <View style={styles.footer}>
-        <Pressable style={styles.action} accessibilityLabel="Save post">
-          <Icon name="bookmark" size={15} color={colors.subtitle} />
-        </Pressable>
-        <Pressable style={styles.action} accessibilityLabel="Open resource">
-          <Icon name="download" size={15} color={colors.subtitle} />
-        </Pressable>
-      </View>
+      )}
+      {!hideActions && (
+        <View style={styles.footer}>
+          <Pressable style={styles.action} accessibilityLabel="Save post">
+            <Icon name="bookmark" size={15} color={colors.subtitle} />
+          </Pressable>
+        </View>
+      )}
     </Animated.View>
   );
 };
@@ -70,9 +80,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
     borderRadius: 22,
-    padding: spacing.lg,
-    ...shadows.card,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   header: {
     flexDirection: "row",
@@ -86,17 +94,15 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   name: { color: colors.text, fontSize: 14, fontWeight: "700" },
   time: { color: colors.subtitle, fontSize: 12, marginTop: 2 },
-  subjectBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-  },
-  subjectBadgeText: { color: colors.white, fontSize: 11, fontWeight: "700" },
   content: {
     color: colors.text,
     fontSize: 14,
     lineHeight: 20,
     marginBottom: spacing.md,
+  },
+  announcementContent: {
+    fontSize: 20,
+    lineHeight: 22,
   },
   previewWrap: {
     borderRadius: 18,
@@ -119,7 +125,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(15,23,42,0.55)",
   },
   previewText: { color: colors.white, fontSize: 11, fontWeight: "700" },
-  footer: { flexDirection: "row", gap: spacing.sm },
+  footer: { flexDirection: "row" },
   action: {
     width: 38,
     height: 38,

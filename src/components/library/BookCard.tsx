@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 
 type BookCardItem = {
   id: string;
@@ -20,7 +20,7 @@ export function BookCard({ item }: BookCardProps) {
   return (
     <Pressable accessibilityRole="button" style={styles.card}>
       <Image source={item.image} style={styles.image} contentFit="cover" />
-      <View style={styles.content}>
+      <View>
         <View style={styles.badgeRow}>
           {item.badge ? (
             <View style={styles.badge}>
@@ -47,19 +47,16 @@ export function BookCard({ item }: BookCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    width: 170,
+    width: 200,
     marginRight: spacing.md,
-    borderRadius: radius.xl,
+    borderRadius: radius.sm,
     backgroundColor: colors.white,
     overflow: "hidden",
-    ...shadows.soft,
+    marginBottom: spacing.md,
   },
   image: {
     width: "100%",
     height: 170,
-  },
-  content: {
-    padding: spacing.md,
   },
   badgeRow: {
     flexDirection: "row",
