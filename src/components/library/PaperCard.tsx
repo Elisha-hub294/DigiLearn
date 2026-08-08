@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
-import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
 import PdfPreview from "../home/PdfPreview";
 
@@ -20,25 +21,42 @@ export function PaperCard({
   image,
   document,
 }: PaperCardProps) {
+  const router = useRouter();
+
+  const openPdf = () => {
+    if (!document) return;
+    router.push({
+      pathname: "/pdf-reader",
+      params: { uri: document, title },
+    } as any);
+  };
+
   return (
     <Pressable
       accessibilityRole="button"
-      style={styles.card}
-      onPress={() => {
-        if (document) {
-          Linking.openURL(document).catch((error) =>
-            console.error("Couldn't open paper", error),
-          );
-        }
-      }}
+      style={({ pressed, hovered }: any) => [
+        styles.card,
+        (pressed || hovered) && styles.cardPressed,
+      ]}
+      onPress={openPdf}
     >
       <View style={styles.previewContainer}>
-        {document ? (
-          <PdfPreview uri={document} style={styles.preview} />
-        ) : (
-          <Image source={image} style={styles.preview} contentFit="cover" />
-        )}
-        <View style={styles.darkOverlay} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${title} PDF`}
+          style={({ pressed, hovered }: any) => [
+            styles.previewPressable,
+            (pressed || hovered) && styles.previewPressed,
+          ]}
+          onPress={openPdf}
+        >
+          {document ? (
+            <PdfPreview uri={document} style={styles.preview} />
+          ) : (
+            <Image source={image} style={styles.preview} contentFit="cover" />
+          )}
+          <View style={styles.darkOverlay} />
+        </Pressable>
       </View>
       <View style={styles.content}>
         <Text style={styles.subject}>{subject}</Text>
@@ -59,10 +77,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     overflow: "hidden",
   },
+  cardPressed: {
+    backgroundColor: "#F3F4F6",
+  },
   previewContainer: {
     width: "100%",
     height: 130,
     position: "relative",
+  },
+  previewPressable: {
+    width: "100%",
+    height: "100%",
+  },
+  previewPressed: {
+    backgroundColor: "#F3F4F6",
   },
   preview: {
     width: "100%",
