@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { StyleSheet, Text, View } from "react-native";
-import Markdown from "react-native-markdown-display";
+import Markdown from "react-native-simple-markdown";
 
 import fallbackAvatar from "../../../assets/images/panda.png";
 import { colors, spacing } from "../../constants/theme";
@@ -39,7 +39,7 @@ export function ChatBubble({
         {isUser ? (
           <Text style={styles.userText}>{message}</Text>
         ) : (
-          <Markdown style={markdownStyles}>{message}</Markdown>
+          <Markdown styles={markdownStyles}>{message}</Markdown>
         )}
       </View>
     </View>
