@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import {
     Pressable,
@@ -12,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, radius, spacing } from "../constants/theme";
 
 export default function WelcomeScreen() {
+  const router = useRouter();
   const { width, height } = useWindowDimensions();
 
   const contentPadding = width >= 900 ? 40 : width >= 600 ? 30 : 20;
@@ -20,12 +22,12 @@ export default function WelcomeScreen() {
   const illustrationHeight = Math.min(320, height * 0.42);
 
   const handleSignUp = useCallback(() => {
-    // TODO: Navigate to registration flow
-  }, []);
+    router.push("/signup");
+  }, [router]);
 
   const handleLogin = useCallback(() => {
-    // TODO: Navigate to login flow
-  }, []);
+    router.push("/login");
+  }, [router]);
 
   const handleGuest = useCallback(() => {
     // TODO: Continue as guest

@@ -24,6 +24,14 @@ export default function RootLayout() {
             options={{ href: null, tabBarStyle: { display: "none" } }}
           />
           <Tabs.Screen
+            name="signup"
+            options={{ href: null, tabBarStyle: { display: "none" } }}
+          />
+          <Tabs.Screen
+            name="login"
+            options={{ href: null, tabBarStyle: { display: "none" } }}
+          />
+          <Tabs.Screen
             name="book-preview"
             options={{ href: null, tabBarStyle: { display: "none" } }}
           />
