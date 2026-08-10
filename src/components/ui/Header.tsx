@@ -1,5 +1,8 @@
 import { Feather as Icon } from "@expo/vector-icons";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { auth } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 
 type HeaderProps = {
@@ -13,6 +16,26 @@ export const Header = ({
   rightIconName = "bell",
   showBadge = true,
 }: HeaderProps) => {
+  const [userName, setUserName] = useState<string | null>(null);
+  const [greeting, setGreeting] = useState("Hi there");
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const firstName = getFirstName(user);
+        setUserName(firstName);
+      } else {
+        setUserName(null);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    setGreeting(generateGreeting());
+  }, []);
+
   const date = new Date().toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
@@ -28,7 +51,10 @@ export const Header = ({
           <>
             <Text style={styles.date}>{date}</Text>
             <Text style={styles.greeting}>
-              Hi, <Text style={{ color: colors.primary }}>[Username]</Text>
+              {greeting}
+              {userName ? (
+                <Text style={{ color: colors.primary }}> {userName}</Text>
+              ) : null}
             </Text>
           </>
         )}
@@ -45,6 +71,31 @@ export const Header = ({
     </View>
   );
 };
+
+function getFirstName(user: User) {
+  const name = user.displayName?.trim();
+  if (!name) return null;
+  return name.split(" ")[0];
+}
+
+function generateGreeting() {
+  const now = new Date();
+  const day = now.getDay();
+  const hour = now.getHours();
+  const isWeekend = day === 0 || day === 6;
+
+  if (isWeekend) {
+    if (hour < 12) return "Happy weekend";
+    if (hour < 18) return "Enjoy your weekend";
+    return "Happy weekend";
+  }
+
+  if (hour < 5) return "Working late";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
+  return "Good evening";
+}
 
 const styles = StyleSheet.create({
   container: {
