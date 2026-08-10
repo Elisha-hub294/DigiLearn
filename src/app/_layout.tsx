@@ -20,6 +20,10 @@ export default function RootLayout() {
           <Tabs.Screen name="videos" options={{ title: "Courses" }} />
           <Tabs.Screen name="profile" options={{ title: "Account" }} />
           <Tabs.Screen
+            name="welcome"
+            options={{ href: null, tabBarStyle: { display: "none" } }}
+          />
+          <Tabs.Screen
             name="book-preview"
             options={{ href: null, tabBarStyle: { display: "none" } }}
           />
