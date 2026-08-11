@@ -23,6 +23,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../firebaseConfig";
+import { ensureUserProfile } from "../services/userProfile";
 import { colors, spacing } from "../constants/theme";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -109,7 +110,8 @@ export default function SignUpScreen() {
 
     try {
       setIsLoading(true);
-      await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      await ensureUserProfile(credential.user);
       router.replace("/");
     } catch (error) {
       const code =
@@ -146,7 +148,8 @@ export default function SignUpScreen() {
 
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const credential = await signInWithPopup(auth, provider);
+      await ensureUserProfile(credential.user);
       router.replace("/");
     } catch (error) {
       const code =
@@ -176,7 +179,8 @@ export default function SignUpScreen() {
 
     try {
       const provider = new FacebookAuthProvider();
-      await signInWithPopup(auth, provider);
+      const credential = await signInWithPopup(auth, provider);
+      await ensureUserProfile(credential.user);
       router.replace("/");
     } catch (error) {
       const code =

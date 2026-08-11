@@ -3,13 +3,14 @@ import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BottomTabBar } from "../components/ui/BottomTabBar";
+import { ProfileProvider } from "../contexts/ProfileContext";
 
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar style="light" />
-        <Tabs
+        <ProfileProvider><Tabs
           screenOptions={{
             headerShown: false,
           }}
@@ -19,6 +20,10 @@ export default function RootLayout() {
           <Tabs.Screen name="library" options={{ title: "Library" }} />
           <Tabs.Screen name="videos" options={{ title: "Courses" }} />
           <Tabs.Screen name="profile" options={{ title: "Account" }} />
+          <Tabs.Screen
+            name="settings"
+            options={{ href: null, tabBarStyle: { display: "none" } }}
+          />
           <Tabs.Screen
             name="welcome"
             options={{ href: null, tabBarStyle: { display: "none" } }}
@@ -63,7 +68,7 @@ export default function RootLayout() {
             name="subject-profile"
             options={{ href: null, tabBarStyle: { display: "none" } }}
           />
-        </Tabs>
+        </Tabs></ProfileProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
