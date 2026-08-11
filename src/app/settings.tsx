@@ -13,15 +13,8 @@ import {
 } from "react-native";
 import SettingsRow from "../components/ui/SettingsRow";
 import SettingsSection from "../components/ui/SettingsSection";
+import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
-
-const getHorizontalPadding = (width: number) => {
-  if (width >= 1200) return 150;
-  if (width >= 900) return 50;
-  if (width >= 600) return 30;
-  if (width >= 400) return 5;
-  return 5;
-};
 
 export default function SettingsScreen() {
   const router = useRouter();

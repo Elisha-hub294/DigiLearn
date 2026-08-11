@@ -19,16 +19,9 @@ import { TopicalNotesSlider } from "../components/home/TopicalNotesSlider";
 import { Header } from "../components/ui/Header";
 import { SearchBar } from "../components/ui/SearchBar";
 import { SectionHeader } from "../components/ui/SectionHeader";
+import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import LoadingScreen from "./loading";
-
-const getHorizontalPadding = (width: number) => {
-  if (width >= 1200) return 150;
-  if (width >= 900) return 50;
-  if (width >= 600) return 30;
-  if (width >= 400) return 5;
-  return 5;
-};
 
 export default function HomeScreen() {
   const router = useRouter();

@@ -24,17 +24,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../firebaseConfig";
 import { ensureUserProfile } from "../services/userProfile";
+import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function getHorizontalPadding(width: number) {
-  if (width >= 1200) return 150;
-  if (width >= 900) return 50;
-  if (width >= 600) return 30;
-  if (width >= 400) return 20;
-  return 16;
-}
 
 function mapAuthError(code: string | undefined) {
   switch (code) {

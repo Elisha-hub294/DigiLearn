@@ -20,6 +20,7 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
+import { getHorizontalPadding } from "../../constants/layout";
 import { FeaturedNoteCard } from "../home/FeaturedNoteCard";
 import { SearchBar } from "../ui/SearchBar";
 
@@ -130,14 +131,6 @@ const formatCreatedAt = (value: unknown) => {
     if (!Number.isNaN(num)) return num;
   }
   return 0;
-};
-
-const getHorizontalPadding = (width: number) => {
-  if (width >= 1200) return 64;
-  if (width >= 900) return 48;
-  if (width >= 600) return 32;
-  if (width >= 400) return 20;
-  return 14;
 };
 
 const sortNotes = (notes: PageNote[], sortBy: string) => {

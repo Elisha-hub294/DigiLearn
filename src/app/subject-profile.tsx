@@ -25,6 +25,7 @@ import { PaperCard } from "../components/library/PaperCard";
 import { BookCard } from "../components/ui/BookCard";
 import { SearchBar } from "../components/ui/SearchBar";
 import { TrendingVideoCard } from "../components/ui/TrendingVideoCard";
+import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius } from "../constants/theme";
 
 type SubjectRecord = {
@@ -111,7 +112,7 @@ function SubjectProfileScreen() {
   const normalizedSubject = normalizeKey(selectedSubject);
   const accentColor = subject?.accent || colors.primary;
   const screenLoading = !subjectReady || !resourcesReady;
-  const horizontalPadding = width >= 1024 ? 48 : width >= 768 ? 32 : 0;
+  const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(860, width - horizontalPadding * 2);
   const sheetPaddingHorizontal = width >= 1024 ? 34 : width >= 768 ? 26 : 20;
   const defaultAvatarSource = subject?.avatar

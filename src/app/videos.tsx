@@ -25,6 +25,7 @@ import {
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
+import { getHorizontalPadding } from "../constants/layout";
 import { dimensions } from "../constants/theme";
 
 type FirestoreLesson = {
@@ -136,7 +137,7 @@ export default function VideosScreen() {
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const isTablet = width >= 768;
-  const horizontalPadding = dimensions.screenPaddingHorizontal;
+  const horizontalPadding = getHorizontalPadding(width);
   const contentWidth =
     Math.min(width, dimensions.maxContentWidth) - horizontalPadding * 2;
   const cardWidth = isTablet

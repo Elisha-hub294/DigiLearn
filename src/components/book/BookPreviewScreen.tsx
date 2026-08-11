@@ -16,6 +16,7 @@ import { BookOverview } from "./BookOverview";
 import { Book, normalizeKey, resolveAuthorAvatar } from "./bookTypes";
 import { BottomActionBar } from "./BottomActionBar";
 import { SimilarBooks } from "./SimilarBooks";
+import { getHorizontalPadding } from "../../constants/layout";
 
 const gradients = [
   ["#57F287", "#2D9CFF"],
@@ -25,14 +26,6 @@ const gradients = [
   ["#F857A6", "#FF5858"],
   ["#4FACFE", "#00F2FE"],
 ] as const;
-
-const getHorizontalPadding = (width: number) => {
-  if (width >= 1200) return 64;
-  if (width >= 900) return 48;
-  if (width >= 600) return 32;
-  if (width >= 400) return 0;
-  return 5;
-};
 
 const strings = (v: unknown) =>
   Array.isArray(v)

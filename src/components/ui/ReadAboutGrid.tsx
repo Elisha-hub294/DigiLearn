@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { FlatList, StyleSheet, View, useWindowDimensions } from "react-native";
-import { dimensions, spacing } from "../../constants/theme";
+import { getHorizontalPadding } from "../../constants/layout";
+import { spacing } from "../../constants/theme";
 import { TopicCard, TopicCardItem } from "./TopicCard";
 
 type ReadAboutGridProps = {
@@ -9,6 +10,7 @@ type ReadAboutGridProps = {
 
 export const ReadAboutGrid = ({ data }: ReadAboutGridProps) => {
   const { width } = useWindowDimensions();
+  const horizontalPadding = getHorizontalPadding(width);
 
   const pages = useMemo(() => {
     const shuffled = [...data].sort(() => Math.random() - 0.5);
@@ -34,7 +36,7 @@ export const ReadAboutGrid = ({ data }: ReadAboutGridProps) => {
               styles.page,
               {
                 width: Math.min(
-                  width - dimensions.screenPaddingHorizontal * 2,
+                  width - horizontalPadding * 2,
                   420,
                 ),
               },

@@ -18,16 +18,9 @@ import { OverviewSection } from "./OverviewSection";
 import { PageHero } from "./PageHero";
 import { DEFAULT_SUBJECT_AVATAR, SourceBook, TopicalNote } from "./pageTypes";
 import { SimilarPages } from "./SimilarPages";
+import { getHorizontalPadding } from "../../constants/layout";
 import { SourceBooks } from "./SourceBooks";
 import { SubjectBadge } from "./SubjectBadge";
-
-const getHorizontalPadding = (width: number) => {
-  if (width >= 1200) return 64;
-  if (width >= 900) return 48;
-  if (width >= 600) return 32;
-  if (width >= 400) return 0;
-  return 5;
-};
 
 const normalizeArray = (val: unknown): string[] => {
   if (!val) return [];

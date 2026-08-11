@@ -24,6 +24,7 @@ import { BookCard } from "../components/library/BookCard";
 import { TeacherPostCard } from "../components/TeacherPostCard";
 import { LatestVideoCard } from "../components/ui/LatestVideoCard";
 import { SearchBar } from "../components/ui/SearchBar";
+import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 
 type TeacherRecord = {
@@ -109,8 +110,7 @@ export default function TeacherProfileScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ name?: string }>();
   const { width } = useWindowDimensions();
-  const horizontalPadding =
-    width >= 1024 ? 120 : width >= 768 ? 32 : width >= 400 ? 5 : 3;
+  const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
 
   const [teacher, setTeacher] = useState<TeacherRecord | null>(null);

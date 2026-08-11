@@ -20,6 +20,7 @@ import { SearchResultTeacherCard } from "../components/search/SearchResultTeache
 import { SearchResultVideoCard } from "../components/search/SearchResultVideoCard";
 import { SearchSkeleton } from "../components/search/SearchSkeleton";
 import { SearchBar } from "../components/ui/SearchBar";
+import { getHorizontalPadding } from "../constants/layout";
 import {
     SearchCategory,
     SearchResult,
@@ -54,8 +55,7 @@ export default function SearchScreen() {
   } = useGlobalSearch();
 
   // Responsive max content width calculation
-  const horizontalPadding =
-    width >= 1024 ? 48 : width >= 768 ? 32 : width >= 400 ? 10 : 5;
+  const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
 
   const isActivelySearching = debouncedQuery.trim().length >= 2;

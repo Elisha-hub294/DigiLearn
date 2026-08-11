@@ -22,6 +22,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { getHorizontalPadding } from "../constants/layout";
 import { getTeacherAvatar } from "../constants/teacherAvatar";
 import { dimensions } from "../constants/theme";
 
@@ -126,7 +127,7 @@ export default function LessonPlayerScreen() {
     }
   }
 
-  const horizontalPadding = dimensions.screenPaddingHorizontal;
+  const horizontalPadding = getHorizontalPadding(width);
   const maxContentWidth = Math.min(width, dimensions.maxContentWidth);
 
   return (
