@@ -65,7 +65,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#F3F4F6",
   },
-  image: { width: 40, height: 40 },
+  image: { width: 35, height: 35 },
   avatar: { ...StyleSheet.absoluteFill, width: "100%", height: "100%" },
   title: {
     color: "#fff",

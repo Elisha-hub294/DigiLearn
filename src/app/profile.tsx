@@ -1,11 +1,11 @@
 import { useCallback, useState } from "react";
 import {
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -48,7 +48,7 @@ export default function ProfileScreen() {
     }
   }, [refresh]);
   const padding = paddingFor(width);
-  const maxWidth = Math.min(860, width - padding * 2);
+  const maxWidth = Math.min(1100, width - padding * 2);
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
       <ScrollView
