@@ -60,7 +60,6 @@ export function ProfileHeader({
 const s = StyleSheet.create({
   wrap: {
     overflow: "hidden",
-    borderRadius: 24,
     backgroundColor: colors.white,
     ...shadows.soft,
   },

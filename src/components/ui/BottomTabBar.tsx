@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius, spacing } from "../../constants/theme";
+import { colors, spacing } from "../../constants/theme";
 
 type TabRoute = {
   key: string;
@@ -10,9 +10,24 @@ type TabRoute = {
 
 const tabs = [
   { name: "Home", icon: "book-outline", activeIcon: "book", route: "index" },
-  { name: "Library", icon: "archive-outline", activeIcon: "archive", route: "library" },
-  { name: "Courses", icon: "play-circle-outline", activeIcon: "play-circle", route: "videos" },
-  { name: "Account", icon: "account-outline", activeIcon: "account", route: "profile" },
+  {
+    name: "Library",
+    icon: "archive-outline",
+    activeIcon: "archive",
+    route: "library",
+  },
+  {
+    name: "Courses",
+    icon: "play-circle-outline",
+    activeIcon: "play-circle",
+    route: "videos",
+  },
+  {
+    name: "Account",
+    icon: "account-outline",
+    activeIcon: "account",
+    route: "profile",
+  },
 ] as const;
 
 export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
@@ -74,8 +89,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },

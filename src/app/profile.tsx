@@ -94,7 +94,6 @@ const s = StyleSheet.create({
   content: {
     width: "100%",
     alignSelf: "center",
-    paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
   },
   sections: { gap: 20 },
