@@ -1,7 +1,48 @@
 import { Feather } from "@expo/vector-icons";
+import type { ComponentProps } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, shadows, spacing } from "../../constants/theme";
+import { colors } from "../../constants/theme";
 import type { UserProfile } from "../../services/userProfile";
-const joinedLabel = (value: any) => { const date = value?.toDate?.() ?? (value ? new Date(value) : null); return date && !Number.isNaN(date.getTime()) ? `Joined ${date.toLocaleDateString(undefined, { month: "short", year: "numeric" })}` : "Joined recently"; };
-export function UserInfoCard({ profile }: { profile: UserProfile }) { const rows = [{ icon: "calendar", label: "Joined", value: joinedLabel(profile.joinedAt), color: "#4F7DF2" }, { icon: "award", label: "Level", value: profile.level || "Set Level", color: "#8B5CF6", action: !profile.level }, { icon: "book-open", label: "School", value: profile.school || "Set School", color: "#4CAF50", action: !profile.school }]; return <View style={s.card}>{rows.map((row, i) => <Pressable key={row.label} disabled={!row.action} accessibilityRole={row.action ? "button" : undefined} accessibilityLabel={row.action ? row.value : row.label} style={[s.row, i < rows.length - 1 && s.border]}><View style={[s.icon, { backgroundColor: row.color }]}><Feather name={row.icon as any} size={18} color="#fff" /></View><View style={s.copy}><Text style={s.label}>{row.label}</Text><Text numberOfLines={1} style={[s.value, row.action && s.action]}>{row.value}</Text></View></Pressable>)}</View>; }
-const s = StyleSheet.create({ card: { backgroundColor: colors.white, borderRadius: 18, paddingHorizontal: spacing.lg, ...shadows.soft }, row: { minHeight: 70, flexDirection: "row", alignItems: "center", gap: 13 }, border: { borderBottomWidth: 1, borderBottomColor: "#F0F0F0" }, icon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" }, copy: { flex: 1, minWidth: 0 }, label: { fontSize: 12, color: "#777", fontWeight: "600", marginBottom: 2 }, value: { fontSize: 15, color: "#1B1B1B" }, action: { color: colors.primary, fontWeight: "600" } });
+
+type ProfileStatProps = {
+  icon: ComponentProps<typeof Feather>["name"];
+  label: string;
+  value: string;
+  interactive?: boolean;
+  onPress?: () => void;
+};
+
+/** A deliberately uniform profile statistic: each column reserves equal vertical space. */
+function ProfileStat({ icon, label, value, interactive = false, onPress }: ProfileStatProps) {
+  const valueContent = <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.value, interactive && styles.interactiveValue]}>{value}</Text>;
+  return <View style={styles.stat}>
+    <Feather name={icon} size={32} color="#3B82F6" />
+    <Text style={styles.label}>{label}</Text>
+    {interactive ? <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={value} style={({ pressed }) => [styles.valueAction, pressed && styles.valuePressed]}>{valueContent}</Pressable> : <View style={styles.valueAction}>{valueContent}</View>}
+  </View>;
+}
+
+function joinedDate(value: unknown) {
+  const date = (value as any)?.toDate?.() ?? (value ? new Date(value as string | number) : null);
+  return date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString(undefined, { month: "short", year: "numeric" }) : "—";
+}
+
+export function UserInfoCard({ profile }: { profile: UserProfile }) {
+  const hasLevel = Boolean(profile.level?.trim());
+  const hasSchool = Boolean(profile.school?.trim());
+  return <View style={styles.row} accessibilityLabel="Profile information">
+    <ProfileStat icon="calendar" label="Joined" value={joinedDate(profile.joinedAt)} />
+    <ProfileStat icon="award" label="Level" value={hasLevel ? profile.level : "Set Level"} interactive={!hasLevel} onPress={() => undefined} />
+    <ProfileStat icon="home" label="School" value={hasSchool ? profile.school : "Add School"} interactive={!hasSchool} onPress={() => undefined} />
+  </View>;
+}
+
+const styles = StyleSheet.create({
+  row: { width: "100%", maxWidth: 520, alignSelf: "center", flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", paddingVertical: 4 },
+  stat: { flex: 1, minWidth: 0, height: 84, alignItems: "center", justifyContent: "flex-start" },
+  label: { marginTop: 7, color: "#777777", fontSize: 12, fontWeight: "600", lineHeight: 15 },
+  valueAction: { width: "100%", minHeight: 18, marginTop: 2, paddingHorizontal: 5, alignItems: "center", justifyContent: "center" },
+  value: { width: "100%", color: "#8A8A8A", fontSize: 11, lineHeight: 15, textAlign: "center" },
+  interactiveValue: { color: "#3B82F6", fontWeight: "700" },
+  valuePressed: { opacity: 0.62, transform: [{ scale: 0.97 }] },
+});
