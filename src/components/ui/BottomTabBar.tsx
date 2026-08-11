@@ -1,4 +1,4 @@
-import { Feather as Icon, FontAwesome } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
@@ -9,10 +9,10 @@ type TabRoute = {
 };
 
 const tabs = [
-  { name: "Home", icon: "book", route: "index" },
-  { name: "Library", icon: "archive", route: "library" },
-  { name: "Courses", icon: "play-circle", route: "videos" },
-  { name: "Account", icon: "user", activeIcon: "user", route: "profile" },
+  { name: "Home", icon: "book-outline", activeIcon: "book", route: "index" },
+  { name: "Library", icon: "archive-outline", activeIcon: "archive", route: "library" },
+  { name: "Courses", icon: "play-circle-outline", activeIcon: "play-circle", route: "videos" },
+  { name: "Account", icon: "account-outline", activeIcon: "account", route: "profile" },
 ] as const;
 
 export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
@@ -53,11 +53,11 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
 
         return (
           <Pressable key={route.key} onPress={onPress} style={styles.item}>
-            {tab.route === "profile" && isActive ? (
-              <FontAwesome name="user" size={19} color={colors.primary} />
-            ) : (
-              <Icon name={tab.icon as any} size={19} color={isActive ? colors.primary : "#8A8A8A"} />
-            )}
+            <MaterialCommunityIcons
+              name={(isActive ? tab.activeIcon : tab.icon) as any}
+              size={20}
+              color={isActive ? colors.primary : "#8A8A8A"}
+            />
             <Text style={[styles.label, isActive && styles.labelActive]}>
               {tab.name}
             </Text>
