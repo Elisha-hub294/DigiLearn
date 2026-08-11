@@ -2,14 +2,14 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    useWindowDimensions,
-    View,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import SettingsRow from "../components/ui/SettingsRow";
 import SettingsSection from "../components/ui/SettingsSection";
@@ -20,6 +20,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
+  const maxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   const [pushEnabled, setPushEnabled] = useState(true);
   const [remindersEnabled, setRemindersEnabled] = useState(true);
@@ -29,8 +30,9 @@ export default function SettingsScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.container,
-          { paddingHorizontal: horizontalPadding },
+          { paddingHorizontal: horizontalPadding, maxWidth },
         ]}
+        style={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
@@ -133,6 +135,7 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.white },
+  scroll: { alignSelf: "center", width: "100%" },
   container: { paddingTop: spacing.xxl },
   headerRow: {
     flexDirection: "row",
