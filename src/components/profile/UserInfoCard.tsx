@@ -1,61 +1,7 @@
 import { Feather } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
-import { colors, spacing } from "../../constants/theme";
-const rows = [
-  {
-    icon: "calendar" as const,
-    label: "Joined",
-    value: "Joined May 2026",
-    color: "#4F7DF2",
-  },
-  {
-    icon: "book-open" as const,
-    label: "School",
-    value: "Nsambya Secondary School",
-    color: "#4CAF50",
-  },
-  {
-    icon: "map-pin" as const,
-    label: "Location",
-    value: "Makindye Division, Kampala",
-    color: "#D56A4D",
-  },
-];
-export function UserInfoCard() {
-  return (
-    <View style={s.card}>
-      {rows.map((row, i) => (
-        <View key={row.label} style={[s.row, i < rows.length - 1 && s.border]}>
-          <View style={[s.icon, { backgroundColor: row.color }]}>
-            <Feather name={row.icon} size={18} color="#fff" />
-          </View>
-          <View style={s.copy}>
-            <Text style={s.label}>{row.label}</Text>
-            <Text style={s.value}>{row.value}</Text>
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-}
-const s = StyleSheet.create({
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 10,
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.border,
-  },
-  row: { minHeight: 70, flexDirection: "row", alignItems: "center", gap: 13 },
-  border: { borderBottomWidth: 1, borderBottomColor: "#F0F0F0" },
-  icon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  copy: { flex: 1 },
-  label: { fontSize: 12, color: "#777", fontWeight: "600", marginBottom: 2 },
-  value: { fontSize: 15, color: "#1B1B1B" },
-});
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { colors, shadows, spacing } from "../../constants/theme";
+import type { UserProfile } from "../../services/userProfile";
+const joinedLabel = (value: any) => { const date = value?.toDate?.() ?? (value ? new Date(value) : null); return date && !Number.isNaN(date.getTime()) ? `Joined ${date.toLocaleDateString(undefined, { month: "short", year: "numeric" })}` : "Joined recently"; };
+export function UserInfoCard({ profile }: { profile: UserProfile }) { const rows = [{ icon: "calendar", label: "Joined", value: joinedLabel(profile.joinedAt), color: "#4F7DF2" }, { icon: "award", label: "Level", value: profile.level || "Set Level", color: "#8B5CF6", action: !profile.level }, { icon: "book-open", label: "School", value: profile.school || "Set School", color: "#4CAF50", action: !profile.school }]; return <View style={s.card}>{rows.map((row, i) => <Pressable key={row.label} disabled={!row.action} accessibilityRole={row.action ? "button" : undefined} accessibilityLabel={row.action ? row.value : row.label} style={[s.row, i < rows.length - 1 && s.border]}><View style={[s.icon, { backgroundColor: row.color }]}><Feather name={row.icon as any} size={18} color="#fff" /></View><View style={s.copy}><Text style={s.label}>{row.label}</Text><Text numberOfLines={1} style={[s.value, row.action && s.action]}>{row.value}</Text></View></Pressable>)}</View>; }
+const s = StyleSheet.create({ card: { backgroundColor: colors.white, borderRadius: 18, paddingHorizontal: spacing.lg, ...shadows.soft }, row: { minHeight: 70, flexDirection: "row", alignItems: "center", gap: 13 }, border: { borderBottomWidth: 1, borderBottomColor: "#F0F0F0" }, icon: { width: 38, height: 38, borderRadius: 12, alignItems: "center", justifyContent: "center" }, copy: { flex: 1, minWidth: 0 }, label: { fontSize: 12, color: "#777", fontWeight: "600", marginBottom: 2 }, value: { fontSize: 15, color: "#1B1B1B" }, action: { color: colors.primary, fontWeight: "600" } });

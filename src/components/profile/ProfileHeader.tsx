@@ -1,121 +1,26 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, { ZoomIn } from "react-native-reanimated";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
-export function ProfileHeader() {
-  return (
-    <View style={s.card}>
-      <Pressable
-        accessibilityLabel="Profile options"
-        accessibilityRole="button"
-        style={s.menu}
-      >
-        <Feather name="more-horizontal" size={24} color="#606060" />
-      </Pressable>
-      <Animated.View
-        entering={ZoomIn.delay(150).duration(480)}
-        style={s.avatarWrap}
-      >
-        <Image
-          source={require("../../../assets/images/tr-default.png")}
-          style={s.avatar}
-          contentFit="cover"
-          accessibilityLabel="User profile picture"
-        />
-        <Pressable
-          accessibilityLabel="Edit profile picture"
-          accessibilityRole="button"
-          style={s.camera}
-        >
-          <Feather name="camera" size={14} color="#fff" />
-        </Pressable>
-      </Animated.View>
-      <Text allowFontScaling style={s.name}>
-        User Name
-      </Text>
-      <Text allowFontScaling style={s.email}>
-        user@email.com
-      </Text>
-      <View style={s.badge}>
-        <Text style={s.badgeText}>Student Account</Text>
-      </View>
-      <Pressable
-        accessibilityLabel="Edit profile"
-        accessibilityRole="button"
-        style={s.edit}
-      >
-        <Feather name="edit-2" size={15} color={colors.primary} />
-        <Text style={s.editText}>Edit profile</Text>
-      </Pressable>
+import { useEffect, useState } from "react";
+import { colors, shadows } from "../../constants/theme";
+import type { UserProfile } from "../../services/userProfile";
+
+const fallbackAvatar = require("../../../assets/images/tr-default.png");
+export function ProfileHeader({ profile, photoURL }: { profile: UserProfile; photoURL?: string | null }) {
+  const router = useRouter();
+  const requestedUri = photoURL || profile.photoURL;
+  const [uri, setUri] = useState(requestedUri);
+  useEffect(() => setUri(requestedUri), [requestedUri]);
+  return <View style={s.wrap}>
+    <View style={s.banner}><Pressable onPress={() => router.push("/settings")} accessibilityRole="button" accessibilityLabel="Open settings" style={s.settings}><Feather name="settings" size={20} color="#F8FAFC" /></Pressable></View>
+    <View style={s.sheet}>
+      <View style={s.avatarWrap}><Image source={uri ? { uri } : fallbackAvatar} placeholder={fallbackAvatar} onError={() => setUri("")} style={s.avatar} contentFit="cover" accessibilityLabel="User profile picture" /></View>
+      <Text style={s.name}>{profile.name}</Text>
+      {profile.bio ? <Text style={s.bio}>{profile.bio}</Text> : <Pressable accessibilityRole="button" accessibilityLabel="Add your bio" hitSlop={8}><Text style={s.addBio}>✎ Talk about yourself</Text></Pressable>}
     </View>
-  );
+  </View>;
 }
 const s = StyleSheet.create({
-  card: {
-    backgroundColor: colors.white,
-    borderRadius: 10,
-    padding: spacing.lg,
-    alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: colors.border,
-  },
-  menu: {
-    position: "absolute",
-    right: 12,
-    top: 12,
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarWrap: {
-    width: 118,
-    height: 118,
-    borderRadius: 59,
-    padding: 3,
-    backgroundColor: "#fff",
-    ...shadows.soft,
-    marginTop: 8,
-    marginBottom: 14,
-  },
-  avatar: { width: "100%", height: "100%", borderRadius: 56 },
-  camera: {
-    position: "absolute",
-    right: -2,
-    bottom: -2,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "#fff",
-  },
-  name: {
-    fontSize: 25,
-    lineHeight: 37,
-    fontWeight: "500",
-    color: "#111",
-    textAlign: "center",
-  },
-  email: { fontSize: 15, lineHeight: 22, color: "#777", marginTop: 3 },
-  badge: {
-    marginTop: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: radius.pill,
-    backgroundColor: "#3B82F6",
-  },
-  badgeText: { color: "#fff", fontSize: 13, fontWeight: "500" },
-  edit: {
-    minHeight: 44,
-    marginTop: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    paddingHorizontal: 12,
-  },
-  editText: { color: colors.primary, fontSize: 14, fontWeight: "700" },
+  wrap: { overflow: "hidden", borderRadius: 24, backgroundColor: colors.white, ...shadows.soft }, banner: { height: 132, backgroundColor: colors.primary }, settings: { position: "absolute", right: 14, top: 13, width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(0, 28, 81, 0.48)", alignItems: "center", justifyContent: "center" }, sheet: { alignItems: "center", paddingHorizontal: 24, paddingBottom: 24, minHeight: 130 }, avatarWrap: { width: 112, height: 112, borderRadius: 56, backgroundColor: "#fff", padding: 4, marginTop: -57, marginBottom: 10, ...shadows.card }, avatar: { width: "100%", height: "100%", borderRadius: 52 }, name: { fontSize: 25, fontWeight: "700", color: colors.dark, textAlign: "center" }, bio: { color: colors.subtitle, lineHeight: 20, fontSize: 14, textAlign: "center", marginTop: 7 }, addBio: { color: colors.primary, fontSize: 14, marginTop: 8, fontWeight: "600" },
 });
