@@ -52,18 +52,27 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     marginBottom: spacing.md,
     maxWidth: "100%",
+    minWidth: 0,
+    flexShrink: 1,
   },
   userWrap: {
     justifyContent: "flex-end",
+    alignSelf: "flex-end",
+    flexShrink: 1,
+    minWidth: 0,
   },
   assistantWrap: {
     justifyContent: "flex-start",
+    alignSelf: "flex-start",
+    flexShrink: 1,
+    minWidth: 0,
   },
   avatarWrap: {
     width: 32,
     height: 32,
     overflow: "hidden",
     marginRight: spacing.sm,
+    flexShrink: 0,
   },
   avatar: {
     width: 32,
@@ -74,12 +83,17 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderRadius: 22,
     maxWidth: "80%",
+    minWidth: 120,
+    flexShrink: 0,
+    flexGrow: 1,
+    alignSelf: "flex-start",
+    overflow: "hidden",
   },
   userBubble: {
     backgroundColor: colors.primary,
   },
   assistantBubble: {
-    backgroundColor: "#ededf5",
+    backgroundColor: "#F7F8FC",
   },
   userText: {
     color: colors.white,
@@ -93,10 +107,14 @@ const markdownStyles: Record<string, any> = {
     color: "#2e2e2e",
     fontSize: 14,
     lineHeight: 22,
+    flexShrink: 1,
+    minWidth: 0,
   },
   paragraph: {
     marginTop: 0,
     marginBottom: 6,
+    flexShrink: 1,
+    minWidth: 0,
   },
   strong: {
     fontWeight: "600",
