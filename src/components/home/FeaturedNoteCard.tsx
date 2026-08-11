@@ -27,6 +27,7 @@ type TopicalNote = {
   description?: string;
   subject?: string | string[];
   author?: string;
+  preview?: string;
   document?: string;
   book?: string | string[];
   updatedAt?: any;
@@ -45,6 +46,7 @@ type FeaturedNoteCardProps = {
     description?: string;
     subject?: string | string[];
     author?: string;
+    preview?: string;
     document?: string;
     book?: string | string[];
     updatedAt?: any;
@@ -368,7 +370,16 @@ const FeaturedNoteItem = ({
             } as any)
           }
         >
-          {note.document ? (
+          {note.preview ? (
+            <Image
+              source={{ uri: note.preview }}
+              style={styles.preview}
+              contentFit="cover"
+              contentPosition="top"
+              transition={150}
+              placeholder={require("../../../assets/images/pdf-preview.jpeg")}
+            />
+          ) : note.document ? (
             <PdfPreview uri={note.document} style={styles.preview} />
           ) : (
             <Image
@@ -381,7 +392,7 @@ const FeaturedNoteItem = ({
         </Pressable>
 
         <View style={styles.content}>
-          {!hideAvatar && (
+          {/* {!hideAvatar && (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Open ${subjectName} profile`}
@@ -399,7 +410,7 @@ const FeaturedNoteItem = ({
                 contentFit="cover"
               />
             </Pressable>
-          )}
+          )} */}
           <View
             style={[
               styles.contentData,
