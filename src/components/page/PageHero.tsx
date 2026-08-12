@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 34,
     lineHeight: 40,
-    fontWeight: "800",
+    fontWeight: "600",
   },
   subtitle: {
     color: "rgba(255, 255, 255, 0.8)",

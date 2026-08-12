@@ -12,13 +12,13 @@ import {
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
+import { getHorizontalPadding } from "../../constants/layout";
 import { FALLBACK_COVER } from "../book/bookTypes";
 import { BottomActionBar } from "./BottomActionBar";
 import { OverviewSection } from "./OverviewSection";
 import { PageHero } from "./PageHero";
 import { DEFAULT_SUBJECT_AVATAR, SourceBook, TopicalNote } from "./pageTypes";
 import { SimilarPages } from "./SimilarPages";
-import { getHorizontalPadding } from "../../constants/layout";
 import { SourceBooks } from "./SourceBooks";
 import { SubjectBadge } from "./SubjectBadge";
 
@@ -123,6 +123,8 @@ export function PagePreviewScreen() {
   const [bookmarked, setBookmarked] = useState(false);
 
   const { width } = useWindowDimensions();
+  const horizontalPadding = getHorizontalPadding(width);
+  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   useEffect(() => {
     let active = true;
@@ -317,34 +319,47 @@ export function PagePreviewScreen() {
   if (loading || !note) {
     return (
       <View
-        style={styles.loadingContainer}
+        style={[styles.loadingContainer, { alignItems: "center" }]}
         accessibilityLabel="Loading page preview"
       >
-        <View style={styles.skeletonHero} />
-        <View style={styles.skeletonSheet}>
-          <View style={styles.skeletonAvatarRow}>
-            <View style={styles.skeletonAvatar} />
-            <View style={styles.skeletonHeaderCopy}>
-              <View style={styles.skeletonTitle} />
-              <View style={styles.skeletonSub} />
+        <View
+          style={[
+            styles.contentContainer,
+            {
+              maxWidth: contentMaxWidth,
+              paddingHorizontal: horizontalPadding,
+            },
+          ]}
+        >
+          <View style={styles.skeletonHero} />
+          <View style={styles.skeletonSheet}>
+            <View style={styles.skeletonAvatarRow}>
+              <View style={styles.skeletonAvatar} />
+              <View style={styles.skeletonHeaderCopy}>
+                <View style={styles.skeletonTitle} />
+                <View style={styles.skeletonSub} />
+              </View>
             </View>
+            <View style={styles.skeletonLine} />
+            <View style={styles.skeletonLine} />
+            <View style={styles.skeletonLineShort} />
           </View>
-          <View style={styles.skeletonLine} />
-          <View style={styles.skeletonLine} />
-          <View style={styles.skeletonLineShort} />
         </View>
         <ActivityIndicator style={styles.loader} color="#6C4DD9" size="large" />
       </View>
     );
   }
 
-  const horizontalPadding = getHorizontalPadding(width);
-  const contentMaxWidth = Math.min(1100, width);
-
   const goBack = () => {
-    const shouldReturnToPages = source === "pages" || returnTo === "/pages";
+    // If an explicit returnTo is provided, always use it (highest priority).
+    // Only fall back to /pages when returnTo is explicitly /pages,
+    // or there's no returnTo at all and source is "pages".
+    if (returnTo && returnTo !== "/pages") {
+      router.replace(returnTo as any);
+      return;
+    }
 
-    if (shouldReturnToPages) {
+    if (returnTo === "/pages" || source === "pages") {
       router.replace({
         pathname: "/pages",
         params: {
@@ -390,13 +405,16 @@ export function PagePreviewScreen() {
     <Animated.View
       key={id}
       entering={FadeIn.duration(260)}
-      style={styles.screen}
+      style={[styles.screen, { alignItems: "center" }]}
     >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 }]}
-      >
-        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+      <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: 120, paddingHorizontal: horizontalPadding },
+          ]}
+        >
           {/* Hero Section */}
           <PageHero note={note} dateText={dateFormatted} onBack={goBack} />
 
@@ -405,7 +423,7 @@ export function PagePreviewScreen() {
             entering={FadeInUp.duration(430)}
             style={[
               styles.sheet,
-              { paddingHorizontal: 24 + horizontalPadding },
+              { paddingHorizontal: 24 },
             ]}
           >
             {/* Header with Avatar & Page Information */}
@@ -451,12 +469,20 @@ export function PagePreviewScreen() {
               }}
             />
           </Animated.View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
 
       {/* Fixed Bottom Action Bar */}
       <View style={styles.actionContainer}>
-        <View style={[styles.actionContent, { maxWidth: contentMaxWidth }]}>
+        <View
+          style={[
+            styles.actionContent,
+            {
+              maxWidth: contentMaxWidth,
+              paddingHorizontal: horizontalPadding,
+            },
+          ]}
+        >
           <BottomActionBar
             bookmarked={bookmarked}
             onBookmark={() => setBookmarked((prev) => !prev)}
@@ -480,6 +506,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   contentContainer: {
+    flex: 1,
     width: "100%",
   },
   sheet: {
@@ -489,6 +516,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     backgroundColor: "#FFFFFF",
     minHeight: 520,
+    width: "100%"
   },
   actionContainer: {
     position: "absolute",

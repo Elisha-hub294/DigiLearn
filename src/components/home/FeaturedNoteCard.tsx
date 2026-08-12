@@ -2,7 +2,7 @@ import { Feather as Icon, Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import { Image } from "expo-image";
 import * as IntentLauncher from "expo-intent-launcher";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -315,6 +315,7 @@ const FeaturedNoteItem = ({
   const { user, profile } = useProfile();
   const [hovered, setHovered] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const title = note.title ?? "Featured note";
   const description =
     (note.description?.length ?? 0) > 100
@@ -381,7 +382,7 @@ const FeaturedNoteItem = ({
               params: {
                 id: note.id,
                 source: previewSource,
-                returnTo: previewSource === "pages" ? "/pages" : undefined,
+                returnTo: pathname,
                 title: routeTitle,
               },
             } as any)

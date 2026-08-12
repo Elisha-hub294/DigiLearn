@@ -1,12 +1,9 @@
 import { Feather as Icon, Ionicons } from "@expo/vector-icons";
-import * as FileSystem from "expo-file-system";
 import { Image } from "expo-image";
-import * as IntentLauncher from "expo-intent-launcher";
 import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
 import {
-  Linking,
   Platform,
   Pressable,
   Animated as RNAnimated,
@@ -79,34 +76,6 @@ const normalizeTeacherPost = (doc: {
     hasPdf,
     document,
   } satisfies TeacherPost;
-};
-
-const openPdfDocument = async (url: string) => {
-  if (!url) return;
-
-  if (Platform.OS === "android") {
-    try {
-      const filename = url.split("/").pop()?.split("?")[0] || "document.pdf";
-      const cacheDir = (FileSystem as any).cacheDirectory || "";
-      const fileUri = `${cacheDir}${Date.now()}_${filename}`;
-
-      const downloadResult = await FileSystem.downloadAsync(url, fileUri);
-      const contentUri = await FileSystem.getContentUriAsync(
-        downloadResult.uri,
-      );
-
-      await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
-        data: contentUri,
-        type: "application/pdf",
-        flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
-      });
-    } catch (error) {
-      console.error("Error launching PDF intent:", error);
-      Linking.openURL(url).catch(console.error);
-    }
-  } else {
-    Linking.openURL(url).catch(console.error);
-  }
 };
 
 const teacherPostCollections = [
@@ -337,7 +306,13 @@ const TeacherPostItem = ({
             style={styles.previewWrap}
             onPress={() => {
               if (postItem.document) {
-                openPdfDocument(postItem.document);
+                router.push({
+                  pathname: "/pdf-reader",
+                  params: {
+                    uri: encodeURIComponent(postItem.document),
+                    title: `Document by ${rawTeacherName}`,
+                  },
+                });
               }
             }}
           >

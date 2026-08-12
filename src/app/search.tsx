@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { useCallback } from "react";
 import {
     FlatList,
@@ -39,6 +39,7 @@ const CATEGORIES: SearchCategory[] = [
 export default function SearchScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
+  const pathname = usePathname();
 
   const {
     query,
@@ -114,7 +115,7 @@ export default function SearchScreen() {
           } else {
             router.push({
               pathname: "/page-preview",
-              params: { id: item.id },
+              params: { id: item.id, returnTo: pathname },
             } as never);
           }
           break;
@@ -123,12 +124,12 @@ export default function SearchScreen() {
         default:
           router.push({
             pathname: "/page-preview",
-            params: { id: item.id },
+            params: { id: item.id, returnTo: pathname },
           } as never);
           break;
       }
     },
-    [addRecentSearch, query, router],
+    [addRecentSearch, query, router, pathname],
   );
 
   const handleChipSelect = useCallback(
