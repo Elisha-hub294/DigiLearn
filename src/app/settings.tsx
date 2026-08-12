@@ -99,7 +99,7 @@ export default function SettingsScreen() {
           <SettingsRow
             icon="headphones"
             title="Help and Support"
-            onPress={() => {}}
+            onPress={() => router.push("/help" as never)}
           />
           <SettingsRow
             icon="file-text"
