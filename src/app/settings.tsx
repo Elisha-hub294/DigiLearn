@@ -109,7 +109,7 @@ export default function SettingsScreen() {
           <SettingsRow
             icon="info"
             title="About"
-            onPress={() => {}}
+            onPress={() => router.push("/about" as never)}
             showSeparator={false}
           />
         </SettingsSection>
