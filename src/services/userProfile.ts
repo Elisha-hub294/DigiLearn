@@ -1,5 +1,5 @@
 import { User } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { arrayRemove, arrayUnion, doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
 export type UserProfile = {
@@ -17,6 +17,24 @@ export type UserProfile = {
   "saved-lessons": string[];
   "saved-posts": string[];
 };
+
+export type SavedItemType = "saved-pages" | "saved-books" | "saved-lessons" | "saved-posts";
+
+export async function toggleSavedItem(
+  userId: string,
+  itemType: SavedItemType,
+  itemId: string,
+  isCurrentlySaved: boolean
+) {
+  const userRef = doc(db, "users", userId);
+  await setDoc(
+    userRef,
+    {
+      [itemType]: isCurrentlySaved ? arrayRemove(itemId) : arrayUnion(itemId),
+    },
+    { merge: true }
+  );
+}
 
 export const nameFromEmail = (email?: string | null) => {
   const localPart = (email ?? "").split("@")[0].replace(/[._-]+/g, " ").trim();
@@ -60,3 +78,4 @@ export async function ensureUserProfile(user: User) {
   });
   if (Object.keys(missing).length) await setDoc(ref, missing, { merge: true });
 }
+

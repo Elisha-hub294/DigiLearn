@@ -1,4 +1,4 @@
-import { Feather as Icon } from "@expo/vector-icons";
+import { Feather as Icon, Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import { Image } from "expo-image";
 import * as IntentLauncher from "expo-intent-launcher";
@@ -18,6 +18,8 @@ import {
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
+import { toggleSavedItem } from "../../services/userProfile";
 import PdfPreview from "./PdfPreview";
 
 type TeacherPost = {
@@ -278,6 +280,7 @@ const TeacherPostItem = ({
   defaultUserAvatar: string | null;
   defaultPdfImage: string | null;
 }) => {
+  const { user, profile } = useProfile();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -287,6 +290,20 @@ const TeacherPostItem = ({
   const description =
     postItem.description ?? "No teacher update available yet.";
   const showPreview = postItem.hasPdf ?? true;
+
+  const isSaved = Boolean(user && profile?.["saved-posts"]?.includes(postItem.id));
+
+  const handleToggleSave = async () => {
+    if (!user) {
+      router.push("/welcome");
+      return;
+    }
+    try {
+      await toggleSavedItem(user.uid, "saved-posts", postItem.id, isSaved);
+    } catch (err) {
+      console.error("Failed to toggle saved teacher post:", err);
+    }
+  };
 
   // Resolve Teacher Avatar from DB or Fallback
   const resolvedAvatar =
@@ -386,7 +403,26 @@ const TeacherPostItem = ({
         <Text style={styles.caption}>{description}</Text>
 
         <View style={styles.actions}>
-          <Action icon="bookmark" label="Save" />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={isSaved ? "Remove bookmark" : "Save post"}
+            style={styles.actionItem}
+            onPress={handleToggleSave}
+          >
+            <Ionicons
+              name={isSaved ? "bookmark" : "bookmark-outline"}
+              size={15}
+              color={isSaved ? colors.primary : colors.subtitle}
+            />
+            <Text
+              style={[
+                styles.actionLabel,
+                isSaved && { color: colors.primary, fontWeight: "700" },
+              ]}
+            >
+              {isSaved ? "Saved" : "Save"}
+            </Text>
+          </Pressable>
           <Action icon="share-2" label="Share" />
         </View>
       </Pressable>

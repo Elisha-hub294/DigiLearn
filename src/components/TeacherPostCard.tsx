@@ -1,9 +1,12 @@
-import { Feather as Icon } from "@expo/vector-icons";
+import { Feather as Icon, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { subjectColors, type TeacherPost } from "../constants/homeData";
 import { colors, radius, spacing } from "../constants/theme";
+import { useProfile } from "../contexts/ProfileContext";
+import { toggleSavedItem } from "../services/userProfile";
 
 export const TeacherPostCard = ({
   post,
@@ -14,11 +17,27 @@ export const TeacherPostCard = ({
   hidePreview?: boolean;
   hideActions?: boolean;
 }) => {
+  const router = useRouter();
+  const { user, profile } = useProfile();
   const accent = subjectColors[post.subject] ?? "#3B82F6";
   const contentStyle = [
     styles.content,
     post.type === "announcement" && styles.announcementContent,
   ];
+
+  const isSaved = Boolean(user && profile?.["saved-posts"]?.includes(post.id));
+
+  const handleToggleSave = async () => {
+    if (!user) {
+      router.push("/welcome");
+      return;
+    }
+    try {
+      await toggleSavedItem(user.uid, "saved-posts", post.id, isSaved);
+    } catch (err) {
+      console.error("Failed to toggle saved post:", err);
+    }
+  };
 
   return (
     <Animated.View entering={FadeInUp.duration(500)} style={styles.card}>
@@ -67,8 +86,16 @@ export const TeacherPostCard = ({
       )}
       {!hideActions && (
         <View style={styles.footer}>
-          <Pressable style={styles.action} accessibilityLabel="Save post">
-            <Icon name="bookmark" size={15} color={colors.subtitle} />
+          <Pressable
+            style={styles.action}
+            accessibilityLabel={isSaved ? "Remove bookmark" : "Save post"}
+            onPress={handleToggleSave}
+          >
+            <Ionicons
+              name={isSaved ? "bookmark" : "bookmark-outline"}
+              size={16}
+              color={isSaved ? colors.primary : colors.subtitle}
+            />
           </Pressable>
         </View>
       )}
