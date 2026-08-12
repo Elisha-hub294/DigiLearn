@@ -9,6 +9,7 @@ export type UserProfile = {
   bio: string;
   level: string;
   school: string;
+  gender: string;
   subjects: string[];
   joinedAt?: unknown;
   "saved-pages": string[];
@@ -29,6 +30,7 @@ export const defaultUserProfile = (user: User): UserProfile => ({
   bio: "",
   level: "",
   school: "",
+  gender: "",
   subjects: [],
   "saved-pages": [],
   "saved-books": [],
@@ -53,7 +55,7 @@ export async function ensureUserProfile(user: User) {
   if (!current.email && fallback.email) missing.email = fallback.email;
   if (!current.name && fallback.name) missing.name = fallback.name;
   if (!current.photoURL && fallback.photoURL) missing.photoURL = fallback.photoURL;
-  ["bio", "level", "school", "subjects", "saved-pages", "saved-books", "saved-lessons", "saved-posts"].forEach((key) => {
+  ["bio", "level", "school", "gender", "subjects", "saved-pages", "saved-books", "saved-lessons", "saved-posts"].forEach((key) => {
     if (current[key] === undefined) missing[key] = fallback[key as keyof UserProfile];
   });
   if (Object.keys(missing).length) await setDoc(ref, missing, { merge: true });

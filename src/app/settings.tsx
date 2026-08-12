@@ -49,7 +49,7 @@ export default function SettingsScreen() {
         {/* Account Section */}
         <Text style={styles.sectionTitle}>Account</Text>
         <SettingsSection>
-          <SettingsRow icon="user" title="My Profile" onPress={() => {}} />
+          <SettingsRow icon="user" title="My Profile" onPress={() => router.push("/my-profile" as never)} />
           <SettingsRow
             icon="settings"
             title="My Preferences"
