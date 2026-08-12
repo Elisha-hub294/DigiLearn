@@ -1,6 +1,6 @@
 import { ImageSourcePropType } from "react-native";
 
-const FALLBACK_THUMBNAIL = require("../../assets/images/thumb-1.jpeg");
+const FALLBACK_THUMBNAIL = require("../../assets/images/thumb-default.jpeg");
 
 /**
  * Extracts YouTube video ID from various YouTube URL formats.
@@ -31,7 +31,9 @@ export function extractYoutubeId(url?: string): string | null {
   if (vMatch?.[1]) return vMatch[1];
 
   // 6. img.youtube.com or i.ytimg.com URL: img.youtube.com/vi/VIDEO_ID/...
-  const ytImgMatch = trimmed.match(/(?:img\.youtube\.com|i\.ytimg\.com)\/vi\/([^/]+)/);
+  const ytImgMatch = trimmed.match(
+    /(?:img\.youtube\.com|i\.ytimg\.com)\/vi\/([^/]+)/,
+  );
   if (ytImgMatch?.[1]) return ytImgMatch[1];
 
   return null;
@@ -41,7 +43,10 @@ export function extractYoutubeId(url?: string): string | null {
  * Resolves the best available remote image URL for a video.
  * Checks thumbnail parameter first, then link parameter for YouTube video ID.
  */
-export function getVideoThumbnailUrl(thumbnail?: string, link?: string): string {
+export function getVideoThumbnailUrl(
+  thumbnail?: string,
+  link?: string,
+): string {
   // 1. First inspect thumbnail string
   if (thumbnail && typeof thumbnail === "string") {
     const trimmed = thumbnail.trim();
@@ -87,7 +92,7 @@ export function getVideoThumbnailUrl(thumbnail?: string, link?: string): string 
  */
 export function resolveVideoImageSource(
   thumbnail?: string | number,
-  link?: string
+  link?: string,
 ): ImageSourcePropType {
   if (typeof thumbnail === "number") {
     return thumbnail;
@@ -95,7 +100,7 @@ export function resolveVideoImageSource(
 
   const url = getVideoThumbnailUrl(
     typeof thumbnail === "string" ? thumbnail : undefined,
-    link
+    link,
   );
 
   if (url) {

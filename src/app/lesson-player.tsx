@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -45,7 +45,7 @@ function getYoutubeEmbedUrl(rawUrl?: string) {
 
 function resolveImageSource(source?: string) {
   if (!source) {
-    return require("../../assets/images/thumb-1.jpeg");
+    return require("../../assets/images/thumb-default.jpeg");
   }
   if (
     typeof source === "string" &&
@@ -53,7 +53,7 @@ function resolveImageSource(source?: string) {
   ) {
     return { uri: source };
   }
-  return require("../../assets/images/thumb-1.jpeg");
+  return require("../../assets/images/thumb-default.jpeg");
 }
 
 export default function LessonPlayerScreen() {

@@ -92,7 +92,7 @@ export const BookCarousel = () => {
               rating: formatRating(ratingValue),
               image: pickImage(
                 data.image || data.coverImage || data.cover || data.thumbnail,
-                require("../../../assets/images/lib.jpeg"),
+                require("../../../assets/images/bookcover-default.jpeg"),
               ),
             } satisfies BookItem;
           })
@@ -234,5 +234,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   rating: { color: "#c59211ff", fontSize: 12, fontWeight: "700" },
-
 });

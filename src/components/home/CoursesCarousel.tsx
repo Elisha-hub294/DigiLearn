@@ -3,16 +3,16 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    NativeScrollEvent,
-    NativeSyntheticEvent,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, radius, spacing } from "../../constants/theme";
@@ -32,7 +32,7 @@ const CourseCardImage = ({
 }) => {
   const primarySource = useMemo(
     () => resolveVideoImageSource(thumbnail, link),
-    [thumbnail, link]
+    [thumbnail, link],
   );
   const [source, setSource] = useState(primarySource);
 
@@ -46,7 +46,7 @@ const CourseCardImage = ({
       style={styles.image}
       contentFit="cover"
       onError={() => {
-        setSource(require("../../../assets/images/thumb-1.jpeg"));
+        setSource(require("../../../assets/images/thumb-default.jpeg"));
       }}
     />
   );
