@@ -53,7 +53,7 @@ export default function SettingsScreen() {
           <SettingsRow
             icon="settings"
             title="My Preferences"
-            onPress={() => {}}
+            onPress={() => router.push("/preferences" as never)}
           />
           <SettingsRow
             icon="clock"
