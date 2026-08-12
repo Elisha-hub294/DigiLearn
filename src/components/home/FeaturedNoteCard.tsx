@@ -152,13 +152,13 @@ export const FeaturedNoteCard = ({
       );
       const filteredNotes = subject
         ? allNotes.filter((note) => {
-            const noteSubjects = Array.isArray(note.subject)
-              ? note.subject
-              : [note.subject ?? ""];
-            return noteSubjects.some(
-              (entry) => normalizeKey(entry) === normalizeKey(subject),
-            );
-          })
+          const noteSubjects = Array.isArray(note.subject)
+            ? note.subject
+            : [note.subject ?? ""];
+          return noteSubjects.some(
+            (entry) => normalizeKey(entry) === normalizeKey(subject),
+          );
+        })
         : allNotes;
 
       if (providedNotes) {
@@ -455,17 +455,9 @@ const FeaturedNoteItem = ({
           >
             <Ionicons
               name={isSaved ? "bookmark" : "bookmark-outline"}
-              size={15}
+              size={20}
               color={isSaved ? colors.primary : colors.subtitle}
             />
-            <Text
-              style={[
-                styles.actionLabel,
-                isSaved && { color: colors.primary, fontWeight: "700" },
-              ]}
-            >
-              {isSaved ? "Saved" : "Save"}
-            </Text>
           </Pressable>
           <Action icon="share-2" label="Share" />
         </View>
@@ -476,8 +468,7 @@ const FeaturedNoteItem = ({
 
 const Action = ({ icon, label }: { icon: any; label: string }) => (
   <View style={styles.actionItem}>
-    <Icon name={icon} size={15} color={colors.subtitle} />
-    <Text style={styles.actionLabel}>{label}</Text>
+    <Icon name={icon} size={20} color={colors.subtitle} />
   </View>
 );
 
@@ -492,9 +483,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
+    borderRadius: 10
   },
   cardHovered: {
-    backgroundColor: "#f0f0f0ff",
+    backgroundColor: "#e8efffff",
   },
   menuButton: {
     width: 36,
@@ -517,6 +509,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
     marginBottom: spacing.xs,
+    borderRadius: 10
   },
   preview: {
     width: "100%",
@@ -529,7 +522,6 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: "row",
     paddingHorizontal: spacing.xs,
-    paddingBottom: spacing.sm,
   },
   contentData: { flex: 1 },
   contentDataNoAvatar: { marginLeft: 0 },
@@ -545,7 +537,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     flexWrap: "wrap",
     gap: 8,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
     paddingBottom: spacing.xs,
   },
   actionItem: {
@@ -553,9 +545,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 3,
     borderRadius: 999,
-    backgroundColor: colors.background,
   },
   actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
   skeletonBox: { backgroundColor: "#EFEFEF", borderRadius: radius.sm },

@@ -5,6 +5,7 @@ import {
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -205,8 +206,41 @@ export const TopicalNotesSlider = () => {
     }, RESUME_DELAY_MS);
   }, [startAutoScroll]);
 
+  const scrollByStep = useCallback(
+    (direction: 1 | -1) => {
+      // Pause auto-scroll and resume after delay (same as user drag)
+      stopAutoScroll();
+      isUserScrolling.current = true;
+      offsetRef.current += direction * itemStep;
+      listRef.current?.scrollToOffset({
+        offset: offsetRef.current,
+        animated: true,
+      });
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = setTimeout(() => {
+        isUserScrolling.current = false;
+        startAutoScroll();
+      }, RESUME_DELAY_MS);
+    },
+    [itemStep, stopAutoScroll, startAutoScroll],
+  );
+
+  const isWeb = Platform.OS === "web";
+
   return (
-    <Animated.View entering={FadeInUp.duration(460)}>
+    <Animated.View entering={FadeInUp.duration(460)} style={styles.wrapper}>
+      {/* Left arrow — web only */}
+      {isWeb && (
+        <Pressable
+          style={[styles.arrow, styles.arrowLeft]}
+          onPress={() => scrollByStep(-1)}
+          accessibilityRole="button"
+          accessibilityLabel="Scroll left"
+        >
+          <Text style={styles.arrowText}>&#8249;</Text>
+        </Pressable>
+      )}
+
       <FlatList
         ref={listRef}
         horizontal
@@ -243,13 +277,33 @@ export const TopicalNotesSlider = () => {
         )}
         contentContainerStyle={styles.list}
       />
+
+      {/* Right arrow — web only */}
+      {isWeb && (
+        <Pressable
+          style={[styles.arrow, styles.arrowRight]}
+          onPress={() => scrollByStep(1)}
+          accessibilityRole="button"
+          accessibilityLabel="Scroll right"
+        >
+          <Text style={styles.arrowText}>&#8250;</Text>
+        </Pressable>
+      )}
     </Animated.View>
   );
 };
 
+const ARROW_SIZE = 34;
+
 const styles = StyleSheet.create({
-  list: {
+  wrapper: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.xl,
+  },
+  list: {
+    flexGrow: 1,
+    flexShrink: 1,
   },
   card: {
     marginRight: CARD_GAP,
@@ -266,4 +320,31 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "500",
   },
+  arrow: {
+    width: ARROW_SIZE,
+    height: ARROW_SIZE,
+    borderRadius: ARROW_SIZE / 2,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.primary,
+    flexShrink: 0,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  arrowLeft: {
+    marginRight: spacing.sm,
+  },
+  arrowRight: {
+    marginLeft: spacing.sm,
+  },
+  arrowText: {
+    fontSize: 22,
+    lineHeight: 24,
+    color: colors.white,
+    fontWeight: "700",
+    marginTop: -5,
+    userSelect: "none",
+  } as any,
 });

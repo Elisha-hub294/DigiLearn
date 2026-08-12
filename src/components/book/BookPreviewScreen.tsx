@@ -92,6 +92,8 @@ export function BookPreviewScreen() {
   const [favourite, setFavourite] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const { width } = useWindowDimensions();
+  const horizontalPadding = getHorizontalPadding(width);
+  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
   const [gradient] = useState(
     () => gradients[Math.floor(Math.random() * gradients.length)],
   );
@@ -193,19 +195,26 @@ export function BookPreviewScreen() {
   if (loading || !book)
     return (
       <View style={styles.loading} accessibilityLabel="Loading book preview">
-        <View style={styles.skeletonHero} />
-        <View style={styles.skeletonSheet}>
-          <View style={styles.skeletonTitle} />
-          <View style={styles.skeletonLine} />
-          <View style={styles.skeletonLineShort} />
-          <View style={styles.skeletonAvatars} />
+        <View
+          style={[
+            styles.contentContainer,
+            {
+              maxWidth: contentMaxWidth,
+              paddingHorizontal: horizontalPadding,
+            },
+          ]}
+        >
+          <View style={styles.skeletonHero} />
+          <View style={styles.skeletonSheet}>
+            <View style={styles.skeletonTitle} />
+            <View style={styles.skeletonLine} />
+            <View style={styles.skeletonLineShort} />
+            <View style={styles.skeletonAvatars} />
+          </View>
         </View>
         <ActivityIndicator style={styles.loader} color="#147B5B" />
       </View>
     );
-
-  const horizontalPadding = getHorizontalPadding(width);
-  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 1);
   const goBack = () => {
     if (
       typeof returnTo === "string" &&
@@ -237,13 +246,16 @@ export function BookPreviewScreen() {
     <Animated.View
       key={id}
       entering={FadeIn.duration(260)}
-      style={styles.screen}
+      style={[styles.screen, { alignItems: "center" }]}
     >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 110 }]}
-      >
-        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+      <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: 110, paddingHorizontal: horizontalPadding },
+          ]}
+        >
           <BookHero
             book={book}
             favourite={favourite}
@@ -254,7 +266,7 @@ export function BookPreviewScreen() {
             entering={FadeInUp.duration(430)}
             style={[
               styles.sheet,
-              { paddingHorizontal: 10 + horizontalPadding },
+              { paddingHorizontal: 10 },
             ]}
           >
             <BookOverview book={book} />
@@ -278,10 +290,18 @@ export function BookPreviewScreen() {
               }
             />
           </Animated.View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
       <View style={styles.action}>
-        <View style={[styles.actionContent, { maxWidth: contentMaxWidth }]}>
+        <View
+          style={[
+            styles.actionContent,
+            {
+              maxWidth: contentMaxWidth,
+              paddingHorizontal: horizontalPadding,
+            },
+          ]}
+        >
           <BottomActionBar
             gradient={gradient}
             bookmarked={bookmarked}
@@ -295,9 +315,9 @@ export function BookPreviewScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#fff" },
-  scrollContent: { flexGrow: 1, alignItems: "center" },
-  contentContainer: { width: "100%" },
-  loading: { flex: 1, backgroundColor: "#fff" },
+  scrollContent: { flexGrow: 1 },
+  contentContainer: { flex: 1, width: "100%" },
+  loading: { flex: 1, backgroundColor: "#fff", alignItems: "center" },
   skeletonHero: { height: "46%", backgroundColor: "#DDE4E2" },
   skeletonSheet: {
     flex: 1,

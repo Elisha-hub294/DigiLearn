@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, spacing } from "../../constants/theme";
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { colors, radius, spacing } from "../../constants/theme";
 
 type TabRoute = {
   key: string;
@@ -31,6 +31,8 @@ const tabs = [
 ] as const;
 
 export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
   const activeRoute = state.routes[state.index];
 
   if (
@@ -46,6 +48,70 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     activeRoute?.name === "about"
   ) {
     return null;
+  }
+
+  if (isDesktop) {
+    return (
+      <View style={styles.desktopSidebar}>
+        <View style={styles.brandingHeader}>
+          <View style={styles.logoBadge}>
+            <MaterialCommunityIcons
+              name="school-outline"
+              size={24}
+              color={colors.primary}
+            />
+          </View>
+          <Text style={styles.brandTitle}>DigiLearn</Text>
+        </View>
+
+        <View style={styles.desktopTabList}>
+          {state.routes.map((route: TabRoute) => {
+            const tab = tabs.find((t) => t.route === route.name);
+
+            if (!tab) return null;
+
+            const isActive = state.routes[state.index].key === route.key;
+
+            const onPress = () => {
+              const event = navigation.emit({
+                type: "tabPress",
+                target: route.key,
+                canPreventDefault: true,
+              });
+              if (!isActive && !event.defaultPrevented) {
+                navigation.navigate(route.name);
+              }
+            };
+
+            return (
+              <Pressable
+                key={route.key}
+                onPress={onPress}
+                style={({ pressed, hovered }: any) => [
+                  styles.desktopItem,
+                  isActive && styles.desktopItemActive,
+                  (pressed || hovered) && !isActive && styles.desktopItemHovered,
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name={(isActive ? tab.activeIcon : tab.icon) as any}
+                  size={22}
+                  color={isActive ? colors.primary : "#8A8A8A"}
+                />
+                <Text
+                  style={[
+                    styles.desktopLabel,
+                    isActive && styles.desktopLabelActive,
+                  ]}
+                >
+                  {tab.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -86,6 +152,7 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
 };
 
 const styles = StyleSheet.create({
+  // Mobile Bottom Bar Styles
   container: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -93,6 +160,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+    backgroundColor: colors.background,
   },
   item: {
     alignItems: "center",
@@ -107,5 +175,67 @@ const styles = StyleSheet.create({
   },
   labelActive: {
     color: colors.primary,
+  },
+
+  // Desktop Left Sidebar Styles
+  desktopSidebar: {
+    width: 220,
+    height: "100%",
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+    backgroundColor: colors.background,
+    justifyContent: "flex-start",
+  },
+  brandingHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.xs,
+    marginBottom: spacing.xl,
+    paddingTop: spacing.xs,
+  },
+  logoBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    backgroundColor: "rgba(0, 110, 255, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.sm,
+  },
+  brandTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: colors.text,
+    letterSpacing: -0.5,
+  },
+  desktopTabList: {
+    width: "100%",
+    gap: 8,
+  },
+  desktopItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: radius.md,
+    backgroundColor: "transparent",
+  },
+  desktopItemActive: {
+    backgroundColor: "rgba(0, 110, 255, 0.1)",
+  },
+  desktopItemHovered: {
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+  },
+  desktopLabel: {
+    marginLeft: spacing.md,
+    fontSize: 15,
+    color: "#8A8A8A",
+    fontWeight: "500",
+  },
+  desktopLabelActive: {
+    color: colors.primary,
+    fontWeight: "700",
   },
 });

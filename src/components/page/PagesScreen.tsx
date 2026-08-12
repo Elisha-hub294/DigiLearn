@@ -395,10 +395,20 @@ export default function PagesScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.skeletonPage}>
-          <View style={styles.skeletonHeaderRow} />
-          <View style={styles.skeletonSearchRow} />
-          <View style={styles.skeletonCard} />
-          <View style={styles.skeletonCard} />
+          <View
+            style={[
+              styles.skeletonInner,
+              {
+                maxWidth: contentMaxWidth,
+                paddingHorizontal: horizontalPadding,
+              },
+            ]}
+          >
+            <View style={styles.skeletonHeaderRow} />
+            <View style={styles.skeletonSearchRow} />
+            <View style={styles.skeletonCard} />
+            <View style={styles.skeletonCard} />
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -610,9 +620,12 @@ const styles = StyleSheet.create({
   },
   skeletonPage: {
     flex: 1,
-    paddingHorizontal: 14,
+    alignItems: "center",
     paddingTop: spacing.xl,
     backgroundColor: colors.white,
+  },
+  skeletonInner: {
+    width: "100%",
   },
   skeletonHeaderRow: {
     width: 180,
