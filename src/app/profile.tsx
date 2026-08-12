@@ -23,8 +23,8 @@ const paddingFor = (width: number) =>
       : width >= 600
         ? 30
         : width >= 400
-          ? 20
-          : 16;
+          ? 5
+          : 3;
 function Skeleton() {
   return (
     <View style={s.skeleton}>

@@ -49,23 +49,23 @@ export function InterestCard({
   );
 }
 const s = StyleSheet.create({
-  wrap: { width: 80 },
+  wrap: { width: 70 },
   card: {
-    height: 80,
+    height: 70,
     borderRadius: 999,
     padding: 9,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarCard: {
-    height: 80,
+    height: 70,
     borderRadius: 999,
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#F3F4F6",
   },
-  image: { width: 35, height: 35 },
+  image: { width: 30, height: 30 },
   avatar: { ...StyleSheet.absoluteFill, width: "100%", height: "100%" },
   title: {
     color: "#fff",

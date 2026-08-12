@@ -41,22 +41,12 @@ export function PaperCard({
       onPress={openPdf}
     >
       <View style={styles.previewContainer}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Open ${title} PDF`}
-          style={({ pressed, hovered }: any) => [
-            styles.previewPressable,
-            (pressed || hovered) && styles.previewPressed,
-          ]}
-          onPress={openPdf}
-        >
-          {document ? (
-            <PdfPreview uri={document} style={styles.preview} />
-          ) : (
-            <Image source={image} style={styles.preview} contentFit="cover" />
-          )}
-          <View style={styles.darkOverlay} />
-        </Pressable>
+        {document ? (
+          <PdfPreview uri={document} style={styles.preview} />
+        ) : (
+          <Image source={image} style={styles.preview} contentFit="cover" />
+        )}
+        <View style={styles.darkOverlay} />
       </View>
       <View style={styles.content}>
         <Text style={styles.subject}>{subject}</Text>
@@ -84,13 +74,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 130,
     position: "relative",
-  },
-  previewPressable: {
-    width: "100%",
-    height: "100%",
-  },
-  previewPressed: {
-    backgroundColor: "#F3F4F6",
   },
   preview: {
     width: "100%",

@@ -1,7 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { auth } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 
@@ -16,6 +16,9 @@ export const Header = ({
   rightIconName = "bell",
   showBadge = true,
 }: HeaderProps) => {
+  const { width } = useWindowDimensions();
+  // Scale greeting font: 22px on ~320px screens, up to 34px on ~430px+ screens
+  const greetingFontSize = Math.min(34, Math.max(22, Math.round(width * 0.075)));
   const [userName, setUserName] = useState<string | null>(null);
   const [greeting, setGreeting] = useState("Hi there");
 
@@ -46,11 +49,11 @@ export const Header = ({
     <View style={styles.container}>
       <View style={styles.textWrap}>
         {isLibraryVariant ? (
-          <Text style={styles.libraryTitle}>{title}</Text>
+          <Text style={[styles.libraryTitle, { fontSize: greetingFontSize }]}>{title}</Text>
         ) : (
           <>
             <Text style={styles.date}>{date}</Text>
-            <Text style={styles.greeting}>
+            <Text style={[styles.greeting, { fontSize: greetingFontSize }]}>
               {greeting}
               {userName ? (
                 <Text style={{ color: colors.primary }}> {userName}</Text>
@@ -113,13 +116,11 @@ const styles = StyleSheet.create({
   },
   greeting: {
     color: colors.dark,
-    fontSize: 30,
     fontWeight: "600",
     letterSpacing: -0.6,
   },
   libraryTitle: {
     color: colors.dark,
-    fontSize: 30,
     fontWeight: "600",
     letterSpacing: -0.6,
   },
