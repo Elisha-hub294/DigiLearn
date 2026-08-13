@@ -4,6 +4,8 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { auth } from "../../../firebaseConfig";
+import { recordUserActivity } from "../../services/activityService";
 import { DurationBadge } from "./DurationBadge";
 import { PlayButton } from "./PlayButton";
 import { TeacherInfo } from "./TeacherInfo";
@@ -22,9 +24,13 @@ export function LatestVideoCard({
   const router = useRouter();
 
   function openLesson() {
+    if (auth.currentUser?.uid) {
+      recordUserActivity(auth.currentUser.uid, "lesson", item.id);
+    }
     router.push({
       pathname: "/lesson-player",
       params: {
+        id: item.id,
         title: item.title,
         teacher: item.teacher,
         subject: item.subject,

@@ -9,7 +9,8 @@ import {
     useWindowDimensions,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
-import { db } from "../../../firebaseConfig";
+import { auth, db } from "../../../firebaseConfig";
+import { recordUserActivity } from "../../services/activityService";
 import { AuthorsCarousel } from "./AuthorsCarousel";
 import { BookHero } from "./BookHero";
 import { BookOverview } from "./BookOverview";
@@ -103,6 +104,10 @@ export function BookPreviewScreen() {
     setLoading(true);
     (async () => {
       try {
+        if (auth.currentUser?.uid && id) {
+          recordUserActivity(auth.currentUser.uid, "book", id);
+        }
+
         const [selected, booksSnapshot, teachersSnapshot, defaultSnapshot] =
           await Promise.all([
             getDoc(doc(db, "books", id)),

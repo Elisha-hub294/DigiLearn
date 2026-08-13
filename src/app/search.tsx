@@ -1,5 +1,7 @@
 import { usePathname, useRouter } from "expo-router";
 import { useCallback } from "react";
+import { auth } from "../../firebaseConfig";
+import { recordUserActivity } from "../services/activityService";
 import {
     FlatList,
     Pressable,
@@ -70,12 +72,16 @@ export default function SearchScreen() {
         addRecentSearch(query.trim());
       }
 
-      // 2. Navigate based on card type
+      // 2. Navigate based on card type + record activity
       switch (item.type) {
         case "video":
+          if (auth.currentUser?.uid) {
+            recordUserActivity(auth.currentUser.uid, "lesson", item.id);
+          }
           router.push({
             pathname: "/lesson-player",
             params: {
+              id: item.id,
               title: item.title,
               teacher: item.teacher || "Teacher",
               subject:
@@ -90,6 +96,9 @@ export default function SearchScreen() {
           break;
 
         case "book":
+          if (auth.currentUser?.uid) {
+            recordUserActivity(auth.currentUser.uid, "book", item.id);
+          }
           router.push({
             pathname: "/book-preview",
             params: { id: item.id, title: item.title, author: item.author },
@@ -104,6 +113,9 @@ export default function SearchScreen() {
           break;
 
         case "pastPaper":
+          if (auth.currentUser?.uid) {
+            recordUserActivity(auth.currentUser.uid, "page", item.id);
+          }
           if (item.doc) {
             router.push({
               pathname: "/pdf-reader",
@@ -122,6 +134,9 @@ export default function SearchScreen() {
 
         case "topicalNote":
         default:
+          if (auth.currentUser?.uid) {
+            recordUserActivity(auth.currentUser.uid, "page", item.id);
+          }
           router.push({
             pathname: "/page-preview",
             params: { id: item.id, returnTo: pathname },

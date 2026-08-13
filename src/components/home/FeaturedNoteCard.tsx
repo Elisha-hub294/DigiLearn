@@ -17,7 +17,8 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { db } from "../../../firebaseConfig";
+import { auth, db } from "../../../firebaseConfig";
+import { recordUserActivity } from "../../services/activityService";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { toggleSavedItem } from "../../services/userProfile";
@@ -376,7 +377,10 @@ const FeaturedNoteItem = ({
           style={styles.previewWrap}
           onHoverIn={() => setHovered(true)}
           onHoverOut={() => setHovered(false)}
-          onPress={() =>
+          onPress={() => {
+            if (auth.currentUser?.uid) {
+              recordUserActivity(auth.currentUser.uid, "page", note.id);
+            }
             router.push({
               pathname: "/page-preview",
               params: {
@@ -385,8 +389,8 @@ const FeaturedNoteItem = ({
                 returnTo: pathname,
                 title: routeTitle,
               },
-            } as any)
-          }
+            } as any);
+          }}
         >
           {note.preview ? (
             <Image

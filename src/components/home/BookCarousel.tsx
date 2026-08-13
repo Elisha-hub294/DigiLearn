@@ -12,7 +12,8 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { db } from "../../../firebaseConfig";
+import { auth, db } from "../../../firebaseConfig";
+import { recordUserActivity } from "../../services/activityService";
 import { colors, spacing } from "../../constants/theme";
 
 type BookItem = {
@@ -154,12 +155,15 @@ export const BookCarousel = () => {
             style={[styles.card, { width: cardWidth }]}
             accessibilityRole="button"
             accessibilityLabel={`Open ${item.title}`}
-            onPress={() =>
+            onPress={() => {
+              if (auth.currentUser?.uid) {
+                recordUserActivity(auth.currentUser.uid, "book", item.id);
+              }
               router.push({
                 pathname: "/book-preview",
                 params: { id: item.id, source: "home" },
-              } as any)
-            }
+              } as any);
+            }}
           >
             <TouchableWithoutFeedback
               accessibilityLabel={`Open teacher profile: ${item.author}`}

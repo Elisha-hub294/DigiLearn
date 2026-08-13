@@ -11,7 +11,8 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
-import { db } from "../../../firebaseConfig";
+import { auth, db } from "../../../firebaseConfig";
+import { recordUserActivity } from "../../services/activityService";
 import { getHorizontalPadding } from "../../constants/layout";
 import { FALLBACK_COVER } from "../book/bookTypes";
 import { BottomActionBar } from "./BottomActionBar";
@@ -133,6 +134,10 @@ export function PagePreviewScreen() {
     (async () => {
       try {
         if (!id) return;
+
+        if (auth.currentUser?.uid) {
+          recordUserActivity(auth.currentUser.uid, "page", id);
+        }
 
         const [selectedSnap, notesSnap, booksSnap, subjectsSnap] =
           await Promise.all([

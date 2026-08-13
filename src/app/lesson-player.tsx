@@ -3,7 +3,9 @@ import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { auth } from "../../firebaseConfig";
+import { recordUserActivity } from "../services/activityService";
 import {
   Alert,
   Pressable,
@@ -62,6 +64,7 @@ export default function LessonPlayerScreen() {
   const [isSaved, setIsSaved] = useState(false);
 
   const params = useLocalSearchParams<{
+    id?: string;
     title?: string;
     teacher?: string;
     subject?: string;
@@ -71,6 +74,13 @@ export default function LessonPlayerScreen() {
     thumbnail?: string;
     avatar?: string;
   }>();
+
+  useEffect(() => {
+    const lessonId = params.id || params.title;
+    if (auth.currentUser?.uid && lessonId) {
+      recordUserActivity(auth.currentUser.uid, "lesson", lessonId);
+    }
+  }, [params.id, params.title]);
 
   const playScale = useSharedValue(1);
   const playAnimatedStyle = useAnimatedStyle(() => ({

@@ -91,7 +91,7 @@ export default function SettingsScreen() {
               <SettingsRow
                 icon="clock"
                 title="Activity"
-                onPress={() => {}}
+                onPress={() => router.push("/activity" as never)}
                 showSeparator={false}
               />
             </SettingsSection>

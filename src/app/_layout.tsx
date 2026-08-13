@@ -31,6 +31,10 @@ export default function RootLayout() {
             options={{ href: null, tabBarStyle: { display: "none" } }}
           />
           <Tabs.Screen
+            name="activity"
+            options={{ href: null, tabBarStyle: { display: "none" } }}
+          />
+          <Tabs.Screen
             name="my-profile"
             options={{ href: null, tabBarStyle: { display: "none" } }}
           />

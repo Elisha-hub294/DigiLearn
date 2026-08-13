@@ -10,6 +10,8 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { auth } from "../../../firebaseConfig";
+import { recordUserActivity } from "../../services/activityService";
 import { DurationBadge } from "./DurationBadge";
 import { TeacherInfo } from "./TeacherInfo";
 import { videoColors, videoRadii, videoShadows } from "./videoDesign";
@@ -43,9 +45,13 @@ export function TrendingVideoCard({
   }));
 
   function openLesson() {
+    if (auth.currentUser?.uid) {
+      recordUserActivity(auth.currentUser.uid, "lesson", item.id);
+    }
     router.push({
       pathname: "/lesson-player",
       params: {
+        id: item.id,
         title: item.title,
         teacher: item.teacher,
         subject: item.subject,

@@ -2,6 +2,8 @@ import { Image } from "expo-image";
 import React from "react";
 import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { auth } from "../../../firebaseConfig";
+import { recordUserActivity } from "../../services/activityService";
 import { colors, radius, spacing } from "../../constants/theme";
 
 type TopSellingBook = {
@@ -39,7 +41,21 @@ export function TopSellingBooks({ items }: TopSellingBooksProps) {
       contentContainerStyle={styles.content}
     >
       {uniqueItems.map((book) => (
-        <Pressable key={book.id} style={styles.card} accessibilityRole="button" accessibilityLabel={`Open ${book.title}`} onPress={() => router.push({ pathname: "/book-preview", params: { id: book.id, source: "library" } } as any)}>
+        <Pressable
+          key={book.id}
+          style={styles.card}
+          accessibilityRole="button"
+          accessibilityLabel={`Open ${book.title}`}
+          onPress={() => {
+            if (auth.currentUser?.uid) {
+              recordUserActivity(auth.currentUser.uid, "book", book.id);
+            }
+            router.push({
+              pathname: "/book-preview",
+              params: { id: book.id, source: "library" },
+            } as any);
+          }}
+        >
           <View style={styles.coverContainer}>
             <Image
               source={book.image}
