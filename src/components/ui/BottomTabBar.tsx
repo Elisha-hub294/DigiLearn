@@ -1,6 +1,12 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import {
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+    useWindowDimensions,
+} from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 
 type TabRoute = {
@@ -44,6 +50,7 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     activeRoute?.name === "pages" ||
     activeRoute?.name === "assistant" ||
     activeRoute?.name === "settings" ||
+    activeRoute?.name === "preferences" ||
     activeRoute?.name === "my-profile" ||
     activeRoute?.name === "activity" ||
     activeRoute?.name === "help" ||
@@ -92,7 +99,9 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                 style={({ pressed, hovered }: any) => [
                   styles.desktopItem,
                   isActive && styles.desktopItemActive,
-                  (pressed || hovered) && !isActive && styles.desktopItemHovered,
+                  (pressed || hovered) &&
+                    !isActive &&
+                    styles.desktopItemHovered,
                 ]}
               >
                 <MaterialCommunityIcons

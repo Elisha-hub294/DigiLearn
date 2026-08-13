@@ -1,8 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useFocusEffect, useNavigation, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  BackHandler,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -70,10 +71,11 @@ function AboutRow({
 
 export default function AboutScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { width } = useWindowDimensions();
 
-  const padding = Math.max(30, getHorizontalPadding(width));
-  const maxWidth = Math.min(560, width - padding * 2);
+  const horizontalPadding = getHorizontalPadding(width);
+  const maxWidth = Math.min(1100, width - horizontalPadding * 2);
   const pandaSize = Math.min(210, Math.max(170, width * 0.48));
 
   const [version, setVersion] = useState<string | null>(null);
@@ -92,6 +94,33 @@ export default function AboutScreen() {
     };
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        router.replace("/settings" as never);
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress,
+      );
+
+      const unsubscribe = navigation.addListener("beforeRemove", (e: any) => {
+        const actionType = e.data?.action?.type;
+        if (actionType === "GO_BACK" || actionType === "POP") {
+          e.preventDefault();
+          router.replace("/settings" as never);
+        }
+      });
+
+      return () => {
+        subscription.remove();
+        unsubscribe();
+      };
+    }, [navigation, router]),
+  );
+
   const versionLabel = useMemo(
     () => (version ? formatAppVersion(version) : "digilearn@…"),
     [version],
@@ -99,19 +128,27 @@ export default function AboutScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <View style={[styles.page, { paddingHorizontal: padding }]}>
-        <View style={[styles.content, { maxWidth }]}>
-          <Pressable
-            onPress={() => router.back()}
-            style={styles.backButton}
-            accessibilityRole="button"
-            accessibilityLabel="Back to Settings"
+      <View style={styles.page}>
+        <View style={[styles.contentContainer, { maxWidth }]}>
+          <View
+            style={[styles.headerRow, { paddingHorizontal: horizontalPadding }]}
           >
-            <Feather name="chevron-left" size={24} color="#111111" />
-          </Pressable>
+            <Pressable
+              onPress={() => router.replace("/settings" as never)}
+              style={styles.backButton}
+              accessibilityRole="button"
+              accessibilityLabel="Back to Settings"
+            >
+              <Feather name="arrow-left" size={22} color={colors.dark} />
+            </Pressable>
+            <Text style={styles.title}>About</Text>
+          </View>
 
           <ScrollView
-            contentContainerStyle={styles.scroll}
+            contentContainerStyle={[
+              styles.scroll,
+              { paddingHorizontal: horizontalPadding },
+            ]}
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.branding}>
@@ -180,26 +217,15 @@ export default function AboutScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  page: {
-    flex: 1,
+  safe: { flex: 1, backgroundColor: colors.white },
+  page: { flex: 1, alignItems: "center" },
+  contentContainer: { flex: 1, width: "100%" },
+  headerRow: {
+    flexDirection: "row",
     alignItems: "center",
+    marginBottom: spacing.xl,
   },
-  content: {
-    flex: 1,
-    width: "100%",
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: -8,
-    marginTop: spacing.xs,
-  },
+  backButton: { marginRight: spacing.md, padding: 6 },
   scroll: {
     flexGrow: 1,
     paddingBottom: spacing.xxl,
@@ -210,6 +236,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     gap: spacing.md,
   },
+  title: { fontSize: 30, fontWeight: "700", color: colors.dark },
   brand: {
     fontSize: 32,
     fontWeight: "700",

@@ -1,15 +1,15 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
-  BackHandler,
-  FlatList,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    BackHandler,
+    FlatList,
+    Pressable,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import ActivityCard from "../components/ui/ActivityCard";
 import ActivitySkeleton from "../components/ui/ActivitySkeleton";
@@ -64,7 +64,7 @@ export default function ActivityScreen() {
 
       const subscription = BackHandler.addEventListener(
         "hardwareBackPress",
-        onBackPress
+        onBackPress,
       );
 
       // Web browser back / navigation stack pop handler
@@ -80,7 +80,7 @@ export default function ActivityScreen() {
         subscription.remove();
         unsubscribe();
       };
-    }, [navigation, router, loadData])
+    }, [navigation, router, loadData]),
   );
 
   const handleCardPress = (item: ActivityItem) => {
@@ -121,7 +121,8 @@ export default function ActivityScreen() {
           </View>
           <Text style={styles.emptyTitle}>Your activity will appear here</Text>
           <Text style={styles.emptySubtitle}>
-            Log in or sign up to keep track of the lessons, pages, and books you've opened on DigiLearn.
+            Log in or sign up to keep track of the lessons, pages, and books
+            you've opened on DigiLearn.
           </Text>
           <Pressable
             style={({ pressed }) => [
@@ -142,7 +143,9 @@ export default function ActivityScreen() {
     if (error) {
       return (
         <View style={styles.emptyContainer}>
-          <View style={[styles.emptyIconCircle, { backgroundColor: "#FEE2E2" }]}>
+          <View
+            style={[styles.emptyIconCircle, { backgroundColor: "#FEE2E2" }]}
+          >
             <Icon name="alert-circle" size={32} color="#EF4444" />
           </View>
           <Text style={styles.emptyTitle}>Something went wrong</Text>
@@ -169,7 +172,8 @@ export default function ActivityScreen() {
           </View>
           <Text style={styles.emptyTitle}>No activity yet</Text>
           <Text style={styles.emptySubtitle}>
-            Start exploring lessons, books, and academic resources. Your recently opened items will appear here.
+            Start exploring lessons, books, and academic resources. Your
+            recently opened items will appear here.
           </Text>
           <Pressable
             style={({ pressed }) => [
@@ -206,10 +210,7 @@ export default function ActivityScreen() {
         <View style={[styles.contentContainer, { maxWidth }]}>
           {/* Header */}
           <View
-            style={[
-              styles.headerRow,
-              { paddingHorizontal: horizontalPadding },
-            ]}
+            style={[styles.headerRow, { paddingHorizontal: horizontalPadding }]}
           >
             <Pressable
               onPress={() => router.replace("/settings" as never)}
@@ -220,18 +221,13 @@ export default function ActivityScreen() {
               accessibilityRole="button"
               accessibilityLabel="Back to Settings"
             >
-              <Icon name="chevron-left" size={24} color="#111111" />
+              <Icon name="arrow-left" size={22} color={colors.dark} />
             </Pressable>
             <Text style={styles.title}>Activity</Text>
           </View>
 
           {/* Body Content */}
-          <View
-            style={[
-              styles.body,
-              { paddingHorizontal: horizontalPadding },
-            ]}
-          >
+          <View style={[styles.body, { paddingHorizontal: horizontalPadding }]}>
             {renderContent()}
           </View>
         </View>
@@ -247,24 +243,19 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
+    marginBottom: spacing.xl,
   },
   backButton: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 4,
-    marginLeft: -8,
+    marginRight: spacing.md,
+    padding: 6,
   },
   backButtonPressed: {
     opacity: 0.6,
   },
   title: {
-    fontSize: 31,
+    fontSize: 30,
     fontWeight: "700",
-    color: "#111111",
+    color: colors.dark,
   },
   body: {
     flex: 1,
