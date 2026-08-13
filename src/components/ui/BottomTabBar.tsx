@@ -44,6 +44,7 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     activeRoute?.name === "pages" ||
     activeRoute?.name === "assistant" ||
     activeRoute?.name === "settings" ||
+    activeRoute?.name === "my-profile" ||
     activeRoute?.name === "activity" ||
     activeRoute?.name === "help" ||
     activeRoute?.name === "about"

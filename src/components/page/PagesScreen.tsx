@@ -19,8 +19,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../../firebaseConfig";
-import { colors, radius, spacing } from "../../constants/theme";
 import { getHorizontalPadding } from "../../constants/layout";
+import { colors, radius, spacing } from "../../constants/theme";
 import { FeaturedNoteCard } from "../home/FeaturedNoteCard";
 import { SearchBar } from "../ui/SearchBar";
 
@@ -675,11 +675,11 @@ const styles = StyleSheet.create({
   searchSection: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
     marginBottom: spacing.xl,
   },
   searchBarWrap: {
     flex: 1,
+    marginRight: spacing.md,
   },
   filterButton: {
     width: 46,

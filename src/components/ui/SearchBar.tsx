@@ -153,8 +153,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
-    gap: 10,
-    marginBottom: spacing.md,
   },
   backButton: {
     width: 44,

@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
@@ -13,87 +14,10 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 
-const SUPABASE_ICONS =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons";
-
-const items = [
-  { id: "math", title: "Mathematics", image: `${SUPABASE_ICONS}/math-3d.png` },
-  { id: "physics", title: "Physics", image: `${SUPABASE_ICONS}/phys-3d.png` },
-  {
-    id: "chemistry",
-    title: "Chemistry",
-    image: `${SUPABASE_ICONS}/chem-3d.png`,
-  },
-  {
-    id: "agriculture",
-    title: "Agriculture",
-    image: `${SUPABASE_ICONS}/agric-3d.png`,
-  },
-  { id: "biology", title: "Biology", image: `${SUPABASE_ICONS}/bio-3d.png` },
-  {
-    id: "english",
-    title: "English",
-    image: `${SUPABASE_ICONS}/eng-3d.png`,
-  },
-  {
-    id: "history",
-    title: "History",
-    image: `${SUPABASE_ICONS}/hist-3d.png`,
-  },
-  {
-    id: "geography",
-    title: "Geography",
-    image: `${SUPABASE_ICONS}/geo-3d.png`,
-  },
-  {
-    id: "cre",
-    title: "CRE",
-    image: `${SUPABASE_ICONS}/cre-3d.png`,
-  },
-  {
-    id: "kiswahili",
-    title: "Kiswahili",
-    image: `${SUPABASE_ICONS}/kis-3d.png`,
-  },
-  {
-    id: "entrepreneurship",
-    title: "Entrepreneurship",
-    image: `${SUPABASE_ICONS}/ent-3d.png`,
-  },
-  {
-    id: "ire",
-    title: "IRE",
-    image: `${SUPABASE_ICONS}/ire-3d.png`,
-  },
-  {
-    id: "art-design",
-    title: "Art & Design",
-    image: `${SUPABASE_ICONS}/art-3d.png`,
-  },
-  {
-    id: "ict",
-    title: "ICT",
-    image: `${SUPABASE_ICONS}/ict-3d.png`,
-  },
-  {
-    id: "literature",
-    title: "Literature",
-    image: `${SUPABASE_ICONS}/lit-3d.png`,
-  },
-  {
-    id: "luganda",
-    title: "Luganda",
-    image: `${SUPABASE_ICONS}/lug-3d.png`,
-  },
-
-  {
-    id: "french",
-    title: "French",
-    image: `${SUPABASE_ICONS}/fr-3d.png`,
-  },
-];
+const defaultSubjectAvatar = require("../../../assets/images/subject-default.png");
 
 /** Fisher-Yates shuffle runs once per app mount */
 function shuffle<T>(arr: T[]): T[] {
@@ -114,9 +38,25 @@ export const TopicalNotesSlider = () => {
   const { width } = useWindowDimensions();
   const cardWidth = width >= 900 ? 128 : 110;
   const itemStep = cardWidth + CARD_GAP;
+  const [subjects, setSubjects] = useState<
+    Array<{ id: string; title: string; image: string | any }>
+  >([]);
+  const [loadingSubjects, setLoadingSubjects] = useState(true);
+
+  // Prepare display list: while loading show placeholders with default avatar
+  const placeholderCount = 10;
+  const placeholderItems = useMemo(
+    () =>
+      Array.from({ length: placeholderCount }).map((_, idx) => ({
+        id: `placeholder-${idx}`,
+        title: "",
+        image: defaultSubjectAvatar,
+      })),
+    [],
+  );
 
   // Triple the shuffled list for an infinite-loop illusion
-  const shuffled = items; // keep original order
+  const shuffled = loadingSubjects ? placeholderItems : subjects;
   const data = useMemo(
     () => [
       ...shuffled.map((i) => ({ ...i, _key: `a-${i.id}` })),
@@ -227,6 +167,41 @@ export const TopicalNotesSlider = () => {
 
   const isWeb = Platform.OS === "web";
 
+  const normalizeKey = (s?: string) => (s ?? "").trim().toLowerCase();
+
+  useEffect(() => {
+    let active = true;
+    const loadSubjects = async () => {
+      try {
+        const snaps = await getDocs(collection(db, "subject"));
+        if (!active) return;
+        const list = snaps.docs
+          .map((d) => {
+            const data = d.data() as Record<string, unknown>;
+            const name = typeof data.name === "string" ? data.name.trim() : "";
+            const avatar =
+              typeof data.avatar === "string" ? data.avatar.trim() : "";
+            return {
+              id: normalizeKey(name) || d.id,
+              title: name || d.id,
+              image: avatar || defaultSubjectAvatar,
+            };
+          })
+          .filter(Boolean);
+        setSubjects(list);
+      } catch (e) {
+        console.error("Failed to load subjects:", e);
+        setSubjects([]);
+      } finally {
+        if (active) setLoadingSubjects(false);
+      }
+    };
+    loadSubjects();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <Animated.View entering={FadeInUp.duration(460)} style={styles.wrapper}>
       {/* Left arrow — web only */}
@@ -266,11 +241,19 @@ export const TopicalNotesSlider = () => {
             }
           >
             <View style={styles.imageWrap}>
-              <Image
-                source={{ uri: item.image }}
-                style={styles.image}
-                contentFit="contain"
-              />
+              {(() => {
+                const imageSource =
+                  typeof item.image === "string"
+                    ? { uri: item.image }
+                    : item.image;
+                return (
+                  <Image
+                    source={imageSource}
+                    style={styles.image}
+                    contentFit="contain"
+                  />
+                );
+              })()}
             </View>
             <Text style={styles.title}>{item.title}</Text>
           </Pressable>
