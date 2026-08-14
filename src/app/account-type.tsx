@@ -10,7 +10,7 @@ import {
     StyleSheet,
     Text,
     useWindowDimensions,
-    View
+    View,
 } from "react-native";
 
 import { auth } from "../../firebaseConfig";
@@ -102,7 +102,11 @@ export default function AccountTypeScreen() {
 
     try {
       await saveAccountTypeDecision(user, selectedAccountType);
-      router.replace("/" as never);
+      if (selectedAccountType === "student") {
+        router.replace("/account-quick-settings" as never);
+      } else {
+        router.replace("/" as never);
+      }
     } catch {
       setErrorMessage(mapSaveError());
     } finally {
