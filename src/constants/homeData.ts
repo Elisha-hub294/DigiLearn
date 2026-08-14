@@ -107,86 +107,86 @@ const imageImports = {
   // tr1: require("../../assets/images/tr-1.webp"),
   // tr2: require("../../assets/images/tr-2.jpg"),
   // tr3: require("../../assets/images/tr-3.jpg"),
-  trDefault: require("../../assets/images/tr-default.png"),
+  trDefault: require("../../assets/images/user-default.png"),
 };
 
-export const topicalNotes: TopicalNote[] = [
-  {
-    id: "note-1",
-    subject: "Mathematics",
-    title: "Quadratic Equations",
-    image: imageImports.math,
-    accent: subjectColors.Mathematics,
-  },
-  {
-    id: "note-2",
-    subject: "Physics",
-    title: "Motion & Force",
-    image: imageImports.physics,
-    accent: subjectColors.Physics,
-  },
-  {
-    id: "note-3",
-    subject: "Chemistry",
-    title: "Acids & Bases",
-    image: imageImports.chemistry,
-    accent: subjectColors.Chemistry,
-  },
-];
+// export const topicalNotes: TopicalNote[] = [
+//   {
+//     id: "note-1",
+//     subject: "Mathematics",
+//     title: "Quadratic Equations",
+//     image: imageImports.math,
+//     accent: subjectColors.Mathematics,
+//   },
+//   {
+//     id: "note-2",
+//     subject: "Physics",
+//     title: "Motion & Force",
+//     image: imageImports.physics,
+//     accent: subjectColors.Physics,
+//   },
+//   {
+//     id: "note-3",
+//     subject: "Chemistry",
+//     title: "Acids & Bases",
+//     image: imageImports.chemistry,
+//     accent: subjectColors.Chemistry,
+//   },
+// ];
 
-export const teacherPosts: TeacherPost[] = [
-  {
-    id: "post-1",
-    teacherName: "Tr. Sarah Namusoke",
-    teacherImage: imageImports.tr1,
-    verified: true,
-    time: "10 min ago",
-    content:
-      "Shared a polished PDF pack for last-minute revision with worked examples and mnemonics.",
-    previewImage: imageImports.pdfPreview,
-    type: "pdf",
-    subject: "Mathematics",
-  },
-  {
-    id: "post-2",
-    teacherName: "Tr. Daniel Kato",
-    teacherImage: imageImports.tr2,
-    verified: true,
-    time: "1 hr ago",
-    content:
-      "New conceptual diagrams for motion and vectors are live in the classroom library.",
-    previewImage: imageImports.pdfPreview,
-    type: "image",
-    subject: "Physics",
-  },
-];
+// export const teacherPosts: TeacherPost[] = [
+//   {
+//     id: "post-1",
+//     teacherName: "Tr. Sarah Namusoke",
+//     teacherImage: imageImports.tr1,
+//     verified: true,
+//     time: "10 min ago",
+//     content:
+//       "Shared a polished PDF pack for last-minute revision with worked examples and mnemonics.",
+//     previewImage: imageImports.pdfPreview,
+//     type: "pdf",
+//     subject: "Mathematics",
+//   },
+//   {
+//     id: "post-2",
+//     teacherName: "Tr. Daniel Kato",
+//     teacherImage: imageImports.tr2,
+//     verified: true,
+//     time: "1 hr ago",
+//     content:
+//       "New conceptual diagrams for motion and vectors are live in the classroom library.",
+//     previewImage: imageImports.pdfPreview,
+//     type: "image",
+//     subject: "Physics",
+//   },
+// ];
 
-export const courses: CourseItem[] = [
-  {
-    id: "course-1",
-    title: "Mastering Quadratics",
-    teacher: "Tr. Sarah",
-    duration: "18 min",
-    image: imageImports.thumb1,
-    accent: subjectColors.Mathematics,
-  },
-  {
-    id: "course-2",
-    title: "Physics in Practice",
-    teacher: "Tr. Daniel",
-    duration: "24 min",
-    image: imageImports.thumb2,
-    accent: subjectColors.Physics,
-  },
-  {
-    id: "course-3",
-    title: "Organic Chemistry Essentials",
-    teacher: "Tr. Joy",
-    duration: "12 min",
-    image: imageImports.thumb4,
-    accent: subjectColors.Chemistry,
-  },
-];
+// export const courses: CourseItem[] = [
+//   {
+//     id: "course-1",
+//     title: "Mastering Quadratics",
+//     teacher: "Tr. Sarah",
+//     duration: "18 min",
+//     image: imageImports.thumb1,
+//     accent: subjectColors.Mathematics,
+//   },
+//   {
+//     id: "course-2",
+//     title: "Physics in Practice",
+//     teacher: "Tr. Daniel",
+//     duration: "24 min",
+//     image: imageImports.thumb2,
+//     accent: subjectColors.Physics,
+//   },
+//   {
+//     id: "course-3",
+//     title: "Organic Chemistry Essentials",
+//     teacher: "Tr. Joy",
+//     duration: "12 min",
+//     image: imageImports.thumb4,
+//     accent: subjectColors.Chemistry,
+//   },
+// ];
 
 export const unebPapers: ResourceItem[] = [
   {
@@ -226,32 +226,32 @@ export const markingGuides: ResourceItem[] = [
   },
 ];
 
-export const books: BookItem[] = [
-  {
-    id: "book-1",
-    title: "Mathematics for Senior",
-    author: "K. Tendo",
-    rating: "4.8",
-    image: imageImports.book1,
-    accent: subjectColors.Mathematics,
-  },
-  {
-    id: "book-2",
-    title: "Physics Study Guide",
-    author: "A. Mwanga",
-    rating: "4.7",
-    image: imageImports.book2,
-    accent: subjectColors.Physics,
-  },
-  {
-    id: "book-3",
-    title: "Chemistry Workbook",
-    author: "J. Nakato",
-    rating: "4.9",
-    image: imageImports.book3,
-    accent: subjectColors.Chemistry,
-  },
-];
+// export const books: BookItem[] = [
+//   {
+//     id: "book-1",
+//     title: "Mathematics for Senior",
+//     author: "K. Tendo",
+//     rating: "4.8",
+//     image: imageImports.book1,
+//     accent: subjectColors.Mathematics,
+//   },
+//   {
+//     id: "book-2",
+//     title: "Physics Study Guide",
+//     author: "A. Mwanga",
+//     rating: "4.7",
+//     image: imageImports.book2,
+//     accent: subjectColors.Physics,
+//   },
+//   {
+//     id: "book-3",
+//     title: "Chemistry Workbook",
+//     author: "J. Nakato",
+//     rating: "4.9",
+//     image: imageImports.book3,
+//     accent: subjectColors.Chemistry,
+//   },
+// ];
 
 export const announcements: AnnouncementItem[] = [
   {
