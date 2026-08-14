@@ -4,19 +4,19 @@ import { deleteUser } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
 import { useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../../firebaseConfig";
@@ -216,7 +216,12 @@ export default function MyProfileScreen() {
                 </Text>
                 <View style={styles.authActions}>
                   <Pressable
-                    onPress={() => router.push("/login" as never)}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/login",
+                        params: { from: "my-profile" },
+                      } as never)
+                    }
                     style={styles.login}
                   >
                     <Text style={styles.loginText}>Log in</Text>

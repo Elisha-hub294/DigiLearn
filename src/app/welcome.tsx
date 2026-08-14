@@ -22,11 +22,11 @@ export default function WelcomeScreen() {
   const illustrationHeight = Math.min(320, height * 0.42);
 
   const handleSignUp = useCallback(() => {
-    router.push("/signup");
+    router.push({ pathname: "/signup", params: { from: "welcome" } });
   }, [router]);
 
   const handleLogin = useCallback(() => {
-    router.push("/login");
+    router.push({ pathname: "/login", params: { from: "welcome" } });
   }, [router]);
 
   const handleGuest = useCallback(() => {

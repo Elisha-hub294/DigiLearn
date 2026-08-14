@@ -196,7 +196,7 @@ export default function SignUpScreen() {
   }, [handleContinue]);
 
   const handleLoginNavigation = useCallback(() => {
-    router.push("/login");
+    router.push({ pathname: "/login", params: { from: "signup" } });
   }, [router]);
 
   const toggleShowPassword = useCallback(() => {

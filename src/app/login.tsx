@@ -1,5 +1,5 @@
 import { Feather, FontAwesome } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
     FacebookAuthProvider,
     GoogleAuthProvider,
@@ -51,6 +51,7 @@ function mapAuthError(code: string | undefined) {
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const { width } = useWindowDimensions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -190,10 +191,16 @@ export default function LoginScreen() {
   }, []);
 
   const handleForgot = useCallback(() => {
-    router.push("/forgot-password");
-  }, [router]);
+    router.push({ pathname: "/forgot-password", params: { from } });
+  }, [router, from]);
 
-  const handleBack = useCallback(() => router.back(), [router]);
+  const handleBack = useCallback(() => {
+    if (from) {
+      router.replace(`/${from}`);
+    } else {
+      router.back();
+    }
+  }, [router, from]);
 
   const handleLogout = useCallback(async () => {
     try {

@@ -59,7 +59,12 @@ function AuthPrompt() {
       </Text>
       <View style={styles.authActions}>
         <Pressable
-          onPress={() => router.push("/login" as never)}
+          onPress={() =>
+            router.push({
+              pathname: "/login",
+              params: { from: "preferences" },
+            } as never)
+          }
           style={styles.login}
         >
           <Text style={styles.loginText}>Log in</Text>
