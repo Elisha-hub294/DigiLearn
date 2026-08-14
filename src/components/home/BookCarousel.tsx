@@ -3,18 +3,17 @@ import { router } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TouchableWithoutFeedback,
-  useWindowDimensions,
-  View,
+    FlatList,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
-import { recordUserActivity } from "../../services/activityService";
 import { colors, spacing } from "../../constants/theme";
+import { recordUserActivity } from "../../services/activityService";
 
 type BookItem = {
   id: string;
@@ -165,39 +164,25 @@ export const BookCarousel = () => {
               } as any);
             }}
           >
-            <TouchableWithoutFeedback
-              accessibilityLabel={`Open teacher profile: ${item.author}`}
-              onPress={(event) => {
-                event.stopPropagation?.();
-                router.push({
-                  pathname: "/teacher-profile",
-                  params: { name: item.author },
-                } as never);
-              }}
-            >
-              <View>
-                <Image
-                  source={item.image}
-                  style={styles.image}
-                  contentFit="cover"
-                />
-              </View>
-            </TouchableWithoutFeedback>
+            <Image
+              source={item.image}
+              style={styles.image}
+              contentFit="cover"
+            />
             <View style={styles.body}>
               <Text style={styles.title}>{item.title}</Text>
-              <TouchableWithoutFeedback
+              <Pressable
                 accessibilityLabel={`Open teacher profile: ${item.author}`}
-                onPress={() =>
+                onPress={(event) => {
+                  event.stopPropagation?.();
                   router.push({
                     pathname: "/teacher-profile",
                     params: { name: item.author },
-                  } as never)
-                }
+                  } as never);
+                }}
               >
-                <View>
-                  <Text style={styles.author}>{item.author}</Text>
-                </View>
-              </TouchableWithoutFeedback>
+                <Text style={styles.author}>{item.author}</Text>
+              </Pressable>
               <View style={styles.row}>
                 <Text style={styles.rating}>★ {item.rating}</Text>
               </View>

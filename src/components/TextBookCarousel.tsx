@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { books, type BookItem } from "../constants/homeData";
@@ -21,21 +22,36 @@ export const TextBookCarousel = () => {
   );
 };
 
-const BookCard = ({ item }: { item: BookItem }) => (
-  <Pressable style={styles.card} accessibilityRole="button">
-    <Image source={item.image} style={styles.image} contentFit="cover" />
-    <View style={styles.body}>
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.author}>{item.author}</Text>
-      <View style={styles.row}>
-        <Text style={styles.rating}>★ {item.rating}</Text>
-        <View style={[styles.badge, { backgroundColor: item.accent }]}>
-          <Text style={styles.badgeText}>Open Library</Text>
+const BookCard = ({ item }: { item: BookItem }) => {
+  const router = useRouter();
+
+  const handlePress = () => {
+    router.push({
+      pathname: "/book-preview",
+      params: { id: item.id },
+    });
+  };
+
+  return (
+    <Pressable
+      style={styles.card}
+      accessibilityRole="button"
+      onPress={handlePress}
+    >
+      <Image source={item.image} style={styles.image} contentFit="cover" />
+      <View style={styles.body}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.author}>{item.author}</Text>
+        <View style={styles.row}>
+          <Text style={styles.rating}>★ {item.rating}</Text>
+          <View style={[styles.badge, { backgroundColor: item.accent }]}>
+            <Text style={styles.badgeText}>Open Library</Text>
+          </View>
         </View>
       </View>
-    </View>
-  </Pressable>
-);
+    </Pressable>
+  );
+};
 
 const styles = StyleSheet.create({
   list: { paddingRight: spacing.md },

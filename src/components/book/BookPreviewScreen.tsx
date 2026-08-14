@@ -10,14 +10,15 @@ import {
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
+import { getHorizontalPadding } from "../../constants/layout";
 import { recordUserActivity } from "../../services/activityService";
+import { toggleSavedItem } from "../../services/userProfile";
 import { AuthorsCarousel } from "./AuthorsCarousel";
 import { BookHero } from "./BookHero";
 import { BookOverview } from "./BookOverview";
 import { Book, normalizeKey, resolveAuthorAvatar } from "./bookTypes";
 import { BottomActionBar } from "./BottomActionBar";
 import { SimilarBooks } from "./SimilarBooks";
-import { getHorizontalPadding } from "../../constants/layout";
 
 const gradients = [
   ["#57F287", "#2D9CFF"],
@@ -169,6 +170,29 @@ export function BookPreviewScreen() {
     };
   }, [id]);
 
+  // Check if book is bookmarked and load bookmarked state
+  useEffect(() => {
+    if (!book || !auth.currentUser?.uid) return;
+
+    const checkBookmarked = async () => {
+      try {
+        const userRef = doc(db, "users", auth.currentUser!.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          const savedBooks = Array.isArray(userData["saved-books"])
+            ? userData["saved-books"]
+            : [];
+          setBookmarked(savedBooks.includes(book.id));
+        }
+      } catch (e) {
+        console.error("Failed to check bookmark status", e);
+      }
+    };
+
+    checkBookmarked();
+  }, [book?.id]);
+
   const authorsWithAvatars = useMemo(() => {
     if (!book) return [];
     return book.author.map((authorName) => ({
@@ -269,10 +293,7 @@ export function BookPreviewScreen() {
           />
           <Animated.View
             entering={FadeInUp.duration(430)}
-            style={[
-              styles.sheet,
-              { paddingHorizontal: 10 },
-            ]}
+            style={[styles.sheet, { paddingHorizontal: 10 }]}
           >
             <BookOverview book={book} />
             <AuthorsCarousel authors={authorsWithAvatars} />
@@ -310,7 +331,20 @@ export function BookPreviewScreen() {
           <BottomActionBar
             gradient={gradient}
             bookmarked={bookmarked}
-            onBookmark={() => setBookmarked((value) => !value)}
+            onBookmark={async () => {
+              if (!book || !auth.currentUser?.uid) return;
+              try {
+                await toggleSavedItem(
+                  auth.currentUser.uid,
+                  "saved-books",
+                  book.id,
+                  bookmarked,
+                );
+                setBookmarked((value) => !value);
+              } catch (e) {
+                console.error("Failed to toggle bookmark", e);
+              }
+            }}
           />
         </View>
       </View>
