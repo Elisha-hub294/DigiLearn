@@ -1,9 +1,17 @@
 import { Feather as Icon } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import {
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
+} from "react-native";
 import { auth } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
+import { useNotifications } from "../../hooks/useNotifications";
 
 type HeaderProps = {
   title?: string;
@@ -17,8 +25,12 @@ export const Header = ({
   showBadge = true,
 }: HeaderProps) => {
   const { width } = useWindowDimensions();
+  const { hasUnread } = useNotifications();
   // Scale greeting font: 22px on ~320px screens, up to 34px on ~430px+ screens
-  const greetingFontSize = Math.min(34, Math.max(22, Math.round(width * 0.075)));
+  const greetingFontSize = Math.min(
+    34,
+    Math.max(22, Math.round(width * 0.075)),
+  );
   const [userName, setUserName] = useState<string | null>(null);
   const [greeting, setGreeting] = useState("Hi there");
 
@@ -49,7 +61,9 @@ export const Header = ({
     <View style={styles.container}>
       <View style={styles.textWrap}>
         {isLibraryVariant ? (
-          <Text style={[styles.libraryTitle, { fontSize: greetingFontSize }]}>{title}</Text>
+          <Text style={[styles.libraryTitle, { fontSize: greetingFontSize }]}>
+            {title}
+          </Text>
         ) : (
           <>
             <Text style={styles.date}>{date}</Text>
@@ -65,10 +79,11 @@ export const Header = ({
       <View style={styles.actions}>
         <Pressable
           style={styles.notificationButton}
-          accessibilityLabel="Open actions"
+          accessibilityLabel="Open notifications"
+          onPress={() => router.push("/notifications" as any)}
         >
           <Icon name={rightIconName as any} size={22} color={colors.text} />
-          {showBadge ? <View style={styles.badge} /> : null}
+          {showBadge && hasUnread ? <View style={styles.badge} /> : null}
         </Pressable>
       </View>
     </View>

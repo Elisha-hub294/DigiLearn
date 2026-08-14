@@ -1,17 +1,21 @@
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { useState } from "react";
 import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { db } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
+import {
+    appendNotificationToAllUsers,
+    buildLibraryNotification,
+} from "../../services/notifications";
 
 export type FormType = "book" | "banner" | "paper" | "page";
 
@@ -133,9 +137,16 @@ export function AddItemModal({
         title: formData.title.trim() || "Untitled",
       };
 
+      let createdItemId = "";
+      let notificationType: "book" | "page" | "lesson" | "announcement" =
+        "book";
+
       if (formType === "book") {
         const parsedRating = Number.parseFloat(formData.rating.trim());
-        await setDoc(doc(db, "books", getTitleDocId(formData.title)), {
+        const itemId = getTitleDocId(formData.title);
+        createdItemId = itemId;
+        notificationType = "book";
+        await setDoc(doc(db, "books", itemId), {
           ...payload,
           author: formData.author.trim() || "Added from app",
           subtitle:
@@ -163,8 +174,11 @@ export function AddItemModal({
           .split(",")
           .map((item) => item.trim())
           .filter(Boolean);
+        const itemId = getTitleDocId(formData.title);
+        createdItemId = itemId;
+        notificationType = "page";
 
-        await setDoc(doc(db, "pages", getTitleDocId(formData.title)), {
+        await setDoc(doc(db, "pages", itemId), {
           title: formData.title.trim() || "Untitled note",
           subject: formData.subject.trim() || "General",
           description: formData.description.trim() || "",
@@ -175,7 +189,10 @@ export function AddItemModal({
           updatedAt: serverTimestamp(),
         });
       } else {
-        await setDoc(doc(db, "pastPaper", getTitleDocId(formData.title)), {
+        const itemId = getTitleDocId(formData.title);
+        createdItemId = itemId;
+        notificationType = "lesson";
+        await setDoc(doc(db, "pastPaper", itemId), {
           ...payload,
           subject: formData.subtitle.trim() || "General",
           type: formData.author.trim() || "UNEB",
@@ -186,6 +203,12 @@ export function AddItemModal({
           document: formData.doc.trim() || "",
           updatedAt: serverTimestamp(),
         });
+      }
+
+      if (createdItemId) {
+        await appendNotificationToAllUsers(
+          buildLibraryNotification(notificationType, createdItemId),
+        );
       }
 
       setFormData(INITIAL_FORM_STATE);

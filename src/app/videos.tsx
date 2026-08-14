@@ -13,20 +13,21 @@ import { useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { dimensions } from "../constants/theme";
+import { useNotifications } from "../hooks/useNotifications";
 
 type FirestoreLesson = {
   id?: string;
@@ -136,6 +137,7 @@ export default function VideosScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const { hasUnread } = useNotifications();
   const isTablet = width >= 768;
   const horizontalPadding = getHorizontalPadding(width);
   const contentWidth =
@@ -197,13 +199,14 @@ export default function VideosScreen() {
         <View style={styles.topRow}>
           <Text style={styles.pageTitle}>Lessons</Text>
           <Pressable
-            accessibilityLabel="Notifications"
+            accessibilityLabel="Open notifications"
             accessibilityRole="button"
             hitSlop={10}
             style={styles.bell}
+            onPress={() => router.push("/notifications" as any)}
           >
             <Ionicons name="play-outline" size={30} color={videoColors.ink} />
-            <View style={styles.dot} />
+            {hasUnread ? <View style={styles.dot} /> : null}
           </Pressable>
         </View>
         <SearchBar />
