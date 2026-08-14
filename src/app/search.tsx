@@ -1,7 +1,5 @@
 import { usePathname, useRouter } from "expo-router";
 import { useCallback } from "react";
-import { auth } from "../../firebaseConfig";
-import { recordUserActivity } from "../services/activityService";
 import {
     FlatList,
     Pressable,
@@ -13,6 +11,8 @@ import {
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { auth } from "../../firebaseConfig";
+import { recordUserActivity } from "../services/activityService";
 
 import { RecentSearchChip } from "../components/search/RecentSearchChip";
 import { SearchEmptyState } from "../components/search/SearchEmptyState";
@@ -101,7 +101,13 @@ export default function SearchScreen() {
           }
           router.push({
             pathname: "/book-preview",
-            params: { id: item.id, title: item.title, author: item.author },
+            params: {
+              id: item.id,
+              title: item.title,
+              author: item.author,
+              source: "search",
+              returnTo: "/search",
+            },
           } as never);
           break;
 

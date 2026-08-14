@@ -25,7 +25,7 @@ import { colors, spacing } from "../constants/theme";
 import { useNotifications } from "../hooks/useNotifications";
 import {
     NotificationRecord,
-    getNotificationSections
+    getNotificationSections,
 } from "../services/notifications";
 
 export default function NotificationsScreen() {
@@ -105,7 +105,14 @@ export default function NotificationsScreen() {
           return;
         }
 
-        const params = { id: notification.itemId };
+        const params =
+          notification.type === "book"
+            ? {
+                id: notification.itemId,
+                source: "notifications",
+                returnTo: "/notifications",
+              }
+            : { id: notification.itemId };
         if (notification.type === "book") {
           router.push({ pathname: itemPath, params } as never);
         } else if (notification.type === "lesson") {

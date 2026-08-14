@@ -160,7 +160,7 @@ export const BookCarousel = () => {
               }
               router.push({
                 pathname: "/book-preview",
-                params: { id: item.id, source: "home" },
+                params: { id: item.id, source: "home", returnTo: "/" },
               } as any);
             }}
           >

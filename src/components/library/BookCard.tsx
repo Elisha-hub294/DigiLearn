@@ -14,11 +14,12 @@ type BookCardItem = {
 
 type BookCardProps = {
   item: BookCardItem;
+  onPress?: () => void;
 };
 
-export function BookCard({ item }: BookCardProps) {
+export function BookCard({ item, onPress }: BookCardProps) {
   return (
-    <Pressable accessibilityRole="button" style={styles.card}>
+    <Pressable accessibilityRole="button" style={styles.card} onPress={onPress}>
       <Image source={item.image} style={styles.image} contentFit="cover" />
       <View>
         <View style={styles.badgeRow}>

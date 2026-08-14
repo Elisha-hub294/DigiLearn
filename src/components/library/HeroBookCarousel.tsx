@@ -1,14 +1,14 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useMemo, useState } from "react";
 import { router } from "expo-router";
+import { useMemo, useState } from "react";
 import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+    useWindowDimensions,
 } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 
@@ -71,7 +71,16 @@ export function HeroBookCarousel({ data }: HeroBookCarouselProps) {
               key={`${item.id}-${index}`}
               accessibilityRole="button"
               accessibilityLabel={`Open ${item.title}`}
-              onPress={() => router.push({ pathname: "/book-preview", params: { id: item.id, source: "library" } } as any)}
+              onPress={() =>
+                router.push({
+                  pathname: "/book-preview",
+                  params: {
+                    id: item.id,
+                    source: "library",
+                    returnTo: "/library",
+                  },
+                } as any)
+              }
               style={[styles.slideWrapper, { width: itemWidth }]}
             >
               <View

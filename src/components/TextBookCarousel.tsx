@@ -28,7 +28,7 @@ const BookCard = ({ item }: { item: BookItem }) => {
   const handlePress = () => {
     router.push({
       pathname: "/book-preview",
-      params: { id: item.id },
+      params: { id: item.id, source: "home", returnTo: "/" },
     });
   };
 

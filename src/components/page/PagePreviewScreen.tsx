@@ -2,18 +2,18 @@ import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  Share,
-  StyleSheet,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    Share,
+    StyleSheet,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
-import { recordUserActivity } from "../../services/activityService";
 import { getHorizontalPadding } from "../../constants/layout";
+import { recordUserActivity } from "../../services/activityService";
 import { FALLBACK_COVER } from "../book/bookTypes";
 import { BottomActionBar } from "./BottomActionBar";
 import { OverviewSection } from "./OverviewSection";
@@ -426,10 +426,7 @@ export function PagePreviewScreen() {
           {/* White Information Sheet */}
           <Animated.View
             entering={FadeInUp.duration(430)}
-            style={[
-              styles.sheet,
-              { paddingHorizontal: 24 },
-            ]}
+            style={[styles.sheet, { paddingHorizontal: 24 }]}
           >
             {/* Header with Avatar & Page Information */}
             <SubjectBadge
@@ -452,7 +449,12 @@ export function PagePreviewScreen() {
               onSelectBook={(bookId) =>
                 router.push({
                   pathname: "/book-preview",
-                  params: { id: bookId, source: source ?? "library" },
+                  params: {
+                    id: bookId,
+                    source: source ?? "library",
+                    returnTo:
+                      returnTo ?? (source === "pages" ? "/pages" : "/library"),
+                  },
                 } as any)
               }
             />
@@ -521,7 +523,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     backgroundColor: "#FFFFFF",
     minHeight: 520,
-    width: "100%"
+    width: "100%",
   },
   actionContainer: {
     position: "absolute",

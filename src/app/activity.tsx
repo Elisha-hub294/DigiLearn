@@ -98,7 +98,9 @@ export default function ActivityScreen() {
       } else if (item.type === "book") {
         router.push({
           pathname: "/book-preview",
-          params: item.rawDoc ? { ...item.rawDoc } : { id: item.targetId },
+          params: item.rawDoc
+            ? { ...item.rawDoc, source: "activity", returnTo: "/activity" }
+            : { id: item.targetId, source: "activity", returnTo: "/activity" },
         } as never);
       }
     } catch (e) {

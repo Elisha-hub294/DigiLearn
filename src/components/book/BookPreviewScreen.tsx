@@ -263,12 +263,26 @@ export function BookPreviewScreen() {
       return;
     }
 
-    if (source === "home") {
-      router.replace("/" as any);
-      return;
+    // Fallback based on source
+    switch (source) {
+      case "home":
+        router.replace("/" as any);
+        break;
+      case "saved":
+        router.replace("/profile" as any);
+        break;
+      case "activity":
+        router.replace("/activity" as any);
+        break;
+      case "notifications":
+        router.replace("/notifications" as any);
+        break;
+      case "search":
+        router.replace("/search" as any);
+        break;
+      default:
+        router.replace("/library" as any);
     }
-
-    router.replace("/library" as any);
   };
 
   return (

@@ -1,10 +1,10 @@
 import { Image } from "expo-image";
-import React from "react";
 import { router } from "expo-router";
+import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { auth } from "../../../firebaseConfig";
-import { recordUserActivity } from "../../services/activityService";
 import { colors, radius, spacing } from "../../constants/theme";
+import { recordUserActivity } from "../../services/activityService";
 
 type TopSellingBook = {
   id: string;
@@ -52,7 +52,7 @@ export function TopSellingBooks({ items }: TopSellingBooksProps) {
             }
             router.push({
               pathname: "/book-preview",
-              params: { id: book.id, source: "library" },
+              params: { id: book.id, source: "library", returnTo: "/library" },
             } as any);
           }}
         >

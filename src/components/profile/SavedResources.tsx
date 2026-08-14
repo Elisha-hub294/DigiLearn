@@ -3,20 +3,20 @@ import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
 import { BookCard } from "../../components/library/BookCard";
 import {
-  TrendingVideoCard,
-  VideoLesson,
+    TrendingVideoCard,
+    VideoLesson,
 } from "../../components/ui/TrendingVideoCard";
 import { colors, radius, shadows, spacing } from "../../constants/theme";
 import type { UserProfile } from "../../services/userProfile";
@@ -161,7 +161,7 @@ export function SavedResources({
         </View>
       ) : displayed.length ? (
         <Animated.View entering={FadeIn.duration(180)} style={s.results}>
-          {renderItems(displayed)}
+          {renderItems(displayed, router)}
         </Animated.View>
       ) : (
         <Empty filter={filter} />
@@ -184,7 +184,7 @@ function Empty({ filter }: { filter: Filter }) {
     </View>
   );
 }
-function renderItems(items: Entry[]) {
+function renderItems(items: Entry[], router: any) {
   const pages = items.filter((x) => x.type === "Pages");
   return (
     <>
@@ -209,6 +209,12 @@ function renderItems(items: Entry[]) {
                 x.data.cover ??
                 require("../../../assets/images/bookcover-default.jpeg"),
             }}
+            onPress={() =>
+              router.push({
+                pathname: "/book-preview",
+                params: { id: x.id, source: "saved", returnTo: "/profile" },
+              })
+            }
           />
         ))}
       {items
