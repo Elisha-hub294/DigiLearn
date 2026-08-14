@@ -63,6 +63,10 @@ export default function RootLayout() {
               options={{ href: null, tabBarStyle: { display: "none" } }}
             />
             <Tabs.Screen
+              name="account-type"
+              options={{ href: null, tabBarStyle: { display: "none" } }}
+            />
+            <Tabs.Screen
               name="login"
               options={{ href: null, tabBarStyle: { display: "none" } }}
             />

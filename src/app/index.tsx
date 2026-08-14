@@ -1,15 +1,17 @@
 import { useRouter } from "expo-router";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,6 +22,7 @@ import { FloatingAssistantButton } from "../components/home/FloatingAssistantBut
 import { TeacherPostCard } from "../components/home/TeacherPostCard";
 import { TopicalNotesSlider } from "../components/home/TopicalNotesSlider";
 
+import { auth, db } from "../../firebaseConfig";
 import { Header } from "../components/ui/Header";
 import { SearchBar } from "../components/ui/SearchBar";
 import { SectionHeader } from "../components/ui/SectionHeader";
@@ -46,6 +49,7 @@ export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const [refreshing, setRefreshing] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
+  const [authCheckReady, setAuthCheckReady] = useState(false);
   const [shuffleSeed, setShuffleSeed] = useState(() => Date.now());
 
   // Infinite Scroll & Lazy Loading Pagination State
@@ -61,6 +65,35 @@ export default function HomeScreen() {
     const timer = setTimeout(() => setShowLoading(false), 1100);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        setAuthCheckReady(true);
+        router.replace("/welcome" as never);
+        return;
+      }
+
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const snapshot = await getDoc(userRef);
+        const completed = Boolean(
+          snapshot.data()?.accountTypeCompleted === true,
+        );
+
+        setAuthCheckReady(true);
+
+        if (!completed) {
+          router.replace("/account-type" as never);
+        }
+      } catch {
+        setAuthCheckReady(true);
+        router.replace("/welcome" as never);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -167,13 +200,15 @@ export default function HomeScreen() {
     if (isNearEnd && !loadingMore && visibleCount < feedItems.length) {
       setLoadingMore(true);
       setTimeout(() => {
-        setVisibleCount((prev) => Math.min(prev + BATCH_INCREMENT, feedItems.length));
+        setVisibleCount((prev) =>
+          Math.min(prev + BATCH_INCREMENT, feedItems.length),
+        );
         setLoadingMore(false);
       }, 350);
     }
   };
 
-  if (showLoading) {
+  if (showLoading || !authCheckReady) {
     return <LoadingScreen />;
   }
 

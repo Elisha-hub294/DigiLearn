@@ -23,9 +23,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../firebaseConfig";
-import { ensureUserProfile } from "../services/userProfile";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { ensureUserProfile } from "../services/userProfile";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -103,9 +103,13 @@ export default function SignUpScreen() {
 
     try {
       setIsLoading(true);
-      const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const credential = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password,
+      );
       await ensureUserProfile(credential.user);
-      router.replace("/");
+      router.replace("/account-type" as never);
     } catch (error) {
       const code =
         typeof error === "object" && error !== null && "code" in error
@@ -143,7 +147,7 @@ export default function SignUpScreen() {
       const provider = new GoogleAuthProvider();
       const credential = await signInWithPopup(auth, provider);
       await ensureUserProfile(credential.user);
-      router.replace("/");
+      router.replace("/account-type" as never);
     } catch (error) {
       const code =
         typeof error === "object" && error !== null && "code" in error
@@ -174,7 +178,7 @@ export default function SignUpScreen() {
       const provider = new FacebookAuthProvider();
       const credential = await signInWithPopup(auth, provider);
       await ensureUserProfile(credential.user);
-      router.replace("/");
+      router.replace("/account-type" as never);
     } catch (error) {
       const code =
         typeof error === "object" && error !== null && "code" in error
