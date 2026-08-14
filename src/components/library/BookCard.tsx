@@ -15,11 +15,16 @@ type BookCardItem = {
 type BookCardProps = {
   item: BookCardItem;
   onPress?: () => void;
+  width?: number;
 };
 
-export function BookCard({ item, onPress }: BookCardProps) {
+export function BookCard({ item, onPress, width = 200 }: BookCardProps) {
   return (
-    <Pressable accessibilityRole="button" style={styles.card} onPress={onPress}>
+    <Pressable
+      accessibilityRole="button"
+      style={[styles.card, { width }]}
+      onPress={onPress}
+    >
       <Image source={item.image} style={styles.image} contentFit="cover" />
       <View>
         <View style={styles.badgeRow}>
@@ -57,7 +62,7 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: 170,
+    height: 300,
   },
   badgeRow: {
     flexDirection: "row",

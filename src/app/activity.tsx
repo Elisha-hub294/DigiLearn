@@ -88,12 +88,16 @@ export default function ActivityScreen() {
       if (item.type === "lesson") {
         router.push({
           pathname: "/lesson-player",
-          params: item.rawDoc ? { ...item.rawDoc } : { id: item.targetId },
+          params: item.rawDoc
+            ? { ...item.rawDoc, source: "activity", returnTo: "/activity" }
+            : { id: item.targetId, source: "activity", returnTo: "/activity" },
         } as never);
       } else if (item.type === "page") {
         router.push({
           pathname: "/page-preview",
-          params: item.rawDoc ? { ...item.rawDoc } : { id: item.targetId },
+          params: item.rawDoc
+            ? { ...item.rawDoc, source: "activity", returnTo: "/activity" }
+            : { id: item.targetId, source: "activity", returnTo: "/activity" },
         } as never);
       } else if (item.type === "book") {
         router.push({

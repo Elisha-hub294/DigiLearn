@@ -3,12 +3,12 @@ import { router } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    FlatList,
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
@@ -19,7 +19,6 @@ type BookItem = {
   id: string;
   title: string;
   author: string;
-  rating: string;
   image: any;
 };
 
@@ -37,26 +36,11 @@ const pickImage = (value: unknown, fallback: any) => {
   return fallback;
 };
 
-const formatRating = (value: unknown) => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return `${value.toFixed(1)}`;
-  }
-
-  if (typeof value === "string") {
-    const parsed = Number.parseFloat(value);
-    if (!Number.isNaN(parsed)) {
-      return `${parsed.toFixed(1)}`;
-    }
-  }
-
-  return "4.8";
-};
-
 export const BookCarousel = () => {
   const { width } = useWindowDimensions();
   const [books, setBooks] = useState<BookItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const cardWidth = width >= 900 ? 220 : 180;
+  const cardWidth = width >= 900 ? 300 : 250;
 
   useEffect(() => {
     let isMounted = true;
@@ -69,36 +53,28 @@ export const BookCarousel = () => {
           return;
         }
 
-        const fetchedBooks = snapshot.docs
-          .map((doc, index) => {
-            const data = doc.data() as Record<string, any>;
-            const ratingValue = Number.parseFloat(
-              data.rating || data.averageRating || data.score || "4.8",
-            );
+        const fetchedBooks = snapshot.docs.map((doc, index) => {
+          const data = doc.data() as Record<string, any>;
 
-            return {
-              id: doc.id || `book-${index}`,
-              title: pickString(
-                data.title || data.name || data.bookTitle,
-                "Untitled book",
-              ),
-              author: (() => {
-                const rawAuthor = data.author || data.writer || data.publisher;
-                if (Array.isArray(rawAuthor) && rawAuthor.length > 0) {
-                  return String(rawAuthor[0]);
-                }
-                return pickString(rawAuthor, "");
-              })(),
-              rating: formatRating(ratingValue),
-              image: pickImage(
-                data.image || data.coverImage || data.cover || data.thumbnail,
-                require("../../../assets/images/bookcover-default.jpeg"),
-              ),
-            } satisfies BookItem;
-          })
-          .sort(
-            (a, b) => Number.parseFloat(b.rating) - Number.parseFloat(a.rating),
-          );
+          return {
+            id: doc.id || `book-${index}`,
+            title: pickString(
+              data.title || data.name || data.bookTitle,
+              "Untitled book",
+            ),
+            author: (() => {
+              const rawAuthor = data.author || data.writer || data.publisher;
+              if (Array.isArray(rawAuthor) && rawAuthor.length > 0) {
+                return String(rawAuthor[0]);
+              }
+              return pickString(rawAuthor, "");
+            })(),
+            image: pickImage(
+              data.image || data.coverImage || data.cover || data.thumbnail,
+              require("../../../assets/images/bookcover-default.jpeg"),
+            ),
+          } satisfies BookItem;
+        });
 
         // Shuffle fetched books to randomize order
         const shuffled = [...fetchedBooks];
@@ -167,7 +143,7 @@ export const BookCarousel = () => {
             <Image
               source={item.image}
               style={styles.image}
-              contentFit="cover"
+              contentFit="contain"
             />
             <View style={styles.body}>
               <Text style={styles.title}>{item.title}</Text>
@@ -183,9 +159,6 @@ export const BookCarousel = () => {
               >
                 <Text style={styles.author}>{item.author}</Text>
               </Pressable>
-              <View style={styles.row}>
-                <Text style={styles.rating}>★ {item.rating}</Text>
-              </View>
             </View>
           </Pressable>
         )}
@@ -209,7 +182,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     overflow: "hidden",
   },
-  image: { width: "100%", height: 170 },
+  image: { width: "100%", height: 200 },
   body: { paddingVertical: spacing.xs },
   title: {
     color: colors.text,
@@ -217,10 +190,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   author: { color: colors.subtitle, fontSize: 12, marginBottom: spacing.sm },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  rating: { color: "#c59211ff", fontSize: 12, fontWeight: "700" },
 });

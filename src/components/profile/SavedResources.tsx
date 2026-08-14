@@ -3,20 +3,20 @@ import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
 import { BookCard } from "../../components/library/BookCard";
 import {
-    TrendingVideoCard,
-    VideoLesson,
+  TrendingVideoCard,
+  VideoLesson,
 } from "../../components/ui/TrendingVideoCard";
 import { colors, radius, shadows, spacing } from "../../constants/theme";
 import type { UserProfile } from "../../services/userProfile";
@@ -199,6 +199,7 @@ function renderItems(items: Entry[], router: any) {
         .map((x) => (
           <BookCard
             key={x.id}
+            width={500}
             item={{
               id: x.id,
               title: x.data.title ?? "Untitled book",

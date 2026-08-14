@@ -3,30 +3,30 @@ import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
-import { useMemo, useState, useEffect } from "react";
-import { auth } from "../../firebaseConfig";
-import { recordUserActivity } from "../services/activityService";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    Alert,
+    Pressable,
+    SafeAreaView,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, {
-  FadeIn,
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
+    FadeIn,
+    FadeInDown,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
 } from "react-native-reanimated";
+import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { getTeacherAvatar } from "../constants/teacherAvatar";
 import { dimensions } from "../constants/theme";
+import { recordUserActivity } from "../services/activityService";
 
 function getYoutubeEmbedUrl(rawUrl?: string) {
   if (!rawUrl) {
@@ -73,6 +73,8 @@ export default function LessonPlayerScreen() {
     link?: string;
     thumbnail?: string;
     avatar?: string;
+    source?: "activity" | "videos";
+    returnTo?: string;
   }>();
 
   useEffect(() => {
@@ -130,10 +132,15 @@ export default function LessonPlayerScreen() {
   }
 
   function handleBack() {
+    if (params.returnTo) {
+      router.replace(params.returnTo as any);
+      return;
+    }
+
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace("/videos");
+      router.replace(params.source === "activity" ? "/activity" : "/videos");
     }
   }
 

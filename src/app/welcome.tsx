@@ -2,11 +2,11 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useCallback } from "react";
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -30,8 +30,8 @@ export default function WelcomeScreen() {
   }, [router]);
 
   const handleGuest = useCallback(() => {
-    // TODO: Continue as guest
-  }, []);
+    router.push("/");
+  }, [router]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -127,6 +127,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.2,
     textAlign: "center",
+    marginBottom: spacing.xl,
   },
   brandBlack: {
     color: colors.dark,

@@ -108,7 +108,7 @@ const extractAccentColor = (rawAccent: unknown): string => {
 export function PagePreviewScreen() {
   const { id, source, returnTo, title } = useLocalSearchParams<{
     id: string;
-    source?: "home" | "library" | "pages";
+    source?: "home" | "library" | "pages" | "activity";
     returnTo?: string;
     title?: string;
   }>();
@@ -377,7 +377,13 @@ export function PagePreviewScreen() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace(source === "home" ? "/" : "/library");
+      router.replace(
+        source === "home"
+          ? "/"
+          : source === "activity"
+            ? "/activity"
+            : "/library",
+      );
     }
   };
 

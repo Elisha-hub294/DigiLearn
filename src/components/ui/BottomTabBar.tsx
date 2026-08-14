@@ -55,7 +55,14 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     activeRoute?.name === "activity" ||
     activeRoute?.name === "help" ||
     activeRoute?.name === "about" ||
-    activeRoute?.name === "notifications"
+    activeRoute?.name === "notifications" ||
+    activeRoute?.name === "welcome" ||
+    activeRoute?.name === "signup" ||
+    activeRoute?.name === "login" ||
+    activeRoute?.name === "account-type" ||
+    activeRoute?.name === "account-quick-settings" ||
+    activeRoute?.name === "forgot-password" ||
+    activeRoute?.name === "loading"
   ) {
     return null;
   }

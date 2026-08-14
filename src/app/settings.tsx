@@ -1,31 +1,63 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
+import { signOut } from "firebase/auth";
 import { useCallback, useState } from "react";
 import {
-  BackHandler,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  useWindowDimensions,
-  View,
+    Alert,
+    BackHandler,
+    Pressable,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
+import { auth } from "../../firebaseConfig";
 import SettingsRow from "../components/ui/SettingsRow";
 import SettingsSection from "../components/ui/SettingsSection";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { useProfile } from "../contexts/ProfileContext";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const navigation = useNavigation();
+  const { user } = useProfile();
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   const [pushEnabled, setPushEnabled] = useState(true);
   const [remindersEnabled, setRemindersEnabled] = useState(true);
+
+  const handleLogout = useCallback(() => {
+    Alert.alert(
+      "Confirm logout",
+      "Are you sure you want to log out of DigiLearn?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Log out",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await signOut(auth);
+              router.replace("/" as never);
+            } catch (error) {
+              console.error("Logout failed:", error);
+              Alert.alert("Unable to sign out", "Please try again.");
+            }
+          },
+        },
+      ],
+      { cancelable: true },
+    );
+  }, [router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -37,7 +69,7 @@ export default function SettingsScreen() {
 
       const subscription = BackHandler.addEventListener(
         "hardwareBackPress",
-        onBackPress
+        onBackPress,
       );
 
       // Web browser back / navigation stack pop handler
@@ -53,7 +85,7 @@ export default function SettingsScreen() {
         subscription.remove();
         unsubscribe();
       };
-    }, [navigation, router])
+    }, [navigation, router]),
   );
 
   return (
@@ -82,7 +114,11 @@ export default function SettingsScreen() {
             {/* Account Section */}
             <Text style={styles.sectionTitle}>Account</Text>
             <SettingsSection>
-              <SettingsRow icon="user" title="My Profile" onPress={() => router.push("/my-profile" as never)} />
+              <SettingsRow
+                icon="user"
+                title="My Profile"
+                onPress={() => router.push("/my-profile" as never)}
+              />
               <SettingsRow
                 icon="settings"
                 title="My Preferences"
@@ -147,20 +183,22 @@ export default function SettingsScreen() {
               />
             </SettingsSection>
 
-            {/* Logout */}
-            <View style={{ height: 30 }} />
-            <Pressable
-              onPress={() => {}}
-              accessibilityRole="button"
-              accessibilityLabel="Logout"
-            >
-              <View style={styles.logoutRow}>
-                <Icon name="log-out" size={18} color="#FF4D4D" />
-                <Text style={styles.logoutText}>Logout</Text>
-              </View>
-            </Pressable>
-
-            <View style={{ height: 60 }} />
+            {user ? (
+              <>
+                <View style={{ height: 30 }} />
+                <Pressable
+                  onPress={handleLogout}
+                  accessibilityRole="button"
+                  accessibilityLabel="Logout"
+                >
+                  <View style={styles.logoutRow}>
+                    <Icon name="log-out" size={18} color="#FF4D4D" />
+                    <Text style={styles.logoutText}>Logout</Text>
+                  </View>
+                </Pressable>
+                <View style={{ height: 60 }} />
+              </>
+            ) : null}
           </ScrollView>
         </View>
       </View>

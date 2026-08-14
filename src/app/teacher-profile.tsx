@@ -868,7 +868,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingVertical: spacing.sm,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: "#e9e9e9",
     borderRadius: 16,
   },
   statValue: {
