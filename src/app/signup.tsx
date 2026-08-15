@@ -1,31 +1,34 @@
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
-    createUserWithEmailAndPassword,
-    FacebookAuthProvider,
-    GoogleAuthProvider,
-    signInWithPopup,
-} from "firebase/auth";
-import { useCallback, useMemo, useState } from "react";
-import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
-import { ensureUserProfile } from "../services/userProfile";
+import {
+  parseAuthError,
+  signInWithFacebook,
+  signInWithGoogle,
+} from "../services/socialAuth";
+import {
+  ensureUserProfile,
+  getUserOnboardingState,
+} from "../services/userProfile";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -52,6 +55,7 @@ function mapAuthError(code: string | undefined) {
 export default function SignUpScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const emailInputRef = useRef<TextInput>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -131,30 +135,26 @@ export default function SignUpScreen() {
 
   const handleGoogleSignUp = useCallback(async () => {
     if (isLoading) return;
-
-    if (Platform.OS !== "web") {
-      Alert.alert(
-        "Google sign-in unavailable",
-        "Google authentication is only available on web for now.",
-      );
-      return;
-    }
-
     setGeneralError("");
     setIsLoading(true);
 
     try {
-      const provider = new GoogleAuthProvider();
-      const credential = await signInWithPopup(auth, provider);
-      await ensureUserProfile(credential.user);
-      router.replace("/account-type" as never);
+      const result = await signInWithGoogle();
+      if (result.cancelled) {
+        return;
+      }
+      if (result.success && result.user) {
+        const onboarding = await getUserOnboardingState(result.user.uid);
+        if (onboarding.accountTypeCompleted && onboarding.type) {
+          router.replace("/" as never);
+        } else {
+          router.replace("/account-type" as never);
+        }
+      } else if (result.error) {
+        setGeneralError(result.error);
+      }
     } catch (error) {
-      const code =
-        typeof error === "object" && error !== null && "code" in error
-          ? (error as any).code
-          : undefined;
-      const message = mapAuthError(code);
-      setGeneralError(message);
+      setGeneralError(parseAuthError(error));
     } finally {
       setIsLoading(false);
     }
@@ -162,38 +162,38 @@ export default function SignUpScreen() {
 
   const handleFacebookSignUp = useCallback(async () => {
     if (isLoading) return;
-
-    if (Platform.OS !== "web") {
-      Alert.alert(
-        "Facebook sign-in unavailable",
-        "Facebook authentication is only available on web for now.",
-      );
-      return;
-    }
-
     setGeneralError("");
     setIsLoading(true);
 
     try {
-      const provider = new FacebookAuthProvider();
-      const credential = await signInWithPopup(auth, provider);
-      await ensureUserProfile(credential.user);
-      router.replace("/account-type" as never);
+      const result = await signInWithFacebook();
+      if (result.cancelled) {
+        return;
+      }
+      if (result.success && result.user) {
+        const onboarding = await getUserOnboardingState(result.user.uid);
+        if (onboarding.accountTypeCompleted && onboarding.type) {
+          router.replace("/" as never);
+        } else {
+          router.replace("/account-type" as never);
+        }
+      } else if (result.error) {
+        setGeneralError(result.error);
+      }
     } catch (error) {
-      const code =
-        typeof error === "object" && error !== null && "code" in error
-          ? (error as any).code
-          : undefined;
-      const message = mapAuthError(code);
-      setGeneralError(message);
+      setGeneralError(parseAuthError(error));
     } finally {
       setIsLoading(false);
     }
   }, [isLoading, router]);
 
   const handleEmailIcon = useCallback(() => {
-    handleContinue();
-  }, [handleContinue]);
+    if (email.trim() && password) {
+      handleContinue();
+    } else {
+      emailInputRef.current?.focus();
+    }
+  }, [email, password, handleContinue]);
 
   const handleLoginNavigation = useCallback(() => {
     router.push({ pathname: "/login", params: { from: "signup" } });
@@ -230,6 +230,7 @@ export default function SignUpScreen() {
               <View style={styles.fieldGroup}>
                 <Text style={styles.fieldLabel}>Email</Text>
                 <TextInput
+                  ref={emailInputRef}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"

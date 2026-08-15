@@ -1,31 +1,33 @@
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
-    FacebookAuthProvider,
-    GoogleAuthProvider,
-    signInWithEmailAndPassword,
-    signInWithPopup,
-    signOut,
+  signInWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import {
+  parseAuthError,
+  signInWithFacebook,
+  signInWithGoogle,
+} from "../services/socialAuth";
 import { ensureUserProfile } from "../services/userProfile";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -44,6 +46,9 @@ function mapAuthError(code: string | undefined) {
       return "Couldn't connect. Check your internet and try again.";
     case "auth/user-disabled":
       return "This account has been disabled. Contact support.";
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "Authentication was cancelled.";
     default:
       return "Something went wrong. Please try again.";
   }
@@ -53,6 +58,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const { from } = useLocalSearchParams<{ from?: string }>();
   const { width } = useWindowDimensions();
+  const emailInputRef = useRef<TextInput>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -128,29 +134,21 @@ export default function LoginScreen() {
 
   const handleGoogleSignIn = useCallback(async () => {
     if (isLoading) return;
-
-    if (Platform.OS !== "web") {
-      Alert.alert(
-        "Google sign-in unavailable",
-        "Google authentication is only available on web for now.",
-      );
-      return;
-    }
-
     setGeneralError("");
     setIsLoading(true);
 
     try {
-      const provider = new GoogleAuthProvider();
-      const credential = await signInWithPopup(auth, provider);
-      await ensureUserProfile(credential.user);
-      router.replace("/");
+      const result = await signInWithGoogle();
+      if (result.cancelled) {
+        return;
+      }
+      if (result.success && result.user) {
+        router.replace("/");
+      } else if (result.error) {
+        setGeneralError(result.error);
+      }
     } catch (error) {
-      const code =
-        typeof error === "object" && error !== null && "code" in error
-          ? (error as any).code
-          : undefined;
-      setGeneralError(mapAuthError(code));
+      setGeneralError(parseAuthError(error));
     } finally {
       setIsLoading(false);
     }
@@ -158,33 +156,33 @@ export default function LoginScreen() {
 
   const handleFacebookSignIn = useCallback(async () => {
     if (isLoading) return;
-
-    if (Platform.OS !== "web") {
-      Alert.alert(
-        "Facebook sign-in unavailable",
-        "Facebook authentication is only available on web for now.",
-      );
-      return;
-    }
-
     setGeneralError("");
     setIsLoading(true);
 
     try {
-      const provider = new FacebookAuthProvider();
-      const credential = await signInWithPopup(auth, provider);
-      await ensureUserProfile(credential.user);
-      router.replace("/");
+      const result = await signInWithFacebook();
+      if (result.cancelled) {
+        return;
+      }
+      if (result.success && result.user) {
+        router.replace("/");
+      } else if (result.error) {
+        setGeneralError(result.error);
+      }
     } catch (error) {
-      const code =
-        typeof error === "object" && error !== null && "code" in error
-          ? (error as any).code
-          : undefined;
-      setGeneralError(mapAuthError(code));
+      setGeneralError(parseAuthError(error));
     } finally {
       setIsLoading(false);
     }
   }, [isLoading, router]);
+
+  const handleEmailIcon = useCallback(() => {
+    if (email.trim() && password) {
+      handleContinue();
+    } else {
+      emailInputRef.current?.focus();
+    }
+  }, [email, password, handleContinue]);
 
   const toggleShowPassword = useCallback(() => {
     setShowPassword((c) => !c);
@@ -306,6 +304,7 @@ export default function LoginScreen() {
               <View style={styles.fieldGroup}>
                 <Text style={styles.fieldLabel}>Email</Text>
                 <TextInput
+                  ref={emailInputRef}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -430,7 +429,7 @@ export default function LoginScreen() {
               </Pressable>
 
               <Pressable
-                onPress={handleContinue}
+                onPress={handleEmailIcon}
                 style={({ pressed }) => [
                   styles.socialButton,
                   pressed && styles.socialPressed,
