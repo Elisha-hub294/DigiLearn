@@ -14,7 +14,9 @@ import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { recordUserActivity } from "../../services/activityService";
+import { toggleSavedItem } from "../../services/userProfile";
 import { FALLBACK_COVER } from "../book/bookTypes";
+import { ActionDialog } from "../ui/ActionDialog";
 import { BottomActionBar } from "./BottomActionBar";
 import { OverviewSection } from "./OverviewSection";
 import { PageHero } from "./PageHero";
@@ -122,6 +124,7 @@ export function PagePreviewScreen() {
   const [subjectAccent, setSubjectAccent] = useState<string>("#000000");
   const [loading, setLoading] = useState(true);
   const [bookmarked, setBookmarked] = useState(false);
+  const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
 
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
@@ -275,6 +278,34 @@ export function PagePreviewScreen() {
     };
   }, [id]);
 
+  useEffect(() => {
+    let active = true;
+
+    const loadBookmarkState = async () => {
+      const userId = auth.currentUser?.uid;
+      if (!id || !userId) {
+        if (active) setBookmarked(false);
+        return;
+      }
+
+      try {
+        const userSnap = await getDoc(doc(db, "users", userId));
+        const savedPages = Array.isArray(userSnap.data()?.["saved-pages"])
+          ? userSnap.data()?.["saved-pages"]
+          : [];
+
+        if (active) setBookmarked(savedPages.includes(id));
+      } catch (error) {
+        console.error("Failed to check page bookmark status", error);
+      }
+    };
+
+    loadBookmarkState();
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
   // Compute Similar Pages by subject overlap (excluding current note)
   const similarPages = useMemo(() => {
     if (!note) return [];
@@ -410,6 +441,8 @@ export function PagePreviewScreen() {
     } as any);
   };
 
+  const pagePreviewRoute = `/page-preview?id=${encodeURIComponent(id)}`;
+
   const subjectsList = normalizeArray(note.subject);
 
   return (
@@ -498,13 +531,47 @@ export function PagePreviewScreen() {
         >
           <BottomActionBar
             bookmarked={bookmarked}
-            onBookmark={() => setBookmarked((prev) => !prev)}
+            onBookmark={async () => {
+              const userId = auth.currentUser?.uid;
+              if (!userId) {
+                setShowGuestSaveAlert(true);
+                return;
+              }
+
+              try {
+                await toggleSavedItem(userId, "saved-pages", id, bookmarked);
+                setBookmarked((value) => !value);
+              } catch (error) {
+                console.error("Failed to toggle page bookmark", error);
+              }
+            }}
             onOpen={handleOpenPdf}
             onShare={handleShare}
             accentColor={subjectAccent}
           />
         </View>
       </View>
+
+      <ActionDialog
+        visible={showGuestSaveAlert}
+        title="Save this resource"
+        message="Log in or sign up to save pages and resources for later."
+        primaryText="Log in"
+        secondaryText="Sign up"
+        onPrimary={() =>
+          router.push({
+            pathname: "/login",
+            params: { from: pagePreviewRoute },
+          } as any)
+        }
+        onSecondary={() =>
+          router.push({
+            pathname: "/signup",
+            params: { from: pagePreviewRoute },
+          } as any)
+        }
+        onClose={() => setShowGuestSaveAlert(false)}
+      />
     </Animated.View>
   );
 }

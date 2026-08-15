@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
+import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
     Alert,
@@ -22,11 +23,12 @@ import Animated, {
     useSharedValue,
     withSpring,
 } from "react-native-reanimated";
-import { auth } from "../../firebaseConfig";
+import { auth, db } from "../../firebaseConfig";
+import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { getTeacherAvatar } from "../constants/teacherAvatar";
-import { dimensions } from "../constants/theme";
 import { recordUserActivity } from "../services/activityService";
+import { toggleSavedItem } from "../services/userProfile";
 
 function getYoutubeEmbedUrl(rawUrl?: string) {
   if (!rawUrl) {
@@ -62,6 +64,8 @@ export default function LessonPlayerScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
 
   const params = useLocalSearchParams<{
     id?: string;
@@ -76,6 +80,29 @@ export default function LessonPlayerScreen() {
     source?: "activity" | "videos";
     returnTo?: string;
   }>();
+  const lessonId = params.id;
+  const lessonReturnPath = useMemo(() => {
+    const search = Object.entries(params)
+      .filter((entry): entry is [string, string] =>
+        typeof entry[1] === "string" && Boolean(entry[1]),
+      )
+      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .join("&");
+
+    return search ? `/lesson-player?${search}` : "/lesson-player";
+  }, [
+    params.avatar,
+    params.duration,
+    params.id,
+    params.link,
+    params.returnTo,
+    params.source,
+    params.subject,
+    params.teacher,
+    params.thumbnail,
+    params.title,
+    params.uploadedAt,
+  ]);
 
   useEffect(() => {
     const lessonId = params.id || params.title;
@@ -83,6 +110,31 @@ export default function LessonPlayerScreen() {
       recordUserActivity(auth.currentUser.uid, "lesson", lessonId);
     }
   }, [params.id, params.title]);
+
+  useEffect(() => {
+    let active = true;
+    const userId = auth.currentUser?.uid;
+
+    if (!userId || !lessonId) {
+      setIsSaved(false);
+      return;
+    }
+
+    getDoc(doc(db, "users", userId))
+      .then((snapshot) => {
+        const savedLessons = snapshot.data()?.["saved-lessons"];
+        if (active) {
+          setIsSaved(
+            Array.isArray(savedLessons) && savedLessons.includes(lessonId),
+          );
+        }
+      })
+      .catch(() => active && setIsSaved(false));
+
+    return () => {
+      active = false;
+    };
+  }, [lessonId]);
 
   const playScale = useSharedValue(1);
   const playAnimatedStyle = useAnimatedStyle(() => ({
@@ -118,17 +170,40 @@ export default function LessonPlayerScreen() {
     }
   }
 
-  function toggleSave() {
-    setIsSaved((prev) => {
-      const next = !prev;
+  async function toggleSave() {
+    const userId = auth.currentUser?.uid;
+    if (!userId) {
+      setShowGuestSaveDialog(true);
+      return;
+    }
+
+    if (!lessonId) {
       Alert.alert(
-        next ? "Saved to Library" : "Removed from Saved",
-        next
+        "Unable to save lesson",
+        "This lesson is missing its resource ID.",
+      );
+      return;
+    }
+
+    if (isSaving) return;
+
+    const nextSaved = !isSaved;
+    setIsSaving(true);
+    try {
+      await toggleSavedItem(userId, "saved-lessons", lessonId, isSaved);
+      setIsSaved(nextSaved);
+      Alert.alert(
+        nextSaved ? "Saved to Library" : "Removed from Saved",
+        nextSaved
           ? "This lesson is now saved in your bookmarks."
           : "Lesson removed from saved items.",
       );
-      return next;
-    });
+    } catch (error) {
+      console.error("Failed to save lesson", error);
+      Alert.alert("Unable to save lesson", "Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function handleBack() {
@@ -145,57 +220,61 @@ export default function LessonPlayerScreen() {
   }
 
   const horizontalPadding = getHorizontalPadding(width);
-  const maxContentWidth = Math.min(width, dimensions.maxContentWidth);
+  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
+      <View style={styles.page}>
+        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+          {/* Navigation Header */}
+          <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
+            <Pressable
+              accessibilityLabel="Back to videos"
+              accessibilityRole="button"
+              onPress={handleBack}
+              style={styles.iconButton}
+              hitSlop={8}
+            >
+              <Ionicons name="chevron-back" size={24} color="#0F172A" />
+            </Pressable>
+            {/* <Text style={styles.headerTitle}>Lesson Preview</Text> */}
+            <View style={styles.headerRightActions}>
+              <Pressable
+                accessibilityLabel="Bookmark lesson"
+                accessibilityRole="button"
+                onPress={toggleSave}
+                disabled={isSaving}
+                accessibilityState={{ selected: isSaved, disabled: isSaving }}
+                style={styles.iconButton}
+                hitSlop={8}
+              >
+                <Ionicons
+                  name={isSaved ? "bookmark" : "bookmark-outline"}
+                  size={20}
+                  color={isSaved ? "#3B82F6" : "#0F172A"}
+                />
+              </Pressable>
+              <Pressable
+                accessibilityLabel="Share lesson"
+                accessibilityRole="button"
+                onPress={handleShare}
+                style={styles.iconButton}
+                hitSlop={8}
+              >
+                <Ionicons name="share-outline" size={20} color="#0F172A" />
+              </Pressable>
+            </View>
+          </View>
 
-      {/* Navigation Header */}
-      <View style={styles.header}>
-        <Pressable
-          accessibilityLabel="Back to videos"
-          accessibilityRole="button"
-          onPress={handleBack}
-          style={styles.iconButton}
-          hitSlop={8}
-        >
-          <Ionicons name="chevron-back" size={24} color="#0F172A" />
-        </Pressable>
-        {/* <Text style={styles.headerTitle}>Lesson Preview</Text> */}
-        <View style={styles.headerRightActions}>
-          <Pressable
-            accessibilityLabel="Bookmark lesson"
-            accessibilityRole="button"
-            onPress={toggleSave}
-            style={styles.iconButton}
-            hitSlop={8}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={styles.scroll}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingHorizontal: horizontalPadding },
+            ]}
           >
-            <Ionicons
-              name={isSaved ? "bookmark" : "bookmark-outline"}
-              size={20}
-              color={isSaved ? "#3B82F6" : "#0F172A"}
-            />
-          </Pressable>
-          <Pressable
-            accessibilityLabel="Share lesson"
-            accessibilityRole="button"
-            onPress={handleShare}
-            style={styles.iconButton}
-            hitSlop={8}
-          >
-            <Ionicons name="share-outline" size={20} color="#0F172A" />
-          </Pressable>
-        </View>
-      </View>
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingHorizontal: horizontalPadding, maxWidth: maxContentWidth },
-        ]}
-      >
         {/* Hero Video Card */}
         <Animated.View
           entering={FadeIn.duration(400)}
@@ -300,7 +379,7 @@ export default function LessonPlayerScreen() {
         </Animated.View>
 
         {/* Overview & Key Highlights Card */}
-        <Animated.View
+        {/* <Animated.View
           entering={FadeInDown.delay(200).duration(400)}
           style={styles.overviewCard}
         >
@@ -337,8 +416,31 @@ export default function LessonPlayerScreen() {
               </Text>
             </View>
           </View>
-        </Animated.View>
-      </ScrollView>
+        </Animated.View> */}
+          </ScrollView>
+        </View>
+      </View>
+
+      <ActionDialog
+        visible={showGuestSaveDialog}
+        title="Save this video"
+        message="Log in or sign up to save video resources and watch them later."
+        primaryText="Log in"
+        secondaryText="Sign up"
+        onPrimary={() =>
+          router.push({
+            pathname: "/login",
+            params: { from: lessonReturnPath },
+          } as never)
+        }
+        onSecondary={() =>
+          router.push({
+            pathname: "/signup",
+            params: { from: lessonReturnPath },
+          } as never)
+        }
+        onClose={() => setShowGuestSaveDialog(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -348,6 +450,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     flex: 1,
   },
+  page: {
+    alignItems: "center",
+    flex: 1,
+  },
+  contentContainer: {
+    flex: 1,
+    width: "100%",
+  },
   header: {
     alignItems: "center",
     backgroundColor: "#fff",
@@ -355,7 +465,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
     paddingVertical: 12,
     backdropFilter: "blur(10px)",
   },
@@ -378,6 +487,10 @@ const styles = StyleSheet.create({
   headerRightActions: {
     flexDirection: "row",
     gap: 8,
+  },
+  scroll: {
+    flex: 1,
+    width: "100%",
   },
   scrollContent: {
     alignSelf: "center",
