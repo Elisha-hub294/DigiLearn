@@ -9,20 +9,9 @@ import {
   useWindowDimensions,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
-import { FavoriteButton } from "./FavoriteButton";
 import { Book } from "./bookTypes";
 
-export function BookHero({
-  book,
-  favourite,
-  onFavourite,
-  onBack,
-}: {
-  book: Book;
-  favourite: boolean;
-  onFavourite: () => void;
-  onBack: () => void;
-}) {
+export function BookHero({ book, onBack }: { book: Book; onBack: () => void }) {
   const { height } = useWindowDimensions();
   const heroHeight = Math.min(Math.max(height * 0.5, 330), 520);
   const hasCover = Boolean(book.cover && book.cover.trim());
@@ -59,7 +48,6 @@ export function BookHero({
         >
           <Feather name="chevron-left" color="#fff" size={27} />
         </Pressable>
-        <FavoriteButton selected={favourite} onPress={onFavourite} />
       </View>
 
       <Animated.View

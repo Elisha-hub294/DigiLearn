@@ -86,8 +86,8 @@ export default function ForgotPasswordScreen() {
   }, [email, isLoading, validate]);
 
   const handleBack = useCallback(() => {
-    if (from) {
-      router.replace(`/${from}`);
+    if (typeof from === "string" && from.trim()) {
+      router.replace(from as any);
     } else {
       router.back();
     }

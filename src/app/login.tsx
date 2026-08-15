@@ -1,22 +1,19 @@
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  signInWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -24,9 +21,9 @@ import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import {
-  parseAuthError,
-  signInWithFacebook,
-  signInWithGoogle,
+    parseAuthError,
+    signInWithFacebook,
+    signInWithGoogle,
 } from "../services/socialAuth";
 import { ensureUserProfile } from "../services/userProfile";
 
@@ -193,8 +190,8 @@ export default function LoginScreen() {
   }, [router, from]);
 
   const handleBack = useCallback(() => {
-    if (from) {
-      router.replace(`/${from}`);
+    if (typeof from === "string" && from.trim()) {
+      router.replace(from as any);
     } else {
       router.back();
     }
@@ -445,7 +442,15 @@ export default function LoginScreen() {
             <View style={styles.footerRow}>
               <Text style={styles.footerText}>Don't have an account?</Text>
               <Pressable
-                onPress={() => router.push("/signup")}
+                onPress={() =>
+                  router.push({
+                    pathname: "/signup",
+                    params: {
+                      from:
+                        typeof from === "string" && from.trim() ? from : "/",
+                    },
+                  })
+                }
                 accessibilityRole="button"
                 accessibilityLabel="Sign up for DigiLearn"
               >

@@ -1,19 +1,18 @@
 import { Feather, FontAwesome } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -21,13 +20,13 @@ import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import {
-  parseAuthError,
-  signInWithFacebook,
-  signInWithGoogle,
+    parseAuthError,
+    signInWithFacebook,
+    signInWithGoogle,
 } from "../services/socialAuth";
 import {
-  ensureUserProfile,
-  getUserOnboardingState,
+    ensureUserProfile,
+    getUserOnboardingState,
 } from "../services/userProfile";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -54,6 +53,7 @@ function mapAuthError(code: string | undefined) {
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const { width } = useWindowDimensions();
   const emailInputRef = useRef<TextInput>(null);
   const [email, setEmail] = useState("");
@@ -196,8 +196,21 @@ export default function SignUpScreen() {
   }, [email, password, handleContinue]);
 
   const handleLoginNavigation = useCallback(() => {
-    router.push({ pathname: "/login", params: { from: "signup" } });
-  }, [router]);
+    router.push({
+      pathname: "/login",
+      params: {
+        from: typeof from === "string" && from.trim() ? from : "/",
+      },
+    });
+  }, [from, router]);
+
+  const handleBack = useCallback(() => {
+    if (typeof from === "string" && from.trim()) {
+      router.replace(from as any);
+    } else {
+      router.back();
+    }
+  }, [from, router]);
 
   const toggleShowPassword = useCallback(() => {
     setShowPassword((current) => !current);
@@ -219,7 +232,15 @@ export default function SignUpScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
-            <View style={styles.header}>
+            <View style={styles.headerWithBack}>
+              <Pressable
+                onPress={handleBack}
+                style={styles.backButton}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+              >
+                <Feather name="arrow-left" size={22} color="#111" />
+              </Pressable>
               <Text style={styles.title}>Sign up</Text>
               <Text style={styles.subtitle}>
                 Fill your information or register with your social accounts
@@ -393,10 +414,12 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
-  header: {
+  headerWithBack: {
     alignItems: "center",
     marginBottom: spacing.xxl,
+    position: "relative",
   },
+  backButton: { position: "absolute", left: 0, top: -2, padding: 6 },
   title: {
     fontSize: 30,
     fontWeight: "700",

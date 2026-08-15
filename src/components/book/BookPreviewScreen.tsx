@@ -2,17 +2,18 @@ import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    View,
-    useWindowDimensions,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { recordUserActivity } from "../../services/activityService";
 import { toggleSavedItem } from "../../services/userProfile";
+import { ActionDialog } from "../ui/ActionDialog";
 import { AuthorsCarousel } from "./AuthorsCarousel";
 import { BookHero } from "./BookHero";
 import { BookOverview } from "./BookOverview";
@@ -91,7 +92,8 @@ export function BookPreviewScreen() {
   );
   const [defaultUserAvatar, setDefaultUserAvatar] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [favourite, setFavourite] = useState(false);
+  const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
+
   const [bookmarked, setBookmarked] = useState(false);
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
@@ -299,12 +301,7 @@ export function BookPreviewScreen() {
             { paddingBottom: 110, paddingHorizontal: horizontalPadding },
           ]}
         >
-          <BookHero
-            book={book}
-            favourite={favourite}
-            onFavourite={() => setFavourite((value) => !value)}
-            onBack={goBack}
-          />
+          <BookHero book={book} onBack={goBack} />
           <Animated.View
             entering={FadeInUp.duration(430)}
             style={[styles.sheet, { paddingHorizontal: 10 }]}
@@ -346,7 +343,13 @@ export function BookPreviewScreen() {
             gradient={gradient}
             bookmarked={bookmarked}
             onBookmark={async () => {
-              if (!book || !auth.currentUser?.uid) return;
+              if (!book) return;
+
+              if (!auth.currentUser?.uid) {
+                setShowGuestSaveAlert(true);
+                return;
+              }
+
               try {
                 await toggleSavedItem(
                   auth.currentUser.uid,
@@ -362,6 +365,37 @@ export function BookPreviewScreen() {
           />
         </View>
       </View>
+
+      <ActionDialog
+        visible={showGuestSaveAlert}
+        title="Save this resource"
+        message="Log in or sign up to save books and resources for later."
+        primaryText="Log in"
+        secondaryText="Sign up"
+        onPrimary={() =>
+          router.push({
+            pathname: "/login",
+            params: {
+              from:
+                typeof returnTo === "string" && returnTo.trim()
+                  ? returnTo
+                  : "/",
+            },
+          } as any)
+        }
+        onSecondary={() =>
+          router.push({
+            pathname: "/signup",
+            params: {
+              from:
+                typeof returnTo === "string" && returnTo.trim()
+                  ? returnTo
+                  : "/",
+            },
+          } as any)
+        }
+        onClose={() => setShowGuestSaveAlert(false)}
+      />
     </Animated.View>
   );
 }

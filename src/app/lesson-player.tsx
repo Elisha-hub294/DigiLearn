@@ -418,12 +418,12 @@ const styles = StyleSheet.create({
   },
   playButtonWrapper: {
     alignItems: "center",
-    alignSelf: "center",
+    bottom: 0,
     justifyContent: "center",
     left: 0,
     position: "absolute",
     right: 0,
-    top: "35%",
+    top: 0,
   },
   playButtonInner: {
     alignItems: "center",

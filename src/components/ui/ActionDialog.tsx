@@ -1,0 +1,139 @@
+import { colors } from "@/constants/theme";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+
+export type ActionDialogProps = {
+  visible: boolean;
+  title: string;
+  message: string;
+  primaryText: string;
+  secondaryText?: string;
+  onPrimary: () => void;
+  onSecondary?: () => void;
+  onClose?: () => void;
+  primaryButtonColor?: string;
+  secondaryButtonColor?: string;
+};
+
+export function ActionDialog({
+  visible,
+  title,
+  message,
+  primaryText,
+  secondaryText,
+  onPrimary,
+  onSecondary,
+  onClose,
+  primaryButtonColor = colors.primary,
+  secondaryButtonColor = "#E2E8F0",
+}: ActionDialogProps) {
+  return (
+    <Modal
+      animationType="fade"
+      transparent
+      visible={visible}
+      onRequestClose={onClose ?? onSecondary ?? onPrimary}
+    >
+      <Pressable style={styles.backdrop} onPress={onClose ?? onSecondary}>
+        <Pressable
+          style={styles.card}
+          onPress={(event) => event.stopPropagation()}
+          accessibilityRole="alert"
+        >
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.message}>{message}</Text>
+
+          <View style={styles.actions}>
+            {secondaryText && onSecondary ? (
+              <Pressable
+                onPress={() => {
+                  onSecondary();
+                  onClose?.();
+                }}
+                style={[
+                  styles.button,
+                  { backgroundColor: secondaryButtonColor },
+                ]}
+              >
+                <Text style={[styles.buttonText, styles.secondaryButtonText]}>
+                  {secondaryText}
+                </Text>
+              </Pressable>
+            ) : null}
+
+            <Pressable
+              onPress={() => {
+                onPrimary();
+                onClose?.();
+              }}
+              style={[styles.button, { backgroundColor: primaryButtonColor }]}
+            >
+              <Text style={[styles.buttonText, styles.primaryButtonText]}>
+                {primaryText}
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  card: {
+    width: "100%",
+    maxWidth: 420,
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  title: {
+    color: "#0F172A",
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  message: {
+    color: "#475569",
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 18,
+  },
+  actions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginTop: 8,
+  },
+  button: {
+    minWidth: 110,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  primaryButtonText: {
+    color: "#FFFFFF",
+  },
+  secondaryButtonText: {
+    color: "#0F172A",
+  },
+});

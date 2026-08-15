@@ -1,5 +1,4 @@
 import { Image } from "expo-image";
-import React from "react";
 import { Pressable, StyleSheet, Text } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { Book, FALLBACK_COVER } from "./bookTypes";
@@ -36,23 +35,18 @@ export function SimilarBookCard({
   );
 }
 const styles = StyleSheet.create({
-  card: { width: 72, marginRight: 14 },
+  card: { width: 80, marginRight: 14 },
   cover: {
-    width: 72,
+    width: 80,
     height: 110,
     borderRadius: 5,
     backgroundColor: "#E9EDF0",
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.2,
-    shadowRadius: 7,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
   },
   title: {
     color: "#344054",
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: "600",
+    fontWeight: "500",
     marginTop: 8,
   },
 });
