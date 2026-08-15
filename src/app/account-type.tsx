@@ -104,6 +104,8 @@ export default function AccountTypeScreen() {
       await saveAccountTypeDecision(user, selectedAccountType);
       if (selectedAccountType === "student") {
         router.replace("/account-quick-settings" as never);
+      } else if (selectedAccountType === "teacher") {
+        router.replace("/teacher-account-quick-settings" as never);
       } else {
         router.replace("/" as never);
       }

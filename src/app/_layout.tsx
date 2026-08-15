@@ -71,6 +71,10 @@ export default function RootLayout() {
               options={{ href: null, tabBarStyle: { display: "none" } }}
             />
             <Tabs.Screen
+              name="teacher-account-quick-settings"
+              options={{ href: null, tabBarStyle: { display: "none" } }}
+            />
+            <Tabs.Screen
               name="login"
               options={{ href: null, tabBarStyle: { display: "none" } }}
             />
