@@ -51,6 +51,10 @@ export default function RootLayout() {
               options={{ href: null, tabBarStyle: { display: "none" } }}
             />
             <Tabs.Screen
+              name="hidden-items"
+              options={{ href: null, tabBarStyle: { display: "none" } }}
+            />
+            <Tabs.Screen
               name="about"
               options={{ href: null, tabBarStyle: { display: "none" } }}
             />

@@ -1,9 +1,19 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // A profile document is private to the Firebase Authentication UID that owns it.
     match /users/{userId} {
-      allow create, read, update: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'marked-as-read',
+          'hidden-pages',
+          'saved-pages',
+          'saved-books',
+          'saved-lessons',
+          'saved-posts'
+        ]);
       allow delete: if false;
     }
   }

@@ -11,6 +11,11 @@ import { db } from "../../firebaseConfig";
 
 export type AccountType = "student" | "teacher" | "";
 
+export type HiddenPageRecord = {
+  id: string;
+  hiddenAt?: unknown;
+};
+
 export type UserProfile = {
   name: string;
   email: string;
@@ -23,6 +28,8 @@ export type UserProfile = {
   joinedAt?: unknown;
   accountTypeCompleted?: boolean;
   type?: AccountType;
+  "marked-as-read": string[];
+  "hidden-pages": HiddenPageRecord[];
   "saved-pages": string[];
   "saved-books": string[];
   "saved-lessons": string[];
@@ -56,6 +63,57 @@ export async function toggleSavedItem(
   );
 }
 
+export async function togglePageReadState(
+  userId: string,
+  itemId: string,
+  isRead: boolean,
+) {
+  const userRef = doc(db, "users", userId);
+  const snapshot = await getDoc(userRef);
+  const currentRead = Array.isArray(snapshot.data()?.["marked-as-read"])
+    ? (snapshot.data()?.["marked-as-read"] as string[])
+    : [];
+
+  const nextRead = isRead
+    ? currentRead.filter((entry) => entry !== itemId)
+    : [...new Set([...currentRead, itemId])];
+
+  await setDoc(userRef, { "marked-as-read": nextRead }, { merge: true });
+}
+
+export async function setPageHiddenState(
+  userId: string,
+  itemId: string,
+  shouldHide: boolean,
+) {
+  const userRef = doc(db, "users", userId);
+  const snapshot = await getDoc(userRef);
+  const currentHidden = Array.isArray(snapshot.data()?.["hidden-pages"])
+    ? (snapshot.data()?.["hidden-pages"] as HiddenPageRecord[])
+    : [];
+
+  if (shouldHide) {
+    const alreadyHidden = currentHidden.some(
+      (entry) =>
+        typeof entry === "object" && entry !== null && entry.id === itemId,
+    );
+    if (alreadyHidden) return;
+
+    const nextHidden = [
+      ...currentHidden,
+      { id: itemId, hiddenAt: serverTimestamp() },
+    ];
+    await setDoc(userRef, { "hidden-pages": nextHidden }, { merge: true });
+    return;
+  }
+
+  const nextHidden = currentHidden.filter(
+    (entry) =>
+      !(typeof entry === "object" && entry !== null && entry.id === itemId),
+  );
+  await setDoc(userRef, { "hidden-pages": nextHidden }, { merge: true });
+}
+
 export const nameFromEmail = (email?: string | null) => {
   const localPart = (email ?? "")
     .split("@")[0]
@@ -77,11 +135,76 @@ export const defaultUserProfile = (user: User): UserProfile => ({
   subjects: [],
   accountTypeCompleted: false,
   type: "",
+  "marked-as-read": [],
+  "hidden-pages": [],
   "saved-pages": [],
   "saved-books": [],
   "saved-lessons": [],
   "saved-posts": [],
 });
+
+export const getHiddenPageEntries = (
+  profile: UserProfile | null | undefined,
+): HiddenPageRecord[] => {
+  const hiddenPages = profile?.["hidden-pages"] ?? [];
+  return Array.isArray(hiddenPages)
+    ? hiddenPages.filter(
+        (entry): entry is HiddenPageRecord =>
+          typeof entry === "object" &&
+          entry !== null &&
+          typeof entry.id === "string",
+      )
+    : [];
+};
+
+export const getMarkedReadItemIds = (
+  profile: UserProfile | null | undefined,
+): string[] => {
+  const marked = profile?.["marked-as-read"] ?? [];
+  return Array.isArray(marked)
+    ? marked.filter((entry): entry is string => typeof entry === "string")
+    : [];
+};
+
+export async function toggleHiddenPage(
+  userId: string,
+  itemId: string,
+  isHidden: boolean,
+) {
+  const userRef = doc(db, "users", userId);
+  const snapshot = await getDoc(userRef);
+  const currentHidden = Array.isArray(snapshot.data()?.["hidden-pages"])
+    ? (snapshot.data()?.["hidden-pages"] as HiddenPageRecord[])
+    : [];
+
+  if (isHidden) {
+    const nextEntries = currentHidden.filter(
+      (entry) =>
+        !(typeof entry === "object" && entry !== null && entry.id === itemId),
+    );
+    await setDoc(userRef, { "hidden-pages": nextEntries }, { merge: true });
+    return;
+  }
+
+  const exists = currentHidden.some(
+    (entry) =>
+      typeof entry === "object" && entry !== null && entry.id === itemId,
+  );
+  if (exists) {
+    return;
+  }
+
+  await setDoc(
+    userRef,
+    {
+      "hidden-pages": [
+        ...currentHidden,
+        { id: itemId, hiddenAt: serverTimestamp() },
+      ],
+    },
+    { merge: true },
+  );
+}
 
 export async function getUserOnboardingState(userId: string) {
   if (onboardingStateCache[userId]) {
@@ -150,6 +273,8 @@ export async function ensureUserProfile(user: User) {
     "school",
     "gender",
     "subjects",
+    "marked-as-read",
+    "hidden-pages",
     "saved-pages",
     "saved-books",
     "saved-lessons",

@@ -6,22 +6,30 @@ import { usePathname, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  FlatList,
-  Linking,
-  Platform,
-  Pressable,
-  Animated as RNAnimated,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    Alert,
+    FlatList,
+    Linking,
+    Platform,
+    Pressable,
+    Animated as RNAnimated,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
-import { recordUserActivity } from "../../services/activityService";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
-import { toggleSavedItem } from "../../services/userProfile";
+import { recordUserActivity } from "../../services/activityService";
+import {
+    getHiddenPageEntries,
+    getMarkedReadItemIds,
+    setPageHiddenState,
+    togglePageReadState,
+    toggleSavedItem,
+} from "../../services/userProfile";
+import { CardActionMenu } from "../ui/CardActionMenu";
 import PdfPreview from "./PdfPreview";
 
 type TopicalNote = {
@@ -61,6 +69,7 @@ type FeaturedNoteCardProps = {
   }>;
   loading?: boolean;
   source?: "home" | "library" | "pages";
+  includeHiddenItems?: boolean;
 };
 
 const normalizeKey = (str: string) => str.trim().toLowerCase();
@@ -105,8 +114,10 @@ export const FeaturedNoteCard = ({
   notes: providedNotes,
   loading: externalLoading,
   source = "home",
+  includeHiddenItems = false,
 }: FeaturedNoteCardProps) => {
   const { width } = useWindowDimensions();
+  const { profile } = useProfile();
   const isWide = width >= 900;
   const [notes, setNotes] = useState<TopicalNote[]>([]);
   const [subjectAvatars, setSubjectAvatars] = useState<Record<string, string>>(
@@ -114,6 +125,15 @@ export const FeaturedNoteCard = ({
   );
   const [defaultAvatar, setDefaultAvatar] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const hiddenIds = useMemo(
+    () =>
+      new Set(
+        (includeHiddenItems ? [] : getHiddenPageEntries(profile)).map(
+          (p) => p.id,
+        ),
+      ),
+    [includeHiddenItems, profile],
+  );
 
   useEffect(() => {
     let active = true;
@@ -154,13 +174,13 @@ export const FeaturedNoteCard = ({
       );
       const filteredNotes = subject
         ? allNotes.filter((note) => {
-          const noteSubjects = Array.isArray(note.subject)
-            ? note.subject
-            : [note.subject ?? ""];
-          return noteSubjects.some(
-            (entry) => normalizeKey(entry) === normalizeKey(subject),
-          );
-        })
+            const noteSubjects = Array.isArray(note.subject)
+              ? note.subject
+              : [note.subject ?? ""];
+            return noteSubjects.some(
+              (entry) => normalizeKey(entry) === normalizeKey(subject),
+            );
+          })
         : allNotes;
 
       if (providedNotes) {
@@ -195,7 +215,13 @@ export const FeaturedNoteCard = ({
     };
   }, [externalLoading, providedNotes, subject]);
 
-  const listData = useMemo(() => notes, [notes]);
+  const listData = useMemo(
+    () =>
+      includeHiddenItems
+        ? notes
+        : notes.filter((note) => !hiddenIds.has(note.id)),
+    [hiddenIds, includeHiddenItems, notes],
+  );
 
   if (loading || externalLoading) {
     return (
@@ -224,6 +250,7 @@ export const FeaturedNoteCard = ({
             source={source}
             subject={subject}
             hideAvatar={hideAvatar}
+            includeHiddenItems={includeHiddenItems}
           />
         )}
       />
@@ -305,6 +332,7 @@ const FeaturedNoteItem = ({
   source,
   subject,
   hideAvatar,
+  includeHiddenItems,
 }: {
   note: TopicalNote;
   subjectAvatars: Record<string, string>;
@@ -313,9 +341,18 @@ const FeaturedNoteItem = ({
   source: "home" | "library" | "pages";
   subject?: string;
   hideAvatar?: boolean;
+  includeHiddenItems?: boolean;
 }) => {
   const { user, profile } = useProfile();
   const [hovered, setHovered] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const menuButtonRef = useRef<View>(null);
   const router = useRouter();
   const pathname = usePathname();
   const title = note.title ?? "Featured note";
@@ -324,7 +361,104 @@ const FeaturedNoteItem = ({
       ? `${note.description?.slice(0, 100)}...`
       : (note.description ?? "A fresh study note will appear here.");
 
+  const readIds = new Set(getMarkedReadItemIds(profile));
+  const isRead = readIds.has(note.id);
+  const hiddenIds = new Set(
+    getHiddenPageEntries(profile).map((entry) => entry.id),
+  );
+  const isHidden = hiddenIds.has(note.id);
   const isSaved = Boolean(user && profile?.["saved-pages"]?.includes(note.id));
+
+  const showAuthPrompt = (title: string, message: string) => {
+    Alert.alert(title, message, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Log in", onPress: () => router.push("/login" as never) },
+      { text: "Sign up", onPress: () => router.push("/signup" as never) },
+    ]);
+  };
+
+  const handleOpenMenu = () => {
+    menuButtonRef.current?.measureInWindow((x, y, width, height) => {
+      setMenuAnchor({ x, y, width, height });
+      setActiveMenuId(note.id);
+    });
+  };
+
+  const handleCloseMenu = () => {
+    setMenuAnchor(null);
+    setActiveMenuId(null);
+  };
+
+  const handleToggleRead = async () => {
+    if (!user) {
+      showAuthPrompt(
+        "Sign in to personalize DigiLearn",
+        "Create an account or log in to save your reading progress and personalize your experience.",
+      );
+      return;
+    }
+
+    try {
+      await togglePageReadState(user.uid, note.id, isRead);
+      if (!isRead) {
+        Alert.alert("Marked as read");
+      }
+    } catch (error) {
+      console.error("Failed to update read state:", error);
+      Alert.alert("Couldn't update this item. Please try again.");
+    }
+  };
+
+  const handleToggleHidden = async () => {
+    if (!user) {
+      showAuthPrompt(
+        "Sign in to manage hidden items",
+        "Log in or create an account to hide pages and keep your preferences across devices.",
+      );
+      return;
+    }
+
+    try {
+      const shouldHide = !isHidden;
+      await setPageHiddenState(user.uid, note.id, shouldHide);
+      if (shouldHide) {
+        Alert.alert("Page hidden", "Page hidden · Undo", [
+          {
+            text: "Undo",
+            onPress: async () => {
+              await setPageHiddenState(user.uid, note.id, false);
+            },
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Failed to update hidden state:", error);
+      Alert.alert("Couldn't update this item. Please try again.");
+    }
+  };
+
+  const handleReportProblem = () => {
+    const subject = encodeURIComponent("Report a Problem in DigiLearn app");
+    const body = encodeURIComponent(
+      `Problem ID: ${note.id}\nCard Type: pages\n\nReport:\n`,
+    );
+    const mailtoUrl = `mailto:support@digilearn.app?subject=${subject}&body=${body}`;
+    Linking.canOpenURL("mailto:").then((supported) => {
+      if (!supported) {
+        Alert.alert(
+          "Email unavailable",
+          "An email application could not be opened on this device.",
+        );
+        return;
+      }
+      Linking.openURL(mailtoUrl).catch(() => {
+        Alert.alert(
+          "Email unavailable",
+          "An email application could not be opened on this device.",
+        );
+      });
+    });
+  };
 
   const handleToggleSave = async () => {
     if (!user) {
@@ -363,6 +497,28 @@ const FeaturedNoteItem = ({
     typeof subject === "string" && subject.trim().length > 0
       ? subject
       : (subjectValues.find(Boolean) ?? routeTitle);
+  const menuActions = [
+    {
+      label: isRead ? "Mark as unread" : "Mark as read",
+      icon: isRead ? "check-circle" : "check-circle",
+      accessibilityLabel: isRead
+        ? "Mark this page as unread"
+        : "Mark this page as read",
+      onPress: handleToggleRead,
+    },
+    {
+      label: isHidden ? "Unhide" : "Hide",
+      icon: isHidden ? "eye" : "eye-off",
+      accessibilityLabel: isHidden ? "Unhide this page" : "Hide this page",
+      onPress: handleToggleHidden,
+    },
+    {
+      label: "Report a problem",
+      icon: "alert-circle",
+      accessibilityLabel: "Report a problem with this page",
+      onPress: handleReportProblem,
+    },
+  ] as const;
 
   return (
     <Animated.View
@@ -412,6 +568,12 @@ const FeaturedNoteItem = ({
             />
           )}
           <View style={styles.overlay} />
+          {isRead ? (
+            <View style={styles.readBadge}>
+              <Ionicons name="checkmark-done" size={12} color={colors.white} />
+              <Text style={styles.readBadgeText}>Read</Text>
+            </View>
+          ) : null}
         </Pressable>
 
         <View style={styles.content}>
@@ -444,11 +606,23 @@ const FeaturedNoteItem = ({
             <Text style={styles.description}>{description}</Text>
           </View>
           <Pressable
+            ref={menuButtonRef}
+            accessibilityRole="button"
             accessibilityLabel="More options"
             style={styles.menuButton}
+            onPress={handleOpenMenu}
           >
             <Icon name="more-vertical" size={18} color={colors.subtitle} />
           </Pressable>
+          <CardActionMenu
+            visible={activeMenuId === note.id && !!menuAnchor}
+            anchor={menuAnchor}
+            actions={menuActions.map((action) => ({
+              ...action,
+              icon: action.icon as any,
+            }))}
+            onClose={handleCloseMenu}
+          />
         </View>
 
         <View style={styles.actions}>
@@ -488,7 +662,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
-    borderRadius: 10
+    borderRadius: 10,
   },
   cardHovered: {
     backgroundColor: "#e8efffff",
@@ -514,7 +688,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
     marginBottom: spacing.xs,
-    borderRadius: 10
+    borderRadius: 10,
   },
   preview: {
     width: "100%",
@@ -523,6 +697,23 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.1)",
+  },
+  readBadge: {
+    position: "absolute",
+    left: 10,
+    bottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: "rgba(15, 23, 42, 0.62)",
+    borderRadius: 999,
+  },
+  readBadgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: "600",
   },
   content: {
     flexDirection: "row",

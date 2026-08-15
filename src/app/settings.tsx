@@ -128,6 +128,11 @@ export default function SettingsScreen() {
                 icon="clock"
                 title="Activity"
                 onPress={() => router.push("/activity" as never)}
+              />
+              <SettingsRow
+                icon="eye-off"
+                title="Hidden items"
+                onPress={() => router.push("/hidden-items" as never)}
                 showSeparator={false}
               />
             </SettingsSection>
