@@ -659,6 +659,18 @@ export default function TeacherProfileScreen() {
                 ? { uri: item.image }
                 : require("../../assets/images/pdf-preview.jpeg"),
             }}
+            width={contentMaxWidth}
+            onPress={() => {
+              router.push({
+                pathname: "/book-preview",
+                params: {
+                  id: item.id,
+                  source: "teacher-profile",
+                  returnTo: "/teacher-profile",
+                  teacherName: teacher?.name || teacherName,
+                },
+              } as any);
+            }}
           />
         );
       }
@@ -710,7 +722,7 @@ export default function TeacherProfileScreen() {
         />
       );
     },
-    [teacher, teacherName],
+    [contentMaxWidth, router, teacher, teacherName],
   );
 
   if (loading) {
@@ -723,23 +735,23 @@ export default function TeacherProfileScreen() {
             { maxWidth: contentMaxWidth, paddingHorizontal: horizontalPadding },
           ]}
         >
-          <Animated.View
+          <RNAnimated.View
             style={[styles.skeletonHeader, { opacity: pulseAnim }]}
           />
           <View style={styles.loadingBody}>
-            <Animated.View
+            <RNAnimated.View
               style={[styles.skeletonAvatar, { opacity: pulseAnim }]}
             />
-            <Animated.View
+            <RNAnimated.View
               style={[styles.skeletonTitle, { opacity: pulseAnim }]}
             />
-            <Animated.View
+            <RNAnimated.View
               style={[styles.skeletonBio, { opacity: pulseAnim }]}
             />
-            <Animated.View
+            <RNAnimated.View
               style={[styles.skeletonLine, { opacity: pulseAnim }]}
             />
-            <Animated.View
+            <RNAnimated.View
               style={[styles.skeletonLineShort, { opacity: pulseAnim }]}
             />
           </View>

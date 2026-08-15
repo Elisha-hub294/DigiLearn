@@ -53,6 +53,7 @@ type FeaturedNoteCardProps = {
     document?: string;
     book?: string | string[];
     updatedAt?: any;
+    createdAt?: any;
     level?: string;
     readStatus?: string;
     isRead?: boolean;

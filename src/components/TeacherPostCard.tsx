@@ -19,7 +19,7 @@ export const TeacherPostCard = ({
 }) => {
   const router = useRouter();
   const { user, profile } = useProfile();
-  const accent = subjectColors[post.subject] ?? "#3B82F6";
+  const accent = (post.subject && subjectColors[post.subject]) || colors.primary;
   const contentStyle = [
     styles.content,
     post.type === "announcement" && styles.announcementContent,
