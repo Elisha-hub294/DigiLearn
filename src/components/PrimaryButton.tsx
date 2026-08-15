@@ -11,7 +11,7 @@ export const PrimaryButton = ({
 }) => (
   <Pressable onPress={onPress} accessibilityRole="button" style={styles.button}>
     <LinearGradient
-      colors={["#6AD7FF", "#D94FFF"]}
+      colors={["#003cff", "#768aff"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={StyleSheet.absoluteFill}
@@ -22,7 +22,6 @@ export const PrimaryButton = ({
 
 const styles = StyleSheet.create({
   button: {
-    alignSelf: "flex-start",
     overflow: "hidden",
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
@@ -30,5 +29,5 @@ const styles = StyleSheet.create({
     minHeight: 42,
     justifyContent: "center",
   },
-  text: { color: colors.white, fontWeight: "700", fontSize: 13 },
+  text: { color: colors.white, fontWeight: "500", fontSize: 13 },
 });

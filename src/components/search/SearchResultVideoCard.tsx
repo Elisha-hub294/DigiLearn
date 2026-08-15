@@ -56,7 +56,10 @@ export function SearchResultVideoCard({
           {parts.map((part, idx) => {
             const isMatch = part.toLowerCase() === trimmedQ.toLowerCase();
             return (
-              <Text key={idx} style={isMatch ? styles.highlightText : undefined}>
+              <Text
+                key={idx}
+                style={isMatch ? styles.highlightText : undefined}
+              >
                 {part}
               </Text>
             );
@@ -104,7 +107,12 @@ export function SearchResultVideoCard({
           {/* Perfectly centered white play button container */}
           <View style={styles.playButtonContainer} pointerEvents="none">
             <View style={styles.playButton}>
-              <Feather name="play" size={20} color="#FFFFFF" style={{ marginLeft: 2 }} />
+              <Feather
+                name="play"
+                size={20}
+                color="#FFFFFF"
+                style={{ marginLeft: 2 }}
+              />
             </View>
           </View>
 
@@ -188,11 +196,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 0, 0, 0.8)",
     alignItems: "center",
     justifyContent: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
   },
   durationBadge: {
     position: "absolute",

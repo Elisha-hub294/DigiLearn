@@ -1,4 +1,3 @@
-import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -84,12 +83,7 @@ export function SearchResultTeacherCard({
           <View style={styles.avatarWrapper}>
             <Image
               source={{
-                uri:
-                  item.avatar ||
-                  item.previewImage ||
-                  item.rawItem?.avatar ||
-                  item.rawItem?.image ||
-                  DEFAULT_TEACHER_AVATAR,
+                uri: item.rawItem?.avatar || DEFAULT_TEACHER_AVATAR,
               }}
               style={styles.avatar}
               contentFit="cover"
@@ -105,13 +99,6 @@ export function SearchResultTeacherCard({
             </Text>
           </View>
         </Pressable>
-
-        {/* Right side: Reserved space for future Follow button */}
-        <View style={styles.rightAction}>
-          <Pressable style={styles.followBtn} accessibilityRole="button">
-            <Feather name="plus" size={16} color="#111111" />
-          </Pressable>
-        </View>
       </View>
     </Animated.View>
   );
@@ -176,19 +163,5 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     color: "#666666",
     lineHeight: 16,
-  },
-  rightAction: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  followBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#F3F4F6",
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

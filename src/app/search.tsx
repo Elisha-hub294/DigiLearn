@@ -1,13 +1,13 @@
 import { usePathname, useRouter } from "expo-router";
 import { useCallback } from "react";
 import {
-    FlatList,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,9 +24,9 @@ import { SearchSkeleton } from "../components/search/SearchSkeleton";
 import { SearchBar } from "../components/ui/SearchBar";
 import { getHorizontalPadding } from "../constants/layout";
 import {
-    SearchCategory,
-    SearchResult,
-    useGlobalSearch,
+  SearchCategory,
+  SearchResult,
+  useGlobalSearch,
 } from "../hooks/useGlobalSearch";
 
 const CATEGORIES: SearchCategory[] = [
@@ -91,6 +91,7 @@ export default function SearchScreen() {
               link: item.link || "",
               thumbnail: item.previewImage,
               avatar: item.avatar || "",
+              returnTo: "/search",
             },
           } as never);
           break;
@@ -114,7 +115,11 @@ export default function SearchScreen() {
         case "teacher":
           router.push({
             pathname: "/teacher-profile",
-            params: { id: item.id, name: item.title },
+            params: {
+              id: item.id,
+              name: item.title,
+              returnTo: "/search",
+            },
           } as never);
           break;
 

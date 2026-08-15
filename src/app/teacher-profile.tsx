@@ -4,17 +4,17 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  Linking,
-  Pressable,
-  RefreshControl,
-  Animated as RNAnimated,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    Alert,
+    FlatList,
+    Linking,
+    Pressable,
+    RefreshControl,
+    Animated as RNAnimated,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -108,10 +108,14 @@ type TeacherTab = (typeof teacherTabOptions)[number];
 
 export default function TeacherProfileScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ name?: string }>();
+  const params = useLocalSearchParams<{ name?: string; returnTo?: string }>();
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
+  const returnTo =
+    typeof params.returnTo === "string" && params.returnTo.trim()
+      ? params.returnTo.trim()
+      : undefined;
 
   const [teacher, setTeacher] = useState<TeacherRecord | null>(null);
   const [resources, setResources] = useState<ResourceItem[]>([]);
@@ -475,7 +479,19 @@ export default function TeacherProfileScreen() {
             accessibilityRole="button"
             accessibilityLabel="Go back"
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => {
+              if (returnTo) {
+                router.replace(returnTo as any);
+                return;
+              }
+
+              if (router.canGoBack()) {
+                router.back();
+                return;
+              }
+
+              router.replace("/search" as any);
+            }}
           >
             <Icon name="arrow-left" size={20} color="#ffffff" />
           </Pressable>
@@ -613,6 +629,7 @@ export default function TeacherProfileScreen() {
       openContactSheet,
       openEmailPrompt,
       openYoutubePrompt,
+      returnTo,
       router,
       search,
       stats.announcements,

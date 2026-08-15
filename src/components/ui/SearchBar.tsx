@@ -72,12 +72,6 @@ export function SearchBar({
             inputContainerStyle,
           ]}
         >
-          <Icon
-            name="search"
-            size={18}
-            color={searchIconColor}
-            style={styles.searchIcon}
-          />
           <TextInput
             accessibilityLabel={accessibilityLabel}
             value={value}
@@ -141,7 +135,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: "#D9D9D9",
-    marginBottom: spacing.md,
   },
   placeholderText: {
     flex: 1,
@@ -153,6 +146,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
+    marginVertical: spacing.lg,
   },
   backButton: {
     width: 44,
@@ -171,7 +165,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: colors.white,
     borderWidth: 1.5,
-    borderColor: "#3f3f3f",
+    borderColor: colors.primary,
   },
   topicInputContainer: {
     height: 48,
@@ -185,7 +179,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: "100%",
-    color: "#111111",
+    color: colors.primary,
     fontSize: 12,
     paddingVertical: 0,
   },
@@ -197,7 +191,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: "#000000",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
