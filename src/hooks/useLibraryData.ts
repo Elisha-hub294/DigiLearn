@@ -42,6 +42,8 @@ export type PaperItem = {
 
 export type PaperSection = {
   title: string;
+  type: string;
+  year: string;
   items: PaperItem[];
 };
 
@@ -232,7 +234,6 @@ export function useLibraryData() {
         const data = doc.data() as Record<string, unknown>;
         const type = pickString(
           data.type || data.examType || data.category || data.paperType,
-          "Paper",
         );
         const year = pickString(
           data.year || data.examYear || data.session || data.publishedYear,
@@ -242,7 +243,7 @@ export function useLibraryData() {
         const subject = pickString(data.subject || data.topic, "General");
         const pages = formatPages(data.pages ?? data.pageCount);
 
-        const sectionKey = `${type} ${year}`.trim();
+        const sectionKey = `${type}::${year}`;
         const sectionItems = paperGroups.get(sectionKey) ?? [];
         sectionItems.push({
           id: doc.id || `paper-${index}`,
@@ -262,12 +263,15 @@ export function useLibraryData() {
         paperGroups.set(sectionKey, sectionItems);
       });
 
-      const sections = Array.from(paperGroups.entries()).map(
-        ([heading, items]) => ({
-          title: heading,
+      const sections = Array.from(paperGroups.entries()).map(([key, items]) => {
+        const [type, year] = key.split("::");
+        return {
+          title: `${type || "Other"} ${year}`,
+          type,
+          year,
           items,
-        }),
-      );
+        };
+      });
 
       setHeroSlides(dynamicHeroSlides);
       setTopBooks(topSellingItems);
