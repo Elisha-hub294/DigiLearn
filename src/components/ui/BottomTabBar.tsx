@@ -8,6 +8,7 @@ import {
     useWindowDimensions,
 } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
 
 type TabRoute = {
   key: string;
@@ -38,8 +39,27 @@ const tabs = [
 
 export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
   const { width } = useWindowDimensions();
+  const { profile } = useProfile();
   const isDesktop = width >= 768;
   const activeRoute = state.routes[state.index];
+  const activeRouteParams = activeRoute?.params as
+    | { openedFromAccount?: string }
+    | undefined;
+  const isTeacherAccountScreen =
+    activeRoute?.name === "teacher-profile" &&
+    activeRouteParams?.openedFromAccount === "true";
+
+  const navigateToTab = (route: TabRoute) => {
+    if (route.name === "profile" && profile?.type === "teacher") {
+      navigation.navigate("teacher-profile", {
+        name: profile.name,
+        openedFromAccount: "true",
+      });
+      return;
+    }
+
+    navigation.navigate(route.name);
+  };
 
   if (
     activeRoute?.name === "book-preview" ||
@@ -48,7 +68,7 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     activeRoute?.name === "pdf-reader" ||
     activeRoute?.name === "search" ||
     activeRoute?.name === "pages" ||
-    activeRoute?.name === "teacher-profile" ||
+    (activeRoute?.name === "teacher-profile" && !isTeacherAccountScreen) ||
     activeRoute?.name === "assistant" ||
     activeRoute?.name === "settings" ||
     activeRoute?.name === "preferences" ||
@@ -88,7 +108,9 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
 
             if (!tab) return null;
 
-            const isActive = state.routes[state.index].key === route.key;
+            const isActive =
+              state.routes[state.index].key === route.key ||
+              (route.name === "profile" && isTeacherAccountScreen);
 
             const onPress = () => {
               const event = navigation.emit({
@@ -97,7 +119,7 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                 canPreventDefault: true,
               });
               if (!isActive && !event.defaultPrevented) {
-                navigation.navigate(route.name);
+                navigateToTab(route);
               }
             };
 
@@ -141,7 +163,9 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
 
         if (!tab) return null;
 
-        const isActive = state.routes[state.index].key === route.key;
+        const isActive =
+          state.routes[state.index].key === route.key ||
+          (route.name === "profile" && isTeacherAccountScreen);
 
         const onPress = () => {
           const event = navigation.emit({
@@ -150,7 +174,7 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
             canPreventDefault: true,
           });
           if (!isActive && !event.defaultPrevented) {
-            navigation.navigate(route.name);
+            navigateToTab(route);
           }
         };
 

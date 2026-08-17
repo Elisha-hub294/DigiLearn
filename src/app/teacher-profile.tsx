@@ -109,7 +109,11 @@ type TeacherTab = (typeof teacherTabOptions)[number];
 
 export default function TeacherProfileScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ name?: string; returnTo?: string }>();
+  const params = useLocalSearchParams<{
+    name?: string;
+    returnTo?: string;
+    openedFromAccount?: string;
+  }>();
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
@@ -120,6 +124,7 @@ export default function TeacherProfileScreen() {
     typeof params.returnTo === "string" && params.returnTo.trim()
       ? params.returnTo.trim()
       : undefined;
+  const openedFromAccount = params.openedFromAccount === "true";
 
   const [teacher, setTeacher] = useState<TeacherRecord | null>(null);
   const [resources, setResources] = useState<ResourceItem[]>([]);
@@ -485,26 +490,28 @@ export default function TeacherProfileScreen() {
           <View
             style={[styles.headerPanel, { backgroundColor: accentColor }]}
           />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            style={styles.backButton}
-            onPress={() => {
-              if (returnTo) {
-                router.replace(returnTo as any);
-                return;
-              }
+          {!openedFromAccount && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              style={styles.backButton}
+              onPress={() => {
+                if (returnTo) {
+                  router.replace(returnTo as any);
+                  return;
+                }
 
-              if (router.canGoBack()) {
-                router.back();
-                return;
-              }
+                if (router.canGoBack()) {
+                  router.back();
+                  return;
+                }
 
-              router.replace("/search" as any);
-            }}
-          >
-            <Icon name="arrow-left" size={20} color="#ffffff" />
-          </Pressable>
+                router.replace("/search" as any);
+              }}
+            >
+              <Icon name="arrow-left" size={20} color="#ffffff" />
+            </Pressable>
+          )}
 
           <View style={styles.avatarShell}>
             <Image
@@ -648,6 +655,7 @@ export default function TeacherProfileScreen() {
       openContactSheet,
       openEmailPrompt,
       openYoutubePrompt,
+      openedFromAccount,
       returnTo,
       router,
       search,
