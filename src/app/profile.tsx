@@ -54,6 +54,7 @@ export default function ProfileScreen() {
       <ScrollView
         contentContainerStyle={[
           s.content,
+          !loading && !user && s.guestContent,
           { paddingHorizontal: padding, maxWidth },
         ]}
         refreshControl={
@@ -96,6 +97,7 @@ const s = StyleSheet.create({
     alignSelf: "center",
     paddingBottom: spacing.xxl,
   },
+  guestContent: { flexGrow: 1, justifyContent: "center" },
   sections: { gap: 20 },
   skeleton: { gap: 20 },
   skeletonHero: { height: 280, borderRadius: 24, backgroundColor: "#EDF2F8" },
