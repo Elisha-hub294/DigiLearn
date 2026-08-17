@@ -44,7 +44,7 @@ export type SavedItemType =
 
 const onboardingStateCache: Record<
   string,
-  { accountTypeCompleted: boolean; type: AccountType }
+  { exists: boolean; accountTypeCompleted: boolean; type: AccountType }
 > = {};
 
 export async function toggleSavedItem(
@@ -211,8 +211,11 @@ export async function getUserOnboardingState(userId: string) {
     return onboardingStateCache[userId];
   }
 
-  const ref = doc(db, "users", userId);
-  const snapshot = await getDoc(ref);
+  const [teacherSnapshot, userSnapshot] = await Promise.all([
+    getDoc(doc(db, "teachers", userId)),
+    getDoc(doc(db, "users", userId)),
+  ]);
+  const snapshot = teacherSnapshot.exists() ? teacherSnapshot : userSnapshot;
   const data = snapshot.data();
   const result = {
     exists: snapshot.exists(),
@@ -221,6 +224,7 @@ export async function getUserOnboardingState(userId: string) {
   };
 
   onboardingStateCache[userId] = {
+    exists: result.exists,
     accountTypeCompleted: result.accountTypeCompleted,
     type: result.type,
   };
@@ -232,11 +236,15 @@ export async function saveAccountTypeDecision(
   user: User,
   accountType: AccountType,
 ) {
-  const ref = doc(db, "users", user.uid);
+  const collectionName = accountType === "teacher" ? "teachers" : "users";
+  const ref = doc(db, collectionName, user.uid);
+  const snapshot = await getDoc(ref);
 
   await setDoc(
     ref,
     {
+      ...(snapshot.exists() ? {} : defaultUserProfile(user)),
+      ...(snapshot.exists() ? {} : { joinedAt: serverTimestamp() }),
       type: accountType,
       accountTypeCompleted: true,
     },
@@ -244,6 +252,7 @@ export async function saveAccountTypeDecision(
   );
 
   onboardingStateCache[user.uid] = {
+    exists: true,
     accountTypeCompleted: true,
     type: accountType,
   };
@@ -251,14 +260,15 @@ export async function saveAccountTypeDecision(
 
 /** Creates only missing fields, preserving all profile edits and the original join date. */
 export async function ensureUserProfile(user: User) {
-  const ref = doc(db, "users", user.uid);
+  const onboarding = await getUserOnboardingState(user.uid);
+  if (!onboarding.exists) return;
+
+  const collectionName = onboarding.type === "teacher" ? "teachers" : "users";
+  const ref = doc(db, collectionName, user.uid);
   const snapshot = await getDoc(ref);
   const fallback = defaultUserProfile(user);
 
-  if (!snapshot.exists()) {
-    await setDoc(ref, { ...fallback, joinedAt: serverTimestamp() });
-    return;
-  }
+  if (!snapshot.exists()) return;
 
   const current = snapshot.data();
   const missing: Record<string, unknown> = {};

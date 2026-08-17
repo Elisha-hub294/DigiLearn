@@ -16,5 +16,11 @@ service cloud.firestore {
         ]);
       allow delete: if false;
     }
+    match /teachers/{teacherId} {
+      allow create: if request.auth != null && request.auth.uid == teacherId;
+      allow read: if request.auth != null && request.auth.uid == teacherId;
+      allow update: if request.auth != null && request.auth.uid == teacherId;
+      allow delete: if false;
+    }
   }
 }

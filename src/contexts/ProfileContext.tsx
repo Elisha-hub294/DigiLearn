@@ -2,7 +2,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import { auth, db } from "../../firebaseConfig";
-import { defaultUserProfile, ensureUserProfile, UserProfile } from "../services/userProfile";
+import { defaultUserProfile, ensureUserProfile, getUserOnboardingState, UserProfile } from "../services/userProfile";
 
 type ProfileState = { user: User | null; profile: UserProfile | null; loading: boolean; error: string | null; refresh: () => Promise<void> };
 const ProfileContext = createContext<ProfileState | undefined>(undefined);
@@ -18,9 +18,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     if (!user) { setLoading(false); return; }
     let unsubscribe = () => {};
     let active = true;
-    ensureUserProfile(user).then(() => {
+    getUserOnboardingState(user.uid).then((onboarding) => {
       if (!active) return;
-      unsubscribe = onSnapshot(doc(db, "users", user.uid), (snapshot) => {
+      if (!onboarding.exists) {
+        setLoading(false);
+        return;
+      }
+      const collectionName = onboarding.type === "teacher" ? "teachers" : "users";
+      unsubscribe = onSnapshot(doc(db, collectionName, user.uid), (snapshot) => {
         setProfile({ ...defaultUserProfile(user), ...(snapshot.data() ?? {}) } as UserProfile);
         setLoading(false);
       }, (reason) => { setError(reason.message || "Could not load your profile."); setLoading(false); });

@@ -135,6 +135,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: "#D9D9D9",
+    marginBottom: spacing.lg,
   },
   placeholderText: {
     flex: 1,

@@ -7,7 +7,6 @@ import {
 } from "firebase/auth";
 import { NativeModules, Platform, TurboModuleRegistry } from "react-native";
 import { auth } from "../../firebaseConfig";
-import { ensureUserProfile } from "./userProfile";
 
 export interface SocialAuthResult {
   success: boolean;
@@ -99,7 +98,6 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
       provider.addScope("profile");
       provider.addScope("email");
       const credential = await signInWithPopup(auth, provider);
-      await ensureUserProfile(credential.user);
       return { success: true, user: credential.user };
     }
 
@@ -142,7 +140,6 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
 
     const credential = GoogleAuthProvider.credential(idToken);
     const userCredential = await signInWithCredential(auth, credential);
-    await ensureUserProfile(userCredential.user);
     return { success: true, user: userCredential.user };
   } catch (error: any) {
     const googleModule = getNativeGoogleSigninModule();
@@ -190,7 +187,6 @@ export async function signInWithFacebook(): Promise<SocialAuthResult> {
     provider.addScope("email");
     provider.addScope("public_profile");
     const credential = await signInWithPopup(auth, provider);
-    await ensureUserProfile(credential.user);
     return { success: true, user: credential.user };
   } catch (error: any) {
     const errorMsg = parseAuthError(error);

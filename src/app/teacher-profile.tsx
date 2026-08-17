@@ -23,6 +23,7 @@ import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
 import { BookCard } from "../components/library/BookCard";
 import { TeacherPostCard } from "../components/TeacherPostCard";
 import { LatestVideoCard } from "../components/ui/LatestVideoCard";
+import { ActionDialog } from "../components/ui/ActionDialog";
 import { SearchBar } from "../components/ui/SearchBar";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
@@ -112,6 +113,9 @@ export default function TeacherProfileScreen() {
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
+  const compactActionRow = width < 390;
+  const actionRowGap = compactActionRow ? 10 : 16;
+  const actionIconSize = compactActionRow ? 46 : 54;
   const returnTo =
     typeof params.returnTo === "string" && params.returnTo.trim()
       ? params.returnTo.trim()
@@ -124,11 +128,13 @@ export default function TeacherProfileScreen() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TeacherTab>("All");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isCommunityDialogVisible, setCommunityDialogVisible] = useState(false);
   const pulseAnim = useRef(new RNAnimated.Value(0.45)).current;
 
   const teacherName = String(params.name ?? "Teacher").trim();
   const normalizedTeacherName = normalizeKey(teacherName);
   const accentColor = teacher?.accent || colors.primary;
+  const teacherFirstName = (teacher?.name || teacherName).split(" ")[0] || "Teacher";
 
   const fetchTeacherProfile = useCallback(async () => {
     try {
@@ -462,6 +468,10 @@ export default function TeacherProfileScreen() {
     ]);
   }, [teacher]);
 
+  const openCommunityDialog = useCallback(() => {
+    setCommunityDialogVisible(true);
+  }, []);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadData();
@@ -547,7 +557,7 @@ export default function TeacherProfileScreen() {
             </View>
           </View>
 
-          <View style={styles.contactRow}>
+          <View style={[styles.contactRow, { gap: actionRowGap }]}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Contact teacher"
@@ -560,7 +570,7 @@ export default function TeacherProfileScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Visit teacher YouTube"
-              style={styles.iconButton}
+              style={[styles.iconButton, { width: actionIconSize, height: actionIconSize }]}
               onPress={openYoutubePrompt}
             >
               <Icon name="youtube" size={22} color={accentColor} />
@@ -569,10 +579,19 @@ export default function TeacherProfileScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Email teacher"
-              style={styles.iconButton}
+              style={[styles.iconButton, { width: actionIconSize, height: actionIconSize }]}
               onPress={openEmailPrompt}
             >
               <Icon name="mail" size={22} color={accentColor} />
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open teacher community"
+              style={[styles.iconButton, { width: actionIconSize, height: actionIconSize }]}
+              onPress={openCommunityDialog}
+            >
+              <Icon name="users" size={22} color={accentColor} />
             </Pressable>
           </View>
 
@@ -810,6 +829,17 @@ export default function TeacherProfileScreen() {
             </View>
           )}
           renderItem={renderResourceCard}
+        />
+        <ActionDialog
+          visible={isCommunityDialogVisible}
+          icon={<Icon name="users" size={24} color="#2563EB" />}
+          title={`Join ${teacherFirstName}'s Community?`}
+          message={`You're about to leave DigiLearn and open ${teacherFirstName}'s WhatsApp community channel. Would you like to continue?`}
+          primaryText="Continue"
+          secondaryText="Cancel"
+          onPrimary={() => undefined}
+          onSecondary={() => setCommunityDialogVisible(false)}
+          onClose={() => setCommunityDialogVisible(false)}
         />
       </Animated.View>
     </SafeAreaView>

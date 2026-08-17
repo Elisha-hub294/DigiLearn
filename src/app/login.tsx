@@ -25,7 +25,6 @@ import {
     signInWithFacebook,
     signInWithGoogle,
 } from "../services/socialAuth";
-import { ensureUserProfile } from "../services/userProfile";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -105,7 +104,6 @@ export default function LoginScreen() {
         email.trim(),
         password,
       );
-      await ensureUserProfile(credential.user);
       router.replace("/");
     } catch (error) {
       const code =

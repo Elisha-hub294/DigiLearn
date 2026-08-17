@@ -1,4 +1,5 @@
 import { colors } from "@/constants/theme";
+import type { ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
 export type ActionDialogProps = {
@@ -10,6 +11,7 @@ export type ActionDialogProps = {
   onPrimary: () => void;
   onSecondary?: () => void;
   onClose?: () => void;
+  icon?: ReactNode;
   primaryButtonColor?: string;
   secondaryButtonColor?: string;
 };
@@ -23,6 +25,7 @@ export function ActionDialog({
   onPrimary,
   onSecondary,
   onClose,
+  icon,
   primaryButtonColor = colors.primary,
   secondaryButtonColor = "#E2E8F0",
 }: ActionDialogProps) {
@@ -39,6 +42,7 @@ export function ActionDialog({
           onPress={(event) => event.stopPropagation()}
           accessibilityRole="alert"
         >
+          {icon ? <View style={styles.iconContainer}>{icon}</View> : null}
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
 
@@ -99,6 +103,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 18,
     elevation: 8,
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EFF6FF",
+    marginBottom: 14,
   },
   title: {
     color: "#0F172A",

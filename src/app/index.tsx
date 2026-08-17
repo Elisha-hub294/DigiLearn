@@ -1,6 +1,5 @@
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     ActivityIndicator,
@@ -22,13 +21,14 @@ import { FloatingAssistantButton } from "../components/home/FloatingAssistantBut
 import { TeacherPostCard } from "../components/home/TeacherPostCard";
 import { TopicalNotesSlider } from "../components/home/TopicalNotesSlider";
 
-import { auth, db } from "../../firebaseConfig";
+import { auth } from "../../firebaseConfig";
 import { Header } from "../components/ui/Header";
 import { SearchBar } from "../components/ui/SearchBar";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import LoadingScreen from "./loading";
+import { getUserOnboardingState } from "../services/userProfile";
 
 // Deterministic Pseudo-Random Number Generator (Mulberry32)
 function mulberry32(seed: number) {
@@ -75,11 +75,8 @@ export default function HomeScreen() {
       }
 
       try {
-        const userRef = doc(db, "users", user.uid);
-        const snapshot = await getDoc(userRef);
-        const completed = Boolean(
-          snapshot.data()?.accountTypeCompleted === true,
-        );
+        const onboarding = await getUserOnboardingState(user.uid);
+        const completed = onboarding.accountTypeCompleted;
 
         setAuthCheckReady(true);
 

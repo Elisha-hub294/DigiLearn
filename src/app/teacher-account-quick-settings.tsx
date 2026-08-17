@@ -82,7 +82,7 @@ export default function TeacherAccountQuickSettingsScreen() {
     setSaveError("");
 
     try {
-      const userRef = doc(db, "users", currentUser.uid);
+      const userRef = doc(db, "teachers", currentUser.uid);
       const [userSnapshot, subjectSnapshot] = await Promise.all([
         getDoc(userRef),
         getDocs(collection(db, "subject")),
@@ -160,7 +160,7 @@ export default function TeacherAccountQuickSettingsScreen() {
         subjects: selectedSubjects,
       };
 
-      const userRef = doc(db, "users", user.uid);
+      const userRef = doc(db, "teachers", user.uid);
       await setDoc(userRef, payload, { merge: true });
       router.replace("/" as never);
     } catch {

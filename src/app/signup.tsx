@@ -24,10 +24,7 @@ import {
     signInWithFacebook,
     signInWithGoogle,
 } from "../services/socialAuth";
-import {
-    ensureUserProfile,
-    getUserOnboardingState,
-} from "../services/userProfile";
+import { getUserOnboardingState } from "../services/userProfile";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -112,7 +109,6 @@ export default function SignUpScreen() {
         email.trim(),
         password,
       );
-      await ensureUserProfile(credential.user);
       router.replace("/account-type" as never);
     } catch (error) {
       const code =
