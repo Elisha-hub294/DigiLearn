@@ -24,7 +24,7 @@ import { useProfile } from "../contexts/ProfileContext";
 export default function SettingsScreen() {
   const router = useRouter();
   const navigation = useNavigation();
-  const { user } = useProfile();
+  const { user, profile } = useProfile();
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - horizontalPadding * 2);
@@ -33,6 +33,18 @@ export default function SettingsScreen() {
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [isLogoutDialogVisible, setLogoutDialogVisible] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+
+  const goToAccount = useCallback(() => {
+    if (profile?.type === "teacher") {
+      router.replace({
+        pathname: "/teacher-profile",
+        params: { name: profile.name, openedFromAccount: "true" },
+      } as never);
+      return;
+    }
+
+    router.replace("/profile" as never);
+  }, [profile?.name, profile?.type, router]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -48,7 +60,7 @@ export default function SettingsScreen() {
     useCallback(() => {
       // Android hardware back button handler
       const onBackPress = () => {
-        router.replace("/profile" as never);
+        goToAccount();
         return true;
       };
 
@@ -62,7 +74,7 @@ export default function SettingsScreen() {
         const actionType = e.data.action.type;
         if (actionType === "GO_BACK" || actionType === "POP") {
           e.preventDefault();
-          router.replace("/profile" as never);
+          goToAccount();
         }
       });
 
@@ -70,7 +82,7 @@ export default function SettingsScreen() {
         subscription.remove();
         unsubscribe();
       };
-    }, [navigation, router]),
+    }, [goToAccount, navigation]),
   );
 
   return (
@@ -87,7 +99,7 @@ export default function SettingsScreen() {
           >
             <View style={styles.headerRow}>
               <Pressable
-                onPress={() => router.replace("/profile" as never)}
+                onPress={goToAccount}
                 style={styles.backButton}
                 accessibilityLabel="Back to profile"
               >

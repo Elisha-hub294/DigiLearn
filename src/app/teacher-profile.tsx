@@ -4,17 +4,17 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Linking,
-    Pressable,
-    RefreshControl,
-    Animated as RNAnimated,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Alert,
+  FlatList,
+  Linking,
+  Pressable,
+  RefreshControl,
+  Animated as RNAnimated,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,12 +22,12 @@ import { db } from "../../firebaseConfig";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
 import { BookCard } from "../components/library/BookCard";
 import { TeacherPostCard } from "../components/TeacherPostCard";
-import { LatestVideoCard } from "../components/ui/LatestVideoCard";
 import { ActionDialog } from "../components/ui/ActionDialog";
+import { LatestVideoCard } from "../components/ui/LatestVideoCard";
 import { SearchBar } from "../components/ui/SearchBar";
-import { useProfile } from "../contexts/ProfileContext";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
+import { useProfile } from "../contexts/ProfileContext";
 
 type TeacherRecord = {
   id: string;
@@ -140,8 +140,9 @@ export default function TeacherProfileScreen() {
 
   const teacherName = String(params.name ?? "Teacher").trim();
   const normalizedTeacherName = normalizeKey(teacherName);
-  const accentColor = teacher?.accent || colors.primary;
-  const teacherFirstName = (teacher?.name || teacherName).split(" ")[0] || "Teacher";
+  const accentColor = teacher?.accent || colors.primaryDark;
+  const teacherFirstName =
+    (teacher?.name || teacherName).split(" ")[0] || "Teacher";
   const isOwnProfile = teacher?.id === user?.uid;
 
   const fetchTeacherProfile = useCallback(async () => {
@@ -532,7 +533,7 @@ export default function TeacherProfileScreen() {
               source={{
                 uri:
                   teacher?.avatar ||
-                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png",
+                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/user-default.png",
               }}
               style={[styles.avatar, { borderColor: accentColor }]}
               contentFit="cover"
@@ -593,7 +594,10 @@ export default function TeacherProfileScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Visit teacher YouTube"
-              style={[styles.iconButton, { width: actionIconSize, height: actionIconSize }]}
+              style={[
+                styles.iconButton,
+                { width: actionIconSize, height: actionIconSize },
+              ]}
               onPress={openYoutubePrompt}
             >
               <Icon name="youtube" size={22} color={accentColor} />
@@ -602,7 +606,10 @@ export default function TeacherProfileScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Email teacher"
-              style={[styles.iconButton, { width: actionIconSize, height: actionIconSize }]}
+              style={[
+                styles.iconButton,
+                { width: actionIconSize, height: actionIconSize },
+              ]}
               onPress={openEmailPrompt}
             >
               <Icon name="mail" size={22} color={accentColor} />
@@ -611,7 +618,10 @@ export default function TeacherProfileScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Open teacher community"
-              style={[styles.iconButton, { width: actionIconSize, height: actionIconSize }]}
+              style={[
+                styles.iconButton,
+                { width: actionIconSize, height: actionIconSize },
+              ]}
               onPress={openCommunityDialog}
             >
               <Icon name="users" size={22} color={accentColor} />
@@ -744,7 +754,7 @@ export default function TeacherProfileScreen() {
               teacherImage: {
                 uri:
                   teacher?.avatar ||
-                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png",
+                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/user-default.png",
               },
               verified: teacher?.verified ?? false,
               time: formatResourceTime(item.createdAt),
@@ -753,7 +763,7 @@ export default function TeacherProfileScreen() {
                 uri:
                   item.image ||
                   teacher?.avatar ||
-                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png",
+                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/user-default.png",
               },
               type: "announcement",
               subject: (item.subject as any) || "English",

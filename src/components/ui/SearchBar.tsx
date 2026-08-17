@@ -1,5 +1,6 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import type { RefObject } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
 
@@ -14,6 +15,7 @@ type SearchBarProps = {
   isInput?: boolean;
   showBack?: boolean;
   autoFocus?: boolean;
+  inputRef?: RefObject<TextInput | null>;
   containerStyle?: any;
   inputContainerStyle?: any;
   inputStyle?: any;
@@ -33,6 +35,7 @@ export function SearchBar({
   isInput = false,
   showBack = false,
   autoFocus = false,
+  inputRef,
   containerStyle,
   inputContainerStyle,
   inputStyle,
@@ -73,6 +76,7 @@ export function SearchBar({
           ]}
         >
           <TextInput
+            ref={inputRef}
             accessibilityLabel={accessibilityLabel}
             value={value}
             onChangeText={onChangeText}

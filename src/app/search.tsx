@@ -1,11 +1,12 @@
-import { usePathname, useRouter } from "expo-router";
-import { useCallback } from "react";
+import { useFocusEffect, usePathname, useRouter } from "expo-router";
+import { useCallback, useRef } from "react";
 import {
   FlatList,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -42,6 +43,15 @@ export default function SearchScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
   const pathname = usePathname();
+  const searchInputRef = useRef<TextInput>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      const frame = requestAnimationFrame(() => searchInputRef.current?.focus());
+
+      return () => cancelAnimationFrame(frame);
+    }, []),
+  );
 
   const {
     query,
@@ -224,6 +234,7 @@ export default function SearchScreen() {
           isInput={true}
           showBack={true}
           autoFocus={true}
+          inputRef={searchInputRef}
           value={query}
           onChangeText={setQuery}
           onSubmit={triggerManualSearch}
