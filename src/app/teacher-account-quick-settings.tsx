@@ -8,6 +8,7 @@ import {
   Alert,
   Keyboard,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   SafeAreaView,
@@ -25,9 +26,91 @@ import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 
 type Subject = { id: string; name: string };
+type SocialKey =
+  | "socials-youtube"
+  | "socials-phone"
+  | "socials-email"
+  | "socials-whatsapp"
+  | "socials-whatsapp-channel";
+
+type SocialOption = {
+  key: SocialKey;
+  title: string;
+  placeholder: string;
+  icon: React.ComponentProps<typeof Feather>["name"];
+  keyboardType?: "default" | "email-address" | "phone-pad" | "url";
+  textContentType?: "emailAddress" | "telephoneNumber" | "URL";
+};
+
+const SOCIAL_OPTIONS: SocialOption[] = [
+  {
+    key: "socials-youtube",
+    title: "YouTube",
+    placeholder: "Enter your YouTube channel link",
+    icon: "youtube",
+    keyboardType: "url",
+    textContentType: "URL",
+  },
+  {
+    key: "socials-phone",
+    title: "Phone",
+    placeholder: "Enter your phone number",
+    icon: "phone",
+    keyboardType: "phone-pad",
+    textContentType: "telephoneNumber",
+  },
+  {
+    key: "socials-email",
+    title: "Email",
+    placeholder: "Enter your email address",
+    icon: "mail",
+    keyboardType: "email-address",
+    textContentType: "emailAddress",
+  },
+  {
+    key: "socials-whatsapp",
+    title: "Whatsapp",
+    placeholder: "Enter your WhatsApp number",
+    icon: "message-circle",
+    keyboardType: "phone-pad",
+    textContentType: "telephoneNumber",
+  },
+  {
+    key: "socials-whatsapp-channel",
+    title: "Whatsapp Channel",
+    placeholder: "Enter your WhatsApp channel link",
+    icon: "users",
+    keyboardType: "url",
+    textContentType: "URL",
+  },
+];
 
 function normalizeText(value: string) {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function validateSocialValue(option: SocialOption, value: string) {
+  if (!value) return "Please enter a value before saving.";
+
+  if (option.key === "socials-email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    return "Please enter a valid email address.";
+  }
+
+  if (
+    (option.key === "socials-phone" || option.key === "socials-whatsapp") &&
+    !/^\+?[0-9][0-9()\s-]{5,}$/.test(value)
+  ) {
+    return "Please enter a valid phone number.";
+  }
+
+  if (
+    (option.key === "socials-youtube" || option.key === "socials-whatsapp-channel") &&
+    !/^(https?:\/\/)?[\w.-]+\.[a-z]{2,}(\/\S*)?$/i.test(value)
+  ) {
+    return "Please enter a valid link.";
+  }
+
+  return "";
 }
 
 function getSubjectNames(items: unknown): string[] {
@@ -68,6 +151,11 @@ export default function TeacherAccountQuickSettingsScreen() {
   const [school, setSchool] = useState("");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [socialValues, setSocialValues] = useState<Partial<Record<SocialKey, string>>>({});
+  const [activeSocial, setActiveSocial] = useState<SocialOption | null>(null);
+  const [socialInput, setSocialInput] = useState("");
+  const [socialError, setSocialError] = useState("");
+  const [isSavingSocial, setIsSavingSocial] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState("");
@@ -107,11 +195,22 @@ export default function TeacherAccountQuickSettingsScreen() {
         typeof profile.school === "string" ? profile.school : "",
       );
       const initialSelectedSubjects = getSubjectNames(profile.subjects ?? []);
+      const initialSocialValues = SOCIAL_OPTIONS.reduce<Partial<Record<SocialKey, string>>>(
+        (result, option) => {
+          const value = profile[option.key];
+          if (typeof value === "string" && normalizeText(value)) {
+            result[option.key] = normalizeText(value);
+          }
+          return result;
+        },
+        {},
+      );
 
       setName(initialName);
       setSchool(initialSchool);
       setSubjects(nextSubjects);
       setSelectedSubjects(initialSelectedSubjects);
+      setSocialValues(initialSocialValues);
     } catch {
       setLoadError("We couldn't load your teacher profile details right now. Please try again.");
     } finally {
@@ -144,6 +243,45 @@ export default function TeacherAccountQuickSettingsScreen() {
         : [...current, subjectName];
     });
   }, []);
+
+  const openSocialModal = useCallback(
+    (option: SocialOption) => {
+      setActiveSocial(option);
+      setSocialInput(socialValues[option.key] ?? "");
+      setSocialError("");
+    },
+    [socialValues],
+  );
+
+  const closeSocialModal = useCallback(() => {
+    if (!isSavingSocial) {
+      setActiveSocial(null);
+      setSocialError("");
+    }
+  }, [isSavingSocial]);
+
+  const saveSocial = useCallback(async () => {
+    if (!user || !activeSocial || isSavingSocial) return;
+
+    const value = normalizeText(socialInput);
+    const validationError = validateSocialValue(activeSocial, value);
+    if (validationError) {
+      setSocialError(validationError);
+      return;
+    }
+
+    setIsSavingSocial(true);
+    setSocialError("");
+    try {
+      await setDoc(doc(db, "teachers", user.uid), { [activeSocial.key]: value }, { merge: true });
+      setSocialValues((current) => ({ ...current, [activeSocial.key]: value }));
+      setActiveSocial(null);
+    } catch {
+      setSocialError("Couldn't save this social detail. Please check your connection and try again.");
+    } finally {
+      setIsSavingSocial(false);
+    }
+  }, [activeSocial, isSavingSocial, socialInput, user]);
 
   const saveProfile = useCallback(async () => {
     if (!user || isSaving) {
@@ -360,6 +498,33 @@ export default function TeacherAccountQuickSettingsScreen() {
                     </InfoMessage>
                   </View>
 
+                  <View style={styles.fieldGroup}>
+                    <Text style={styles.fieldLabel}>Socials</Text>
+                    <View style={styles.socialsList}>
+                      {SOCIAL_OPTIONS.map((option) => {
+                        const value = socialValues[option.key];
+                        return (
+                          <Pressable
+                            key={option.key}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Set ${option.title}`}
+                            onPress={() => openSocialModal(option)}
+                            style={({ pressed }) => [styles.socialRow, pressed && styles.socialRowPressed]}
+                          >
+                            <Feather name={option.icon} size={21} color="#3B5B8F" />
+                            <View style={styles.socialTextWrap}>
+                              <Text style={styles.socialTitle}>{option.title}</Text>
+                              {value ? <Text style={styles.socialValue} numberOfLines={1}>{value}</Text> : null}
+                            </View>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                    <InfoMessage>
+                      Socials help students connect with you outside DigiLearn. Add only the contact details or social links you want students to use.
+                    </InfoMessage>
+                  </View>
+
                   {saveError ? <Text style={styles.errorBubble}>{saveError}</Text> : null}
 
                   <Pressable
@@ -385,6 +550,48 @@ export default function TeacherAccountQuickSettingsScreen() {
           </ScrollView>
         </Pressable>
       </KeyboardAvoidingView>
+      <Modal
+        visible={Boolean(activeSocial)}
+        transparent
+        animationType="fade"
+        onRequestClose={closeSocialModal}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalKeyboardView}
+        >
+          <Pressable style={styles.modalBackdrop} onPress={closeSocialModal}>
+            <Pressable style={styles.socialModalCard} onPress={() => undefined}>
+              <Text style={styles.modalTitle}>Set {activeSocial?.title}</Text>
+              <TextInput
+                value={socialInput}
+                onChangeText={(value) => {
+                  setSocialInput(value);
+                  if (socialError) setSocialError("");
+                }}
+                placeholder={activeSocial?.placeholder}
+                placeholderTextColor="#7A8FA8"
+                style={styles.input}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType={activeSocial?.keyboardType ?? "default"}
+                textContentType={activeSocial?.textContentType}
+                accessibilityLabel={activeSocial?.title}
+                autoFocus
+              />
+              {socialError ? <Text style={styles.socialError}>{socialError}</Text> : null}
+              <View style={styles.modalActions}>
+                <Pressable disabled={isSavingSocial} onPress={closeSocialModal} style={styles.modalCancelButton}>
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </Pressable>
+                <Pressable disabled={isSavingSocial} onPress={saveSocial} style={styles.modalSaveButton}>
+                  {isSavingSocial ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.modalSaveText}>Save</Text>}
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -482,6 +689,34 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12.5,
     lineHeight: 17,
+  },
+  socialsList: {
+    gap: 12,
+  },
+  socialRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 42,
+    paddingVertical: 3,
+    gap: 18,
+  },
+  socialRowPressed: {
+    opacity: 0.72,
+  },
+  socialTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  socialTitle: {
+    color: "#3B5B8F",
+    fontSize: 17,
+    fontWeight: "600",
+  },
+  socialValue: {
+    color: "#6B7280",
+    fontSize: 13,
+    lineHeight: 17,
+    marginTop: 3,
   },
   chipsWrap: {
     flexDirection: "row",
@@ -595,6 +830,68 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     paddingHorizontal: 12,
     paddingVertical: 10,
+  },
+  modalKeyboardView: {
+    flex: 1,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.38)",
+    justifyContent: "center",
+    padding: 24,
+  },
+  socialModalCard: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  modalTitle: {
+    color: "#1F2937",
+    fontSize: 19,
+    fontWeight: "700",
+    marginBottom: spacing.md,
+  },
+  socialError: {
+    color: "#B91C1C",
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: spacing.sm,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginTop: spacing.lg,
+  },
+  modalCancelButton: {
+    minHeight: 42,
+    borderRadius: 21,
+    justifyContent: "center",
+    paddingHorizontal: 17,
+  },
+  modalCancelText: {
+    color: "#3B5B8F",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  modalSaveButton: {
+    minWidth: 86,
+    minHeight: 42,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 21,
+    backgroundColor: "#FF6268",
+    paddingHorizontal: 18,
+  },
+  modalSaveText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: "600",
   },
   skeletonWrap: {
     gap: 12,
