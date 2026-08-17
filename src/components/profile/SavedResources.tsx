@@ -113,14 +113,24 @@ export function SavedResources({
           </Text>
           <View style={s.authActions}>
             <Pressable
-              onPress={() => router.push("/welcome")}
+              onPress={() =>
+                router.push({
+                  pathname: "/login",
+                  params: { from: "/profile" },
+                })
+              }
               style={s.loginButton}
               accessibilityRole="button"
             >
               <Text style={s.loginText}>Log in</Text>
             </Pressable>
             <Pressable
-              onPress={() => router.push("/signup")}
+              onPress={() =>
+                router.push({
+                  pathname: "/signup",
+                  params: { from: "/profile" },
+                })
+              }
               style={s.signupButton}
               accessibilityRole="button"
             >

@@ -201,10 +201,13 @@ export default function SignUpScreen() {
   }, [from, router]);
 
   const handleBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
     if (typeof from === "string" && from.trim()) {
       router.replace(from as any);
-    } else {
-      router.back();
     }
   }, [from, router]);
 

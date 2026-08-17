@@ -188,10 +188,13 @@ export default function LoginScreen() {
   }, [router, from]);
 
   const handleBack = useCallback(() => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
     if (typeof from === "string" && from.trim()) {
       router.replace(from as any);
-    } else {
-      router.back();
     }
   }, [router, from]);
 
