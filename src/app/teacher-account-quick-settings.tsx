@@ -155,7 +155,6 @@ export default function TeacherAccountQuickSettingsScreen() {
   const [activeSocial, setActiveSocial] = useState<SocialOption | null>(null);
   const [socialInput, setSocialInput] = useState("");
   const [socialError, setSocialError] = useState("");
-  const [isSavingSocial, setIsSavingSocial] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState("");
@@ -254,14 +253,13 @@ export default function TeacherAccountQuickSettingsScreen() {
   );
 
   const closeSocialModal = useCallback(() => {
-    if (!isSavingSocial) {
-      setActiveSocial(null);
-      setSocialError("");
-    }
-  }, [isSavingSocial]);
+    Keyboard.dismiss();
+    setActiveSocial(null);
+    setSocialError("");
+  }, []);
 
-  const saveSocial = useCallback(async () => {
-    if (!user || !activeSocial || isSavingSocial) return;
+  const saveSocial = useCallback(() => {
+    if (!activeSocial) return;
 
     const value = normalizeText(socialInput);
     const validationError = validateSocialValue(activeSocial, value);
@@ -270,18 +268,10 @@ export default function TeacherAccountQuickSettingsScreen() {
       return;
     }
 
-    setIsSavingSocial(true);
     setSocialError("");
-    try {
-      await setDoc(doc(db, "teachers", user.uid), { [activeSocial.key]: value }, { merge: true });
-      setSocialValues((current) => ({ ...current, [activeSocial.key]: value }));
-      setActiveSocial(null);
-    } catch {
-      setSocialError("Couldn't save this social detail. Please check your connection and try again.");
-    } finally {
-      setIsSavingSocial(false);
-    }
-  }, [activeSocial, isSavingSocial, socialInput, user]);
+    setSocialValues((current) => ({ ...current, [activeSocial.key]: value }));
+    closeSocialModal();
+  }, [activeSocial, closeSocialModal, socialInput]);
 
   const saveProfile = useCallback(async () => {
     if (!user || isSaving) {
@@ -296,6 +286,7 @@ export default function TeacherAccountQuickSettingsScreen() {
         name: normalizeText(name),
         school: normalizeText(school),
         subjects: selectedSubjects,
+        ...socialValues,
       };
 
       const userRef = doc(db, "teachers", user.uid);
@@ -553,43 +544,53 @@ export default function TeacherAccountQuickSettingsScreen() {
       <Modal
         visible={Boolean(activeSocial)}
         transparent
-        animationType="fade"
+        animationType="slide"
+        presentationStyle="overFullScreen"
         onRequestClose={closeSocialModal}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
           style={styles.modalKeyboardView}
         >
-          <Pressable style={styles.modalBackdrop} onPress={closeSocialModal}>
-            <Pressable style={styles.socialModalCard} onPress={() => undefined}>
-              <Text style={styles.modalTitle}>Set {activeSocial?.title}</Text>
-              <TextInput
-                value={socialInput}
-                onChangeText={(value) => {
-                  setSocialInput(value);
-                  if (socialError) setSocialError("");
-                }}
-                placeholder={activeSocial?.placeholder}
-                placeholderTextColor="#7A8FA8"
-                style={styles.input}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType={activeSocial?.keyboardType ?? "default"}
-                textContentType={activeSocial?.textContentType}
-                accessibilityLabel={activeSocial?.title}
-                autoFocus
-              />
-              {socialError ? <Text style={styles.socialError}>{socialError}</Text> : null}
-              <View style={styles.modalActions}>
-                <Pressable disabled={isSavingSocial} onPress={closeSocialModal} style={styles.modalCancelButton}>
-                  <Text style={styles.modalCancelText}>Cancel</Text>
-                </Pressable>
-                <Pressable disabled={isSavingSocial} onPress={saveSocial} style={styles.modalSaveButton}>
-                  {isSavingSocial ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.modalSaveText}>Save</Text>}
-                </Pressable>
-              </View>
+          <SafeAreaView style={styles.modalSafeArea}>
+            <Pressable
+              style={[styles.modalBackdrop, { paddingHorizontal: horizontalPadding }]}
+              onPress={closeSocialModal}
+            >
+              <Pressable
+                style={[styles.socialModalCard, { maxWidth: contentMaxWidth }]}
+                onPress={() => undefined}
+              >
+                <Text style={styles.modalTitle}>Set {activeSocial?.title}</Text>
+                <TextInput
+                  value={socialInput}
+                  onChangeText={(value) => {
+                    setSocialInput(value);
+                    if (socialError) setSocialError("");
+                  }}
+                  placeholder={activeSocial?.placeholder}
+                  placeholderTextColor="#7A8FA8"
+                  style={styles.input}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType={activeSocial?.keyboardType ?? "default"}
+                  textContentType={activeSocial?.textContentType}
+                  accessibilityLabel={activeSocial?.title}
+                  autoFocus
+                />
+                {socialError ? <Text style={styles.socialError}>{socialError}</Text> : null}
+                <View style={styles.modalActions}>
+                  <Pressable onPress={closeSocialModal} style={styles.modalCancelButton}>
+                    <Text style={styles.modalCancelText}>Cancel</Text>
+                  </Pressable>
+                  <Pressable onPress={saveSocial} style={styles.modalSaveButton}>
+                    <Text style={styles.modalSaveText}>Save</Text>
+                  </Pressable>
+                </View>
+              </Pressable>
             </Pressable>
-          </Pressable>
+          </SafeAreaView>
         </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
@@ -834,13 +835,19 @@ const styles = StyleSheet.create({
   modalKeyboardView: {
     flex: 1,
   },
+  modalSafeArea: {
+    flex: 1,
+  },
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(15, 23, 42, 0.38)",
-    justifyContent: "center",
-    padding: 24,
+    justifyContent: "flex-end",
+    paddingTop: 24,
+    paddingBottom: 24,
   },
   socialModalCard: {
+    width: "100%",
+    alignSelf: "center",
     backgroundColor: colors.white,
     borderRadius: 16,
     padding: 20,
