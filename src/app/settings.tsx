@@ -3,7 +3,6 @@ import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { useCallback, useState } from "react";
 import {
-    Alert,
     BackHandler,
     Pressable,
     SafeAreaView,
@@ -15,6 +14,7 @@ import {
     View,
 } from "react-native";
 import { auth } from "../../firebaseConfig";
+import { ActionDialog } from "../components/ui/ActionDialog";
 import SettingsRow from "../components/ui/SettingsRow";
 import SettingsSection from "../components/ui/SettingsSection";
 import { getHorizontalPadding } from "../constants/layout";
@@ -31,32 +31,17 @@ export default function SettingsScreen() {
 
   const [pushEnabled, setPushEnabled] = useState(true);
   const [remindersEnabled, setRemindersEnabled] = useState(true);
+  const [isLogoutDialogVisible, setLogoutDialogVisible] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
 
-  const handleLogout = useCallback(() => {
-    Alert.alert(
-      "Confirm logout",
-      "Are you sure you want to log out of DigiLearn?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Log out",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await signOut(auth);
-              router.replace("/" as never);
-            } catch (error) {
-              console.error("Logout failed:", error);
-              Alert.alert("Unable to sign out", "Please try again.");
-            }
-          },
-        },
-      ],
-      { cancelable: true },
-    );
+  const handleLogout = useCallback(async () => {
+    try {
+      await signOut(auth);
+      router.replace("/" as never);
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setLogoutError("We couldn't log you out. Please try again.");
+    }
   }, [router]);
 
   useFocusEffect(
@@ -192,7 +177,7 @@ export default function SettingsScreen() {
               <>
                 <View style={{ height: 30 }} />
                 <Pressable
-                  onPress={handleLogout}
+                  onPress={() => setLogoutDialogVisible(true)}
                   accessibilityRole="button"
                   accessibilityLabel="Logout"
                 >
@@ -207,6 +192,27 @@ export default function SettingsScreen() {
           </ScrollView>
         </View>
       </View>
+
+      <ActionDialog
+        visible={isLogoutDialogVisible}
+        icon={<Icon name="log-out" size={24} color="#DC2626" />}
+        title="Log out?"
+        message="Are you sure you want to log out of DigiLearn?"
+        primaryText="Log out"
+        secondaryText="Cancel"
+        primaryButtonColor="#DC2626"
+        onPrimary={handleLogout}
+        onSecondary={() => setLogoutDialogVisible(false)}
+        onClose={() => setLogoutDialogVisible(false)}
+      />
+      <ActionDialog
+        visible={logoutError !== null}
+        title="Unable to log out"
+        message={logoutError ?? ""}
+        primaryText="OK"
+        onPrimary={() => setLogoutError(null)}
+        onClose={() => setLogoutError(null)}
+      />
     </SafeAreaView>
   );
 }
