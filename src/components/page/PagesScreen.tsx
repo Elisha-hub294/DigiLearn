@@ -1,7 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
     Modal,
@@ -21,6 +21,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
+import { getMarkedReadItemIds } from "../../services/userProfile";
 import { FeaturedNoteCard } from "../home/FeaturedNoteCard";
 import { SearchBar } from "../ui/SearchBar";
 
@@ -135,11 +137,12 @@ const formatCreatedAt = (value: unknown) => {
 
 const sortNotes = (notes: PageNote[], sortBy: string) => {
   const list = [...notes];
+  const noteDate = (note: PageNote) =>
+    formatCreatedAt(note.createdAt ?? note.updatedAt);
+
   switch (sortBy) {
     case "Oldest":
-      return list.sort(
-        (a, b) => formatCreatedAt(a.createdAt) - formatCreatedAt(b.createdAt),
-      );
+      return list.sort((a, b) => noteDate(a) - noteDate(b));
     case "Most Read":
       return list.sort(
         (a, b) =>
@@ -147,7 +150,7 @@ const sortNotes = (notes: PageNote[], sortBy: string) => {
       );
     case "Recently Updated":
       return list.sort(
-        (a, b) => formatCreatedAt(b.updatedAt) - formatCreatedAt(a.updatedAt),
+        (a, b) => noteDate(b) - noteDate(a),
       );
     case "Alphabetical (A–Z)":
       return list.sort((a, b) =>
@@ -157,16 +160,17 @@ const sortNotes = (notes: PageNote[], sortBy: string) => {
       );
     case "Newest":
     default:
-      return list.sort(
-        (a, b) => formatCreatedAt(b.createdAt) - formatCreatedAt(a.createdAt),
-      );
+      return list.sort((a, b) => noteDate(b) - noteDate(a));
   }
 };
 
-const filterByReadStatus = (note: PageNote, readingStatus: string) => {
+const filterByReadStatus = (
+  note: PageNote,
+  readingStatus: string,
+  readNoteIds: ReadonlySet<string>,
+) => {
   if (readingStatus === "All") return true;
-  const isRead =
-    Boolean(note.isRead) || normalizeText(note.readStatus) === "read";
+  const isRead = readNoteIds.has(note.id);
   const inProgress = Number(note.progress ?? 0) > 0;
 
   switch (readingStatus) {
@@ -194,6 +198,7 @@ const filterByAttachments = (note: PageNote, attachments: string) => {
 
 export default function PagesScreen() {
   const router = useRouter();
+  const { profile } = useProfile();
   const params = useLocalSearchParams<{ title?: string }>();
   const pageTitle = typeof params.title === "string" ? params.title : "Pages";
   const [notes, setNotes] = useState<PageNote[]>([]);
@@ -215,6 +220,10 @@ export default function PagesScreen() {
       (option) => option !== "All" && option !== "Newest",
     ).length;
   }, [filters]);
+  const readNoteIds = useMemo(
+    () => new Set(getMarkedReadItemIds(profile)),
+    [profile],
+  );
 
   const isPageDataReady = !loading;
 
@@ -227,7 +236,7 @@ export default function PagesScreen() {
 
         const [subjectsSnapshot, pagesSnapshot] = await Promise.all([
           getDocs(collection(db, "subject")),
-          getDocs(query(collection(db, "pages"), orderBy("createdAt", "desc"))),
+          getDocs(collection(db, "pages")),
         ]);
 
         if (cancelled) return;
@@ -325,7 +334,7 @@ export default function PagesScreen() {
     }
 
     filtered = filtered.filter((note) =>
-      filterByReadStatus(note, filters.readingStatus),
+      filterByReadStatus(note, filters.readingStatus, readNoteIds),
     );
     filtered = filtered.filter((note) => filterByLevel(note, filters.level));
     filtered = filtered.filter((note) =>
@@ -333,7 +342,7 @@ export default function PagesScreen() {
     );
 
     return sortNotes(filtered, filters.sortBy);
-  }, [filters, notes, searchQuery]);
+  }, [filters, notes, readNoteIds, searchQuery]);
 
   useEffect(() => {
     if (searchTimeout.current) {
