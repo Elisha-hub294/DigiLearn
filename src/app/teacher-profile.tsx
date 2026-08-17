@@ -25,6 +25,7 @@ import { TeacherPostCard } from "../components/TeacherPostCard";
 import { LatestVideoCard } from "../components/ui/LatestVideoCard";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { SearchBar } from "../components/ui/SearchBar";
+import { useProfile } from "../contexts/ProfileContext";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 
@@ -109,6 +110,7 @@ type TeacherTab = (typeof teacherTabOptions)[number];
 
 export default function TeacherProfileScreen() {
   const router = useRouter();
+  const { user } = useProfile();
   const params = useLocalSearchParams<{
     name?: string;
     returnTo?: string;
@@ -140,6 +142,7 @@ export default function TeacherProfileScreen() {
   const normalizedTeacherName = normalizeKey(teacherName);
   const accentColor = teacher?.accent || colors.primary;
   const teacherFirstName = (teacher?.name || teacherName).split(" ")[0] || "Teacher";
+  const isOwnProfile = teacher?.id === user?.uid;
 
   const fetchTeacherProfile = useCallback(async () => {
     try {
@@ -513,6 +516,17 @@ export default function TeacherProfileScreen() {
             </Pressable>
           )}
 
+          {isOwnProfile && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open settings"
+              style={styles.settingsButton}
+              onPress={() => router.push("/settings")}
+            >
+              <Icon name="settings" size={20} color="#F8FAFC" />
+            </Pressable>
+          )}
+
           <View style={styles.avatarShell}>
             <Image
               source={{
@@ -567,11 +581,13 @@ export default function TeacherProfileScreen() {
           <View style={[styles.contactRow, { gap: actionRowGap }]}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Contact teacher"
+              accessibilityLabel={isOwnProfile ? "Publish" : "Contact teacher"}
               style={[styles.contactButton, { backgroundColor: accentColor }]}
               onPress={openContactSheet}
             >
-              <Text style={styles.contactButtonText}>Contact</Text>
+              <Text style={styles.contactButtonText}>
+                {isOwnProfile ? "Publish" : "Contact"}
+              </Text>
             </Pressable>
 
             <Pressable
@@ -886,6 +902,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  settingsButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 3,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 28, 81, 0.48)",
   },
   avatarShell: {
     position: "absolute",
