@@ -1,4 +1,4 @@
-import { resolveVideoImageSource } from "@/utils/videoUtils";
+import { formatVideoUploadedAt, resolveVideoImageSource } from "@/utils/videoUtils";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -13,7 +13,7 @@ import { VideoLesson } from "./TrendingVideoCard";
 import { videoRadii } from "./videoDesign";
 
 export function LatestVideoCard({
-  item,
+  item: rawItem,
   index,
   isGrid = false,
 }: {
@@ -22,6 +22,7 @@ export function LatestVideoCard({
   isGrid?: boolean;
 }) {
   const router = useRouter();
+  const item = { ...rawItem, uploadedAt: formatVideoUploadedAt(rawItem.uploadedAt) };
 
   function openLesson() {
     if (auth.currentUser?.uid) {

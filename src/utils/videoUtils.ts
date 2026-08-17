@@ -2,6 +2,36 @@ import { ImageSourcePropType } from "react-native";
 
 const FALLBACK_THUMBNAIL = require("../../assets/images/thumb-default.jpeg");
 
+type FirestoreTimestampLike = {
+  seconds?: unknown;
+  toDate?: () => Date;
+};
+
+/** Converts Firestore timestamps to text that can safely be rendered in React. */
+export function formatVideoUploadedAt(value: unknown): string {
+  if (typeof value === "string") return value;
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toLocaleDateString();
+  }
+
+  if (typeof value === "object" && value !== null) {
+    const timestamp = value as FirestoreTimestampLike;
+    if (typeof timestamp.toDate === "function") {
+      const date = timestamp.toDate();
+      if (date instanceof Date && !Number.isNaN(date.getTime())) {
+        return date.toLocaleDateString();
+      }
+    }
+    if (typeof timestamp.seconds === "number") {
+      const date = new Date(timestamp.seconds * 1000);
+      if (!Number.isNaN(date.getTime())) return date.toLocaleDateString();
+    }
+  }
+
+  return "";
+}
+
 /**
  * Extracts YouTube video ID from various YouTube URL formats.
  */

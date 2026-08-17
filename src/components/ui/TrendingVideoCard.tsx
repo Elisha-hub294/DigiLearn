@@ -1,4 +1,4 @@
-import { resolveVideoImageSource } from "@/utils/videoUtils";
+import { formatVideoUploadedAt, resolveVideoImageSource } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -21,7 +21,7 @@ export type VideoLesson = {
   title: string;
   subject: string;
   teacher: string;
-  uploadedAt: string;
+  uploadedAt: unknown;
   duration: string;
   thumbnail?: number | string;
   avatar?: number | string;
@@ -32,7 +32,7 @@ export type VideoLesson = {
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function TrendingVideoCard({
-  item,
+  item: rawItem,
   width,
 }: {
   item: VideoLesson;
@@ -40,6 +40,7 @@ export function TrendingVideoCard({
 }) {
   const router = useRouter();
   const scale = useSharedValue(1);
+  const item = { ...rawItem, uploadedAt: formatVideoUploadedAt(rawItem.uploadedAt) };
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
