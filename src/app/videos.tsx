@@ -1,9 +1,6 @@
 import { LatestVideoCard } from "@/components/ui/LatestVideoCard";
-import { SearchBar } from "@/components/ui/SearchBar";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { SubjectFilter } from "@/components/ui/SubjectFilter";
-import { TrendingCarousel } from "@/components/ui/TrendingCarousel";
 import { VideoLesson } from "@/components/ui/TrendingVideoCard";
+import { VideosScreenHeader } from "@/components/ui/VideosScreenHeader";
 // import { colors } from "@/components/ui/videoDesign";
 import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,7 +10,6 @@ import { useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -195,40 +191,15 @@ export default function VideosScreen() {
 
   const header = useMemo(
     () => (
-      <>
-        <View style={styles.topRow}>
-          <Text style={styles.pageTitle}>Lessons</Text>
-          <Pressable
-            accessibilityLabel="Open notifications"
-            accessibilityRole="button"
-            hitSlop={10}
-            style={styles.bell}
-            onPress={() => router.push("/notifications" as any)}
-          >
-            <Ionicons name="play-outline" size={30} color={colors.dark} />
-            {hasUnread ? <View style={styles.dot} /> : null}
-          </Pressable>
-        </View>
-        <SearchBar />
-        <View>
-          <SubjectFilter selected={subject} onSelect={setSubject} />
-        </View>
-        <View style={styles.section}>
-          <SectionHeader title="Trending ⚡" />
-          {loading ? (
-            <View style={styles.loader}>
-              <ActivityIndicator size="small" color={colors.primary} />
-            </View>
-          ) : (
-            <TrendingCarousel items={trendingLessons} cardWidth={cardWidth} />
-          )}
-        </View>
-        <View style={styles.latestHeading}>
-          <SectionHeader title="Latest" />
-        </View>
-      </>
+      <VideosScreenHeader
+        subject={subject}
+        setSubject={setSubject}
+        loading={loading}
+        trendingLessons={trendingLessons}
+        cardWidth={cardWidth}
+      />
     ),
-    [cardWidth, loading, subject, trendingLessons],
+    [subject, loading, trendingLessons, cardWidth]
   );
 
   return (
@@ -270,14 +241,6 @@ export default function VideosScreen() {
             )}
             keyExtractor={(item) => item.id}
             ListHeaderComponent={header}
-            // ListFooterComponent={
-            //   <Image
-            //     source={require("../../assets/images/lib.jpeg")}
-            //     contentFit="contain"
-            //     style={styles.footerImage}
-            //     accessibilityLabel="Learning together illustration"
-            //   />
-            // }
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -306,39 +269,9 @@ const styles = StyleSheet.create({
   safe: { backgroundColor: "#fff", flex: 1 },
   container: { alignSelf: "center", flex: 1, width: "100%" },
   listContent: { paddingBottom: 124 },
-  topRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-    paddingTop: 8,
-  },
-  pageTitle: {
-    color: "#111",
-    fontSize: 34,
-    fontWeight: "500",
-    letterSpacing: -1,
-  },
-  bell: { padding: 0, position: "relative" },
-  dot: {
-    backgroundColor: "#FF3B30",
-    borderColor: "#fff",
-    borderRadius: 5,
-    borderWidth: 1.5,
-    height: 10,
-    position: "absolute",
-    right: 4,
-    top: 3,
-    width: 10,
-  },
+
   section: { marginTop: 30 },
   latestHeading: { marginTop: 34 },
-  footerImage: {
-    alignSelf: "center",
-    height: 250,
-    marginTop: 18,
-    width: "90%",
-  },
   emptyStateContainer: {
     flex: 1,
   },
@@ -370,11 +303,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: "center",
   },
-  loader: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 120,
-  },
+
   fab: {
     alignItems: "center",
     backgroundColor: colors.primary,
