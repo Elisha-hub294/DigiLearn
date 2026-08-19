@@ -1,5 +1,5 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import type { RefObject } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
@@ -22,6 +22,7 @@ type SearchBarProps = {
   placeholderTextColor?: string;
   searchIconColor?: string;
   variant?: "default" | "topic";
+  onBack?: () => void;
 };
 
 export function SearchBar({
@@ -42,14 +43,19 @@ export function SearchBar({
   placeholderTextColor = "#8A8A8A",
   searchIconColor = "#8A8A8A",
   variant = "default",
+  onBack,
 }: SearchBarProps) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const handlePress = () => {
     if (onPress) {
       onPress();
     } else {
-      router.push("/search" as never);
+      router.push({
+        pathname: "/search",
+        params: pathname && pathname !== "/search" ? { returnTo: pathname } : undefined,
+      } as never);
     }
   };
 
@@ -61,7 +67,15 @@ export function SearchBar({
             accessibilityRole="button"
             accessibilityLabel="Go back"
             hitSlop={8}
-            onPress={() => router.back()}
+            onPress={() => {
+              if (onBack) {
+                onBack();
+              } else if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace("/" as never);
+              }
+            }}
             style={styles.backButton}
           >
             <Icon name="arrow-left" size={22} color="#111111" />

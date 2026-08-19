@@ -1,4 +1,4 @@
-import { useFocusEffect, usePathname, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useRef } from "react";
 import {
   FlatList,
@@ -12,23 +12,23 @@ import {
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { auth } from "../../firebaseConfig";
-import { recordUserActivity } from "../services/activityService";
+import { auth } from "../../../firebaseConfig";
+import { recordUserActivity } from "../../services/activityService";
 
-import { RecentSearchChip } from "../components/search/RecentSearchChip";
-import { SearchEmptyState } from "../components/search/SearchEmptyState";
-import { SearchResultBookCard } from "../components/search/SearchResultBookCard";
-import { SearchResultCard } from "../components/search/SearchResultCard";
-import { SearchResultTeacherCard } from "../components/search/SearchResultTeacherCard";
-import { SearchResultVideoCard } from "../components/search/SearchResultVideoCard";
-import { SearchSkeleton } from "../components/search/SearchSkeleton";
-import { SearchBar } from "../components/ui/SearchBar";
-import { getHorizontalPadding } from "../constants/layout";
+import { RecentSearchChip } from "../../components/search/RecentSearchChip";
+import { SearchEmptyState } from "../../components/search/SearchEmptyState";
+import { SearchResultBookCard } from "../../components/search/SearchResultBookCard";
+import { SearchResultCard } from "../../components/search/SearchResultCard";
+import { SearchResultTeacherCard } from "../../components/search/SearchResultTeacherCard";
+import { SearchResultVideoCard } from "../../components/search/SearchResultVideoCard";
+import { SearchSkeleton } from "../../components/search/SearchSkeleton";
+import { SearchBar } from "../../components/ui/SearchBar";
+import { getHorizontalPadding } from "../../constants/layout";
 import {
   SearchCategory,
   SearchResult,
   useGlobalSearch,
-} from "../hooks/useGlobalSearch";
+} from "../../hooks/useGlobalSearch";
 
 const CATEGORIES: SearchCategory[] = [
   "All",
@@ -40,9 +40,9 @@ const CATEGORIES: SearchCategory[] = [
 ];
 
 export default function SearchScreen() {
-  const { width } = useWindowDimensions();
   const router = useRouter();
-  const pathname = usePathname();
+  const params = useLocalSearchParams<{ returnTo?: string }>();
+  const { width } = useWindowDimensions();
   const searchInputRef = useRef<TextInput>(null);
 
   const {
@@ -88,6 +88,7 @@ export default function SearchScreen() {
       }
 
       // 2. Navigate based on card type + record activity
+      // Stack navigation means router.back() in sub-screens will return here automatically
       switch (item.type) {
         case "video":
           if (auth.currentUser?.uid) {
@@ -106,7 +107,6 @@ export default function SearchScreen() {
               link: item.link || "",
               thumbnail: item.previewImage,
               avatar: item.avatar || "",
-              returnTo: "/search",
             },
           } as never);
           break;
@@ -122,7 +122,6 @@ export default function SearchScreen() {
               title: item.title,
               author: item.author,
               source: "search",
-              returnTo: "/search",
             },
           } as never);
           break;
@@ -133,7 +132,6 @@ export default function SearchScreen() {
             params: {
               id: item.id,
               name: item.title,
-              returnTo: "/search",
             },
           } as never);
           break;
@@ -153,7 +151,7 @@ export default function SearchScreen() {
           } else {
             router.push({
               pathname: "/page-preview",
-              params: { id: item.id, returnTo: pathname },
+              params: { id: item.id },
             } as never);
           }
           break;
@@ -165,12 +163,12 @@ export default function SearchScreen() {
           }
           router.push({
             pathname: "/page-preview",
-            params: { id: item.id, returnTo: pathname },
+            params: { id: item.id },
           } as never);
           break;
       }
     },
-    [addRecentSearch, query, router, pathname],
+    [addRecentSearch, query, router],
   );
 
   const handleChipSelect = useCallback(
@@ -244,6 +242,15 @@ export default function SearchScreen() {
           onChangeText={setQuery}
           onSubmit={triggerManualSearch}
           onClear={() => setQuery("")}
+          onBack={() => {
+            if (params.returnTo) {
+              router.replace(params.returnTo as never);
+            } else if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace("/" as never);
+            }
+          }}
           placeholder="Search pages, books, authors, teachers..."
         />
 

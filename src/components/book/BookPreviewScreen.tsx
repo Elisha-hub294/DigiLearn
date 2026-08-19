@@ -280,7 +280,11 @@ export function BookPreviewScreen() {
         router.replace("/notifications" as any);
         break;
       case "search":
-        router.replace("/search" as any);
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace("/search" as any);
+        }
         break;
       default:
         router.replace("/library" as any);

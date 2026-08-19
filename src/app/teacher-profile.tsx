@@ -500,17 +500,11 @@ export default function TeacherProfileScreen() {
               accessibilityLabel="Go back"
               style={styles.backButton}
               onPress={() => {
-                if (returnTo) {
-                  router.replace(returnTo as any);
-                  return;
-                }
-
                 if (router.canGoBack()) {
                   router.back();
-                  return;
+                } else {
+                  router.replace("/" as any);
                 }
-
-                router.replace("/search" as any);
               }}
             >
               <Icon name="arrow-left" size={20} color="#ffffff" />

@@ -99,7 +99,7 @@ export default function RootLayout() {
               options={{ href: null, tabBarStyle: { display: "none" } }}
             />
             <Tabs.Screen
-              name="search"
+              name="(search)"
               options={{ href: null, tabBarStyle: { display: "none" } }}
             />
             <Tabs.Screen
