@@ -41,6 +41,7 @@ export default function AssistantScreen() {
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [errorText, setErrorText] = useState<string | null>(null);
+  const [failedPrompt, setFailedPrompt] = useState<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
   >(null);
@@ -130,6 +131,7 @@ export default function AssistantScreen() {
     setMessages(nextMessages);
     setMessage("");
     setErrorText(null);
+    setFailedPrompt(null);
     setIsTyping(true);
 
     try {
@@ -168,8 +170,9 @@ export default function AssistantScreen() {
       const message =
         error instanceof Error && error.message
           ? error.message
-          : "I couldn't generate a response right now. Please check your connection and try again.";
+          : "DigiLearn AI couldn't respond right now. Please try again in a moment.";
       setErrorText(message);
+      setFailedPrompt(prompt);
     }
   };
 
@@ -184,6 +187,7 @@ export default function AssistantScreen() {
     setActiveConversationId(conversationId);
     setMessages(selectedConversation.messages);
     setErrorText(null);
+    setFailedPrompt(null);
   };
 
   const handleBackToMain = () => {
@@ -192,6 +196,7 @@ export default function AssistantScreen() {
       setMessage("");
       setIsTyping(false);
       setErrorText(null);
+      setFailedPrompt(null);
       setActiveConversationId(null);
       return;
     }
@@ -309,7 +314,7 @@ export default function AssistantScreen() {
                 <View style={styles.errorCard}>
                   <Text style={styles.errorText}>{errorText}</Text>
                   <Pressable
-                    onPress={() => handleSend(message || "Explain Osmosis")}
+                    onPress={() => handleSend(failedPrompt ?? undefined)}
                     style={styles.retryButton}
                   >
                     <Text style={styles.retryText}>Retry</Text>

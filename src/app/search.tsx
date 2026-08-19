@@ -45,18 +45,11 @@ export default function SearchScreen() {
   const pathname = usePathname();
   const searchInputRef = useRef<TextInput>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      const frame = requestAnimationFrame(() => searchInputRef.current?.focus());
-
-      return () => cancelAnimationFrame(frame);
-    }, []),
-  );
-
   const {
     query,
     setQuery,
     debouncedQuery,
+    hasSubmittedSearch,
     selectedCategory,
     setSelectedCategory,
     results,
@@ -67,11 +60,23 @@ export default function SearchScreen() {
     triggerManualSearch,
   } = useGlobalSearch();
 
+  useFocusEffect(
+    useCallback(() => {
+      const frame = requestAnimationFrame(() => searchInputRef.current?.focus());
+
+      return () => {
+        cancelAnimationFrame(frame);
+        setQuery("");
+      };
+    }, [setQuery]),
+  );
+
   // Responsive max content width calculation
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
 
-  const isActivelySearching = debouncedQuery.trim().length >= 2;
+  const isActivelySearching =
+    hasSubmittedSearch && debouncedQuery.trim().length >= 2;
 
   const handleResultPress = useCallback(
     (item: SearchResult) => {

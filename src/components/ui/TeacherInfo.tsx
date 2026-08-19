@@ -1,10 +1,10 @@
+import { colors } from "@/constants/theme";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { getTeacherAvatar } from "../../constants/teacherAvatar";
-import { videoColors } from "./videoDesign";
+// import { videoColors } from "./videoDesign";
 
 export function TeacherInfo({
   name,
@@ -38,7 +38,7 @@ export function TeacherInfo({
         <MaterialCommunityIcons
           name="dots-vertical"
           size={24}
-          color={videoColors.muted}
+          color={colors.inactive}
         />
       </Pressable>
     </Animated.View>
@@ -50,11 +50,11 @@ const styles = StyleSheet.create({
   copy: { flex: 1, marginLeft: 11 },
   nameRow: { alignItems: "center", flexDirection: "row", gap: 4 },
   name: {
-    color: videoColors.ink,
+    color: colors.dark,
     fontSize: 14,
     fontWeight: "700",
     maxWidth: 220,
   },
-  time: { color: videoColors.muted, fontSize: 13, marginTop: 2 },
+  time: { color: colors.inactive, fontSize: 13, marginTop: 2 },
   more: { paddingLeft: 12 },
 });

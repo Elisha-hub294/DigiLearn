@@ -1,19 +1,19 @@
 import { GoogleGenAI } from "@google/genai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-    addDoc,
-    collection,
-    getDocs,
-    orderBy,
-    query,
-    serverTimestamp,
-    updateDoc,
+  addDoc,
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 
 import { db } from "../../firebaseConfig";
 import {
-    getAssistantContent,
-    getDigiLearnKnowledgeContext,
+  getAssistantContent,
+  getDigiLearnKnowledgeContext,
 } from "./aiAssistantService";
 
 export type ChatMessage = {
@@ -33,6 +33,42 @@ export type ConversationRecord = {
 };
 
 const STORAGE_KEY = "digilearn.assistant.conversations";
+
+const ASSISTANT_UNAVAILABLE_MESSAGE =
+  "DigiLearn AI couldn't respond right now. Please try again in a moment.";
+
+function getAssistantErrorMessage(error: unknown) {
+  const detail = error instanceof Error ? error.message : String(error);
+  const normalizedDetail = detail.toLowerCase();
+
+  if (
+    normalizedDetail.includes("failed to fetch") ||
+    normalizedDetail.includes("network request failed") ||
+    normalizedDetail.includes("network error") ||
+    normalizedDetail.includes("offline")
+  ) {
+    return "DigiLearn AI needs an internet connection. Check your connection and try again.";
+  }
+
+  if (
+    normalizedDetail.includes("api key") ||
+    normalizedDetail.includes("permission") ||
+    normalizedDetail.includes("unauthorized") ||
+    normalizedDetail.includes("forbidden")
+  ) {
+    return "DigiLearn AI isn't available right now. Please try again later.";
+  }
+
+  if (
+    normalizedDetail.includes("rate limit") ||
+    normalizedDetail.includes("quota") ||
+    normalizedDetail.includes("429")
+  ) {
+    return "DigiLearn AI is busy right now. Please wait a moment and try again.";
+  }
+
+  return ASSISTANT_UNAVAILABLE_MESSAGE;
+}
 
 function toDisplayDate(value: string) {
   const date = new Date(value);
@@ -159,7 +195,9 @@ export async function generateAssistantReply(
   const apiKey = content.geminiApiKey;
 
   if (!apiKey) {
-    throw new Error("Gemini API key is not configured.");
+    throw new Error(
+      "DigiLearn AI isn't available right now. Please try again later.",
+    );
   }
 
   const history = previousMessages
@@ -175,10 +213,10 @@ export async function generateAssistantReply(
 
   const systemPrompt = [
     "You are DigiLearn's academic study assistant.",
-    "Help with math, biology, chemistry, physics, ICT, geography, history, English, literature, economics, entrepreneurship, art, exams, revision, study planning, notes, past papers, marking guides, textbooks, courses, and teacher explanations.",
     "Use the Firestore knowledge block as the primary source for DigiLearn-specific information and capabilities.",
     "Do not invent DigiLearn database information. If the requested information or resource is not present in the provided knowledge or other DigiLearn Firestore data, say clearly that it could not be found.",
     "When appropriate, suggest DigiLearn resources in a concise way.",
+    "Do not mention any developer related thing to the user",
     "Format with markdown and short paragraphs.",
     knowledgeBlock,
   ].join(" ");
@@ -189,16 +227,9 @@ export async function generateAssistantReply(
       model: "gemini-3-flash-preview",
       contents: `${systemPrompt}\n\nConversation:\n${history}\n\nUser prompt:\n${prompt}`,
     });
-    const text =
-      response.text ??
-      "I couldn't generate a response right now. Please check your connection and try again.";
+    const text = response.text ?? ASSISTANT_UNAVAILABLE_MESSAGE;
     return text;
   } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      detail.includes("API key") || detail.includes("permission")
-        ? "The Gemini API key is missing or invalid. Please update the configuration in Firestore."
-        : `Gemini request failed: ${detail}`,
-    );
+    throw new Error(getAssistantErrorMessage(error));
   }
 }

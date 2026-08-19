@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, getDocs, onSnapshot } from "firebase/firestore";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { db } from "../../firebaseConfig";
 import { DEFAULT_SUBJECT_AVATAR } from "../components/page/pageTypes";
 import { getVideoThumbnailUrl } from "../utils/videoUtils";
@@ -136,6 +136,7 @@ export function formatUploadedAt(value: unknown): string {
 export function useGlobalSearch() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [hasSubmittedSearch, setHasSubmittedSearch] = useState(false);
   const [selectedCategory, setSelectedCategory] =
     useState<SearchCategory>("All");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -152,8 +153,6 @@ export function useGlobalSearch() {
   >({});
   const [defaultPdfIcon, setDefaultPdfIcon] =
     useState<string>(FALLBACK_PDF_ICON);
-
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 1. Load recent searches from AsyncStorage
   useEffect(() => {
@@ -294,15 +293,10 @@ export function useGlobalSearch() {
     };
   }, []);
 
-  // 4. Debounce search input (250–350 ms)
+  // 4. Keep typing separate from the submitted search.
   const handleSetQuery = useCallback((text: string) => {
     setQuery(text);
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    debounceTimerRef.current = setTimeout(() => {
-      setDebouncedQuery(text);
-    }, 300);
+    setHasSubmittedSearch(false);
   }, []);
 
   // 5. Recent searches persistence
@@ -374,7 +368,7 @@ export function useGlobalSearch() {
   // 6. Comprehensive filtering & Priority ranking
   const results = useMemo<SearchResult[]>(() => {
     const q = debouncedQuery.trim().toLowerCase();
-    if (q.length < 2) return [];
+    if (!hasSubmittedSearch || q.length < 2) return [];
 
     const scored: { score: number; item: SearchResult }[] = [];
 
@@ -578,6 +572,7 @@ export function useGlobalSearch() {
     return mapped.filter((i) => i.type === targetType);
   }, [
     debouncedQuery,
+    hasSubmittedSearch,
     selectedCategory,
     topicalNotes,
     pastPapers,
@@ -591,6 +586,7 @@ export function useGlobalSearch() {
 
   const triggerManualSearch = useCallback(() => {
     setDebouncedQuery(query);
+    setHasSubmittedSearch(true);
     if (query.trim().length >= 2) {
       addRecentSearch(query.trim());
     }
@@ -600,6 +596,7 @@ export function useGlobalSearch() {
     query,
     setQuery: handleSetQuery,
     debouncedQuery,
+    hasSubmittedSearch,
     selectedCategory,
     setSelectedCategory,
     results,
