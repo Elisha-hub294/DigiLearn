@@ -1,11 +1,11 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-    useWindowDimensions,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
@@ -67,6 +67,7 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     activeRoute?.name === "lesson-player" ||
     activeRoute?.name === "pdf-reader" ||
     activeRoute?.name === "search" ||
+    activeRoute?.name === "(search)" ||
     activeRoute?.name === "pages" ||
     (activeRoute?.name === "teacher-profile" && !isTeacherAccountScreen) ||
     activeRoute?.name === "assistant" ||
@@ -131,8 +132,8 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                   styles.desktopItem,
                   isActive && styles.desktopItemActive,
                   (pressed || hovered) &&
-                    !isActive &&
-                    styles.desktopItemHovered,
+                  !isActive &&
+                  styles.desktopItemHovered,
                 ]}
               >
                 <MaterialCommunityIcons

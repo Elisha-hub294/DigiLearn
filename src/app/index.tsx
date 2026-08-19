@@ -2,15 +2,15 @@ import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    NativeScrollEvent,
-    NativeSyntheticEvent,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -27,8 +27,8 @@ import { SearchBar } from "../components/ui/SearchBar";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
-import LoadingScreen from "./loading";
 import { getUserOnboardingState } from "../services/userProfile";
+import LoadingScreen from "./loading";
 
 // Deterministic Pseudo-Random Number Generator (Mulberry32)
 function mulberry32(seed: number) {

@@ -211,14 +211,14 @@ export function BookPreviewScreen() {
     () =>
       book
         ? allBooks
-            .filter(
-              (candidate) =>
-                candidate.id !== book.id &&
-                candidate.subject.some((subject) =>
-                  book.subject.includes(subject),
-                ),
-            )
-            .slice(0, 10)
+          .filter(
+            (candidate) =>
+              candidate.id !== book.id &&
+              candidate.subject.some((subject) =>
+                book.subject.includes(subject),
+              ),
+          )
+          .slice(0, 10)
         : [],
     [allBooks, book],
   );

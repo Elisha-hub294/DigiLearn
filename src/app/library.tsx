@@ -166,7 +166,7 @@ export default function LibraryScreen() {
                 >
                   <SectionHeader
                     title={section.title}
-                    onSeeAll={() => {}}
+                    onSeeAll={() => { }}
                     actionLabel="See all"
                   />
                   <PaperCarousel items={section.items} />
