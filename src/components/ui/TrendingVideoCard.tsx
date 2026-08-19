@@ -1,8 +1,11 @@
-import { formatVideoUploadedAt, resolveVideoImageSource } from "@/utils/videoUtils";
+import { colors, radius } from "@/constants/theme";
+import {
+  formatVideoUploadedAt,
+  resolveVideoImageSource,
+} from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -13,8 +16,6 @@ import Animated, {
 import { auth } from "../../../firebaseConfig";
 import { recordUserActivity } from "../../services/activityService";
 import { DurationBadge } from "./DurationBadge";
-import { TeacherInfo } from "./TeacherInfo";
-import { videoColors, videoRadii, videoShadows } from "./videoDesign";
 
 export type VideoLesson = {
   id: string;
@@ -40,7 +41,10 @@ export function TrendingVideoCard({
 }) {
   const router = useRouter();
   const scale = useSharedValue(1);
-  const item = { ...rawItem, uploadedAt: formatVideoUploadedAt(rawItem.uploadedAt) };
+  const item = {
+    ...rawItem,
+    uploadedAt: formatVideoUploadedAt(rawItem.uploadedAt),
+  };
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
@@ -91,8 +95,8 @@ export function TrendingVideoCard({
           <View style={styles.playIcon}>
             <Ionicons
               name="play"
-              size={34}
-              color="#111"
+              size={25}
+              color={colors.primary}
               style={styles.playIconGlyph}
             />
           </View>
@@ -114,11 +118,10 @@ export function TrendingVideoCard({
 const styles = StyleSheet.create({
   card: { marginRight: 14 },
   thumbnail: {
-    ...videoShadows.soft,
     width: "100%", // Explicit width so aspectRatio calculates correctly
-    aspectRatio: 1.55,
+    aspectRatio: 1.5,
     backgroundColor: "#ddd",
-    borderRadius: videoRadii.card,
+    borderRadius: radius.sm,
     overflow: "hidden",
   },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.25)" },
@@ -136,13 +139,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.92)",
     borderRadius: 32,
     elevation: 5,
-    height: 64,
+    height: 50,
+    width: 50,
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 9,
-    width: 64,
   },
   playIconGlyph: { marginLeft: 3 },
   duration: { bottom: 10, position: "absolute", right: 10 },
@@ -151,7 +150,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "500",
     lineHeight: 22,
-    marginTop: 12,
+    marginTop: 5,
   },
   meta: { color: "#6E6E73", fontSize: 13, marginTop: 5 },
 });

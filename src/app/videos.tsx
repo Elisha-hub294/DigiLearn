@@ -4,7 +4,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { SubjectFilter } from "@/components/ui/SubjectFilter";
 import { TrendingCarousel } from "@/components/ui/TrendingCarousel";
 import { VideoLesson } from "@/components/ui/TrendingVideoCard";
-import { videoColors } from "@/components/ui/videoDesign";
+// import { colors } from "@/components/ui/videoDesign";
 import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
@@ -13,20 +13,20 @@ import { useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
-import { dimensions } from "../constants/theme";
+import { colors, dimensions } from "../constants/theme";
 import { useNotifications } from "../hooks/useNotifications";
 
 type FirestoreLesson = {
@@ -205,19 +205,19 @@ export default function VideosScreen() {
             style={styles.bell}
             onPress={() => router.push("/notifications" as any)}
           >
-            <Ionicons name="play-outline" size={30} color={videoColors.ink} />
+            <Ionicons name="play-outline" size={30} color={colors.dark} />
             {hasUnread ? <View style={styles.dot} /> : null}
           </Pressable>
         </View>
         <SearchBar />
-        <View style={styles.filter}>
+        <View>
           <SubjectFilter selected={subject} onSelect={setSubject} />
         </View>
         <View style={styles.section}>
           <SectionHeader title="Trending ⚡" />
           {loading ? (
             <View style={styles.loader}>
-              <ActivityIndicator size="small" color={videoColors.primary} />
+              <ActivityIndicator size="small" color={colors.primary} />
             </View>
           ) : (
             <TrendingCarousel items={trendingLessons} cardWidth={cardWidth} />
@@ -251,17 +251,12 @@ export default function VideosScreen() {
             <View style={styles.emptyHeader}>{header}</View>
             <View style={styles.emptyState}>
               <Image
-                source={{
-                  uri: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/images/empty.png",
-                }}
+                source={require("@/assets/images/empty.png")}
                 style={styles.emptyImage}
                 contentFit="contain"
               />
               <Text style={styles.emptyTitle}>
                 No lessons in this subject yet
-              </Text>
-              <Text style={styles.emptyText}>
-                Try another subject or add a new lesson to this collection.
               </Text>
             </View>
           </ScrollView>
@@ -289,7 +284,7 @@ export default function VideosScreen() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor={videoColors.primary}
+                tintColor={colors.primary}
               />
             }
           />
@@ -321,7 +316,7 @@ const styles = StyleSheet.create({
   pageTitle: {
     color: "#111",
     fontSize: 34,
-    fontWeight: "800",
+    fontWeight: "500",
     letterSpacing: -1,
   },
   bell: { padding: 0, position: "relative" },
@@ -336,7 +331,6 @@ const styles = StyleSheet.create({
     top: 3,
     width: 10,
   },
-  filter: { marginTop: 18 },
   section: { marginTop: 30 },
   latestHeading: { marginTop: 34 },
   footerImage: {
@@ -383,7 +377,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     alignItems: "center",
-    backgroundColor: videoColors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 28,
     bottom: 28,
     elevation: 6,

@@ -240,7 +240,7 @@ export const CoursesCarousel = () => {
                 <View style={styles.overlay} />
                 <View style={styles.playButton}>
                   <Text style={styles.playText}>
-                    <Ionicons name="play" size={20} color="#ffffff7a" />
+                    <Ionicons name="play" size={20} color="#fff" />
                   </Text>
                 </View>
                 {!!item.duration && (
@@ -301,10 +301,13 @@ const styles = StyleSheet.create({
   card: {
     marginRight: CARD_GAP,
     backgroundColor: colors.white,
+  },
+  imageWrap: {
+    height: 132,
+    position: "relative",
     borderRadius: radius.sm,
     overflow: "hidden",
   },
-  imageWrap: { height: 132, position: "relative" },
   imagePressable: { width: "100%", height: "100%" },
   image: { width: "100%", height: "100%" },
   imagePlaceholder: { backgroundColor: "#E2E8F0" },
@@ -315,8 +318,8 @@ const styles = StyleSheet.create({
     top: spacing.md,
     width: 35,
     height: 35,
-    borderRadius: 10,
-    backgroundColor: "rgba(0, 149, 207, 0.7)",
+    borderRadius: 100,
+    backgroundColor: "rgb(255, 0, 0)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -324,7 +327,7 @@ const styles = StyleSheet.create({
   durationBadge: {
     position: "absolute",
     right: spacing.md,
-    top: spacing.md,
+    bottom: spacing.md,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: radius.pill,

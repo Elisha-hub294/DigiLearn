@@ -1,7 +1,10 @@
-import { formatVideoUploadedAt, resolveVideoImageSource } from "@/utils/videoUtils";
+import { radius } from "@/constants/theme";
+import {
+  formatVideoUploadedAt,
+  resolveVideoImageSource,
+} from "@/utils/videoUtils";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { auth } from "../../../firebaseConfig";
@@ -10,7 +13,6 @@ import { DurationBadge } from "./DurationBadge";
 import { PlayButton } from "./PlayButton";
 import { TeacherInfo } from "./TeacherInfo";
 import { VideoLesson } from "./TrendingVideoCard";
-import { videoRadii } from "./videoDesign";
 
 export function LatestVideoCard({
   item: rawItem,
@@ -22,7 +24,10 @@ export function LatestVideoCard({
   isGrid?: boolean;
 }) {
   const router = useRouter();
-  const item = { ...rawItem, uploadedAt: formatVideoUploadedAt(rawItem.uploadedAt) };
+  const item = {
+    ...rawItem,
+    uploadedAt: formatVideoUploadedAt(rawItem.uploadedAt),
+  };
 
   function openLesson() {
     if (auth.currentUser?.uid) {
@@ -84,8 +89,8 @@ const styles = StyleSheet.create({
   gridCard: { marginHorizontal: 8 },
   thumbnail: {
     backgroundColor: "#ddd",
-    borderRadius: videoRadii.thumbnail,
-    height: 210,
+    borderRadius: radius.sm,
+    height: 200,
     width: "100%", // Explicit full width for grid/flex layout calculation
     overflow: "hidden",
   },
@@ -117,9 +122,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#111",
-    fontSize: 18,
-    fontWeight: "600",
-    lineHeight: 24,
-    marginTop: 12,
+    fontSize: 13,
+    lineHeight: 10,
+    marginTop: 5,
   },
 });

@@ -84,10 +84,7 @@ export default function AddTrendingLessonScreen() {
         <Pressable onPress={() => router.back()} style={styles.iconButton}>
           <Ionicons name="arrow-back" size={22} color="#111" />
         </Pressable>
-        <Text style={styles.title}>
-          ~ADMIN~ With a brand new day spending its heat, I have it here: get a
-          flash district.Add trending lesson
-        </Text>
+        <Text style={styles.title}>~ADMIN~ Add trending lesson</Text>
       </View>
 
       <ScrollView
