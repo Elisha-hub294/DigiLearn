@@ -1,4 +1,4 @@
-import { colors, radius } from "@/constants/theme";
+import { radius } from "@/constants/theme";
 import {
   formatVideoUploadedAt,
   resolveVideoImageSource,
@@ -96,7 +96,7 @@ export function TrendingVideoCard({
             <Ionicons
               name="play"
               size={25}
-              color={colors.primary}
+              color={"white"}
               style={styles.playIconGlyph}
             />
           </View>
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   playIcon: {
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.92)",
+    backgroundColor: "rgba(255, 0, 0, 1)",
     borderRadius: 32,
     elevation: 5,
     height: 50,

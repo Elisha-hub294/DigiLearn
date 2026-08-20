@@ -1,4 +1,3 @@
-import { colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet } from "react-native";
 import Animated, {
@@ -36,7 +35,7 @@ export function PlayButton({
       <Ionicons
         name="play"
         size={25}
-        color={colors.primary}
+        color={"white"}
         style={styles.icon}
       />
     </AnimatedPressable>
@@ -46,7 +45,7 @@ export function PlayButton({
 const styles = StyleSheet.create({
   button: {
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.92)",
+    backgroundColor: "rgba(255, 0, 0, 1)",
     borderRadius: 32,
     elevation: 5,
     height: 50,

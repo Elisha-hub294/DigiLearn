@@ -122,8 +122,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#111",
-    fontSize: 13,
-    lineHeight: 10,
+    fontSize: 15,
+    fontWeight: "500",
     marginTop: 5,
   },
 });

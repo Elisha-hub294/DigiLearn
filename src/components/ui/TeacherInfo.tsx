@@ -1,5 +1,5 @@
 import { colors } from "@/constants/theme";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
@@ -26,7 +26,7 @@ export function TeacherInfo({
           <Text numberOfLines={1} style={styles.name}>
             {name}
           </Text>
-          <Ionicons name="checkmark-circle" size={15} color="#3B82F6" />
+          {/* <Ionicons name="checkmark-circle" size={15} color="#3B82F6" /> */}
         </View>
         <Text style={styles.time}>{uploadedAt}</Text>
       </View>
@@ -52,9 +52,9 @@ const styles = StyleSheet.create({
   name: {
     color: colors.dark,
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "500",
     maxWidth: 220,
   },
-  time: { color: colors.inactive, fontSize: 13, marginTop: 2 },
+  time: { color: colors.inactive, fontSize: 13 },
   more: { paddingLeft: 12 },
 });
