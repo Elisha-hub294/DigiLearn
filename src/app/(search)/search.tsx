@@ -66,7 +66,7 @@ export default function SearchScreen() {
 
       return () => {
         cancelAnimationFrame(frame);
-        setQuery("");
+        // Do not clear the search query on blur; it will be cleared only when back button is pressed.
       };
     }, [setQuery]),
   );
@@ -174,8 +174,10 @@ export default function SearchScreen() {
   const handleChipSelect = useCallback(
     (term: string) => {
       setQuery(term);
+      triggerManualSearch(term);
+      searchInputRef.current?.focus();
     },
-    [setQuery],
+    [setQuery, triggerManualSearch, searchInputRef],
   );
 
   const renderResultCard = useCallback(
@@ -243,6 +245,8 @@ export default function SearchScreen() {
           onSubmit={triggerManualSearch}
           onClear={() => setQuery("")}
           onBack={() => {
+            // Clear the search query when user explicitly presses the back button from the search screen
+            setQuery("");
             if (params.returnTo) {
               router.replace(params.returnTo as never);
             } else if (router.canGoBack()) {
@@ -279,7 +283,7 @@ export default function SearchScreen() {
                 <Pressable
                   key={cat}
                   accessibilityRole="button"
-                  onPress={() => setSelectedCategory(cat)}
+                  onPress={() => { setSelectedCategory(cat); triggerManualSearch(); }}
                   style={[
                     styles.categoryChip,
                     active && styles.categoryChipActive,

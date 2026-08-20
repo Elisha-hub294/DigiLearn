@@ -584,11 +584,12 @@ export function useGlobalSearch() {
     resolveTeacherAvatar,
   ]);
 
-  const triggerManualSearch = useCallback(() => {
-    setDebouncedQuery(query);
+  const triggerManualSearch = useCallback((overrideQuery?: string) => {
+    const searchTerm = typeof overrideQuery === 'string' ? overrideQuery : query;
+    setDebouncedQuery(searchTerm);
     setHasSubmittedSearch(true);
-    if (query.trim().length >= 2) {
-      addRecentSearch(query.trim());
+    if (searchTerm.trim().length >= 2) {
+      addRecentSearch(searchTerm.trim());
     }
   }, [query, addRecentSearch]);
 
