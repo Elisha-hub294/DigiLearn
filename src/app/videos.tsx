@@ -1,7 +1,7 @@
 import { LatestVideoCard } from "@/components/ui/LatestVideoCard";
+import { getTrendingCardWidth } from "@/components/ui/TrendingCarousel";
 import { VideoLesson } from "@/components/ui/TrendingVideoCard";
 import { VideosScreenHeader } from "@/components/ui/VideosScreenHeader";
-// import { colors } from "@/components/ui/videoDesign";
 import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
@@ -22,8 +22,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
-import { colors, dimensions } from "../constants/theme";
-import { useNotifications } from "../hooks/useNotifications";
+import { colors, spacing } from "../constants/theme";
 
 type FirestoreLesson = {
   id?: string;
@@ -133,14 +132,12 @@ export default function VideosScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const { hasUnread } = useNotifications();
   const isTablet = width >= 768;
   const horizontalPadding = getHorizontalPadding(width);
+  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
   const contentWidth =
-    Math.min(width, dimensions.maxContentWidth) - horizontalPadding * 2;
-  const cardWidth = isTablet
-    ? Math.min(contentWidth * 0.72, 480)
-    : Math.min(contentWidth * 0.9, 570);
+    Math.min(width, contentMaxWidth) - horizontalPadding * 2;
+  const cardWidth = getTrendingCardWidth(width, contentWidth);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -206,18 +203,16 @@ export default function VideosScreen() {
     <SafeAreaView edges={["top"]} style={styles.safe}>
       <Animated.View
         entering={FadeIn.duration(380)}
-        style={[
-          styles.container,
-          {
-            maxWidth: dimensions.maxContentWidth,
-            paddingHorizontal: horizontalPadding,
-          },
-        ]}
+        style={[styles.container, { maxWidth: contentMaxWidth }]}
       >
         {showEmptyState ? (
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={styles.emptyStateContainer}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingHorizontal: horizontalPadding },
+            ]}
           >
             <View style={styles.emptyHeader}>{header}</View>
             <View style={styles.emptyState}>
@@ -241,7 +236,10 @@ export default function VideosScreen() {
             )}
             keyExtractor={(item) => item.id}
             ListHeaderComponent={header}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingHorizontal: horizontalPadding },
+            ]}
             showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
@@ -266,9 +264,13 @@ export default function VideosScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { backgroundColor: "#fff", flex: 1 },
+  safe: { backgroundColor: colors.background, flex: 1 },
   container: { alignSelf: "center", flex: 1, width: "100%" },
-  listContent: { paddingBottom: 124 },
+  listContent: {
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xxl,
+    width: "100%",
+  },
 
   section: { marginTop: 30 },
   latestHeading: { marginTop: 34 },
