@@ -105,10 +105,10 @@ export function TrendingVideoCard({
           <DurationBadge duration={item.duration} />
         </View>
       </View>
-      <Text numberOfLines={2} style={styles.title}>
+      <Text numberOfLines={1} ellipsizeMode="tail" style={styles.title}>
         {item.title}
       </Text>
-      <Text style={styles.meta}>
+      <Text numberOfLines={1} ellipsizeMode="tail" style={styles.meta}>
         {item.teacher} • {item.uploadedAt}
       </Text>
     </AnimatedPressable>

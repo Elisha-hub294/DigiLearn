@@ -1,3 +1,4 @@
+import { spacing } from "@/constants/theme";
 import { FlatList, StyleSheet, View } from "react-native";
 import { FilterChip } from "./FilterChip";
 
@@ -17,12 +18,12 @@ export const subjects = [
   "Fine Art",
   "French",
   "Music",
-  "Fine art",
   "Literature",
   "C.R.E",
   "I.R.E",
   "Physical Education",
 ];
+
 export function SubjectFilter({
   selected,
   onSelect,
@@ -50,7 +51,8 @@ export function SubjectFilter({
     </View>
   );
 }
+
 const styles = StyleSheet.create({
-  wrap: { marginRight: -24 },
-  content: { paddingRight: 36 },
+  wrap: { width: "100%" },
+  content: { paddingRight: spacing.md },
 });

@@ -1,13 +1,32 @@
+import { getHorizontalPadding } from '@/constants/layout';
+import { spacing } from '@/constants/theme';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { TrendingVideoCard, VideoLesson } from './TrendingVideoCard';
 
-export function TrendingCarousel({ items, cardWidth }: { items: VideoLesson[]; cardWidth: number }) {
+export function getTrendingCardWidth(width: number, contentWidth: number): number {
+  if (width < 600) {
+    return Math.max(220, Math.min(contentWidth * 0.82, 300));
+  }
+  if (width < 900) {
+    return Math.max(260, Math.min(contentWidth * 0.48, 340));
+  }
+  return Math.max(280, Math.min(contentWidth * 0.32, 360));
+}
+
+export function TrendingCarousel({ items, cardWidth }: { items: VideoLesson[]; cardWidth?: number }) {
+  const { width } = useWindowDimensions();
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isInteracting, setIsInteracting] = useState(false);
   const data = useMemo(() => [...items, ...items, ...items], [items]);
-  const itemWidth = cardWidth + 14;
+
+  const horizontalPadding = getHorizontalPadding(width);
+  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
+  const contentWidth = Math.min(width, contentMaxWidth) - horizontalPadding * 2;
+  const activeCardWidth = cardWidth ?? getTrendingCardWidth(width, contentWidth);
+
+  const itemWidth = activeCardWidth + 14;
 
   useEffect(() => {
     if (data.length === 0 || isInteracting) return;
@@ -40,7 +59,7 @@ export function TrendingCarousel({ items, cardWidth }: { items: VideoLesson[]; c
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item, index) => `${item.id}-${index}`}
-        renderItem={({ item }) => <TrendingVideoCard item={item} width={cardWidth} />}
+        renderItem={({ item }) => <TrendingVideoCard item={item} width={activeCardWidth} />}
         contentContainerStyle={styles.content}
         decelerationRate="fast"
         snapToInterval={itemWidth}
@@ -59,6 +78,6 @@ export function TrendingCarousel({ items, cardWidth }: { items: VideoLesson[]; c
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginRight: -24 },
-  content: { paddingRight: 30 },
+  wrap: { width: '100%' },
+  content: { paddingRight: spacing.md, marginBottom: spacing.xl },
 });

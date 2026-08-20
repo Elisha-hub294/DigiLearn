@@ -1,11 +1,10 @@
+import { colors } from "@/constants/theme";
 import { Pressable, StyleSheet, Text } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-// import { videoColors } from "./videoDesign";
-import { colors } from "@/constants/theme";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function FilterChip({
