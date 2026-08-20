@@ -1,5 +1,7 @@
 import { Feather as Icon, Ionicons } from "@expo/vector-icons";
+import MaskedView from "@react-native-masked-view/masked-view";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useRef, useState } from "react";
@@ -9,8 +11,9 @@ import {
   Animated as RNAnimated,
   StyleSheet,
   Text,
+  TextStyle,
   useWindowDimensions,
-  View,
+  View
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
@@ -25,8 +28,78 @@ type TeacherPost = {
   subject?: string;
   description?: string;
   hasPdf?: boolean;
-  createdAt?: unknown;
+  createdAt?: Date | null;
   document?: string;
+};
+
+type GradientTextProps = {
+  text: string;
+  style?: TextStyle | TextStyle[];
+  colors?: [string, string, ...string[]];
+};
+
+const GradientText = ({
+  text,
+  style,
+  colors = [colors.primary, "#e95cf6ff", "#ff0080ff"],
+}: GradientTextProps) => {
+  if (Platform.OS === "web") {
+    return (
+      <Text
+        style={[
+          style,
+          {
+            backgroundImage: `linear-gradient(135deg, ${colors.join(", ")})`,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            color: "transparent",
+          } as any,
+        ]}
+      >
+        {text}
+      </Text>
+    );
+  }
+
+  return (
+    <MaskedView
+      maskElement={
+        <Text style={[style, { backgroundColor: "transparent" }]}>
+          {text}
+        </Text>
+      }
+    >
+      <LinearGradient
+        colors={colors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <Text style={[style, { opacity: 0 }]}>{text}</Text>
+      </LinearGradient>
+    </MaskedView>
+  );
+};
+
+const getRelativeTime = (date: Date | null | undefined): string => {
+  if (!date) return "Recently shared";
+  const now = Date.now();
+  const diffMs = now - date.getTime();
+  if (isNaN(diffMs) || diffMs < 0) return "Recently shared";
+
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return "Just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return diffMin === 1 ? "1 minute ago" : `${diffMin} minutes ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return diffHr === 1 ? "1 hour ago" : `${diffHr} hours ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return diffDay === 1 ? "Yesterday" : `${diffDay} days ago`;
+  const diffWk = Math.floor(diffDay / 7);
+  if (diffWk < 5) return diffWk === 1 ? "1 week ago" : `${diffWk} weeks ago`;
+  const diffMo = Math.floor(diffDay / 30);
+  if (diffMo < 12) return diffMo === 1 ? "1 month ago" : `${diffMo} months ago`;
+  const diffYr = Math.floor(diffDay / 365);
+  return diffYr === 1 ? "1 year ago" : `${diffYr} years ago`;
 };
 
 const normalizeTeacherPost = (doc: {
@@ -68,6 +141,19 @@ const normalizeTeacherPost = (doc: {
   const document =
     typeof data.document === "string" ? data.document : undefined;
 
+  const rawCreatedAt = data.createdAt;
+  let createdAt: Date | null = null;
+  if (rawCreatedAt && typeof (rawCreatedAt as any).toDate === "function") {
+    createdAt = (rawCreatedAt as any).toDate() as Date;
+  } else if (rawCreatedAt instanceof Date) {
+    createdAt = rawCreatedAt;
+  } else if (typeof rawCreatedAt === "number") {
+    createdAt = new Date(rawCreatedAt);
+  } else if (typeof rawCreatedAt === "string") {
+    const parsed = new Date(rawCreatedAt);
+    if (!isNaN(parsed.getTime())) createdAt = parsed;
+  }
+
   return {
     id: doc.id,
     teacher,
@@ -75,6 +161,7 @@ const normalizeTeacherPost = (doc: {
     description,
     hasPdf,
     document,
+    createdAt,
   } satisfies TeacherPost;
 };
 
@@ -365,17 +452,24 @@ const TeacherPostItem = ({
               }
             >
               <View>
-                <View style={styles.nameRow}>
-                  <Text style={styles.name}>{teacherName}</Text>
-                  <Icon name="check-circle" size={14} color={colors.primary} />
-                </View>
-                <Text style={styles.time}>Recently shared</Text>
+                <Text style={styles.name}>{teacherName}</Text>
+                <Text style={styles.time}>{getRelativeTime(postItem.createdAt)}</Text>
               </View>
             </Pressable>
           </View>
         </View>
 
-        <Text style={styles.caption}>{description}</Text>
+        {!showPreview ? (
+          <View style={styles.noPdfTextContainer}>
+            <GradientText
+              text={description}
+              style={styles.gradientMaskedText}
+              colors={[colors.primary, "#c224f0ff", "#ff002bff"]}
+            />
+          </View>
+        ) : (
+          <Text style={styles.caption}>{description}</Text>
+        )}
 
         <View style={styles.actions}>
           <Pressable
@@ -533,7 +627,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     marginRight: spacing.sm,
   },
-  nameRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   name: { color: colors.text, fontSize: 14, fontWeight: "500" },
   time: { color: colors.subtitle, fontSize: 12, marginTop: 2 },
 
@@ -541,6 +634,15 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 14,
     marginBottom: spacing.sm,
+  },
+  noPdfTextContainer: {
+    marginBottom: spacing.sm,
+  },
+  gradientMaskedText: {
+    fontSize: 20,
+    fontWeight: "700",
+    lineHeight: 28,
+    letterSpacing: -0.3,
   },
   previewWrap: {
     overflow: "hidden",

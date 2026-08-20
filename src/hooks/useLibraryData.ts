@@ -47,12 +47,44 @@ export type PaperSection = {
   items: PaperItem[];
 };
 
-const pickString = (value: unknown, fallback = ""): string => {
-  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+const stringifyCandidate = (val: unknown): string => {
+  if (typeof val === "string" && val.trim()) {
+    return val.trim();
+  }
+  if (typeof val === "number" && !Number.isNaN(val)) {
+    return String(val);
+  }
+  if (Array.isArray(val)) {
+    const parts = val.map(stringifyCandidate).filter(Boolean);
+    if (parts.length > 0) {
+      return parts.join(", ");
+    }
+  }
+  if (typeof val === "object" && val !== null) {
+    if ("name" in val) return stringifyCandidate((val as { name: unknown }).name);
+    if ("title" in val) return stringifyCandidate((val as { title: unknown }).title);
+    if ("label" in val) return stringifyCandidate((val as { label: unknown }).label);
+  }
+  return "";
 };
 
-const pickImage = (value: unknown, fallback: string): string => {
-  return typeof value === "string" && value.trim() ? value.trim() : fallback;
+const pickString = (candidates: unknown | unknown[], fallback = ""): string => {
+  const list = Array.isArray(candidates) ? candidates : [candidates];
+  for (const item of list) {
+    const str = stringifyCandidate(item);
+    if (str) return str;
+  }
+  return fallback;
+};
+
+const pickImage = (candidates: unknown | unknown[], fallback: string): string => {
+  const list = Array.isArray(candidates) ? candidates : [candidates];
+  for (const item of list) {
+    if (typeof item === "string" && item.trim()) {
+      return item.trim();
+    }
+  }
+  return fallback;
 };
 
 const formatPages = (value: unknown): string => {
@@ -66,7 +98,7 @@ const formatPages = (value: unknown): string => {
     }
     return value.trim();
   }
-  return "12 Pages";
+  return "2 Pages";
 };
 
 const normalizeKey = (key: string): string => key.trim().toLowerCase();
@@ -79,6 +111,12 @@ const resolveAuthorAvatar = (
   const normalizedAuthor = normalizeKey(authorName);
   if (teacherAvatars[normalizedAuthor]) {
     return teacherAvatars[normalizedAuthor];
+  }
+  const parts = authorName.split(",").map((p) => normalizeKey(p));
+  for (const part of parts) {
+    if (teacherAvatars[part]) {
+      return teacherAvatars[part];
+    }
   }
   return defaultUserAvatar;
 };
@@ -152,27 +190,27 @@ export function useLibraryData() {
           );
           const isTop = Boolean(data.isTop || data.featured || data.highlight);
           const authorName = pickString(
-            data.author || data.writer || data.publisher,
+            [data.author, data.writer, data.publisher],
             "Unknown author",
           );
 
           return {
             id: doc.id || `book-${index}`,
             title: pickString(
-              data.title || data.name || data.bookTitle,
+              [data.title, data.name, data.bookTitle],
               "Untitled book",
             ),
             author: authorName,
             subtitle: pickString(
-              data.subtitle || data.summary || data.description,
+              [data.subtitle, data.summary, data.description],
               "Fresh study resource",
             ),
             image: pickImage(
-              data.image || data.coverImage || data.cover || data.thumbnail,
+              [data.image, data.coverImage, data.cover, data.thumbnail],
               "",
             ),
             badge: pickString(
-              data.badge || (isTop ? "Featured" : data.type),
+              [data.badge, isTop ? "Featured" : data.type],
               isTop ? "Featured" : "New",
             ),
             avatar: resolveAuthorAvatar(
@@ -211,19 +249,19 @@ export function useLibraryData() {
         const data = doc.data() as Record<string, unknown>;
         return {
           title: pickString(
-            data.title || data.name || data.heading,
+            [data.title, data.name, data.heading],
             "Fresh learning picks",
           ),
           description: pickString(
-            data.description || data.summary || data.caption,
+            [data.description, data.summary, data.caption],
             "Explore a new study experience",
           ),
           image: pickImage(
-            data.cover || data.image || data.coverImage || data.thumbnail,
+            [data.cover, data.image, data.coverImage, data.thumbnail],
             "",
           ),
           avatar: pickImage(
-            data.avatar || data.authorAvatar || data.userImage,
+            [data.avatar, data.authorAvatar, data.userImage],
             defaultUserAvatar,
           ),
         };
@@ -233,14 +271,15 @@ export function useLibraryData() {
       papersSnapshot.docs.forEach((doc, index) => {
         const data = doc.data() as Record<string, unknown>;
         const type = pickString(
-          data.type || data.examType || data.category || data.paperType,
+          [data.type, data.examType, data.category, data.paperType],
+          "",
         );
         const year = pickString(
-          data.year || data.examYear || data.session || data.publishedYear,
+          [data.year, data.examYear, data.session, data.publishedYear],
           "2025",
         );
-        const title = pickString(data.title || data.name, `Paper ${index + 1}`);
-        const subject = pickString(data.subject || data.topic, "General");
+        const title = pickString([data.title, data.name], `Paper ${index + 1}`);
+        const subject = pickString([data.subject, data.topic], "General");
         const pages = formatPages(data.pages ?? data.pageCount);
 
         const sectionKey = `${type}::${year}`;
@@ -252,11 +291,11 @@ export function useLibraryData() {
           year,
           pages,
           image: pickImage(
-            data.image || data.coverImage || data.thumbnail,
+            [data.image, data.coverImage, data.thumbnail],
             defaultPdfImage,
           ),
           document: pickString(
-            data.doc || data.document || data.pdf || data.url,
+            [data.doc, data.document, data.pdf, data.url],
             "",
           ),
         });
