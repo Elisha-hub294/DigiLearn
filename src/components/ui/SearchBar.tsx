@@ -3,6 +3,7 @@ import { usePathname, useRouter } from "expo-router";
 import type { RefObject } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
+import type { SearchCategory } from "../../hooks/useGlobalSearch";
 
 type SearchBarProps = {
   value?: string;
@@ -23,6 +24,7 @@ type SearchBarProps = {
   searchIconColor?: string;
   variant?: "default" | "topic";
   onBack?: () => void;
+  category?: SearchCategory;
 };
 
 export function SearchBar({
@@ -44,6 +46,7 @@ export function SearchBar({
   searchIconColor = "#8A8A8A",
   variant = "default",
   onBack,
+  category,
 }: SearchBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -54,7 +57,10 @@ export function SearchBar({
     } else {
       router.push({
         pathname: "/search",
-        params: pathname && pathname !== "/search" ? { returnTo: pathname } : undefined,
+        params: {
+          ...(pathname && pathname !== "/search" ? { returnTo: pathname } : {}),
+          ...(category ? { category } : {}),
+        },
       } as never);
     }
   };

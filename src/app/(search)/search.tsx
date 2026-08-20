@@ -41,9 +41,15 @@ const CATEGORIES: SearchCategory[] = [
 
 export default function SearchScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ returnTo?: string }>();
+  const params = useLocalSearchParams<{
+    returnTo?: string;
+    category?: SearchCategory;
+    initialCategory?: SearchCategory;
+  }>();
   const { width } = useWindowDimensions();
   const searchInputRef = useRef<TextInput>(null);
+
+  const initialCat = (params.category || params.initialCategory || "All") as SearchCategory;
 
   const {
     query,
@@ -58,7 +64,7 @@ export default function SearchScreen() {
     addRecentSearch,
     removeRecentSearch,
     triggerManualSearch,
-  } = useGlobalSearch();
+  } = useGlobalSearch(initialCat);
 
   useFocusEffect(
     useCallback(() => {
@@ -255,7 +261,19 @@ export default function SearchScreen() {
               router.replace("/" as never);
             }
           }}
-          placeholder="Search pages, books, authors, teachers..."
+          placeholder={
+            selectedCategory === "Notes"
+              ? "Search in Pages..."
+              : selectedCategory === "Books"
+                ? "Search in Books..."
+                : selectedCategory === "Videos"
+                  ? "Search in Lessons..."
+                  : selectedCategory === "Teachers"
+                    ? "Search in Tutors..."
+                    : selectedCategory === "Past Papers"
+                      ? "Search in Past papers..."
+                      : "Search in Pages, Books, Authors, Tutors..."
+          }
         />
 
         {/* Dynamic Search Header Count: Results for "[search text]" ([count]) */}

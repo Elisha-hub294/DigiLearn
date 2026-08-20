@@ -31,7 +31,7 @@ export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
       </Animated.View>
 
       <Animated.View entering={FadeInUp.duration(360)}>
-        <SearchBar placeholder="Search Lessons" />
+        <SearchBar placeholder="Search Lessons" category="Videos" />
       </Animated.View>
 
       <Animated.View entering={FadeInUp.duration(400)} style={styles.filterSection}>

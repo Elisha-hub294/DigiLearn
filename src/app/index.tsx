@@ -234,7 +234,7 @@ export default function HomeScreen() {
             }
           >
             <Header />
-            <SearchBar />
+            <SearchBar placeholder="Search DigiLearn..." />
 
             {visibleFeed.map((item, idx) => (
               <Animated.View

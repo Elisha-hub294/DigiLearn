@@ -133,14 +133,20 @@ export function formatUploadedAt(value: unknown): string {
   });
 }
 
-export function useGlobalSearch() {
+export function useGlobalSearch(initialCategory: SearchCategory = "All") {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [hasSubmittedSearch, setHasSubmittedSearch] = useState(false);
   const [selectedCategory, setSelectedCategory] =
-    useState<SearchCategory>("All");
+    useState<SearchCategory>(initialCategory);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+    }
+  }, [initialCategory]);
 
   const [topicalNotes, setTopicalNotes] = useState<any[]>([]);
   const [pastPapers, setPastPapers] = useState<any[]>([]);
