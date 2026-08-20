@@ -238,8 +238,8 @@ export const FeaturedNoteCard = ({
       <FlatList
         data={listData}
         keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        scrollEnabled={false}
+        showsVerticalScrollIndicator={source === "pages"}
+        scrollEnabled={source === "pages"}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <FeaturedNoteItem

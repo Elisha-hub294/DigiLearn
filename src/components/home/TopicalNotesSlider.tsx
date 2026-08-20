@@ -284,10 +284,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.xl,
   },
-  list: {
-    flexGrow: 1,
-    flexShrink: 1,
-  },
+  list: {},
   card: {
     marginRight: CARD_GAP,
     alignItems: "center",

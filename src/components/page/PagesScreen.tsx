@@ -658,6 +658,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   contentContainer: {
+    flex: 1,
     width: "100%",
     alignItems: "stretch",
   },
