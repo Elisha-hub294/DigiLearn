@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, shadows } from "../../constants/theme";
+import { colors } from "../../constants/theme";
 import type { UserProfile } from "../../services/userProfile";
 
 const fallbackAvatar = require("../../../assets/images/user-default.png");
@@ -61,7 +61,6 @@ const s = StyleSheet.create({
   wrap: {
     overflow: "hidden",
     backgroundColor: colors.white,
-    ...shadows.soft,
   },
   banner: { height: 132, backgroundColor: colors.primary },
   settings: {

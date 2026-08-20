@@ -18,7 +18,7 @@ import {
   TrendingVideoCard,
   VideoLesson,
 } from "../../components/ui/TrendingVideoCard";
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 import type { UserProfile } from "../../services/userProfile";
 type Filter = "All" | "Pages" | "Books" | "Lessons" | "Posts";
 type Entry = {
@@ -273,7 +273,6 @@ const s = StyleSheet.create({
     borderRadius: 18,
     paddingVertical: spacing.lg,
     overflow: "hidden",
-    ...shadows.soft,
   },
   title: {
     paddingHorizontal: spacing.lg,

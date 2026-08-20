@@ -280,7 +280,7 @@ export default function TeacherProfileScreen() {
           createdAt: (entry as Record<string, unknown>).createdAt,
           image: pickString(
             (entry as Record<string, unknown>).image ||
-              (entry as Record<string, unknown>).cover,
+            (entry as Record<string, unknown>).cover,
           ),
           author: pickArray((entry as Record<string, unknown>).author),
         }));

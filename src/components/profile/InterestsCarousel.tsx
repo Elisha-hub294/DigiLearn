@@ -2,7 +2,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { db } from "../../../firebaseConfig";
-import { colors, shadows, spacing } from "../../constants/theme";
+import { colors, spacing } from "../../constants/theme";
 import { InterestCard } from "./InterestCard";
 type Subject = {
   id: string;
@@ -66,7 +66,6 @@ const s = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 18,
     paddingVertical: spacing.lg,
-    ...shadows.soft,
   },
   title: {
     paddingHorizontal: spacing.lg,

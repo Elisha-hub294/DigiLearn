@@ -96,7 +96,7 @@ export function BookPreviewScreen() {
 
   const [bookmarked, setBookmarked] = useState(false);
   const { width } = useWindowDimensions();
-  const horizontalPadding = getHorizontalPadding(width);
+  const horizontalPadding = width < 600 ? 0 : getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
   const [gradient] = useState(
     () => gradients[Math.floor(Math.random() * gradients.length)],
@@ -447,9 +447,9 @@ const styles = StyleSheet.create({
   loader: { position: "absolute", top: "50%", alignSelf: "center" },
   sheet: {
     marginTop: -28,
-    paddingTop: 32,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    paddingTop: 25,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     backgroundColor: "#fff",
     minHeight: 520,
   },

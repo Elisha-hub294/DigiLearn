@@ -2,13 +2,13 @@ import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    Share,
-    StyleSheet,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Share,
+  StyleSheet,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
@@ -127,7 +127,7 @@ export function PagePreviewScreen() {
   const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
 
   const { width } = useWindowDimensions();
-  const horizontalPadding = getHorizontalPadding(width);
+  const horizontalPadding = width < 600 ? 0 : getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   useEffect(() => {
@@ -591,9 +591,9 @@ const styles = StyleSheet.create({
   },
   sheet: {
     marginTop: -30,
-    paddingTop: 28,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    paddingTop: 25,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     backgroundColor: "#FFFFFF",
     minHeight: 520,
     width: "100%",

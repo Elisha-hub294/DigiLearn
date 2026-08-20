@@ -1,5 +1,4 @@
 import { Feather } from "@expo/vector-icons";
-import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Book } from "./bookTypes";
 
@@ -16,12 +15,12 @@ export function BookOverview({ book }: { book: Book }) {
             <Feather name="file-text" size={14} /> {book.pages} pages
           </Text>
         ) : null}
-        {book.rating ? (
+        {/* {book.rating ? (
           <Text style={styles.stat}>
             <Feather name="star" size={14} color="#E8A600" />{" "}
             {book.rating.toFixed(1)}
           </Text>
-        ) : null}
+        ) : null} */}
         {typeof book.saves === "number" ? (
           <Text style={styles.stat}>
             <Feather name="heart" size={14} /> {book.saves} saved
