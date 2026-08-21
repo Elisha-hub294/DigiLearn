@@ -14,6 +14,7 @@ export type ActionDialogProps = {
   icon?: ReactNode;
   primaryButtonColor?: string;
   secondaryButtonColor?: string;
+  secondaryButtonTextColor?: string;
 };
 
 export function ActionDialog({
@@ -28,6 +29,7 @@ export function ActionDialog({
   icon,
   primaryButtonColor = colors.primary,
   secondaryButtonColor = "#E2E8F0",
+  secondaryButtonTextColor,
 }: ActionDialogProps) {
   return (
     <Modal
@@ -58,7 +60,7 @@ export function ActionDialog({
                   { backgroundColor: secondaryButtonColor },
                 ]}
               >
-                <Text style={[styles.buttonText, styles.secondaryButtonText]}>
+                <Text style={[styles.buttonText, styles.secondaryButtonText, secondaryButtonTextColor ? { color: secondaryButtonTextColor } : undefined]}>
                   {secondaryText}
                 </Text>
               </Pressable>

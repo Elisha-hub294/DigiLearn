@@ -1,8 +1,10 @@
+import { colors } from "@/constants/theme";
 import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Linking,
   ScrollView,
   StyleSheet,
   View,
@@ -90,9 +92,13 @@ export function BookPreviewScreen() {
   const [teacherAvatars, setTeacherAvatars] = useState<Record<string, string>>(
     {},
   );
+  const [teacherPhones, setTeacherPhones] = useState<Record<string, string>>(
+    {},
+  );
   const [defaultUserAvatar, setDefaultUserAvatar] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
+  const [showGetYoursDialog, setShowGetYoursDialog] = useState(false);
 
   const [bookmarked, setBookmarked] = useState(false);
   const { width } = useWindowDimensions();
@@ -133,18 +139,23 @@ export function BookPreviewScreen() {
         });
         setDefaultUserAvatar(defaultAvatar);
 
-        // Map teacher names (normalized lowercase) to their avatar URLs
+        // Map teacher names (normalized lowercase) to their avatar URLs and phone numbers
         const avatarsMap: Record<string, string> = {};
+        const phonesMap: Record<string, string> = {};
         teachersSnapshot.docs.forEach((docSnap) => {
           const data = docSnap.data();
-          if (
-            typeof data.name === "string" &&
-            typeof data.avatar === "string"
-          ) {
-            avatarsMap[normalizeKey(data.name)] = data.avatar.trim();
+          if (typeof data.name === "string") {
+            const key = normalizeKey(data.name);
+            if (typeof data.avatar === "string") {
+              avatarsMap[key] = data.avatar.trim();
+            }
+            if (typeof data.phone === "string" && data.phone.trim()) {
+              phonesMap[key] = data.phone.trim();
+            }
           }
         });
         setTeacherAvatars(avatarsMap);
+        setTeacherPhones(phonesMap);
 
         // Set Book Data
         setBook(
@@ -346,6 +357,7 @@ export function BookPreviewScreen() {
           <BottomActionBar
             gradient={gradient}
             bookmarked={bookmarked}
+            onGetYours={() => setShowGetYoursDialog(true)}
             onBookmark={async () => {
               if (!book) return;
 
@@ -399,6 +411,34 @@ export function BookPreviewScreen() {
           } as any)
         }
         onClose={() => setShowGuestSaveAlert(false)}
+      />
+
+      <ActionDialog
+        visible={showGetYoursDialog}
+        title="You're leaving DigiLearn"
+        message="To get this book, you'll be redirected to an external service. Choose how you'd like to reach the seller."
+        primaryText="WhatsApp"
+        secondaryText="Phone Call"
+        secondaryButtonColor={colors.primary}
+        secondaryButtonTextColor="#fff"
+        primaryButtonColor="#25D366"
+        onPrimary={() => {
+          const phone = book?.author.length
+            ? teacherPhones[normalizeKey(book.author[0])] ?? ""
+            : "";
+          const cleaned = phone.replace(/[^\d+]/g, "");
+          Linking.openURL(
+            `https://wa.me/${cleaned}?text=${encodeURIComponent(`Hi, I'm interested in the book "${book?.title}" from DigiLearn.`)}`
+          );
+        }}
+        onSecondary={() => {
+          const phone = book?.author.length
+            ? teacherPhones[normalizeKey(book.author[0])] ?? ""
+            : "";
+          const cleaned = phone.replace(/[^\d+]/g, "");
+          Linking.openURL(`tel:${cleaned}`);
+        }}
+        onClose={() => setShowGetYoursDialog(false)}
       />
     </Animated.View>
   );
