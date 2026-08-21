@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { DownloadedResources } from "../components/profile/DownloadedResources";
 import { InterestsCarousel } from "../components/profile/InterestsCarousel";
 import { ProfileHeader } from "../components/profile/ProfileHeader";
 import { SavedResources } from "../components/profile/SavedResources";
@@ -70,11 +71,15 @@ export default function ProfileScreen() {
         {loading ? (
           <Skeleton />
         ) : !user ? (
-          <SavedResources profile={null} signedIn={false} />
+          <View style={s.sections}>
+            <DownloadedResources />
+            <SavedResources profile={null} signedIn={false} />
+          </View>
         ) : profile ? (
           <Animated.View entering={FadeIn.duration(220)} style={s.sections}>
             <ProfileHeader profile={profile} photoURL={user.photoURL} />
             <UserInfoCard profile={profile} />
+            <DownloadedResources />
             <InterestsCarousel subjects={profile.subjects} />
             <SavedResources profile={profile} signedIn />
           </Animated.View>

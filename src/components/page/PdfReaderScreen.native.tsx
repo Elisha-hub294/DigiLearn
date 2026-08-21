@@ -1,7 +1,10 @@
 import { Feather } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   Animated,
   Platform,
   Pressable,
@@ -11,6 +14,7 @@ import {
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { colors, radius, spacing } from "../../constants/theme";
+import { saveDownloadedFile } from "../../services/downloadService";
 
 // Fallback timeout: if onLoadEnd never fires (can happen with some PDFs),
 // hide the loading overlay after 20 seconds so the user isn't stuck.
@@ -21,12 +25,20 @@ export function PdfReaderScreen() {
 
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const progressAnim = useRef(new Animated.Value(0)).current;
+  const downloadProgressAnim = useRef(new Animated.Value(0)).current;
+  const downloadScale = useRef(new Animated.Value(1)).current;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const decodedUri = uri ? decodeURIComponent(uri as string) : null;
-  const googleDocsUrl = decodedUri
-    ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(decodedUri)}`
+  const isLocalFile = Boolean(decodedUri?.startsWith("file://"));
+
+  const webViewUrl = decodedUri
+    ? isLocalFile
+      ? decodedUri
+      : `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(decodedUri)}`
     : null;
 
   // Animate the progress bar to a target value
@@ -62,7 +74,85 @@ export function PdfReaderScreen() {
     if (router.canGoBack()) router.back();
   };
 
+  /** Download the PDF with real-time progress animation */
+  const handleDownload = async () => {
+    if (!decodedUri || downloading || isLocalFile) return;
+
+    setDownloading(true);
+    setDownloadProgress(0);
+    downloadProgressAnim.setValue(0);
+
+    // Quick bounce animation for tactile feedback
+    Animated.sequence([
+      Animated.timing(downloadScale, { toValue: 0.85, duration: 100, useNativeDriver: true }),
+      Animated.timing(downloadScale, { toValue: 1, duration: 150, useNativeDriver: true }),
+    ]).start();
+
+    try {
+      const fileName =
+        (title ? title.replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") + ".pdf";
+      const fileUri = FileSystem.documentDirectory + fileName;
+
+      const downloadResumable = FileSystem.createDownloadResumable(
+        decodedUri,
+        fileUri,
+        {},
+        (dp) => {
+          if (dp.totalBytesExpectedToWrite > 0) {
+            const p = dp.totalBytesWritten / dp.totalBytesExpectedToWrite;
+            setDownloadProgress(p);
+            Animated.timing(downloadProgressAnim, {
+              toValue: p,
+              duration: 150,
+              useNativeDriver: false,
+            }).start();
+          }
+        }
+      );
+
+      const downloadResult = await downloadResumable.downloadAsync();
+
+      if (downloadResult && downloadResult.status === 200) {
+        // Ensure progress fills to 100% on finish
+        setDownloadProgress(1);
+        Animated.timing(downloadProgressAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: false,
+        }).start();
+
+        // Save to Downloaded files registry
+        await saveDownloadedFile({
+          title: title || "PDF Document",
+          uri: decodedUri,
+          localUri: downloadResult.uri,
+        });
+
+        setTimeout(() => {
+          Alert.alert("Download Complete", `"${fileName}" has been saved to your device.`, [
+            { text: "OK" },
+          ]);
+        }, 300);
+      } else {
+        Alert.alert("Download Failed", "The file could not be downloaded. Please try again.");
+      }
+    } catch (err) {
+      console.warn("PDF download error:", err);
+      Alert.alert("Download Error", "Something went wrong while downloading the file.");
+    } finally {
+      setTimeout(() => {
+        setDownloading(false);
+        setDownloadProgress(0);
+      }, 600);
+    }
+  };
+
   const progressBarWidth = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0%", "100%"],
+  });
+
+  const downloadBarWidth = downloadProgressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ["0%", "100%"],
   });
@@ -93,11 +183,59 @@ export function PdfReaderScreen() {
           </Text>
         </View>
 
-        <View style={{ width: 40 }} />
+        {/* ── Download button with gradient (only for online files) ── */}
+        {!isLocalFile && (
+          <Animated.View style={{ transform: [{ scale: downloadScale }] }}>
+            <Pressable
+              onPress={handleDownload}
+              disabled={downloading}
+              accessibilityLabel="Download PDF"
+              style={({ pressed }) => [
+                styles.downloadBtn,
+                pressed && { opacity: 0.85 },
+              ]}
+            >
+              <LinearGradient
+                colors={["#006eff", "#6C63FF", "#A855F7"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.downloadGradient}
+              >
+                <Text style={styles.downloadText}>
+                  {downloading
+                    ? `${Math.round(downloadProgress * 100)}%`
+                    : "Download"}
+                </Text>
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+        )}
       </View>
 
+      {/* ── Active File Download Progress Banner & Bar ── */}
+      {downloading && (
+        <View style={styles.downloadProgressBanner}>
+          <View style={styles.downloadProgressInfo}>
+            <Feather name="download-cloud" size={16} color="#006eff" />
+            <Text style={styles.downloadProgressLabel}>
+              Downloading file… {Math.round(downloadProgress * 100)}%
+            </Text>
+          </View>
+          <View style={styles.downloadTrack}>
+            <Animated.View style={[styles.downloadFill, { width: downloadBarWidth }]}>
+              <LinearGradient
+                colors={["#006eff", "#6C63FF", "#A855F7"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={StyleSheet.absoluteFill}
+              />
+            </Animated.View>
+          </View>
+        </View>
+      )}
+
       {/* ── Animated progress bar ── */}
-      {!loaded && (
+      {!loaded && !downloading && (
         <View style={styles.progressTrack}>
           <Animated.View style={[styles.progressBar, { width: progressBarWidth }]} />
         </View>
@@ -131,14 +269,17 @@ export function PdfReaderScreen() {
       )}
 
       {/* ── WebView — always mounted so it loads in the background ── */}
-      {!loadError && (
+      {!loadError && webViewUrl && (
         <WebView
-          source={{ uri: googleDocsUrl }}
+          source={{ uri: webViewUrl }}
           style={[styles.webview, !loaded && styles.webviewHidden]}
           onLoadEnd={handleLoadEnd}
           onError={handleError}
           javaScriptEnabled
           domStorageEnabled
+          allowFileAccess
+          allowingReadAccessToURL={decodedUri || undefined}
+          originWhitelist={["*"]}
           startInLoadingState={false}
           allowsFullscreenVideo={false}
         />
@@ -187,8 +328,65 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 15,
-    fontWeight: "700",
+    fontWeight: "500",
+    color: colors.primary,
+  },
+
+  // Download button
+  downloadBtn: {
+    borderRadius: radius.pill,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#6C63FF",
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 3 },
+      },
+      android: { elevation: 6 },
+    }),
+  },
+  downloadGradient: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: radius.pill,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  downloadText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "500",
+  },
+
+  // Download Progress Banner
+  downloadProgressBanner: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0",
+    gap: 6,
+  },
+  downloadProgressInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  downloadProgressLabel: {
+    fontSize: 12,
+    fontWeight: "600",
     color: colors.text,
+  },
+  downloadTrack: {
+    height: 4,
+    backgroundColor: "#E2E8F0",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  downloadFill: {
+    height: 4,
+    borderRadius: 2,
+    overflow: "hidden",
   },
 
   // Progress bar
