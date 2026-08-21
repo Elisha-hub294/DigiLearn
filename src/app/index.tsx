@@ -24,7 +24,6 @@ import { TopicalNotesSlider } from "../components/home/TopicalNotesSlider";
 import { auth } from "../../firebaseConfig";
 import { Header } from "../components/ui/Header";
 import { SearchBar } from "../components/ui/SearchBar";
-import { SectionHeader } from "../components/ui/SectionHeader";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { clearGuestMode, isGuestMode } from "../services/guestService";
@@ -123,30 +122,14 @@ export default function HomeScreen() {
       },
       {
         type: "courses",
-        render: () => (
-          <>
-            <SectionHeader
-              title="Trending Lessons"
-              onSeeAll={() => router.push("/videos?scrollTo=trending")}
-            />
-            <CoursesCarousel />
-          </>
-        ),
+        render: () => <CoursesCarousel />,
       },
       {
         type: "books",
-        render: () => (
-          <>
-            <SectionHeader
-              title="Books"
-              onSeeAll={() => router.push("/library")}
-            />
-            <BookCarousel />
-          </>
-        ),
+        render: () => <BookCarousel />,
       },
     ],
-    [router],
+    [],
   );
 
   // Modern Feed Randomization Engine:

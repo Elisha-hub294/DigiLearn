@@ -16,7 +16,13 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, radius, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
 import { useTrendingLessons } from "../../hooks/useTrendingLessons";
+import {
+  matchesUserInterests,
+  shouldFilterByInterests,
+} from "../../utils/interestFilter";
+import { SectionHeader } from "../ui/SectionHeader";
 import { resolveVideoImageSource } from "../../utils/videoUtils";
 
 const AUTO_SCROLL_INTERVAL_MS = 4500;
@@ -55,19 +61,27 @@ const CourseCardImage = ({
 export const CoursesCarousel = () => {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { profile } = useProfile();
   const { lessons, loading, error } = useTrendingLessons();
   const cardWidth = width >= 900 ? 240 : 220;
   const itemStep = cardWidth + CARD_GAP;
 
+  const filteredLessons = useMemo(() => {
+    if (!shouldFilterByInterests(profile)) return lessons;
+    return lessons.filter((lesson: any) =>
+      matchesUserInterests(lesson.subject ?? lesson.title, profile?.subjects),
+    );
+  }, [lessons, profile]);
+
   // Shuffle lessons to display in random order each load
   const shuffledLessons = useMemo(() => {
-    const arr = [...lessons];
+    const arr = [...filteredLessons];
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
-  }, [lessons]);
+  }, [filteredLessons]);
 
   // Use shuffled lessons for a single list (no duplication)
   const data = useMemo(
@@ -165,18 +179,16 @@ export const CoursesCarousel = () => {
     );
   }
 
-  if (error || lessons.length === 0) {
-    return (
-      <View style={styles.emptyWrap}>
-        <Text style={styles.emptyText}>
-          {error ?? "No courses available yet."}
-        </Text>
-      </View>
-    );
+  if (error || shuffledLessons.length === 0) {
+    return null;
   }
 
   return (
     <Animated.View entering={FadeInUp.duration(540)}>
+      <SectionHeader
+        title="Trending Lessons"
+        onSeeAll={() => router.push("/videos?scrollTo=trending")}
+      />
       <FlatList
         ref={listRef}
         horizontal

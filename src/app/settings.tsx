@@ -3,15 +3,15 @@ import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { useCallback, useState } from "react";
 import {
-    BackHandler,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    useWindowDimensions,
-    View,
+  BackHandler,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { auth } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
@@ -177,7 +177,7 @@ export default function SettingsScreen() {
               <SettingsRow
                 icon="file-text"
                 title="Terms and Policies"
-                onPress={() => {}}
+                onPress={() => { }}
               />
               <SettingsRow
                 icon="info"

@@ -16,6 +16,11 @@ import {
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
+import {
+  matchesUserInterests,
+  shouldFilterByInterests,
+} from "../../utils/interestFilter";
 
 const defaultSubjectAvatar = require("../../../assets/images/subject-default.png");
 
@@ -36,6 +41,7 @@ const CARD_GAP = spacing.lg; // marginRight on each card
 export const TopicalNotesSlider = () => {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { profile } = useProfile();
   const cardWidth = width >= 900 ? 128 : 110;
   const itemStep = cardWidth + CARD_GAP;
   const [subjects, setSubjects] = useState<
@@ -55,8 +61,15 @@ export const TopicalNotesSlider = () => {
     [],
   );
 
+  const filteredSubjects = useMemo(() => {
+    if (!shouldFilterByInterests(profile)) return subjects;
+    return subjects.filter((item) =>
+      matchesUserInterests(item.title, profile?.subjects),
+    );
+  }, [subjects, profile]);
+
   // Triple the shuffled list for an infinite-loop illusion
-  const shuffled = loadingSubjects ? placeholderItems : subjects;
+  const shuffled = loadingSubjects ? placeholderItems : filteredSubjects;
   const data = useMemo(
     () => [
       ...shuffled.map((i) => ({ ...i, _key: `a-${i.id}` })),
@@ -201,6 +214,8 @@ export const TopicalNotesSlider = () => {
       active = false;
     };
   }, []);
+
+  if (!loadingSubjects && shuffled.length === 0) return null;
 
   return (
     <Animated.View entering={FadeInUp.duration(460)} style={styles.wrapper}>

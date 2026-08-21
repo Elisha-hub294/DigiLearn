@@ -3,14 +3,15 @@ import { useRouter } from "expo-router";
 import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { db } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
@@ -87,6 +88,7 @@ export default function PreferencesScreen() {
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
+  const [filterFeedByInterests, setFilterFeedByInterests] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -127,6 +129,7 @@ export default function PreferencesScreen() {
 
   useEffect(() => {
     if (!initialized.current && !profileLoading) {
+      setFilterFeedByInterests(Boolean(profile?.filterFeedByInterests));
       const seen = new Set<string>();
       setSelected(
         (profile?.subjects ?? []).reduce<string[]>((result, name) => {
@@ -141,7 +144,7 @@ export default function PreferencesScreen() {
       );
       initialized.current = true;
     }
-  }, [profile?.subjects, profileLoading]);
+  }, [profile?.subjects, profile?.filterFeedByInterests, profileLoading]);
 
   const toggle = (name: string) =>
     setSelected((current) =>
@@ -150,10 +153,10 @@ export default function PreferencesScreen() {
           item.localeCompare(name, undefined, { sensitivity: "accent" }) === 0,
       )
         ? current.filter(
-            (item) =>
-              item.localeCompare(name, undefined, { sensitivity: "accent" }) !==
-              0,
-          )
+          (item) =>
+            item.localeCompare(name, undefined, { sensitivity: "accent" }) !==
+            0,
+        )
         : [...current, name],
     );
 
@@ -172,8 +175,12 @@ export default function PreferencesScreen() {
 
   const save = async () => {
     if (!user || saving) return;
-    const original = profile?.subjects ?? [];
-    if (arraysEqualIgnoreOrder(selected, original)) {
+    const originalSubjects = profile?.subjects ?? [];
+    const originalFilter = Boolean(profile?.filterFeedByInterests);
+    if (
+      arraysEqualIgnoreOrder(selected, originalSubjects) &&
+      filterFeedByInterests === originalFilter
+    ) {
       setSaved(true);
       return;
     }
@@ -181,7 +188,11 @@ export default function PreferencesScreen() {
       setSaving(true);
       setSaved(false);
       setSaveError(false);
-      await updateDoc(doc(db, "users", user.uid), { subjects: selected });
+      const collectionName = profile?.type === "teacher" ? "teachers" : "users";
+      await updateDoc(doc(db, collectionName, user.uid), {
+        subjects: selected,
+        filterFeedByInterests,
+      });
       setSaved(true);
     } catch {
       setSaveError(true);
@@ -210,7 +221,7 @@ export default function PreferencesScreen() {
                   style={styles.backButton}
                   accessibilityLabel="Back to profile"
                 >
-                  <Feather name="arrow-left" size={22} color={colors.dark} />
+                  <Feather name="chevron-left" size={22} color={colors.dark} />
                 </Pressable>
                 <Text style={styles.title}>Preferences</Text>
               </View>
@@ -262,6 +273,7 @@ export default function PreferencesScreen() {
                   Choose the subjects you're interested in to personalize your
                   home feed, recommendations, and learning resources.
                 </Text>
+
                 <Text style={styles.sectionTitle}>My Subjects</Text>
                 {subjects.length ? (
                   <View style={styles.chips}>
@@ -298,6 +310,24 @@ export default function PreferencesScreen() {
                 ) : null}
               </>
             )}
+
+            <View style={styles.toggleCard}>
+              <View style={styles.toggleInfo}>
+                <Text style={styles.toggleTitle}>
+                  Only show selected interests in feeds
+                </Text>
+                <Text style={styles.toggleSubtitle}>
+                  Filter your Home and Library feeds to only display resources matching your selected subjects.
+                </Text>
+              </View>
+              <Switch
+                value={filterFeedByInterests}
+                onValueChange={setFilterFeedByInterests}
+                trackColor={{ false: "#D1D5DB", true: "#3B82F6" }}
+                thumbColor={colors.white}
+                accessibilityLabel="Toggle filter feeds by interests"
+              />
+            </View>
 
             <View style={{ height: 60 }} />
           </ScrollView>
@@ -436,4 +466,30 @@ const styles = StyleSheet.create({
   emptyCopy: { marginTop: 5, color: "#6B6B6B", fontSize: 14 },
   success: { marginTop: 24, color: "#238636", fontSize: 14, fontWeight: "600" },
   saveError: { marginTop: 12, color: "#FF6B6B", fontSize: 14 },
+  toggleCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    padding: spacing.md,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    gap: 12,
+  },
+  toggleInfo: {
+    flex: 1,
+  },
+  toggleTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.dark,
+    marginBottom: 4,
+  },
+  toggleSubtitle: {
+    fontSize: 12,
+    color: "#64748B",
+    lineHeight: 16,
+  },
 });

@@ -1,11 +1,11 @@
 import { User } from "firebase/auth";
 import {
-    arrayRemove,
-    arrayUnion,
-    doc,
-    getDoc,
-    serverTimestamp,
-    setDoc,
+  arrayRemove,
+  arrayUnion,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
@@ -25,6 +25,7 @@ export type UserProfile = {
   school: string;
   gender: string;
   subjects: string[];
+  filterFeedByInterests?: boolean;
   joinedAt?: unknown;
   accountTypeCompleted?: boolean;
   type?: AccountType;
@@ -133,6 +134,7 @@ export const defaultUserProfile = (user: User): UserProfile => ({
   school: "",
   gender: "",
   subjects: [],
+  filterFeedByInterests: false,
   accountTypeCompleted: false,
   type: "",
   "marked-as-read": [],
@@ -149,11 +151,11 @@ export const getHiddenPageEntries = (
   const hiddenPages = profile?.["hidden-pages"] ?? [];
   return Array.isArray(hiddenPages)
     ? hiddenPages.filter(
-        (entry): entry is HiddenPageRecord =>
-          typeof entry === "object" &&
-          entry !== null &&
-          typeof entry.id === "string",
-      )
+      (entry): entry is HiddenPageRecord =>
+        typeof entry === "object" &&
+        entry !== null &&
+        typeof entry.id === "string",
+    )
     : [];
 };
 
@@ -283,6 +285,7 @@ export async function ensureUserProfile(user: User) {
     "school",
     "gender",
     "subjects",
+    "filterFeedByInterests",
     "marked-as-read",
     "hidden-pages",
     "saved-pages",

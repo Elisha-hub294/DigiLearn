@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -20,6 +20,10 @@ import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { toggleSavedItem } from "../../services/userProfile";
+import {
+  matchesUserInterests,
+  shouldFilterByInterests,
+} from "../../utils/interestFilter";
 import PdfPreview from "./PdfPreview";
 
 type TeacherPost = {
@@ -173,6 +177,7 @@ const teacherPostCollections = [
 
 export const TeacherPostCard = () => {
   const { width } = useWindowDimensions();
+  const { profile } = useProfile();
   const isWide = width >= 900;
   const [posts, setPosts] = useState<TeacherPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -286,6 +291,13 @@ export const TeacherPostCard = () => {
     };
   }, []);
 
+  const displayedPosts = useMemo(() => {
+    if (!shouldFilterByInterests(profile)) return posts;
+    return posts.filter((post) =>
+      matchesUserInterests(post.subject, profile?.subjects),
+    );
+  }, [posts, profile]);
+
   if (loading) {
     return (
       <View style={styles.list}>
@@ -296,17 +308,13 @@ export const TeacherPostCard = () => {
     );
   }
 
-  if (posts.length === 0) {
-    return (
-      <Animated.View entering={FadeInUp.duration(500)} style={[styles.card]}>
-        <Text style={styles.caption}>No teacher updates available yet.</Text>
-      </Animated.View>
-    );
+  if (displayedPosts.length === 0) {
+    return null;
   }
 
   return (
     <View style={styles.list}>
-      {posts.map((postItem, index) => (
+      {displayedPosts.map((postItem, index) => (
         <TeacherPostItem
           key={postItem.id}
           postItem={postItem}

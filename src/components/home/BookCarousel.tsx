@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -13,12 +13,19 @@ import {
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
 import { recordUserActivity } from "../../services/activityService";
+import { SectionHeader } from "../ui/SectionHeader";
+import {
+  matchesUserInterests,
+  shouldFilterByInterests,
+} from "../../utils/interestFilter";
 
 type BookItem = {
   id: string;
   title: string;
   author: string;
+  subject?: string;
   image: any;
 };
 
@@ -38,6 +45,7 @@ const pickImage = (value: unknown, fallback: any) => {
 
 export const BookCarousel = () => {
   const { width } = useWindowDimensions();
+  const { profile } = useProfile();
   const [books, setBooks] = useState<BookItem[]>([]);
   const [loading, setLoading] = useState(true);
   const cardWidth = width >= 900 ? 300 : 250;
@@ -69,6 +77,10 @@ export const BookCarousel = () => {
               }
               return pickString(rawAuthor, "");
             })(),
+            subject: pickString(
+              data.subject || data.category || data.title,
+              "",
+            ),
             image: pickImage(
               data.image || data.coverImage || data.cover || data.thumbnail,
               require("../../../assets/images/bookcover-default.jpeg"),
@@ -102,6 +114,13 @@ export const BookCarousel = () => {
     };
   }, []);
 
+  const displayedBooks = useMemo(() => {
+    if (!shouldFilterByInterests(profile)) return books;
+    return books.filter((book) =>
+      matchesUserInterests(book.subject || book.title, profile?.subjects),
+    );
+  }, [books, profile]);
+
   if (loading) {
     return (
       <Animated.View entering={FadeInUp.duration(680)} style={styles.container}>
@@ -110,19 +129,19 @@ export const BookCarousel = () => {
     );
   }
 
-  if (books.length === 0) {
-    return (
-      <Animated.View entering={FadeInUp.duration(680)} style={styles.container}>
-        <Text style={styles.loadingText}>No textbooks available yet.</Text>
-      </Animated.View>
-    );
+  if (displayedBooks.length === 0) {
+    return null;
   }
 
   return (
     <Animated.View entering={FadeInUp.duration(680)} style={styles.container}>
+      <SectionHeader
+        title="Books"
+        onSeeAll={() => router.push("/library")}
+      />
       <FlatList
         horizontal
-        data={books}
+        data={displayedBooks}
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (

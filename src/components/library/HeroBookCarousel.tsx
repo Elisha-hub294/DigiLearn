@@ -11,12 +11,18 @@ import {
     useWindowDimensions,
 } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
+import {
+  matchesUserInterests,
+  shouldFilterByInterests,
+} from "../../utils/interestFilter";
 
 type HeroBook = {
   id: string;
   title: string;
   author: string;
   subtitle: string;
+  subject?: string;
   image: any;
   badge?: string;
 };
@@ -27,12 +33,13 @@ type HeroBookCarouselProps = {
 
 export function HeroBookCarousel({ data }: HeroBookCarouselProps) {
   const { width } = useWindowDimensions();
+  const { profile } = useProfile();
   const [activeIndex, setActiveIndex] = useState(0);
 
   const slides = useMemo(() => {
     const seen = new Set<string>();
 
-    return data.filter((item) => {
+    let list = data.filter((item) => {
       if (seen.has(item.id)) {
         return false;
       }
@@ -40,12 +47,25 @@ export function HeroBookCarousel({ data }: HeroBookCarouselProps) {
       seen.add(item.id);
       return true;
     });
-  }, [data]);
+
+    if (shouldFilterByInterests(profile)) {
+      list = list.filter((item) =>
+        matchesUserInterests(
+          item.subject || item.subtitle || item.title,
+          profile?.subjects,
+        ),
+      );
+    }
+
+    return list;
+  }, [data, profile]);
 
   const itemWidth = Math.min(width * 0.78, 320);
   const gap = 14;
   const snapInterval = itemWidth + gap;
   const normalizedIndex = activeIndex % Math.max(slides.length, 1);
+
+  if (slides.length === 0) return null;
 
   return (
     <View style={styles.container}>

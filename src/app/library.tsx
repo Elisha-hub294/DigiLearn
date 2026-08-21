@@ -20,7 +20,12 @@ import { SearchBar } from "../components/ui/SearchBar";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
+import { useProfile } from "../contexts/ProfileContext";
 import { PaperSection, useLibraryData } from "../hooks/useLibraryData";
+import {
+  matchesUserInterests,
+  shouldFilterByInterests,
+} from "../utils/interestFilter";
 
 const categories = [
   { key: "pages", label: "Pages" },
@@ -37,6 +42,7 @@ const yearNumber = (year: string) => {
 
 export default function LibraryScreen() {
   const { width } = useWindowDimensions();
+  const { profile } = useProfile();
   const {
     loading,
     refreshing,
@@ -53,14 +59,25 @@ export default function LibraryScreen() {
   const filteredPaperCollections = useMemo<PaperSection[]>(() => {
     const category = categories.find((item) => item.key === selectedCategory);
     if (!category || !("paperType" in category)) return [];
-    return paperCollections
-      .filter(
-        (section) =>
-          section.type.trim().toLowerCase() ===
-          category.paperType.toLowerCase(),
-      )
-      .sort((a, b) => yearNumber(b.year) - yearNumber(a.year));
-  }, [paperCollections, selectedCategory]);
+    
+    let collections = paperCollections.filter(
+      (section) =>
+        section.type.trim().toLowerCase() === category.paperType.toLowerCase(),
+    );
+
+    if (shouldFilterByInterests(profile)) {
+      collections = collections
+        .map((section) => ({
+          ...section,
+          items: section.items.filter((item) =>
+            matchesUserInterests(item.subject || item.title, profile?.subjects),
+          ),
+        }))
+        .filter((section) => section.items.length > 0);
+    }
+
+    return collections.sort((a, b) => yearNumber(b.year) - yearNumber(a.year));
+  }, [paperCollections, selectedCategory, profile]);
 
   if (loading)
     return (

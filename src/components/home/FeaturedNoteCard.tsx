@@ -21,6 +21,10 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import {
+  matchesUserInterests,
+  shouldFilterByInterests,
+} from "../../utils/interestFilter";
 import { recordUserActivity } from "../../services/activityService";
 import {
     getHiddenPageEntries,
@@ -215,13 +219,18 @@ export const FeaturedNoteCard = ({
     };
   }, [externalLoading, providedNotes, subject]);
 
-  const listData = useMemo(
-    () =>
-      includeHiddenItems
-        ? notes
-        : notes.filter((note) => !hiddenIds.has(note.id)),
-    [hiddenIds, includeHiddenItems, notes],
-  );
+  const listData = useMemo(() => {
+    let result = includeHiddenItems
+      ? notes
+      : notes.filter((note) => !hiddenIds.has(note.id));
+
+    if (shouldFilterByInterests(profile)) {
+      result = result.filter((note) =>
+        matchesUserInterests(note.subject, profile?.subjects),
+      );
+    }
+    return result;
+  }, [hiddenIds, includeHiddenItems, notes, profile]);
 
   if (loading || externalLoading) {
     return (
