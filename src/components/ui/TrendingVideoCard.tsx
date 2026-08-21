@@ -1,4 +1,4 @@
-import { radius } from "@/constants/theme";
+import { colors, radius } from "@/constants/theme";
 import {
   formatVideoUploadedAt,
   resolveVideoImageSource,
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   playIcon: {
     alignItems: "center",
-    backgroundColor: "rgba(255, 0, 0, 1)",
+    backgroundColor: colors.primary,
     borderRadius: 32,
     elevation: 5,
     height: 50,

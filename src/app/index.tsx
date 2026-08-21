@@ -120,8 +120,8 @@ export default function HomeScreen() {
         render: () => (
           <>
             <SectionHeader
-              title="Popular courses"
-              onSeeAll={() => router.push("/videos")}
+              title="Trending Lessons"
+              onSeeAll={() => router.push("/videos?scrollTo=trending")}
             />
             <CoursesCarousel />
           </>

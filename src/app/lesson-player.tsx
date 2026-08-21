@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
   },
   playButtonInner: {
     alignItems: "center",
-    backgroundColor: colors.primaryRed,
+    backgroundColor: colors.primary,
     borderRadius: 35,
     elevation: 6,
     justifyContent: "center",

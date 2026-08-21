@@ -6,9 +6,9 @@ import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -128,10 +128,13 @@ function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
 export default function VideosScreen() {
   const { width } = useWindowDimensions();
   const router = useRouter();
+  const { scrollTo } = useLocalSearchParams<{ scrollTo?: string }>();
   const [subject, setSubject] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const flashListRef = useRef<FlashList<LessonRecord>>(null);
+  const trendingSectionY = useRef<number>(0);
   const isTablet = width >= 768;
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
@@ -162,6 +165,22 @@ export default function VideosScreen() {
 
     return () => unsubscribe();
   }, []);
+
+  // Auto-scroll to Trending Lessons section every time the screen
+  // gains focus with the scrollTo=trending param
+  useFocusEffect(
+    useCallback(() => {
+      if (scrollTo === "trending" && !loading && trendingSectionY.current > 0) {
+        const timer = setTimeout(() => {
+          flashListRef.current?.scrollToOffset({
+            offset: trendingSectionY.current,
+            animated: true,
+          });
+        }, 400);
+        return () => clearTimeout(timer);
+      }
+    }, [scrollTo, loading]),
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -194,6 +213,9 @@ export default function VideosScreen() {
         loading={loading}
         trendingLessons={trendingLessons}
         cardWidth={cardWidth}
+        onTrendingSectionLayout={(y) => {
+          trendingSectionY.current = y;
+        }}
       />
     ),
     [subject, loading, trendingLessons, cardWidth]
@@ -228,6 +250,7 @@ export default function VideosScreen() {
           </ScrollView>
         ) : (
           <FlashList
+            ref={flashListRef}
             key={`latest-${isTablet ? 2 : 1}`}
             data={visibleLatest}
             numColumns={isTablet ? 2 : 1}

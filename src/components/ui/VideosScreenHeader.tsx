@@ -5,7 +5,7 @@ import { SubjectFilter } from "@/components/ui/SubjectFilter";
 import { TrendingCarousel } from "@/components/ui/TrendingCarousel";
 import { VideoLesson } from "@/components/ui/TrendingVideoCard";
 import React from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, LayoutChangeEvent, StyleSheet, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, spacing } from "../../constants/theme";
 
@@ -15,6 +15,7 @@ type VideosScreenHeaderProps = {
   loading: boolean;
   trendingLessons: VideoLesson[];
   cardWidth: number;
+  onTrendingSectionLayout?: (y: number) => void;
 };
 
 export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
@@ -23,7 +24,11 @@ export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
   loading,
   trendingLessons,
   cardWidth,
+  onTrendingSectionLayout,
 }) => {
+  const handleTrendingLayout = (event: LayoutChangeEvent) => {
+    onTrendingSectionLayout?.(event.nativeEvent.layout.y);
+  };
   return (
     <>
       <Animated.View entering={FadeInUp.duration(320)} style={styles.headerWrap}>
@@ -49,11 +54,9 @@ export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
         )}
       </Animated.View>
 
-      <Animated.View entering={FadeInUp.duration(480)} style={styles.section}>
+      <Animated.View entering={FadeInUp.duration(480)} style={styles.section} onLayout={handleTrendingLayout}>
         <SectionHeader
-          title="Latest Lessons"
-          onSeeAll={() => { }}
-          actionLabel="See all"
+          title="Trending Lessons"
         />
       </Animated.View>
     </>

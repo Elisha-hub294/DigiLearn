@@ -50,8 +50,8 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   selected: {
-    backgroundColor: colors.primaryRed,
-    borderColor: colors.primaryRed,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   text: { color: colors.inactive, fontSize: 12, fontWeight: "600" },
   selectedText: { color: "#fff" },
