@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors, radius, spacing } from "../constants/theme";
+import { setGuestMode } from "../services/guestService";
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -29,8 +30,9 @@ export default function WelcomeScreen() {
     router.push({ pathname: "/login", params: { from: "welcome" } });
   }, [router]);
 
-  const handleGuest = useCallback(() => {
-    router.push("/");
+  const handleGuest = useCallback(async () => {
+    await setGuestMode(true);
+    router.replace("/");
   }, [router]);
 
   return (

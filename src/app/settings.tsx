@@ -20,6 +20,7 @@ import SettingsSection from "../components/ui/SettingsSection";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { clearGuestMode } from "../services/guestService";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -48,8 +49,9 @@ export default function SettingsScreen() {
 
   const handleLogout = useCallback(async () => {
     try {
+      await clearGuestMode();
       await signOut(auth);
-      router.replace("/" as never);
+      router.replace("/welcome" as never);
     } catch (error) {
       console.error("Logout failed:", error);
       setLogoutError("We couldn't log you out. Please try again.");

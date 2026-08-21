@@ -27,6 +27,7 @@ import { SearchBar } from "../components/ui/SearchBar";
 import { SectionHeader } from "../components/ui/SectionHeader";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { clearGuestMode, isGuestMode } from "../services/guestService";
 import { getUserOnboardingState } from "../services/userProfile";
 import LoadingScreen from "./loading";
 
@@ -69,10 +70,15 @@ export default function HomeScreen() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
+        const guest = await isGuestMode();
         setAuthCheckReady(true);
-        router.replace("/welcome" as never);
+        if (!guest) {
+          router.replace("/welcome" as never);
+        }
         return;
       }
+
+      await clearGuestMode();
 
       try {
         const onboarding = await getUserOnboardingState(user.uid);

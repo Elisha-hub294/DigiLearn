@@ -23,6 +23,7 @@ import { auth, db } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { clearGuestMode } from "../services/guestService";
 
 type Field = "name" | "bio" | "level" | "school" | "gender";
 type RowProps = {
@@ -140,6 +141,7 @@ export default function MyProfileScreen() {
           onPress: async () => {
             if (!auth.currentUser) return;
             try {
+              await clearGuestMode();
               await deleteUser(auth.currentUser);
               router.replace("/welcome" as never);
             } catch (reason) {
