@@ -32,11 +32,6 @@ export function DownloadedResources() {
     }, [loadFiles])
   );
 
-  // If there are no items, hide the section completely!
-  if (files.length === 0) {
-    return null;
-  }
-
   const handleOpenFile = (file: DownloadedFile) => {
     router.push({
       pathname: "/pdf-reader",
@@ -81,55 +76,67 @@ export function DownloadedResources() {
         <Text style={styles.sectionSubtitle}>Available offline anytime</Text>
       </View>
 
-      {/* Files List */}
-      <View style={styles.list}>
-        {files.map((file) => (
-          <Pressable
-            key={file.id}
-            style={({ pressed }) => [
-              styles.fileCard,
-              pressed && styles.fileCardPressed,
-            ]}
-            onPress={() => handleOpenFile(file)}
-          >
-            <View style={styles.fileIconWrapper}>
-              <Feather name="file-text" size={22} color="#006eff" />
-            </View>
-
-            <View style={styles.fileDetails}>
-              <Text style={styles.fileTitle} numberOfLines={1}>
-                {file.title}
-              </Text>
-              <View style={styles.metaRow}>
-                <View style={styles.offlineBadge}>
-                  <Feather name="check-circle" size={10} color="#10B981" />
-                  <Text style={styles.offlineText}>Offline</Text>
-                </View>
-                <Text style={styles.metaDot}>•</Text>
-                <Text style={styles.fileDate}>{formatDate(file.downloadedAt)}</Text>
+      {/* Content: Files List or Empty State */}
+      {files.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconCircle}>
+            <Feather name="download-cloud" size={28} color="#94A3B8" />
+          </View>
+          <Text style={styles.emptyTitle}>Downloaded files will appear here</Text>
+          <Text style={styles.emptySubtitle}>
+            Save PDFs and documents to access them offline anytime.
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.list}>
+          {files.map((file) => (
+            <Pressable
+              key={file.id}
+              style={({ pressed }) => [
+                styles.fileCard,
+                pressed && styles.fileCardPressed,
+              ]}
+              onPress={() => handleOpenFile(file)}
+            >
+              <View style={styles.fileIconWrapper}>
+                <Feather name="file-text" size={22} color="#006eff" />
               </View>
-            </View>
 
-            <View style={styles.actions}>
-              <Pressable
-                style={styles.openBtn}
-                onPress={() => handleOpenFile(file)}
-                accessibilityLabel="Open downloaded file"
-              >
-                <Text style={styles.openBtnText}>Open</Text>
-              </Pressable>
+              <View style={styles.fileDetails}>
+                <Text style={styles.fileTitle} numberOfLines={1}>
+                  {file.title}
+                </Text>
+                <View style={styles.metaRow}>
+                  <View style={styles.offlineBadge}>
+                    <Feather name="check-circle" size={10} color="#10B981" />
+                    <Text style={styles.offlineText}>Offline</Text>
+                  </View>
+                  <Text style={styles.metaDot}>•</Text>
+                  <Text style={styles.fileDate}>{formatDate(file.downloadedAt)}</Text>
+                </View>
+              </View>
 
-              <Pressable
-                style={styles.deleteBtn}
-                onPress={() => handleDeleteFile(file)}
-                accessibilityLabel="Delete downloaded file"
-              >
-                <Feather name="trash-2" size={16} color="#EF4444" />
-              </Pressable>
-            </View>
-          </Pressable>
-        ))}
-      </View>
+              <View style={styles.actions}>
+                <Pressable
+                  style={styles.openBtn}
+                  onPress={() => handleOpenFile(file)}
+                  accessibilityLabel="Open downloaded file"
+                >
+                  <Text style={styles.openBtnText}>Open</Text>
+                </Pressable>
+
+                <Pressable
+                  style={styles.deleteBtn}
+                  onPress={() => handleDeleteFile(file)}
+                  accessibilityLabel="Delete downloaded file"
+                >
+                  <Feather name="trash-2" size={16} color="#EF4444" />
+                </Pressable>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      )}
 
       {/* Action Dialog for Delete Confirmation */}
       <ActionDialog
@@ -188,6 +195,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.subtitle,
     marginTop: 2,
+  },
+  emptyContainer: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: radius.md,
+    padding: spacing.xl,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "#CBD5E1",
+    gap: 8,
+    marginTop: spacing.xs,
+  },
+  emptyIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#F1F5F9",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  emptyTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.text,
+    textAlign: "center",
+  },
+  emptySubtitle: {
+    fontSize: 12,
+    color: colors.subtitle,
+    textAlign: "center",
+    maxWidth: 280,
   },
   list: {
     gap: 10,
