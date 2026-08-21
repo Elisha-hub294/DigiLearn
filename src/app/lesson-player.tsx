@@ -1,3 +1,4 @@
+import { colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -6,22 +7,22 @@ import * as WebBrowser from "expo-web-browser";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-    Alert,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Alert,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, {
-    FadeIn,
-    FadeInDown,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
+  FadeIn,
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
 } from "react-native-reanimated";
 import { auth, db } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
@@ -160,9 +161,8 @@ export default function LessonPlayerScreen() {
     try {
       await Share.share({
         title: params.title ?? "Lesson Preview",
-        message: `Check out this lesson: "${params.title ?? "Lesson"}" by ${
-          params.teacher ?? "Teacher"
-        } on DigiLearn!`,
+        message: `Check out this lesson: "${params.title ?? "Lesson"}" by ${params.teacher ?? "Teacher"
+          } on DigiLearn!`,
         url: params.link ?? embedUrl,
       });
     } catch {
@@ -275,111 +275,111 @@ export default function LessonPlayerScreen() {
               { paddingHorizontal: horizontalPadding },
             ]}
           >
-        {/* Hero Video Card */}
-        <Animated.View
-          entering={FadeIn.duration(400)}
-          style={styles.heroCardContainer}
-        >
-          <Pressable
-            onPress={openVideo}
-            onPressIn={() => {
-              playScale.value = withSpring(0.95);
-            }}
-            onPressOut={() => {
-              playScale.value = withSpring(1);
-            }}
-            style={styles.heroPressable}
-            accessibilityLabel={`Play video: ${params.title ?? "Lesson"}`}
-            accessibilityRole="button"
-          >
-            <Image
-              source={resolveImageSource(params.thumbnail)}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-              transition={300}
-            />
-            <View style={styles.heroOverlay} />
-
-            {/* Subject Pill Badge */}
-            <View style={styles.subjectBadge}>
-              <Text style={styles.subjectBadgeText}>
-                {params.subject?.toUpperCase() ?? "GENERAL"}
-              </Text>
-            </View>
-
-            {/* Play Button Icon Overlay */}
+            {/* Hero Video Card */}
             <Animated.View
-              style={[styles.playButtonWrapper, playAnimatedStyle]}
+              entering={FadeIn.duration(400)}
+              style={styles.heroCardContainer}
             >
-              <View style={styles.playButtonInner}>
-                <Ionicons
-                  name="play"
-                  size={32}
-                  color="#3B82F6"
-                  style={styles.playIconOffset}
+              <Pressable
+                onPress={openVideo}
+                onPressIn={() => {
+                  playScale.value = withSpring(0.95);
+                }}
+                onPressOut={() => {
+                  playScale.value = withSpring(1);
+                }}
+                style={styles.heroPressable}
+                accessibilityLabel={`Play video: ${params.title ?? "Lesson"}`}
+                accessibilityRole="button"
+              >
+                <Image
+                  source={resolveImageSource(params.thumbnail)}
+                  style={StyleSheet.absoluteFill}
+                  contentFit="cover"
+                  transition={300}
                 />
+                <View style={styles.heroOverlay} />
+
+                {/* Subject Pill Badge */}
+                <View style={styles.subjectBadge}>
+                  <Text style={styles.subjectBadgeText}>
+                    {params.subject?.toUpperCase() ?? "GENERAL"}
+                  </Text>
+                </View>
+
+                {/* Play Button Icon Overlay */}
+                <Animated.View
+                  style={[styles.playButtonWrapper, playAnimatedStyle]}
+                >
+                  <View style={styles.playButtonInner}>
+                    <Ionicons
+                      name="play"
+                      size={32}
+                      color={colors.white}
+                      style={styles.playIconOffset}
+                    />
+                  </View>
+                </Animated.View>
+
+                {/* Duration Badge */}
+                <View style={styles.durationBadge}>
+                  <Ionicons name="time-outline" size={13} color="#FFFFFF" />
+                  <Text style={styles.durationBadgeText}>
+                    {params.duration ?? "00:00"}
+                  </Text>
+                </View>
+              </Pressable>
+            </Animated.View>
+
+            {/* Lesson Details & Educator Section */}
+            <Animated.View
+              entering={FadeInDown.delay(150).duration(400)}
+              style={styles.detailsCard}
+            >
+              <Text style={styles.title}>{params.title ?? "Untitled Lesson"}</Text>
+
+              {/* Instructor Profile */}
+              <View style={styles.instructorRow}>
+                <Image
+                  source={{ uri: getTeacherAvatar(params.teacher) }}
+                  style={styles.avatarImage}
+                  contentFit="cover"
+                />
+                <View style={styles.instructorTextWrap}>
+                  <View style={styles.instructorNameRow}>
+                    <Text style={styles.instructorName}>
+                      {params.teacher ?? "Educator"}
+                    </Text>
+                    <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />
+                  </View>
+                  <Text style={styles.instructorRole}>Verified Educator</Text>
+                </View>
+              </View>
+
+              {/* Specs / Quick Info Grid */}
+              <View style={styles.specsRow}>
+                <View style={styles.specCard}>
+                  <Ionicons name="time" size={18} color="#3B82F6" />
+                  <Text style={styles.specLabel}>Duration</Text>
+                  <Text style={styles.specValue}>{params.duration ?? "00:00"}</Text>
+                </View>
+                <View style={styles.specCard}>
+                  <Ionicons name="calendar" size={18} color="#10B981" />
+                  <Text style={styles.specLabel}>Added</Text>
+                  <Text style={styles.specValue} numberOfLines={1}>
+                    {params.uploadedAt ?? "Recent"}
+                  </Text>
+                </View>
+                <View style={styles.specCard}>
+                  <Ionicons name="sparkles" size={18} color="#F59E0B" />
+                  <Text style={styles.specLabel}>Access</Text>
+                  <Text style={styles.specValue}>Free HD</Text>
+                </View>
               </View>
             </Animated.View>
 
-            {/* Duration Badge */}
-            <View style={styles.durationBadge}>
-              <Ionicons name="time-outline" size={13} color="#FFFFFF" />
-              <Text style={styles.durationBadgeText}>
-                {params.duration ?? "00:00"}
-              </Text>
-            </View>
-          </Pressable>
-        </Animated.View>
-
-        {/* Lesson Details & Educator Section */}
-        <Animated.View
-          entering={FadeInDown.delay(150).duration(400)}
-          style={styles.detailsCard}
-        >
-          <Text style={styles.title}>{params.title ?? "Untitled Lesson"}</Text>
-
-          {/* Instructor Profile */}
-          <View style={styles.instructorRow}>
-            <Image
-              source={{ uri: getTeacherAvatar(params.teacher) }}
-              style={styles.avatarImage}
-              contentFit="cover"
-            />
-            <View style={styles.instructorTextWrap}>
-              <View style={styles.instructorNameRow}>
-                <Text style={styles.instructorName}>
-                  {params.teacher ?? "Educator"}
-                </Text>
-                <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />
-              </View>
-              <Text style={styles.instructorRole}>Verified Educator</Text>
-            </View>
-          </View>
-
-          {/* Specs / Quick Info Grid */}
-          <View style={styles.specsRow}>
-            <View style={styles.specCard}>
-              <Ionicons name="time" size={18} color="#3B82F6" />
-              <Text style={styles.specLabel}>Duration</Text>
-              <Text style={styles.specValue}>{params.duration ?? "00:00"}</Text>
-            </View>
-            <View style={styles.specCard}>
-              <Ionicons name="calendar" size={18} color="#10B981" />
-              <Text style={styles.specLabel}>Added</Text>
-              <Text style={styles.specValue} numberOfLines={1}>
-                {params.uploadedAt ?? "Recent"}
-              </Text>
-            </View>
-            <View style={styles.specCard}>
-              <Ionicons name="sparkles" size={18} color="#F59E0B" />
-              <Text style={styles.specLabel}>Access</Text>
-              <Text style={styles.specValue}>Free HD</Text>
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* Overview & Key Highlights Card */}
-        {/* <Animated.View
+            {/* Overview & Key Highlights Card */}
+            {/* <Animated.View
           entering={FadeInDown.delay(200).duration(400)}
           style={styles.overviewCard}
         >
@@ -501,7 +501,6 @@ const styles = StyleSheet.create({
   heroCardContainer: {
     aspectRatio: 1.6,
     backgroundColor: "#0F172A",
-    borderRadius: 10,
     elevation: 4,
     overflow: "hidden",
     width: "100%",
@@ -524,9 +523,9 @@ const styles = StyleSheet.create({
     top: 14,
   },
   subjectBadgeText: {
-    color: "#3B82F6",
+    color: colors.primaryDark,
     fontSize: 11,
-    fontWeight: "500",
+    fontWeight: "800",
     letterSpacing: 0.6,
   },
   playButtonWrapper: {
@@ -540,7 +539,7 @@ const styles = StyleSheet.create({
   },
   playButtonInner: {
     alignItems: "center",
-    backgroundColor: "#ffffff",
+    backgroundColor: colors.primaryRed,
     borderRadius: 35,
     elevation: 6,
     justifyContent: "center",
@@ -576,7 +575,7 @@ const styles = StyleSheet.create({
     padding: 18,
   },
   title: {
-    color: "#0F172A",
+    color: colors.primaryDark,
     fontSize: 22,
     fontWeight: "600",
     letterSpacing: -0.4,

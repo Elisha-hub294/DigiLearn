@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -107,7 +107,7 @@ export function SearchResultVideoCard({
           {/* Perfectly centered white play button container */}
           <View style={styles.playButtonContainer} pointerEvents="none">
             <View style={styles.playButton}>
-              <Feather
+              <Ionicons
                 name="play"
                 size={20}
                 color="#FFFFFF"

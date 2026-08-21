@@ -110,10 +110,6 @@ export default function RootLayout() {
               name="teacher-profile"
               options={{ href: null, tabBarStyle: { display: "none" } }}
             />
-            <Tabs.Screen
-              name="subject-profile"
-              options={{ href: null, tabBarStyle: { display: "none" } }}
-            />
           </Tabs>
         </ProfileProvider>
       </SafeAreaProvider>

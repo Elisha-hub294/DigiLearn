@@ -1,5 +1,4 @@
 import { Image } from "expo-image";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -154,9 +153,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   coverWrapper: {
-    width: 76,
+    width: 90,
     height: 104,
-    borderRadius: 10,
+    borderRadius: 5,
     overflow: "hidden",
     backgroundColor: "#F3F4F6",
     elevation: 3,

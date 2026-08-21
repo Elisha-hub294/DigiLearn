@@ -507,7 +507,7 @@ export default function TeacherProfileScreen() {
                 }
               }}
             >
-              <Icon name="arrow-left" size={20} color="#ffffff" />
+              <Icon name="chevron-left" size={20} color="#ffffff" />
             </Pressable>
           )}
 
@@ -902,7 +902,7 @@ const styles = StyleSheet.create({
     zIndex: 3,
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: 999,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(0,0,0,0.3)",
