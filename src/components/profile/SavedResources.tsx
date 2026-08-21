@@ -1,4 +1,3 @@
-import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
@@ -101,9 +100,7 @@ export function SavedResources({
   if (!signedIn)
     return (
       <View style={s.card}>
-        <Text style={[s.title, s.guestTitle]}>Saved</Text>
         <View style={s.empty}>
-          <Feather name="bookmark" size={28} color={colors.primary} />
           <Text style={s.emptyTitle}>
             Sign in to keep your learning organized
           </Text>
@@ -281,7 +278,6 @@ const s = StyleSheet.create({
     color: "#171717",
     marginBottom: 12,
   },
-  guestTitle: { textAlign: "center" },
   chips: { paddingHorizontal: spacing.lg, gap: 8, paddingBottom: 14 },
   chip: {
     minHeight: 36,

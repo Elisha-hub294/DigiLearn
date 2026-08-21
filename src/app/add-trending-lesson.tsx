@@ -21,12 +21,13 @@ import {
   View,
 } from "react-native";
 import { db } from "../../firebaseConfig";
-import { subjects } from "../components/ui/SubjectFilter";
+import { useSubjects } from "../components/ui/SubjectFilter";
 
 export default function AddTrendingLessonScreen() {
   const router = useRouter();
+  const { subjects } = useSubjects();
   const [title, setTitle] = useState("");
-  const [subject, setSubject] = useState(subjects[1]);
+  const [subject, setSubject] = useState("Mathematics");
   const [teacher, setTeacher] = useState("");
   const [duration, setDuration] = useState("");
   const [thumbnail, setThumbnail] = useState("");
