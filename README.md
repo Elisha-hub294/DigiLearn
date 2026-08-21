@@ -1,18 +1,12 @@
 # DigiLearn
 
-**DigiLearn** is an AI-powered cross-platform educational application built with **React Native and Expo**, designed to give students easier access to academic resources, learning materials, video lessons, educators, and intelligent academic assistance.
-
-DigiLearn brings together **past examination papers, topical notes, textbooks, marking guides, video lessons, teachers, and AI-powered assistance** in one platform.
-
-The application UI was designed in **Figma** and developed with the assistance of **GPT-5.6, OpenAI Codex, and GitHub Copilot**, which helped accelerate the translation of UI designs into production-ready React Native code, Firebase integration, responsive interfaces, and AI functionality.
+**DigiLearn** is an AI-powered educational application built with **React Native and Expo**, to give Uganda students easier access to academic resources, learning materials, video lessons, and educators.
 
 ---
 
-## ✨ Features
+## Features
 
-### 📚 Academic Resource Hub
-
-Access a centralized collection of academic resources, including:
+### Academic Resources
 
 * Topical class notes
 * UNEB past examination papers
@@ -21,43 +15,21 @@ Access a centralized collection of academic resources, including:
 * Recommended textbooks
 * Educational resources organized by subject
 
-### 🤖 AI-Powered Learning Assistant
+### AI-Powered Learning Assistant
 
 DigiLearn includes an AI assistant designed to help learners and teachers interact with the platform more intelligently.
 
-The AI can use structured **DigiLearn app knowledge** to understand the application's resources and provid
-
-### 👨‍🏫 Teacher Connection
+### Teacher Connection
 
 Students can discover educator profiles and access teacher information for additional academic guidance and support.
 
-### 👤 Responsive User Profiles
+### Responsive User Profiles
 
 Users can manage their profile information and interact with their learning experience through a responsive profile interface.
 
-### 🔎 Resource Discovery
-
-DigiLearn provides search and discovery functionality across different types of educational content, including:
-
-* Notes
-* Books
-* Teachers
-* Lessons
-* Past papers
-* Other academic resources
-
-### 📱 Cross-Platform
-
-Built with React Native and Expo, DigiLearn is designed to run across:
-
-* Android
-* iOS
-
 ---
 
-# 🚀 Built with GPT-5.6, Codex & GitHub Copilot
-
-AI tools were integrated directly into the development workflow.
+# Built with GPT-5.6, Codex & GitHub Copilot
 
 ### 1. Figma → React Native
 
@@ -86,7 +58,7 @@ GPT-5.6 was also used to help design the application's AI knowledge architecture
 
 ---
 
-# 🚀 Getting Started
+# Getting Started
 
 ## Prerequisites
 
@@ -125,11 +97,7 @@ Alternatively, launch the application using an available Android or iOS emulator
 
 ---
 
-# 🌱 Future Development
-
-DigiLearn is intended to continue evolving into a more intelligent learning platform.
-
-Potential areas of development include:
+# Future Development
 
 * Assist more students and teachers in africa
 * Expanded educational content
@@ -138,7 +106,7 @@ Potential areas of development include:
 
 ---
 
-## 👨‍💻 Built with passion
+## Built with passion
 
 DigiLearn was created as a real-world educational technology project with the goal of solving practical problems faced by learners.
 
