@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -33,10 +33,13 @@ import {
 
 export default function AssistantScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ initialPrompt?: string }>();
   const [isLoading, setIsLoading] = useState(true);
   const [gifUri, setGifUri] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(
+    typeof params.initialPrompt === "string" ? params.initialPrompt : "",
+  );
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -47,6 +50,15 @@ export default function AssistantScreen() {
   >(null);
   const [assistantAvatar, setAssistantAvatar] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    if (
+      typeof params.initialPrompt === "string" &&
+      params.initialPrompt.trim()
+    ) {
+      setMessage(params.initialPrompt.trim());
+    }
+  }, [params.initialPrompt]);
 
   useEffect(() => {
     let active = true;

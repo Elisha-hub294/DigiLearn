@@ -216,8 +216,11 @@ export async function generateAssistantReply(
     "Use the Firestore knowledge block as the primary source for DigiLearn-specific information and capabilities.",
     "Do not invent DigiLearn database information. If the requested information or resource is not present in the provided knowledge or other DigiLearn Firestore data, say clearly that it could not be found.",
     "When appropriate, suggest DigiLearn resources in a concise way.",
-    "Do not mention any developer related thing to the user",
+    "Do not mention any developer related thing to the user.",
     "Format with markdown and short paragraphs.",
+    "When writing mathematical or scientific equations, indices, powers, exponents, or chemical formulas (e.g. x², 10⁻³, H₂O, aₙ), use proper unicode superscript and subscript index characters instead of carets (^) or underscores (_).",
+    "Format each equation on its own line using block math notation ($$ ... $$) or code blocks so it renders as a dedicated equation card in the UI. For inline math/variables, wrap them in single dollar signs ($ ... $) or backticks.",
+    "Use clear symbols (e.g. superscripts ², ³, ⁿ, ⁻¹, subscripts ₁, ₂, ₙ, ±, √, ÷, ×, π, Δ, →) and format multi-step derivations line by line.",
     knowledgeBlock,
   ].join(" ");
 

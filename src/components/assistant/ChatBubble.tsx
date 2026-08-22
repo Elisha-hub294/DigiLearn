@@ -1,24 +1,210 @@
 import { Image } from "expo-image";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 
 import fallbackAvatar from "../../../assets/images/panda.png";
 import { colors, radius, spacing } from "../../constants/theme";
 
+// ─── Math & Equation Formatting Helper ──────────────────────────────────────
+
+const SUPER_MAP: Record<string, string> = {
+  "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴",
+  "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹",
+  "+": "⁺", "-": "⁻", "=": "⁼", "(": "⁽", ")": "⁾",
+  "a": "ᵃ", "b": "ᵇ", "c": "ᶜ", "d": "ᵈ", "e": "ᵉ",
+  "f": "ᶠ", "g": "ᵍ", "h": "ʰ", "i": "ⁱ", "j": "ʲ",
+  "k": "ᵏ", "l": "ˡ", "m": "ᵐ", "n": "ⁿ", "o": "ᵒ",
+  "p": "ᵖ", "r": "ʳ", "s": "ˢ", "t": "ᵗ", "u": "ᵘ",
+  "v": "ᵛ", "w": "ʷ", "x": "ˣ", "y": "ʸ", "z": "ᶻ",
+};
+
+const SUB_MAP: Record<string, string> = {
+  "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄",
+  "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉",
+  "+": "₊", "-": "₋", "=": "₌", "(": "₍", ")": "₎",
+  "a": "ₐ", "e": "ₑ", "h": "ₕ", "i": "ᵢ", "j": "ⱼ",
+  "k": "ₖ", "l": "ₗ", "m": "ₘ", "n": "ₙ", "o": "ₒ",
+  "p": "ₚ", "r": "ᵣ", "s": "ₛ", "t": "ₜ", "u": "ᵤ",
+  "v": "ᵥ", "x": "ₓ",
+};
+
+function toSuperscript(str: string): string {
+  return str
+    .split("")
+    .map((ch) => SUPER_MAP[ch] ?? ch)
+    .join("");
+}
+
+function toSubscript(str: string): string {
+  return str
+    .split("")
+    .map((ch) => SUB_MAP[ch] ?? ch)
+    .join("");
+}
+
+function convertIndices(text: string): string {
+  return text
+    .replace(/\^\{([^}]+)\}/g, (_, inner) => toSuperscript(inner))
+    .replace(/\^\(([^)]+)\)/g, (_, inner) => toSuperscript(inner))
+    .replace(/\^([0-9a-zA-Z+=-]+)/g, (_, inner) => toSuperscript(inner))
+    .replace(/_\{([^}]+)\}/g, (_, inner) => toSubscript(inner))
+    .replace(/_\(([^)]+)\)/g, (_, inner) => toSubscript(inner))
+    .replace(/_([0-9a-zA-Z+=-]+)/g, (_, inner) => toSubscript(inner));
+}
+
+function formatMathString(latexOrMath: string): string {
+  const formatted = latexOrMath
+    .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1 / $2)")
+    .replace(/\\sqrt\{([^}]+)\}/g, "√($1)")
+    .replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, "√$1")
+    .replace(/\\pm/g, "±")
+    .replace(/\\times/g, "×")
+    .replace(/\\div/g, "÷")
+    .replace(/\\neq/g, "≠")
+    .replace(/\\leq/g, "≤")
+    .replace(/\\geq/g, "≥")
+    .replace(/\\approx/g, "≈")
+    .replace(/\\infty/g, "∞")
+    .replace(/\\pi/g, "π")
+    .replace(/\\theta/g, "θ")
+    .replace(/\\alpha/g, "α")
+    .replace(/\\beta/g, "β")
+    .replace(/\\Delta/g, "Δ")
+    .replace(/\\delta/g, "δ")
+    .replace(/\\cdot/g, "·")
+    .replace(/\\rightarrow/g, "→")
+    .replace(/\\\$/g, "$");
+
+  return convertIndices(formatted);
+}
+
+// ─── Fraction & Formula Component ───────────────────────────────────────────
+
+function FractionView({ num, den }: { num: string; den: string }) {
+  return (
+    <View style={fractionStyles.container}>
+      <Text style={fractionStyles.numerator}>{convertIndices(num.trim())}</Text>
+      <View style={fractionStyles.line} />
+      <Text style={fractionStyles.denominator}>{convertIndices(den.trim())}</Text>
+    </View>
+  );
+}
+
+type MathToken =
+  | { kind: "text"; text: string }
+  | { kind: "fraction"; num: string; den: string };
+
+function parseMathTokens(formula: string): MathToken[] {
+  const cleaned = formula
+    .replace(/\\cos/g, "cos")
+    .replace(/\\sin/g, "sin")
+    .replace(/\\tan/g, "tan")
+    .replace(/\\log/g, "log")
+    .replace(/\\ln/g, "ln")
+    .replace(/\^\\circ|\^o|\\circ/g, "°");
+
+  const tokens: MathToken[] = [];
+  const pattern =
+    /\\frac\{([^}]+)\}\{([^}]+)\}|\(([^)]+)\)\s*\/\s*\(([^)]+)\)|([0-9a-zA-Z²³⁺⁻⁰-⁹\s+*-]+)\s*\/\s*([0-9a-zA-Z²³⁺⁻⁰-⁹\s+*-]+)/g;
+
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(cleaned)) !== null) {
+    if (match.index > lastIndex) {
+      tokens.push({ kind: "text", text: cleaned.slice(lastIndex, match.index) });
+    }
+
+    if (match[1] !== undefined && match[2] !== undefined) {
+      tokens.push({ kind: "fraction", num: match[1], den: match[2] });
+    } else if (match[3] !== undefined && match[4] !== undefined) {
+      tokens.push({ kind: "fraction", num: match[3], den: match[4] });
+    } else if (match[5] !== undefined && match[6] !== undefined) {
+      const num = match[5].trim();
+      const den = match[6].trim();
+      if (num && den) {
+        tokens.push({ kind: "fraction", num, den });
+      } else {
+        tokens.push({ kind: "text", text: match[0] });
+      }
+    }
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < cleaned.length) {
+    tokens.push({ kind: "text", text: cleaned.slice(lastIndex) });
+  }
+
+  return tokens;
+}
+
+function MathFormulaView({ formula }: { formula: string }) {
+  const tokens = parseMathTokens(formula);
+
+  return (
+    <View style={mdStyles.formulaRow}>
+      {tokens.map((token, i) => {
+        if (token.kind === "fraction") {
+          return <FractionView key={i} num={token.num} den={token.den} />;
+        }
+        return (
+          <Text key={i} style={mdStyles.mathFormulaText}>
+            {convertIndices(token.text)}
+          </Text>
+        );
+      })}
+    </View>
+  );
+}
+
+const fractionStyles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: 4,
+    paddingHorizontal: 2,
+  },
+  numerator: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#0369A1",
+    textAlign: "center",
+    paddingBottom: 1,
+  },
+  line: {
+    height: 1.5,
+    backgroundColor: "#0284C7",
+    width: "100%",
+    minWidth: 16,
+    marginVertical: 1,
+  },
+  denominator: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#0369A1",
+    textAlign: "center",
+    paddingTop: 1,
+  },
+});
+
 // ─── Inline markdown parser ─────────────────────────────────────────────────
-// Splits a line of text into styled segments (bold, italic, code, plain).
+// Splits a line of text into styled segments (bold, italic, code, math, plain).
 
 type Segment =
   | { type: "text"; value: string }
   | { type: "bold"; value: string }
   | { type: "italic"; value: string }
   | { type: "code"; value: string }
+  | { type: "math"; value: string }
   | { type: "bolditalic"; value: string };
 
 function parseInline(line: string): Segment[] {
   const segments: Segment[] = [];
-  // Order matters: bolditalic before bold before italic
-  const pattern = /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|__(.+?)__|_(.+?)_|\*(.+?)\*|`(.+?)`)/g;
+  // Order matters: bolditalic before bold before italic, math before plain text
+  const pattern =
+    /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|__(.+?)__|_(.+?)_|\*(.+?)\*|`(.+?)`|\$(.+?)\$|\\\((.+?)\\\))/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
@@ -35,6 +221,9 @@ function parseInline(line: string): Segment[] {
       segments.push({ type: "italic", value: match[5] ?? match[6] });
     } else if (full.startsWith("`")) {
       segments.push({ type: "code", value: match[7] });
+    } else if (full.startsWith("$") || full.startsWith("\\(")) {
+      const rawMath = match[8] ?? match[9];
+      segments.push({ type: "math", value: formatMathString(rawMath) });
     }
     lastIndex = match.index + full.length;
   }
@@ -51,15 +240,17 @@ function InlineText({ segments, baseStyle }: { segments: Segment[]; baseStyle: o
       {segments.map((seg, i) => {
         switch (seg.type) {
           case "bold":
-            return <Text key={i} style={inlineStyles.bold}>{seg.value}</Text>;
+            return <Text key={i} style={inlineStyles.bold}>{convertIndices(seg.value)}</Text>;
           case "italic":
-            return <Text key={i} style={inlineStyles.italic}>{seg.value}</Text>;
+            return <Text key={i} style={inlineStyles.italic}>{convertIndices(seg.value)}</Text>;
           case "bolditalic":
-            return <Text key={i} style={inlineStyles.boldItalic}>{seg.value}</Text>;
+            return <Text key={i} style={inlineStyles.boldItalic}>{convertIndices(seg.value)}</Text>;
           case "code":
             return <Text key={i} style={inlineStyles.inlineCode}>{seg.value}</Text>;
+          case "math":
+            return <Text key={i} style={inlineStyles.mathInline}>{convertIndices(seg.value)}</Text>;
           default:
-            return <Text key={i}>{seg.value}</Text>;
+            return <Text key={i}>{convertIndices(seg.value)}</Text>;
         }
       })}
     </Text>
@@ -73,6 +264,7 @@ type Block =
   | { kind: "bullet"; text: string }
   | { kind: "numbered"; n: number; text: string }
   | { kind: "codeblock"; code: string }
+  | { kind: "mathblock"; formula: string }
   | { kind: "divider" }
   | { kind: "paragraph"; text: string };
 
@@ -83,6 +275,38 @@ function parseBlocks(markdown: string): Block[] {
 
   while (i < lines.length) {
     const line = lines[i];
+
+    // Math block ($$ ... $$ or \[ ... \])
+    if (line.trim().startsWith("$$") || line.trim().startsWith("\\[")) {
+      const codeLines: string[] = [];
+      let inlineContent = line.trim().replace(/^(\$\$|\\\[)/, "").replace(/(\$\$|\\\])$/, "").trim();
+
+      if (inlineContent && (line.trim().endsWith("$$") || line.trim().endsWith("\\]")) && line.trim().length > 4) {
+        blocks.push({ kind: "mathblock", formula: formatMathString(inlineContent) });
+        i++;
+        continue;
+      }
+
+      i++;
+      while (
+        i < lines.length &&
+        !lines[i].trim().endsWith("$$") &&
+        !lines[i].trim().endsWith("\\]")
+      ) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) {
+        const endLine = lines[i].trim().replace(/(\$\$|\\\])$/, "").trim();
+        if (endLine) codeLines.push(endLine);
+        i++;
+      }
+      blocks.push({
+        kind: "mathblock",
+        formula: formatMathString(codeLines.join("\n").trim()),
+      });
+      continue;
+    }
 
     // Fenced code block
     if (line.trim().startsWith("```")) {
@@ -144,6 +368,8 @@ function parseBlocks(markdown: string): Block[] {
       !lines[i].match(/^[\s]*[-*+]\s/) &&
       !lines[i].match(/^[\s]*\d+\.\s/) &&
       !lines[i].trim().startsWith("```") &&
+      !lines[i].trim().startsWith("$$") &&
+      !lines[i].trim().startsWith("\\[") &&
       !/^[-*_]{3,}$/.test(lines[i].trim())
     ) {
       paraLines.push(lines[i]);
@@ -193,6 +419,16 @@ function MarkdownView({ text }: { text: string }) {
                 <View style={mdStyles.listContent}>
                   <InlineText segments={parseInline(block.text)} baseStyle={mdStyles.bodyText} />
                 </View>
+              </View>
+            );
+
+          case "mathblock":
+            return (
+              <View key={idx} style={mdStyles.mathCard}>
+                <View style={mdStyles.mathHeader}>
+                  <Text style={mdStyles.mathBadge}>FORMULA / EQUATION</Text>
+                </View>
+                <MathFormulaView formula={block.formula} />
               </View>
             );
 
@@ -265,7 +501,7 @@ const styles = StyleSheet.create({
   },
   rowUser: {
     justifyContent: "flex-end",
-    paddingLeft: 60, // prevent user bubble from spanning full width
+    paddingLeft: 60,
   },
   rowAssistant: {
     justifyContent: "flex-start",
@@ -337,6 +573,38 @@ const mdStyles = StyleSheet.create({
   listContent: {
     flex: 1,
   },
+  mathCard: {
+    backgroundColor: "#F0F9FF",
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginVertical: spacing.sm,
+    borderColor: "#BAE6FD",
+    borderWidth: 1,
+  },
+  mathHeader: {
+    marginBottom: 4,
+  },
+  mathBadge: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: colors.primary,
+    letterSpacing: 0.8,
+  },
+  mathFormulaText: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#0369A1",
+    lineHeight: 24,
+  },
+  formulaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    marginTop: 2,
+  },
   codeBlock: {
     backgroundColor: "#E8ECF8",
     borderRadius: 8,
@@ -373,5 +641,15 @@ const inlineStyles = StyleSheet.create({
     fontSize: 12,
     backgroundColor: "#E8ECF8",
     color: "#2d2d6b",
+  },
+  mathInline: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#0284C7",
+    backgroundColor: "#E0F2FE",
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
   },
 });

@@ -231,7 +231,17 @@ export function FloatingAssistantButton() {
   };
 
   const handlePress = () => {
-    router.push("/assistant");
+    const isBubbleVisible =
+      bubbleOpacity.value > 0.1 && activeMessage.trim().length > 0;
+
+    if (isBubbleVisible) {
+      router.push({
+        pathname: "/assistant",
+        params: { initialPrompt: activeMessage.trim() },
+      });
+    } else {
+      router.push("/assistant");
+    }
   };
 
   const safeBottom = insets.bottom;
