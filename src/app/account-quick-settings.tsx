@@ -13,6 +13,7 @@ import {
     SafeAreaView,
     ScrollView,
     StyleSheet,
+    Switch,
     Text,
     TextInput,
     useWindowDimensions,
@@ -71,6 +72,7 @@ export default function AccountQuickSettingsScreen() {
   const [school, setSchool] = useState("");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [filterFeedByInterests, setFilterFeedByInterests] = useState(false);
   const [showLevelModal, setShowLevelModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -125,12 +127,14 @@ export default function AccountQuickSettingsScreen() {
       const initialSelectedSubjects = getSubjectNames(
         profile.subjects ?? [],
       ).map((subject) => normalizeText(subject));
+      const initialFilter = Boolean(profile.filterFeedByInterests);
 
       setName(initialName);
       setLevel(initialLevel);
       setSchool(initialSchool);
       setSubjects(nextSubjects);
       setSelectedSubjects(initialSelectedSubjects);
+      setFilterFeedByInterests(initialFilter);
     } catch {
       setLoadError(
         "We couldn't load your profile details right now. Please try again.",
@@ -220,6 +224,7 @@ export default function AccountQuickSettingsScreen() {
       if (level) payload.level = level;
       if (cleanSchool) payload.school = cleanSchool;
       if (selectedSubjects.length > 0) payload.subjects = selectedSubjects;
+      payload.filterFeedByInterests = filterFeedByInterests;
 
       await setDoc(doc(db, "users", user.uid), payload, { merge: true });
       router.replace("/" as never);
@@ -444,6 +449,24 @@ export default function AccountQuickSettingsScreen() {
                     Preferences. They personalize your feed and help you
                     discover relevant learning resources.
                   </InfoMessage>
+                </View>
+
+                <View style={styles.toggleCard}>
+                  <View style={styles.toggleInfo}>
+                    <Text style={styles.toggleTitle}>
+                      Only show selected interests in feeds
+                    </Text>
+                    <Text style={styles.toggleSubtitle}>
+                      Filter your Home and Library feeds to only display resources matching your selected subjects.
+                    </Text>
+                  </View>
+                  <Switch
+                    value={filterFeedByInterests}
+                    onValueChange={setFilterFeedByInterests}
+                    trackColor={{ false: "#D1D5DB", true: "#3B82F6" }}
+                    thumbColor={colors.white}
+                    accessibilityLabel="Toggle filter feeds by interests"
+                  />
                 </View>
 
                 {saveError ? (
@@ -798,5 +821,31 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "#E9EEF5",
     borderRadius: 10,
+  },
+  toggleCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    padding: spacing.md,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    gap: 12,
+  },
+  toggleInfo: {
+    flex: 1,
+  },
+  toggleTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.dark,
+    marginBottom: 4,
+  },
+  toggleSubtitle: {
+    fontSize: 12,
+    color: "#64748B",
+    lineHeight: 16,
   },
 });

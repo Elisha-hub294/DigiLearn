@@ -14,6 +14,7 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   useWindowDimensions,
@@ -151,6 +152,7 @@ export default function TeacherAccountQuickSettingsScreen() {
   const [school, setSchool] = useState("");
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [filterFeedByInterests, setFilterFeedByInterests] = useState(false);
   const [socialValues, setSocialValues] = useState<Partial<Record<SocialKey, string>>>({});
   const [activeSocial, setActiveSocial] = useState<SocialOption | null>(null);
   const [socialInput, setSocialInput] = useState("");
@@ -194,6 +196,7 @@ export default function TeacherAccountQuickSettingsScreen() {
         typeof profile.school === "string" ? profile.school : "",
       );
       const initialSelectedSubjects = getSubjectNames(profile.subjects ?? []);
+      const initialFilter = Boolean(profile.filterFeedByInterests);
       const initialSocialValues = SOCIAL_OPTIONS.reduce<Partial<Record<SocialKey, string>>>(
         (result, option) => {
           const value = profile[option.key];
@@ -209,6 +212,7 @@ export default function TeacherAccountQuickSettingsScreen() {
       setSchool(initialSchool);
       setSubjects(nextSubjects);
       setSelectedSubjects(initialSelectedSubjects);
+      setFilterFeedByInterests(initialFilter);
       setSocialValues(initialSocialValues);
     } catch {
       setLoadError("We couldn't load your teacher profile details right now. Please try again.");
@@ -286,6 +290,7 @@ export default function TeacherAccountQuickSettingsScreen() {
         name: normalizeText(name),
         school: normalizeText(school),
         subjects: selectedSubjects,
+        filterFeedByInterests,
         ...socialValues,
       };
 
@@ -297,7 +302,7 @@ export default function TeacherAccountQuickSettingsScreen() {
     } finally {
       setIsSaving(false);
     }
-  }, [isSaving, name, router, school, selectedSubjects, user]);
+  }, [filterFeedByInterests, isSaving, name, router, school, selectedSubjects, socialValues, user]);
 
   const handleConfirm = useCallback(async () => {
     if (!user || isSaving) {
@@ -488,6 +493,20 @@ export default function TeacherAccountQuickSettingsScreen() {
                       Your selected subjects can be changed anytime in Preferences. We'll use them to help personalize your teaching experience and connect you with relevant resources.
                     </InfoMessage>
                   </View>
+
+                  <View style={styles.toggleCard}>
+                     <View style={styles.toggleInfo}>
+                       <Text style={styles.toggleTitle}>Only show selected interests in feeds</Text>
+                       <Text style={styles.toggleSubtitle}>Filter your Home and Library feeds to only display resources matching your selected subjects.</Text>
+                     </View>
+                     <Switch
+                       value={filterFeedByInterests}
+                       onValueChange={setFilterFeedByInterests}
+                       trackColor={{ false: "#D1D5DB", true: "#3B82F6" }}
+                       thumbColor={colors.white}
+                       accessibilityLabel="Toggle filter feeds by interests"
+                     />
+                   </View>
 
                   <View style={styles.fieldGroup}>
                     <Text style={styles.fieldLabel}>Socials</Text>
@@ -921,5 +940,31 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "#F4E8EA",
     borderRadius: 10,
+  },
+  toggleCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    padding: spacing.md,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    gap: 12,
+  },
+  toggleInfo: {
+    flex: 1,
+  },
+  toggleTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.dark,
+    marginBottom: 4,
+  },
+  toggleSubtitle: {
+    fontSize: 12,
+    color: "#64748B",
+    lineHeight: 16,
   },
 });
