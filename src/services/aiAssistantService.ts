@@ -1,3 +1,4 @@
+import { GoogleGenAI } from "@google/genai";
 import { collection, getDocs } from "firebase/firestore";
 
 import { db } from "../../firebaseConfig";
@@ -19,49 +20,24 @@ let appKnowledgeCache: AppKnowledgeContext | null = null;
 let appKnowledgePromise: Promise<AppKnowledgeContext> | null = null;
 let cachedLastMessage: string | null = null;
 
+const DEFAULT_FLOATING_MESSAGES = [
+  "Need help with your studies?",
+  "Ask me anything about your topics!",
+  "Ready for a quick revision session?",
+  "I'm here to assist your learning!",
+  "Let's boost your grades today!",
+];
+
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
 
 const getAvatarFromData = (data: Record<string, unknown>): string | null => {
   const candidates = [
     data.avatar,
-    data.Avatar,
-    data.avatarUrl,
-    data.avatar_url,
-    data.image,
-    data.imageUrl,
-    data.image_url,
-    data.gif,
-    data.Gif,
-    data.gifUrl,
-    data.gif_url,
-    data.photo,
-    data.photoUrl,
-    data.photo_url,
+    data.gif
   ];
 
   return candidates.find(isNonEmptyString) ?? null;
-};
-
-const normalizeMessages = (data: Record<string, unknown>): string[] => {
-  const explicitMessage = data.message;
-  if (Array.isArray(data.Message)) {
-    return data.Message.filter(isNonEmptyString);
-  }
-
-  if (Array.isArray(explicitMessage)) {
-    return explicitMessage.filter(isNonEmptyString);
-  }
-
-  if (isNonEmptyString(explicitMessage)) {
-    return [explicitMessage];
-  }
-
-  if (isNonEmptyString(data.Message)) {
-    return [data.Message];
-  }
-
-  return [];
 };
 
 const normalizeKnowledgeKey = (value: unknown): string => {
@@ -129,6 +105,65 @@ const extractKnowledgeValue = (
   return null;
 };
 
+async function generateFloatingMessagesFromAI(
+  geminiApiKey: string | null,
+  appOverview: string | null,
+): Promise<string[]> {
+  if (!geminiApiKey) {
+    return DEFAULT_FLOATING_MESSAGES;
+  }
+
+  const prompt = [
+    "You are DigiLearn's AI Assistant for a mobile learning app.",
+    appOverview
+      ? `App Overview:\n${appOverview}`
+      : "DigiLearn is an interactive educational app offering study resources, revision, and academic support for students.",
+    "Generate exactly 5 distinct, engaging, short messages (maximum 60 characters each) to display in a floating assistant speech bubble on the app's home screen.",
+    "The messages should invite students to ask questions, revise, or explore study tools in DigiLearn.",
+    'Return ONLY a valid JSON array containing exactly 5 string items. Example: ["Message 1", "Message 2", "Message 3", "Message 4", "Message 5"]',
+  ].join("\n\n");
+
+  try {
+    const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+    });
+
+    const text = response.text ? response.text.trim() : "";
+    const cleaned = text
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/, "")
+      .replace(/\s*```$/, "")
+      .trim();
+
+    const parsed = JSON.parse(cleaned);
+    if (Array.isArray(parsed)) {
+      const items = parsed
+        .map((item) => (typeof item === "string" ? item.trim() : ""))
+        .filter((item) => item.length > 0);
+
+      if (items.length >= 5) {
+        return items.slice(0, 5);
+      }
+      if (items.length > 0) {
+        const filled = [...items];
+        for (const fallback of DEFAULT_FLOATING_MESSAGES) {
+          if (filled.length >= 5) break;
+          if (!filled.includes(fallback)) {
+            filled.push(fallback);
+          }
+        }
+        return filled.slice(0, 5);
+      }
+    }
+  } catch (error) {
+    console.warn("Unable to generate AI floating messages:", error);
+  }
+
+  return DEFAULT_FLOATING_MESSAGES;
+}
+
 export async function getAssistantContent(
   forceRefresh = false,
 ): Promise<AssistantContent> {
@@ -141,35 +176,36 @@ export async function getAssistantContent(
   }
 
   assistantContentPromise = (async () => {
-    const [assistantSnapshot, configSnapshot] = await Promise.all([
-      getDocs(collection(db, "ai assistant")),
-      getDocs(collection(db, "config")),
-    ]);
+    const [assistantSnapshot, configSnapshot, knowledgeContext] =
+      await Promise.all([
+        getDocs(collection(db, "ai assistant")),
+        getDocs(collection(db, "config")),
+        getDigiLearnKnowledgeContext(forceRefresh),
+      ]);
 
     const assistantEntries = assistantSnapshot.docs
       .map((doc) => {
         const data = doc.data() as Record<string, unknown>;
-        const avatar = getAvatarFromData(data);
-        const messages = normalizeMessages(data);
-
-        return { avatar, messages };
+        return { avatar: getAvatarFromData(data) };
       })
-      .filter((entry) => entry.avatar || entry.messages.length > 0);
+      .filter((entry) => entry.avatar);
 
-    const fallbackAvatar = null;
     const firstAvatar =
-      assistantEntries.find((entry) => entry.avatar)?.avatar ?? fallbackAvatar;
-    const allMessages = assistantEntries.flatMap((entry) => entry.messages);
+      assistantEntries.find((entry) => entry.avatar)?.avatar ?? null;
 
     const geminiApiKey =
       configSnapshot.docs
         .map((doc) => (doc.data() as Record<string, unknown>).gemini_api_key)
         .find(isNonEmptyString) ?? null;
 
+    const messages = await generateFloatingMessagesFromAI(
+      geminiApiKey,
+      knowledgeContext.appOverview,
+    );
+
     const content = {
       avatar: firstAvatar,
-      messages:
-        allMessages.length > 0 ? allMessages : ["Need help with your studies?"],
+      messages,
       geminiApiKey,
     };
 
