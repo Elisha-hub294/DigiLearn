@@ -63,7 +63,7 @@ export default function AssistantScreen() {
 
         const resolvedAvatar = content.avatar ?? fallbackAvatar;
         setAssistantAvatar(resolvedAvatar);
-        setSuggestions(content.messages.slice(0, 6));
+        setSuggestions(content.suggestions ?? content.messages.slice(0, 6));
         setGifUri(typeof resolvedAvatar === "string" ? resolvedAvatar : null);
         const history = await loadConversationHistory();
         if (active) {

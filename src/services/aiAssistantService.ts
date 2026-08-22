@@ -5,6 +5,7 @@ import { db } from "../../firebaseConfig";
 
 export type AssistantContent = {
   messages: string[];
+  suggestions: string[];
   avatar: string | null;
   geminiApiKey: string | null;
 };
@@ -26,6 +27,15 @@ const DEFAULT_FLOATING_MESSAGES = [
   "Ready for a quick revision session?",
   "I'm here to assist your learning!",
   "Let's boost your grades today!",
+];
+
+const DEFAULT_SUGGESTIONS = [
+  "Explain Osmosis",
+  "Revise Quadratic Equations",
+  "Help me prepare for UNEB",
+  "5 Quick Physics Quiz Questions",
+  "Tips for effective study & revision",
+  "Summarize key Biology topics",
 ];
 
 const isNonEmptyString = (value: unknown): value is string =>
@@ -105,12 +115,15 @@ const extractKnowledgeValue = (
   return null;
 };
 
-async function generateFloatingMessagesFromAI(
+async function generateAIContentFromKnowledge(
   geminiApiKey: string | null,
   appOverview: string | null,
-): Promise<string[]> {
+): Promise<{ floatingMessages: string[]; suggestions: string[] }> {
   if (!geminiApiKey) {
-    return DEFAULT_FLOATING_MESSAGES;
+    return {
+      floatingMessages: DEFAULT_FLOATING_MESSAGES,
+      suggestions: DEFAULT_SUGGESTIONS,
+    };
   }
 
   const prompt = [
@@ -118,9 +131,11 @@ async function generateFloatingMessagesFromAI(
     appOverview
       ? `App Overview:\n${appOverview}`
       : "DigiLearn is an interactive educational app offering study resources, revision, and academic support for students.",
-    "Generate exactly 5 distinct, engaging, short messages (maximum 60 characters each) to display in a floating assistant speech bubble on the app's home screen.",
-    "The messages should invite students to ask questions, revise, or explore study tools in DigiLearn.",
-    'Return ONLY a valid JSON array containing exactly 5 string items. Example: ["Message 1", "Message 2", "Message 3", "Message 4", "Message 5"]',
+    "Generate content for the app's AI assistant feature:",
+    "1. Exactly 5 distinct, engaging, short messages (maximum 30 characters each) to display in a floating assistant speech bubble on the app's home screen.",
+    "2. Exactly 6 distinct study prompt chip suggestions (maximum 20 characters each), (actionable question/prompt ideas like 'Explain Osmosis' or 'Revise Quadratic Equations') for students to tap in the assistant chat screen.",
+    'Return ONLY a valid JSON object with keys "floatingMessages" (array of 5 strings) and "suggestions" (array of 6 strings).',
+    'Example format: {"floatingMessages": ["Message 1", "Message 2", "Message 3", "Message 4", "Message 5"], "suggestions": ["Prompt 1", "Prompt 2", "Prompt 3", "Prompt 4", "Prompt 5", "Prompt 6"]}',
   ].join("\n\n");
 
   try {
@@ -138,30 +153,48 @@ async function generateFloatingMessagesFromAI(
       .trim();
 
     const parsed = JSON.parse(cleaned);
-    if (Array.isArray(parsed)) {
-      const items = parsed
-        .map((item) => (typeof item === "string" ? item.trim() : ""))
-        .filter((item) => item.length > 0);
+    if (parsed && typeof parsed === "object") {
+      let floatingMessages: string[] = DEFAULT_FLOATING_MESSAGES;
+      let suggestions: string[] = DEFAULT_SUGGESTIONS;
 
-      if (items.length >= 5) {
-        return items.slice(0, 5);
-      }
-      if (items.length > 0) {
-        const filled = [...items];
-        for (const fallback of DEFAULT_FLOATING_MESSAGES) {
-          if (filled.length >= 5) break;
-          if (!filled.includes(fallback)) {
-            filled.push(fallback);
+      if (Array.isArray(parsed.floatingMessages)) {
+        const items = parsed.floatingMessages
+          .map((item: unknown) => (typeof item === "string" ? item.trim() : ""))
+          .filter((item: string) => item.length > 0);
+        if (items.length > 0) {
+          const filled = [...items];
+          for (const fallback of DEFAULT_FLOATING_MESSAGES) {
+            if (filled.length >= 5) break;
+            if (!filled.includes(fallback)) filled.push(fallback);
           }
+          floatingMessages = filled.slice(0, 5);
         }
-        return filled.slice(0, 5);
       }
+
+      if (Array.isArray(parsed.suggestions)) {
+        const items = parsed.suggestions
+          .map((item: unknown) => (typeof item === "string" ? item.trim() : ""))
+          .filter((item: string) => item.length > 0);
+        if (items.length > 0) {
+          const filled = [...items];
+          for (const fallback of DEFAULT_SUGGESTIONS) {
+            if (filled.length >= 6) break;
+            if (!filled.includes(fallback)) filled.push(fallback);
+          }
+          suggestions = filled.slice(0, 6);
+        }
+      }
+
+      return { floatingMessages, suggestions };
     }
   } catch (error) {
-    console.warn("Unable to generate AI floating messages:", error);
+    console.warn("Unable to generate AI assistant content:", error);
   }
 
-  return DEFAULT_FLOATING_MESSAGES;
+  return {
+    floatingMessages: DEFAULT_FLOATING_MESSAGES,
+    suggestions: DEFAULT_SUGGESTIONS,
+  };
 }
 
 export async function getAssistantContent(
@@ -198,14 +231,15 @@ export async function getAssistantContent(
         .map((doc) => (doc.data() as Record<string, unknown>).gemini_api_key)
         .find(isNonEmptyString) ?? null;
 
-    const messages = await generateFloatingMessagesFromAI(
+    const { floatingMessages, suggestions } = await generateAIContentFromKnowledge(
       geminiApiKey,
       knowledgeContext.appOverview,
     );
 
     const content = {
       avatar: firstAvatar,
-      messages,
+      messages: floatingMessages,
+      suggestions,
       geminiApiKey,
     };
 
