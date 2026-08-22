@@ -1,6 +1,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useRef } from "react";
 import {
+  BackHandler,
   FlatList,
   Pressable,
   ScrollView,
@@ -77,6 +78,31 @@ export default function SearchScreen() {
     }, [setQuery]),
   );
 
+  // Intercept the Android system/gesture back button so it runs the same
+  // logic as the custom back arrow (clear query + honour returnTo param).
+  useFocusEffect(
+    useCallback(() => {
+      const handleSystemBack = () => {
+        setQuery("");
+        if (params.returnTo) {
+          router.replace(params.returnTo as never);
+        } else if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace("/" as never);
+        }
+        return true; // prevent default back behaviour
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        handleSystemBack,
+      );
+
+      return () => subscription.remove();
+    }, [params.returnTo, router, setQuery]),
+  );
+
   // Responsive max content width calculation
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
@@ -101,7 +127,7 @@ export default function SearchScreen() {
             recordUserActivity(auth.currentUser.uid, "lesson", item.id);
           }
           router.push({
-            pathname: "/lesson-player",
+            pathname: "./lesson-player",
             params: {
               id: item.id,
               title: item.title,
@@ -122,7 +148,7 @@ export default function SearchScreen() {
             recordUserActivity(auth.currentUser.uid, "book", item.id);
           }
           router.push({
-            pathname: "/book-preview",
+            pathname: "./book-preview",
             params: {
               id: item.id,
               title: item.title,
@@ -134,7 +160,7 @@ export default function SearchScreen() {
 
         case "teacher":
           router.push({
-            pathname: "/teacher-profile",
+            pathname: "./teacher-profile",
             params: {
               id: item.id,
               name: item.title,
@@ -148,7 +174,7 @@ export default function SearchScreen() {
           }
           if (item.doc) {
             router.push({
-              pathname: "/pdf-reader",
+              pathname: "./pdf-reader",
               params: {
                 uri: encodeURIComponent(item.doc),
                 title: item.title,
@@ -156,7 +182,7 @@ export default function SearchScreen() {
             } as never);
           } else {
             router.push({
-              pathname: "/page-preview",
+              pathname: "./page-preview",
               params: { id: item.id },
             } as never);
           }
@@ -168,7 +194,7 @@ export default function SearchScreen() {
             recordUserActivity(auth.currentUser.uid, "page", item.id);
           }
           router.push({
-            pathname: "/page-preview",
+            pathname: "./page-preview",
             params: { id: item.id },
           } as never);
           break;

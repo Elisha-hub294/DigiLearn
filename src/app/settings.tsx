@@ -1,7 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   BackHandler,
   Pressable,
@@ -21,6 +21,7 @@ import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { clearGuestMode } from "../services/guestService";
+import { isAssistantEnabled, setAssistantEnabled } from "../services/aiAssistantService";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -32,8 +33,28 @@ export default function SettingsScreen() {
 
   const [pushEnabled, setPushEnabled] = useState(true);
   const [remindersEnabled, setRemindersEnabled] = useState(true);
+  const [assistantEnabled, setAssistantEnabledState] = useState(true);
   const [isLogoutDialogVisible, setLogoutDialogVisible] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadSettings = async () => {
+      const enabled = await isAssistantEnabled();
+      if (!cancelled) {
+        setAssistantEnabledState(enabled);
+      }
+    };
+    loadSettings();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleToggleAssistant = useCallback(async (value: boolean) => {
+    setAssistantEnabledState(value);
+    await setAssistantEnabled(value);
+  }, []);
 
   const goToAccount = useCallback(() => {
     if (profile?.type === "teacher") {
@@ -162,6 +183,25 @@ export default function SettingsScreen() {
                 }
                 showSeparator={false}
                 onPress={() => setRemindersEnabled((s) => !s)}
+              />
+            </SettingsSection>
+
+            {/* DigiLearn Assistant */}
+            <View style={{ height: spacing.xxl }} />
+            <Text style={styles.sectionTitle}>DigiLearn Assistant</Text>
+            <SettingsSection>
+              <SettingsRow
+                icon="cpu"
+                title="AI Assistant Features"
+                right={
+                  <Switch
+                    value={assistantEnabled}
+                    onValueChange={handleToggleAssistant}
+                    accessibilityLabel="Toggle AI assistant features"
+                  />
+                }
+                showSeparator={false}
+                onPress={() => handleToggleAssistant(!assistantEnabled)}
               />
             </SettingsSection>
 

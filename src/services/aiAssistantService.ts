@@ -1,7 +1,30 @@
 import { GoogleGenAI } from "@google/genai";
 import { collection, getDocs } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { db } from "../../firebaseConfig";
+
+const ASSISTANT_ENABLED_KEY = "digilearn.assistant.enabled";
+
+export async function isAssistantEnabled(): Promise<boolean> {
+  try {
+    const value = await AsyncStorage.getItem(ASSISTANT_ENABLED_KEY);
+    if (value === null) {
+      return true; // Enabled by default
+    }
+    return value === "true";
+  } catch {
+    return true;
+  }
+}
+
+export async function setAssistantEnabled(enabled: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(ASSISTANT_ENABLED_KEY, enabled ? "true" : "false");
+  } catch (error) {
+    console.warn("Unable to save assistant enabled state", error);
+  }
+}
 
 export type AssistantContent = {
   messages: string[];

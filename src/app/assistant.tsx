@@ -21,7 +21,7 @@ import { MessageComposer } from "../components/assistant/MessageComposer";
 import { PromptChip } from "../components/assistant/PromptChip";
 import { TypingIndicator } from "../components/assistant/TypingIndicator";
 import { colors, radius, spacing } from "../constants/theme";
-import { getAssistantContent } from "../services/aiAssistantService";
+import { getAssistantContent, isAssistantEnabled } from "../services/aiAssistantService";
 import {
   generateAssistantReply,
   getCachedConversations,
@@ -65,6 +65,14 @@ export default function AssistantScreen() {
 
     const loadScreenData = async () => {
       try {
+        const enabled = await isAssistantEnabled();
+        if (!enabled) {
+          if (active) {
+            router.replace("/" as never);
+          }
+          return;
+        }
+
         const [content, cachedConversations] = await Promise.all([
           getAssistantContent(true),
           getCachedConversations(),

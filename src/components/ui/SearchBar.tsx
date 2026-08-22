@@ -56,9 +56,9 @@ export function SearchBar({
       onPress();
     } else {
       router.push({
-        pathname: "/search",
+        pathname: "/(search)/search",
         params: {
-          ...(pathname && pathname !== "/search" ? { returnTo: pathname } : {}),
+          ...(pathname && pathname !== "/(search)/search" ? { returnTo: pathname } : {}),
           ...(category ? { category } : {}),
         },
       } as never);

@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AppState,
   Pressable,
@@ -28,6 +28,7 @@ import {
   getAssistantContent,
   getCachedAssistantMessage,
   setCachedAssistantMessage,
+  isAssistantEnabled,
 } from "../../services/aiAssistantService";
 
 const TYPING_INTERVAL_MS = 32;
@@ -43,6 +44,21 @@ export function FloatingAssistantButton() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const [isEnabled, setIsEnabled] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      isAssistantEnabled().then((val) => {
+        if (!cancelled) {
+          setIsEnabled(val);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
   const [messages, setMessages] = useState<string[]>([]);
   const [activeMessage, setActiveMessage] = useState(
     "Need help with your studies?",
@@ -244,7 +260,9 @@ export function FloatingAssistantButton() {
     }
   };
 
-  const safeBottom = insets.bottom;
+  if (!isEnabled) {
+    return null;
+  }
 
   return (
     <Animated.View
@@ -252,7 +270,7 @@ export function FloatingAssistantButton() {
       exiting={FadeOut.duration(220)}
       style={[
         styles.wrapper,
-        { bottom: safeBottom, right: 5, maxWidth: width - 32 },
+        { bottom: insets.bottom, right: 5, maxWidth: width - 32 },
       ]}
     >
       <Animated.View style={[styles.container, animatedContainerStyle]}>

@@ -294,7 +294,7 @@ export function BookPreviewScreen() {
         if (router.canGoBack()) {
           router.back();
         } else {
-          router.replace("/search" as any);
+          router.replace("/(search)/search" as any);
         }
         break;
       default:
