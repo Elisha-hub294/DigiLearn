@@ -14,21 +14,21 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BookCarousel } from "../components/home/BookCarousel";
-import { CoursesCarousel } from "../components/home/CoursesCarousel";
-import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
-import { FloatingAssistantButton } from "../components/home/FloatingAssistantButton";
-import { TeacherPostCard } from "../components/home/TeacherPostCard";
-import { TopicalNotesSlider } from "../components/home/TopicalNotesSlider";
+import { BookCarousel } from "../../components/home/BookCarousel";
+import { CoursesCarousel } from "../../components/home/CoursesCarousel";
+import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
+import { FloatingAssistantButton } from "../../components/home/FloatingAssistantButton";
+import { TeacherPostCard } from "../../components/home/TeacherPostCard";
+import { TopicalNotesSlider } from "../../components/home/TopicalNotesSlider";
 
-import { auth } from "../../firebaseConfig";
-import { Header } from "../components/ui/Header";
-import { SearchBar } from "../components/ui/SearchBar";
-import { getHorizontalPadding } from "../constants/layout";
-import { colors, spacing } from "../constants/theme";
-import { clearGuestMode, isGuestMode } from "../services/guestService";
-import { getUserOnboardingState } from "../services/userProfile";
-import LoadingScreen from "./loading";
+import { auth } from "../../../firebaseConfig";
+import { Header } from "../../components/ui/Header";
+import { SearchBar } from "../../components/ui/SearchBar";
+import { getHorizontalPadding } from "../../constants/layout";
+import { colors, spacing } from "../../constants/theme";
+import { clearGuestMode, isGuestMode } from "../../services/guestService";
+import { getUserOnboardingState } from "../../services/userProfile";
+import LoadingScreen from "../loading";
 
 // Deterministic Pseudo-Random Number Generator (Mulberry32)
 function mulberry32(seed: number) {

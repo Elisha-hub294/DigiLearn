@@ -10,19 +10,19 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { db } from "../../firebaseConfig";
-import { getHorizontalPadding } from "../constants/layout";
-import { colors, spacing } from "../constants/theme";
+import { db } from "../../../firebaseConfig";
+import { getHorizontalPadding } from "../../constants/layout";
+import { colors, spacing } from "../../constants/theme";
 
 type FirestoreLesson = {
   id?: string;
@@ -138,8 +138,7 @@ export default function VideosScreen() {
   const isTablet = width >= 768;
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
-  const contentWidth =
-    Math.min(width, contentMaxWidth) - horizontalPadding * 2;
+  const contentWidth = Math.min(width, contentMaxWidth) - horizontalPadding * 2;
   const cardWidth = getTrendingCardWidth(width, contentWidth);
 
   useEffect(() => {
@@ -218,7 +217,7 @@ export default function VideosScreen() {
         }}
       />
     ),
-    [subject, loading, trendingLessons, cardWidth]
+    [subject, loading, trendingLessons, cardWidth],
   );
 
   return (

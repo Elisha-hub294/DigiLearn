@@ -1,31 +1,31 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
-import { AddItemModal, FormType } from "../components/library/AddItemModal";
-import { HeroBookCarousel } from "../components/library/HeroBookCarousel";
-import { PaperCarousel } from "../components/library/PaperCarousel";
-import { Header } from "../components/ui/Header";
-import { SearchBar } from "../components/ui/SearchBar";
-import { SectionHeader } from "../components/ui/SectionHeader";
-import { getHorizontalPadding } from "../constants/layout";
-import { colors, radius, spacing } from "../constants/theme";
-import { useProfile } from "../contexts/ProfileContext";
-import { PaperSection, useLibraryData } from "../hooks/useLibraryData";
+import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
+import { AddItemModal, FormType } from "../../components/library/AddItemModal";
+import { HeroBookCarousel } from "../../components/library/HeroBookCarousel";
+import { PaperCarousel } from "../../components/library/PaperCarousel";
+import { Header } from "../../components/ui/Header";
+import { SearchBar } from "../../components/ui/SearchBar";
+import { SectionHeader } from "../../components/ui/SectionHeader";
+import { getHorizontalPadding } from "../../constants/layout";
+import { colors, radius, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
+import { PaperSection, useLibraryData } from "../../hooks/useLibraryData";
 import {
-  matchesUserInterests,
-  shouldFilterByInterests,
-} from "../utils/interestFilter";
+    matchesUserInterests,
+    shouldFilterByInterests,
+} from "../../utils/interestFilter";
 
 const categories = [
   { key: "pages", label: "Pages" },
@@ -59,7 +59,7 @@ export default function LibraryScreen() {
   const filteredPaperCollections = useMemo<PaperSection[]>(() => {
     const category = categories.find((item) => item.key === selectedCategory);
     if (!category || !("paperType" in category)) return [];
-    
+
     let collections = paperCollections.filter(
       (section) =>
         section.type.trim().toLowerCase() === category.paperType.toLowerCase(),
@@ -183,7 +183,7 @@ export default function LibraryScreen() {
                 >
                   <SectionHeader
                     title={section.title}
-                    onSeeAll={() => { }}
+                    onSeeAll={() => {}}
                     actionLabel="See all"
                   />
                   <PaperCarousel items={section.items} />

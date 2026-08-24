@@ -9,13 +9,13 @@ import {
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { DownloadedResources } from "../components/profile/DownloadedResources";
-import { InterestsCarousel } from "../components/profile/InterestsCarousel";
-import { ProfileHeader } from "../components/profile/ProfileHeader";
-import { SavedResources } from "../components/profile/SavedResources";
-import { UserInfoCard } from "../components/profile/UserInfoCard";
-import { colors, spacing } from "../constants/theme";
-import { useProfile } from "../contexts/ProfileContext";
+import { DownloadedResources } from "../../components/profile/DownloadedResources";
+import { InterestsCarousel } from "../../components/profile/InterestsCarousel";
+import { ProfileHeader } from "../../components/profile/ProfileHeader";
+import { SavedResources } from "../../components/profile/SavedResources";
+import { UserInfoCard } from "../../components/profile/UserInfoCard";
+import { colors, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
 const paddingFor = (width: number) =>
   width >= 1200
     ? 150
