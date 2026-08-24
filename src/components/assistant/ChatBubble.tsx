@@ -1,5 +1,4 @@
 import { Image } from "expo-image";
-import React from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 
 import fallbackAvatar from "../../../assets/images/panda.png";
@@ -8,24 +7,81 @@ import { colors, radius, spacing } from "../../constants/theme";
 // ─── Math & Equation Formatting Helper ──────────────────────────────────────
 
 const SUPER_MAP: Record<string, string> = {
-  "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴",
-  "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹",
-  "+": "⁺", "-": "⁻", "=": "⁼", "(": "⁽", ")": "⁾",
-  "a": "ᵃ", "b": "ᵇ", "c": "ᶜ", "d": "ᵈ", "e": "ᵉ",
-  "f": "ᶠ", "g": "ᵍ", "h": "ʰ", "i": "ⁱ", "j": "ʲ",
-  "k": "ᵏ", "l": "ˡ", "m": "ᵐ", "n": "ⁿ", "o": "ᵒ",
-  "p": "ᵖ", "r": "ʳ", "s": "ˢ", "t": "ᵗ", "u": "ᵘ",
-  "v": "ᵛ", "w": "ʷ", "x": "ˣ", "y": "ʸ", "z": "ᶻ",
+  "0": "⁰",
+  "1": "¹",
+  "2": "²",
+  "3": "³",
+  "4": "⁴",
+  "5": "⁵",
+  "6": "⁶",
+  "7": "⁷",
+  "8": "⁸",
+  "9": "⁹",
+  "+": "⁺",
+  "-": "⁻",
+  "=": "⁼",
+  "(": "⁽",
+  ")": "⁾",
+  a: "ᵃ",
+  b: "ᵇ",
+  c: "ᶜ",
+  d: "ᵈ",
+  e: "ᵉ",
+  f: "ᶠ",
+  g: "ᵍ",
+  h: "ʰ",
+  i: "ⁱ",
+  j: "ʲ",
+  k: "ᵏ",
+  l: "ˡ",
+  m: "ᵐ",
+  n: "ⁿ",
+  o: "ᵒ",
+  p: "ᵖ",
+  r: "ʳ",
+  s: "ˢ",
+  t: "ᵗ",
+  u: "ᵘ",
+  v: "ᵛ",
+  w: "ʷ",
+  x: "ˣ",
+  y: "ʸ",
+  z: "ᶻ",
 };
 
 const SUB_MAP: Record<string, string> = {
-  "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄",
-  "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉",
-  "+": "₊", "-": "₋", "=": "₌", "(": "₍", ")": "₎",
-  "a": "ₐ", "e": "ₑ", "h": "ₕ", "i": "ᵢ", "j": "ⱼ",
-  "k": "ₖ", "l": "ₗ", "m": "ₘ", "n": "ₙ", "o": "ₒ",
-  "p": "ₚ", "r": "ᵣ", "s": "ₛ", "t": "ₜ", "u": "ᵤ",
-  "v": "ᵥ", "x": "ₓ",
+  "0": "₀",
+  "1": "₁",
+  "2": "₂",
+  "3": "₃",
+  "4": "₄",
+  "5": "₅",
+  "6": "₆",
+  "7": "₇",
+  "8": "₈",
+  "9": "₉",
+  "+": "₊",
+  "-": "₋",
+  "=": "₌",
+  "(": "₍",
+  ")": "₎",
+  a: "ₐ",
+  e: "ₑ",
+  h: "ₕ",
+  i: "ᵢ",
+  j: "ⱼ",
+  k: "ₖ",
+  l: "ₗ",
+  m: "ₘ",
+  n: "ₙ",
+  o: "ₒ",
+  p: "ₚ",
+  r: "ᵣ",
+  s: "ₛ",
+  t: "ₜ",
+  u: "ᵤ",
+  v: "ᵥ",
+  x: "ₓ",
 };
 
 function toSuperscript(str: string): string {
@@ -85,7 +141,9 @@ function FractionView({ num, den }: { num: string; den: string }) {
     <View style={fractionStyles.container}>
       <Text style={fractionStyles.numerator}>{convertIndices(num.trim())}</Text>
       <View style={fractionStyles.line} />
-      <Text style={fractionStyles.denominator}>{convertIndices(den.trim())}</Text>
+      <Text style={fractionStyles.denominator}>
+        {convertIndices(den.trim())}
+      </Text>
     </View>
   );
 }
@@ -112,7 +170,10 @@ function parseMathTokens(formula: string): MathToken[] {
 
   while ((match = pattern.exec(cleaned)) !== null) {
     if (match.index > lastIndex) {
-      tokens.push({ kind: "text", text: cleaned.slice(lastIndex, match.index) });
+      tokens.push({
+        kind: "text",
+        text: cleaned.slice(lastIndex, match.index),
+      });
     }
 
     if (match[1] !== undefined && match[2] !== undefined) {
@@ -210,7 +271,10 @@ function parseInline(line: string): Segment[] {
 
   while ((match = pattern.exec(line)) !== null) {
     if (match.index > lastIndex) {
-      segments.push({ type: "text", value: line.slice(lastIndex, match.index) });
+      segments.push({
+        type: "text",
+        value: line.slice(lastIndex, match.index),
+      });
     }
     const full = match[0];
     if (full.startsWith("***")) {
@@ -234,21 +298,47 @@ function parseInline(line: string): Segment[] {
   return segments;
 }
 
-function InlineText({ segments, baseStyle }: { segments: Segment[]; baseStyle: object }) {
+function InlineText({
+  segments,
+  baseStyle,
+}: {
+  segments: Segment[];
+  baseStyle: object;
+}) {
   return (
     <Text style={baseStyle}>
       {segments.map((seg, i) => {
         switch (seg.type) {
           case "bold":
-            return <Text key={i} style={inlineStyles.bold}>{convertIndices(seg.value)}</Text>;
+            return (
+              <Text key={i} style={inlineStyles.bold}>
+                {convertIndices(seg.value)}
+              </Text>
+            );
           case "italic":
-            return <Text key={i} style={inlineStyles.italic}>{convertIndices(seg.value)}</Text>;
+            return (
+              <Text key={i} style={inlineStyles.italic}>
+                {convertIndices(seg.value)}
+              </Text>
+            );
           case "bolditalic":
-            return <Text key={i} style={inlineStyles.boldItalic}>{convertIndices(seg.value)}</Text>;
+            return (
+              <Text key={i} style={inlineStyles.boldItalic}>
+                {convertIndices(seg.value)}
+              </Text>
+            );
           case "code":
-            return <Text key={i} style={inlineStyles.inlineCode}>{seg.value}</Text>;
+            return (
+              <Text key={i} style={inlineStyles.inlineCode}>
+                {seg.value}
+              </Text>
+            );
           case "math":
-            return <Text key={i} style={inlineStyles.mathInline}>{convertIndices(seg.value)}</Text>;
+            return (
+              <Text key={i} style={inlineStyles.mathInline}>
+                {convertIndices(seg.value)}
+              </Text>
+            );
           default:
             return <Text key={i}>{convertIndices(seg.value)}</Text>;
         }
@@ -279,10 +369,21 @@ function parseBlocks(markdown: string): Block[] {
     // Math block ($$ ... $$ or \[ ... \])
     if (line.trim().startsWith("$$") || line.trim().startsWith("\\[")) {
       const codeLines: string[] = [];
-      let inlineContent = line.trim().replace(/^(\$\$|\\\[)/, "").replace(/(\$\$|\\\])$/, "").trim();
+      let inlineContent = line
+        .trim()
+        .replace(/^(\$\$|\\\[)/, "")
+        .replace(/(\$\$|\\\])$/, "")
+        .trim();
 
-      if (inlineContent && (line.trim().endsWith("$$") || line.trim().endsWith("\\]")) && line.trim().length > 4) {
-        blocks.push({ kind: "mathblock", formula: formatMathString(inlineContent) });
+      if (
+        inlineContent &&
+        (line.trim().endsWith("$$") || line.trim().endsWith("\\]")) &&
+        line.trim().length > 4
+      ) {
+        blocks.push({
+          kind: "mathblock",
+          formula: formatMathString(inlineContent),
+        });
         i++;
         continue;
       }
@@ -297,7 +398,10 @@ function parseBlocks(markdown: string): Block[] {
         i++;
       }
       if (i < lines.length) {
-        const endLine = lines[i].trim().replace(/(\$\$|\\\])$/, "").trim();
+        const endLine = lines[i]
+          .trim()
+          .replace(/(\$\$|\\\])$/, "")
+          .trim();
         if (endLine) codeLines.push(endLine);
         i++;
       }
@@ -331,7 +435,11 @@ function parseBlocks(markdown: string): Block[] {
     // Headings
     const headingMatch = line.match(/^(#{1,6})\s+(.+)/);
     if (headingMatch) {
-      blocks.push({ kind: "heading", level: headingMatch[1].length, text: headingMatch[2] });
+      blocks.push({
+        kind: "heading",
+        level: headingMatch[1].length,
+        text: headingMatch[2],
+      });
       i++;
       continue;
     }
@@ -347,7 +455,11 @@ function parseBlocks(markdown: string): Block[] {
     // Numbered list
     const numberedMatch = line.match(/^[\s]*(\d+)\.\s+(.+)/);
     if (numberedMatch) {
-      blocks.push({ kind: "numbered", n: parseInt(numberedMatch[1], 10), text: numberedMatch[2] });
+      blocks.push({
+        kind: "numbered",
+        n: parseInt(numberedMatch[1], 10),
+        text: numberedMatch[2],
+      });
       i++;
       continue;
     }
@@ -407,7 +519,10 @@ function MarkdownView({ text }: { text: string }) {
               <View key={idx} style={mdStyles.listRow}>
                 <Text style={mdStyles.bullet}>•</Text>
                 <View style={mdStyles.listContent}>
-                  <InlineText segments={parseInline(block.text)} baseStyle={mdStyles.bodyText} />
+                  <InlineText
+                    segments={parseInline(block.text)}
+                    baseStyle={mdStyles.bodyText}
+                  />
                 </View>
               </View>
             );
@@ -417,7 +532,10 @@ function MarkdownView({ text }: { text: string }) {
               <View key={idx} style={mdStyles.listRow}>
                 <Text style={mdStyles.bullet}>{block.n}.</Text>
                 <View style={mdStyles.listContent}>
-                  <InlineText segments={parseInline(block.text)} baseStyle={mdStyles.bodyText} />
+                  <InlineText
+                    segments={parseInline(block.text)}
+                    baseStyle={mdStyles.bodyText}
+                  />
                 </View>
               </View>
             );
@@ -426,7 +544,7 @@ function MarkdownView({ text }: { text: string }) {
             return (
               <View key={idx} style={mdStyles.mathCard}>
                 <View style={mdStyles.mathHeader}>
-                  <Text style={mdStyles.mathBadge}>FORMULA / EQUATION</Text>
+                  <Text style={mdStyles.mathBadge}>FORMULA</Text>
                 </View>
                 <MathFormulaView formula={block.formula} />
               </View>
@@ -446,7 +564,10 @@ function MarkdownView({ text }: { text: string }) {
           default:
             return (
               <View key={idx} style={mdStyles.para}>
-                <InlineText segments={parseInline(block.text)} baseStyle={mdStyles.bodyText} />
+                <InlineText
+                  segments={parseInline(block.text)}
+                  baseStyle={mdStyles.bodyText}
+                />
               </View>
             );
         }
@@ -480,7 +601,12 @@ export function ChatBubble({
         </View>
       )}
 
-      <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
+      <View
+        style={[
+          styles.bubble,
+          isUser ? styles.userBubble : styles.assistantBubble,
+        ]}
+      >
         {isUser ? (
           <Text style={styles.userText}>{message}</Text>
         ) : (

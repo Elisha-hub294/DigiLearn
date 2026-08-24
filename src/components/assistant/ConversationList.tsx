@@ -46,7 +46,9 @@ export function ConversationList({
 }) {
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.title}>Recent conversations</Text>
+      {conversations.length > 0 ? (
+        <Text style={styles.title}>Recent conversations</Text>
+      ) : null}
       {conversations.map((conversation) => (
         <Pressable
           key={conversation.id}

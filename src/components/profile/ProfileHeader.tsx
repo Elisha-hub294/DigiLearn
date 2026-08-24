@@ -62,7 +62,7 @@ const s = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: colors.white,
   },
-  banner: { height: 132, backgroundColor: colors.primary },
+  banner: { height: 132, backgroundColor: colors.primaryDark },
   settings: {
     position: "absolute",
     right: 14,
@@ -92,14 +92,14 @@ const s = StyleSheet.create({
   avatar: { width: "100%", height: "100%", borderRadius: 999 },
   name: {
     fontSize: 25,
-    fontWeight: "600",
+    fontWeight: "700",
     color: colors.text,
     textAlign: "center",
   },
   bio: {
     color: colors.subtitle,
     lineHeight: 20,
-    fontSize: 14,
+    fontSize: 15,
     textAlign: "center",
     marginTop: 7,
   },

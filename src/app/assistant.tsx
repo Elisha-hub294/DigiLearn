@@ -1,7 +1,13 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  BackHandler,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -21,10 +27,12 @@ import { MessageComposer } from "../components/assistant/MessageComposer";
 import { PromptChip } from "../components/assistant/PromptChip";
 import { TypingIndicator } from "../components/assistant/TypingIndicator";
 import { colors, radius, spacing } from "../constants/theme";
-import { getAssistantContent, isAssistantEnabled } from "../services/aiAssistantService";
+import {
+  getAssistantContent,
+  isAssistantEnabled,
+} from "../services/aiAssistantService";
 import {
   generateAssistantReply,
-  getCachedConversations,
   loadConversationHistory,
   persistConversation,
   type ChatMessage,
@@ -33,6 +41,7 @@ import {
 
 export default function AssistantScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const params = useLocalSearchParams<{ initialPrompt?: string }>();
   const [isLoading, setIsLoading] = useState(true);
   const [gifUri, setGifUri] = useState<string | null>(null);
@@ -73,10 +82,7 @@ export default function AssistantScreen() {
           return;
         }
 
-        const [content, cachedConversations] = await Promise.all([
-          getAssistantContent(true),
-          getCachedConversations(),
-        ]);
+        const content = await getAssistantContent(true);
         if (!active) {
           return;
         }
@@ -88,9 +94,6 @@ export default function AssistantScreen() {
         const history = await loadConversationHistory();
         if (active) {
           setConversations(history);
-        }
-        if (cachedConversations.length > 0 && active) {
-          setConversations(cachedConversations);
         }
       } catch (error) {
         if (active) {
@@ -221,13 +224,39 @@ export default function AssistantScreen() {
       return;
     }
 
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-
-    router.replace("/");
+    router.back();
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      const handleSystemBack = () => {
+        if (!hasStartedConversation) {
+          return false;
+        }
+
+        handleBackToMain();
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        handleSystemBack,
+      );
+      const unsubscribe = navigation.addListener("beforeRemove", (event) => {
+        if (!hasStartedConversation) {
+          return;
+        }
+
+        event.preventDefault();
+        handleBackToMain();
+      });
+
+      return () => {
+        subscription.remove();
+        unsubscribe();
+      };
+    }, [hasStartedConversation, navigation]),
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>

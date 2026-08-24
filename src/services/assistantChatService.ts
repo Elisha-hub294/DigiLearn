@@ -1,19 +1,19 @@
 import { GoogleGenAI } from "@google/genai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  addDoc,
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
+    collection,
+    doc,
+    getDocs,
+    orderBy,
+    query,
+    serverTimestamp,
+    setDoc,
 } from "firebase/firestore";
 
-import { db } from "../../firebaseConfig";
+import { auth, db } from "../../firebaseConfig";
 import {
-  getAssistantContent,
-  getDigiLearnKnowledgeContext,
+    getAssistantContent,
+    getDigiLearnKnowledgeContext,
 } from "./aiAssistantService";
 
 export type ChatMessage = {
@@ -36,6 +36,13 @@ const STORAGE_KEY = "digilearn.assistant.conversations";
 
 const ASSISTANT_UNAVAILABLE_MESSAGE =
   "DigiLearn AI couldn't respond right now. Please try again in a moment.";
+
+function getConversationCollection() {
+  const user = auth.currentUser;
+  return user
+    ? collection(db, "users", user.uid, "assistant_conversations")
+    : null;
+}
 
 function getAssistantErrorMessage(error: unknown) {
   const detail = error instanceof Error ? error.message : String(error);
@@ -105,16 +112,17 @@ export async function getCachedConversations(): Promise<ConversationRecord[]> {
 }
 
 export async function loadConversationHistory(): Promise<ConversationRecord[]> {
+  await auth.authStateReady();
+  const conversationCollection = getConversationCollection();
+
+  if (!conversationCollection) {
+    return getCachedConversations();
+  }
+
   try {
-    const [cached, firestoreSnapshots] = await Promise.all([
-      getCachedConversations(),
-      getDocs(
-        query(
-          collection(db, "assistant_conversations"),
-          orderBy("updatedAt", "desc"),
-        ),
-      ),
-    ]);
+    const firestoreSnapshots = await getDocs(
+      query(conversationCollection, orderBy("updatedAt", "desc")),
+    );
 
     const remote: ConversationRecord[] = firestoreSnapshots.docs.map((doc) => {
       const data = doc.data() as Record<string, unknown>;
@@ -135,55 +143,48 @@ export async function loadConversationHistory(): Promise<ConversationRecord[]> {
       };
     });
 
-    const merged = [
-      ...remote,
-      ...cached.filter((entry) => !remote.some((item) => item.id === entry.id)),
-    ];
-    return merged.slice(0, 8).map((entry) => ({
+    return remote.slice(0, 8).map((entry) => ({
       ...entry,
       updatedAtDisplay: toDisplayDate(entry.updatedAt),
     }));
   } catch (error) {
     console.warn("Unable to load conversations", error);
-    return getCachedConversations();
+    return [];
   }
 }
 
 export async function persistConversation(conversation: ConversationRecord) {
+  await auth.authStateReady();
+  const conversationCollection = getConversationCollection();
+
+  if (!conversationCollection) {
+    await saveConversationLocally(conversation);
+    return conversation;
+  }
+
   try {
-    const docRef = await addDoc(collection(db, "assistant_conversations"), {
+    const conversationRef = doc(
+      conversationCollection,
+      conversation.id.startsWith("local-") ? undefined : conversation.id,
+    );
+    const conversationId = conversationRef.id;
+
+    await setDoc(conversationRef, {
       title: conversation.title,
       firstMessage: conversation.firstMessage,
-      createdAt: serverTimestamp(),
+      createdAt: conversation.createdAt,
       updatedAt: serverTimestamp(),
       messages: conversation.messages,
     });
 
-    await updateDoc(docRef, {
-      updatedAt: serverTimestamp(),
-    });
-
-    await saveConversationLocally({ ...conversation, id: docRef.id });
-    return { ...conversation, id: docRef.id };
+    return { ...conversation, id: conversationId };
   } catch (error) {
-    await saveConversationLocally(conversation);
     return conversation;
   }
 }
 
 export async function updateConversation(conversation: ConversationRecord) {
-  try {
-    if (conversation.id.startsWith("local-")) {
-      await saveConversationLocally(conversation);
-      return conversation;
-    }
-
-    await saveConversationLocally(conversation);
-    return conversation;
-  } catch (error) {
-    await saveConversationLocally(conversation);
-    return conversation;
-  }
+  return persistConversation(conversation);
 }
 
 export async function generateAssistantReply(
