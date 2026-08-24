@@ -15,6 +15,7 @@ type PaperItem = {
 
 type PaperCarouselProps = {
   items: PaperItem[];
+  onSeeAll?: () => void;
 };
 
 export function PaperCarousel({ items }: PaperCarouselProps) {

@@ -22,8 +22,8 @@ import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
-import { SectionHeader } from "../ui/SectionHeader";
 import { resolveVideoImageSource } from "../../utils/videoUtils";
+import { SectionHeader } from "../ui/SectionHeader";
 
 const AUTO_SCROLL_INTERVAL_MS = 4500;
 const RESUME_DELAY_MS = 5000;
@@ -187,7 +187,7 @@ export const CoursesCarousel = () => {
     <Animated.View entering={FadeInUp.duration(540)}>
       <SectionHeader
         title="Trending Lessons"
-        onSeeAll={() => router.push("/videos?scrollTo=trending")}
+        onSeeAll={() => router.push("/see-all?type=courses")}
       />
       <FlatList
         ref={listRef}

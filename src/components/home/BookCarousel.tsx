@@ -137,7 +137,7 @@ export const BookCarousel = () => {
     <Animated.View entering={FadeInUp.duration(680)} style={styles.container}>
       <SectionHeader
         title="Books"
-        onSeeAll={() => router.push("/library")}
+        onSeeAll={() => router.push("/see-all?type=books")}
       />
       <FlatList
         horizontal

@@ -1,4 +1,5 @@
 import { Feather as Icon } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
     Pressable,
@@ -34,14 +35,15 @@ const categories: Array<{
   key: Category;
   label: string;
   paperType?: string;
+  icon?: keyof typeof Icon.glyphMap;
 }> = [
-  { key: "all", label: "All" },
-  { key: "pages", label: "Pages" },
-  { key: "uneb", label: "UNEB", paperType: "uneb" },
-  { key: "mock", label: "MOCK", paperType: "mock" },
-  { key: "umta", label: "UMTA", paperType: "umta" },
-  { key: "books", label: "Books", paperType: "books" },
-  { key: "other", label: "Other", paperType: "" },
+  { key: "all", label: "All", icon: "list" },
+  { key: "pages", label: "Pages", icon: "file-text" },
+  { key: "uneb", label: "UNEB", paperType: "uneb", icon: "file-text" },
+  { key: "mock", label: "MOCK", paperType: "mock", icon: "file-text" },
+  { key: "umta", label: "UMTA", paperType: "umta", icon: "file-text" },
+  { key: "books", label: "Books", paperType: "books", icon: "book" },
+  { key: "other", label: "Other", paperType: "", icon: "more-horizontal" },
 ];
 const yearNumber = (year: string) => {
   const value = Number.parseInt(year, 10);
@@ -206,7 +208,7 @@ export default function LibraryScreen() {
                     ]}
                   >
                     <Icon
-                      name="file-text"
+                      name={category.icon ?? "file-text"}
                       size={15}
                       color={isSelected ? colors.white : "#4B5563"}
                     />
@@ -238,7 +240,7 @@ export default function LibraryScreen() {
                 <View style={styles.paperSection}>
                   <SectionHeader
                     title="Pages"
-                    onSeeAll={() => {}}
+                    onSeeAll={() => router.push("/see-all?type=papers")}
                     actionLabel="See all"
                   />
                   <FeaturedNoteCard source="library" />
@@ -252,7 +254,7 @@ export default function LibraryScreen() {
                   <View key={group.key} style={styles.paperSection}>
                     <SectionHeader
                       title={group.label}
-                      onSeeAll={() => {}}
+                      onSeeAll={() => router.push({ pathname: "/see-all", params: { type: "papers", paperType: group.key } } as any)}
                       actionLabel="See all"
                     />
                     {group.collections.map((section) => (
@@ -275,7 +277,7 @@ export default function LibraryScreen() {
                 >
                   <SectionHeader
                     title={section.title}
-                    onSeeAll={() => {}}
+                    onSeeAll={() => router.push({ pathname: "/see-all", params: { type: "papers", paperType: section.type } } as any)}
                     actionLabel="See all"
                   />
                   <PaperCarousel items={section.items} />
