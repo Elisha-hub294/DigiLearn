@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BookCarousel } from "../../components/home/BookCarousel";
 import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
 import { AddItemModal, FormType } from "../../components/library/AddItemModal";
 import { HeroBookCarousel } from "../../components/library/HeroBookCarousel";
@@ -27,14 +28,21 @@ import {
     shouldFilterByInterests,
 } from "../../utils/interestFilter";
 
-const categories = [
+type Category = "all" | "pages" | "uneb" | "mock" | "umta" | "books" | "other";
+
+const categories: Array<{
+  key: Category;
+  label: string;
+  paperType?: string;
+}> = [
+  { key: "all", label: "All" },
   { key: "pages", label: "Pages" },
   { key: "uneb", label: "UNEB", paperType: "uneb" },
   { key: "mock", label: "MOCK", paperType: "mock" },
   { key: "umta", label: "UMTA", paperType: "umta" },
+  { key: "books", label: "Books", paperType: "books" },
   { key: "other", label: "Other", paperType: "" },
-] as const;
-type Category = (typeof categories)[number]["key"];
+];
 const yearNumber = (year: string) => {
   const value = Number.parseInt(year, 10);
   return Number.isFinite(value) ? value : Number.NEGATIVE_INFINITY;
@@ -51,19 +59,23 @@ export default function LibraryScreen() {
     loadLibraryData,
     onRefresh,
   } = useLibraryData();
-  const [selectedCategory, setSelectedCategory] = useState<Category>("pages");
+  const [selectedCategory, setSelectedCategory] = useState<Category>("all");
   const [showModal, setShowModal] = useState(false);
   const [formType, setFormType] = useState<FormType>("book");
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
   const filteredPaperCollections = useMemo<PaperSection[]>(() => {
     const category = categories.find((item) => item.key === selectedCategory);
-    if (!category || !("paperType" in category)) return [];
+    if (!category) return [];
 
-    let collections = paperCollections.filter(
-      (section) =>
-        section.type.trim().toLowerCase() === category.paperType.toLowerCase(),
-    );
+    let collections =
+      selectedCategory === "all"
+        ? [...paperCollections]
+        : paperCollections.filter(
+            (section) =>
+              section.type.trim().toLowerCase() ===
+              category.paperType?.toLowerCase(),
+          );
 
     if (shouldFilterByInterests(profile)) {
       collections = collections
@@ -78,6 +90,45 @@ export default function LibraryScreen() {
 
     return collections.sort((a, b) => yearNumber(b.year) - yearNumber(a.year));
   }, [paperCollections, selectedCategory, profile]);
+
+  const groupedPaperCollections = useMemo(() => {
+    return categories
+      .filter(
+        (category) =>
+          category.key !== "all" &&
+          category.key !== "pages" &&
+          category.key !== "books",
+      )
+      .map((category) => {
+        const collections = paperCollections
+          .filter(
+            (section) =>
+              section.type.trim().toLowerCase() ===
+              (category.paperType ?? "").toLowerCase(),
+          )
+          .sort((a, b) => yearNumber(b.year) - yearNumber(a.year));
+
+        if (shouldFilterByInterests(profile)) {
+          return {
+            ...category,
+            collections: collections
+              .map((section) => ({
+                ...section,
+                items: section.items.filter((item) =>
+                  matchesUserInterests(
+                    item.subject || item.title,
+                    profile?.subjects,
+                  ),
+                ),
+              }))
+              .filter((section) => section.items.length > 0),
+          };
+        }
+
+        return { ...category, collections };
+      })
+      .filter((group) => group.collections.length > 0);
+  }, [paperCollections, profile]);
 
   if (loading)
     return (
@@ -122,7 +173,10 @@ export default function LibraryScreen() {
             <Header title="Library" rightIconName="book-open" />
           </Animated.View>
           <Animated.View entering={FadeInUp.duration(360)}>
-            <SearchBar placeholder="Search by subject, title, etc" />
+            <SearchBar
+              placeholder="Search by subject, title, etc"
+              source="library"
+            />
           </Animated.View>
           <Animated.View entering={FadeInUp.duration(400)}>
             <HeroBookCarousel data={heroSlides} />
@@ -175,6 +229,44 @@ export default function LibraryScreen() {
           >
             {selectedCategory === "pages" ? (
               <FeaturedNoteCard source="library" />
+            ) : selectedCategory === "books" ? (
+              <View style={styles.bookContainer}>
+                <BookCarousel />
+              </View>
+            ) : selectedCategory === "all" ? (
+              <>
+                <View style={styles.paperSection}>
+                  <SectionHeader
+                    title="Pages"
+                    onSeeAll={() => {}}
+                    actionLabel="See all"
+                  />
+                  <FeaturedNoteCard source="library" />
+                </View>
+
+                <View style={styles.bookContainer}>
+                  <BookCarousel />
+                </View>
+
+                {groupedPaperCollections.map((group) => (
+                  <View key={group.key} style={styles.paperSection}>
+                    <SectionHeader
+                      title={group.label}
+                      onSeeAll={() => {}}
+                      actionLabel="See all"
+                    />
+                    {group.collections.map((section) => (
+                      <View
+                        key={`${section.type}-${section.year}`}
+                        style={styles.subSection}
+                      >
+                        <Text style={styles.sectionTitle}>{section.title}</Text>
+                        <PaperCarousel items={section.items} />
+                      </View>
+                    ))}
+                  </View>
+                ))}
+              </>
             ) : filteredPaperCollections.length ? (
               filteredPaperCollections.map((section) => (
                 <View
@@ -265,6 +357,14 @@ const styles = StyleSheet.create({
   categoryLabel: { color: "#4B5563", fontSize: 14, fontWeight: "600" },
   categoryLabelSelected: { color: colors.white },
   paperSection: { marginBottom: spacing.xl },
+  bookContainer: { marginTop: spacing.sm },
+  subSection: { marginTop: spacing.md },
+  sectionTitle: {
+    marginBottom: spacing.sm,
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "700",
+  },
   emptyState: {
     alignItems: "center",
     paddingVertical: spacing.xxl,

@@ -133,7 +133,11 @@ export function formatUploadedAt(value: unknown): string {
   });
 }
 
-export function useGlobalSearch(initialCategory: SearchCategory = "All") {
+export function useGlobalSearch(
+  initialCategory: SearchCategory = "All",
+  options: { excludeVideos?: boolean } = {},
+) {
+  const excludeVideos = options.excludeVideos === true;
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [hasSubmittedSearch, setHasSubmittedSearch] = useState(false);
@@ -480,32 +484,33 @@ export function useGlobalSearch(initialCategory: SearchCategory = "All") {
     });
 
     // Evaluate Videos
-    videos.forEach((v) => {
-      const teacherName = String(v.teacher || "Teacher");
-      const videoAvatar = resolveTeacherAvatar(teacherName, v.avatar);
-      const cleanUploadedAt = formatUploadedAt(v.uploadedAt);
+    if (!excludeVideos)
+      videos.forEach((v) => {
+        const teacherName = String(v.teacher || "Teacher");
+        const videoAvatar = resolveTeacherAvatar(teacherName, v.avatar);
+        const cleanUploadedAt = formatUploadedAt(v.uploadedAt);
 
-      addScored(
-        v,
-        "video",
-        String(v.title || "Untitled Video"),
-        String(v.subject || "Lesson"),
-        "",
-        "",
-        teacherName,
-        v.subject,
-        getVideoThumbnailUrl(
-          typeof v.thumbnail === "string" ? v.thumbnail : undefined,
-          typeof v.link === "string" ? v.link : undefined
-        ),
-        {
-          duration: v.duration || "10:00",
-          uploadedAt: cleanUploadedAt,
-          avatar: videoAvatar,
-          link: v.link || "",
-        },
-      );
-    });
+        addScored(
+          v,
+          "video",
+          String(v.title || "Untitled Video"),
+          String(v.subject || "Lesson"),
+          "",
+          "",
+          teacherName,
+          v.subject,
+          getVideoThumbnailUrl(
+            typeof v.thumbnail === "string" ? v.thumbnail : undefined,
+            typeof v.link === "string" ? v.link : undefined,
+          ),
+          {
+            duration: v.duration || "10:00",
+            uploadedAt: cleanUploadedAt,
+            avatar: videoAvatar,
+            link: v.link || "",
+          },
+        );
+      });
 
     // Evaluate Books
     books.forEach((b) => {
@@ -580,6 +585,7 @@ export function useGlobalSearch(initialCategory: SearchCategory = "All") {
     debouncedQuery,
     hasSubmittedSearch,
     selectedCategory,
+    excludeVideos,
     topicalNotes,
     pastPapers,
     videos,
@@ -590,14 +596,18 @@ export function useGlobalSearch(initialCategory: SearchCategory = "All") {
     resolveTeacherAvatar,
   ]);
 
-  const triggerManualSearch = useCallback((overrideQuery?: string) => {
-    const searchTerm = typeof overrideQuery === 'string' ? overrideQuery : query;
-    setDebouncedQuery(searchTerm);
-    setHasSubmittedSearch(true);
-    if (searchTerm.trim().length >= 2) {
-      addRecentSearch(searchTerm.trim());
-    }
-  }, [query, addRecentSearch]);
+  const triggerManualSearch = useCallback(
+    (overrideQuery?: string) => {
+      const searchTerm =
+        typeof overrideQuery === "string" ? overrideQuery : query;
+      setDebouncedQuery(searchTerm);
+      setHasSubmittedSearch(true);
+      if (searchTerm.trim().length >= 2) {
+        addRecentSearch(searchTerm.trim());
+      }
+    },
+    [query, addRecentSearch],
+  );
 
   return {
     query,

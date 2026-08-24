@@ -25,6 +25,7 @@ type SearchBarProps = {
   variant?: "default" | "topic";
   onBack?: () => void;
   category?: SearchCategory;
+  source?: "library";
 };
 
 export function SearchBar({
@@ -47,6 +48,7 @@ export function SearchBar({
   variant = "default",
   onBack,
   category,
+  source,
 }: SearchBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -58,8 +60,11 @@ export function SearchBar({
       router.push({
         pathname: "/(search)/search",
         params: {
-          ...(pathname && pathname !== "/(search)/search" ? { returnTo: pathname } : {}),
+          ...(pathname && pathname !== "/(search)/search"
+            ? { returnTo: pathname }
+            : {}),
           ...(category ? { category } : {}),
+          ...(source ? { source } : {}),
         },
       } as never);
     }

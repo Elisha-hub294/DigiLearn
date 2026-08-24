@@ -1,15 +1,15 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useRef } from "react";
 import {
-  BackHandler,
-  FlatList,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
+    BackHandler,
+    FlatList,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,9 +26,9 @@ import { SearchSkeleton } from "../../components/search/SearchSkeleton";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { getHorizontalPadding } from "../../constants/layout";
 import {
-  SearchCategory,
-  SearchResult,
-  useGlobalSearch,
+    SearchCategory,
+    SearchResult,
+    useGlobalSearch,
 } from "../../hooks/useGlobalSearch";
 
 const CATEGORIES: SearchCategory[] = [
@@ -46,11 +46,21 @@ export default function SearchScreen() {
     returnTo?: string;
     category?: SearchCategory;
     initialCategory?: SearchCategory;
+    source?: string;
   }>();
   const { width } = useWindowDimensions();
   const searchInputRef = useRef<TextInput>(null);
 
-  const initialCat = (params.category || params.initialCategory || "All") as SearchCategory;
+  const openedFromLibrary = params.source === "library";
+  const initialCat = (
+    openedFromLibrary &&
+    (params.category === "Videos" || params.initialCategory === "Videos")
+      ? "All"
+      : params.category || params.initialCategory || "All"
+  ) as SearchCategory;
+  const visibleCategories = openedFromLibrary
+    ? CATEGORIES.filter((category) => category !== "Videos")
+    : CATEGORIES;
 
   const {
     query,
@@ -65,11 +75,13 @@ export default function SearchScreen() {
     addRecentSearch,
     removeRecentSearch,
     triggerManualSearch,
-  } = useGlobalSearch(initialCat);
+  } = useGlobalSearch(initialCat, { excludeVideos: openedFromLibrary });
 
   useFocusEffect(
     useCallback(() => {
-      const frame = requestAnimationFrame(() => searchInputRef.current?.focus());
+      const frame = requestAnimationFrame(() =>
+        searchInputRef.current?.focus(),
+      );
 
       return () => {
         cancelAnimationFrame(frame);
@@ -321,13 +333,16 @@ export default function SearchScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoryScroll}
           >
-            {CATEGORIES.map((cat) => {
+            {visibleCategories.map((cat) => {
               const active = selectedCategory === cat;
               return (
                 <Pressable
                   key={cat}
                   accessibilityRole="button"
-                  onPress={() => { setSelectedCategory(cat); triggerManualSearch(); }}
+                  onPress={() => {
+                    setSelectedCategory(cat);
+                    triggerManualSearch();
+                  }}
                   style={[
                     styles.categoryChip,
                     active && styles.categoryChipActive,
