@@ -3,17 +3,17 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -21,9 +21,9 @@ import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import {
-    parseAuthError,
-    signInWithFacebook,
-    signInWithGoogle,
+  parseAuthError,
+  signInWithFacebook,
+  signInWithGoogle,
 } from "../services/socialAuth";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -338,6 +338,8 @@ export default function LoginScreen() {
                     autoCapitalize="none"
                     autoCorrect={false}
                     textContentType="password"
+                    autoComplete="off"
+                    importantForAutofill="no"
                     accessibilityLabel="Password"
                     accessibilityHint="Enter your password"
                   />
