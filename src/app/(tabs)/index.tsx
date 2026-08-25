@@ -317,7 +317,9 @@ export default function HomeScreen() {
                   <Text style={styles.loaderText}>Loading more for you...</Text>
                 </View>
               ) : isAllLoaded ? (
-                <Text style={styles.endText}>You&apos;re all caught up! ✨</Text>
+                <Text style={styles.endText}>
+                  You&apos;re all caught up! ✨
+                </Text>
               ) : null}
             </View>
           </ScrollView>
