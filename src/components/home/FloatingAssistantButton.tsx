@@ -27,8 +27,8 @@ import { colors, radius, shadows, spacing } from "../../constants/theme";
 import {
   getAssistantContent,
   getCachedAssistantMessage,
-  setCachedAssistantMessage,
   isAssistantEnabled,
+  setCachedAssistantMessage,
 } from "../../services/aiAssistantService";
 
 const TYPING_INTERVAL_MS = 32;
@@ -57,7 +57,7 @@ export function FloatingAssistantButton() {
       return () => {
         cancelled = true;
       };
-    }, [])
+    }, []),
   );
   const [messages, setMessages] = useState<string[]>([]);
   const [activeMessage, setActiveMessage] = useState(
@@ -247,13 +247,13 @@ export function FloatingAssistantButton() {
   };
 
   const handlePress = () => {
-    const isBubbleVisible =
-      bubbleOpacity.value > 0.1 && activeMessage.trim().length > 0;
+    const fullMessage = currentMessage.value.trim();
+    const isBubbleVisible = bubbleOpacity.value > 0.1 && fullMessage.length > 0;
 
     if (isBubbleVisible) {
       router.push({
         pathname: "/assistant",
-        params: { initialPrompt: activeMessage.trim() },
+        params: { initialPrompt: fullMessage },
       });
     } else {
       router.push("/assistant");
@@ -273,7 +273,24 @@ export function FloatingAssistantButton() {
         { bottom: insets.bottom, right: 5, maxWidth: width - 32 },
       ]}
     >
-      <Animated.View style={[styles.container, animatedContainerStyle]}>
+      <Animated.View
+        pointerEvents="box-none"
+        style={[styles.container, animatedContainerStyle]}
+      >
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.bubbleWrapper, animatedBubbleStyle]}
+        >
+          <View
+            pointerEvents="none"
+            style={[styles.messageBubble, { maxWidth: bubbleWidth }]}
+          >
+            <Text numberOfLines={2} style={styles.messageText}>
+              {activeMessage}
+            </Text>
+          </View>
+        </Animated.View>
+
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Open AI assistant"
@@ -289,14 +306,6 @@ export function FloatingAssistantButton() {
             },
           ]}
         >
-          <Animated.View style={[styles.bubbleWrapper, animatedBubbleStyle]}>
-            <View style={[styles.messageBubble, { maxWidth: bubbleWidth }]}>
-              <Text numberOfLines={2} style={styles.messageText}>
-                {activeMessage}
-              </Text>
-            </View>
-          </Animated.View>
-
           <Animated.View style={[styles.avatarWrapper, animatedAvatarStyle]}>
             <View style={styles.avatarFrame}>
               <Image
@@ -329,7 +338,6 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "center",
     flexDirection: "row",
-    pointerEvents: "box-none",
   },
   touchTarget: {
     flexDirection: "row",
