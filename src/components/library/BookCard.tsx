@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
+import { FALLBACK_COVER } from "../book/bookTypes";
 
 type BookCardItem = {
   id: string;
@@ -25,7 +26,11 @@ export function BookCard({ item, onPress, width = 200 }: BookCardProps) {
       style={[styles.card, { width }]}
       onPress={onPress}
     >
-      <Image source={item.image} style={styles.image} contentFit="cover" />
+      <Image
+        source={item.image || FALLBACK_COVER}
+        style={styles.image}
+        contentFit="cover"
+      />
       <View>
         <View style={styles.badgeRow}>
           {item.badge ? (

@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { collection, getDocs, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { db } from "../../firebaseConfig";
 import { DEFAULT_SUBJECT_AVATAR } from "../components/page/pageTypes";
@@ -7,8 +7,6 @@ import { getVideoThumbnailUrl } from "../utils/videoUtils";
 
 const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
 const MAX_RECENT_ITEMS = 10;
-const FALLBACK_PDF_ICON =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/library/pages-2d.png";
 const FALLBACK_TEACHER_AVATAR =
   "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/opero-stephen.jpeg";
 
@@ -161,8 +159,6 @@ export function useGlobalSearch(
   const [teachersAvatarMap, setTeachersAvatarMap] = useState<
     Record<string, string>
   >({});
-  const [defaultPdfIcon, setDefaultPdfIcon] =
-    useState<string>(FALLBACK_PDF_ICON);
 
   // 1. Load recent searches from AsyncStorage
   useEffect(() => {
@@ -185,7 +181,7 @@ export function useGlobalSearch(
     };
   }, []);
 
-  // 2. Fetch subject icons and default pdf icon
+  // 2. Fetch subject icons
   useEffect(() => {
     let isMounted = true;
 
@@ -204,25 +200,6 @@ export function useGlobalSearch(
       },
       (err) => console.warn("Error fetching subjects:", err),
     );
-
-    (async () => {
-      try {
-        const defaultSnap = await getDocs(collection(db, "default"));
-        if (!isMounted) return;
-        let pdfIcon = "";
-        defaultSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          if (data.name && String(data.name).toLowerCase() === "pdf") {
-            pdfIcon = data.icon || data.avatar || "";
-          }
-        });
-        if (pdfIcon) {
-          setDefaultPdfIcon(pdfIcon);
-        }
-      } catch (err) {
-        console.warn("Error fetching default pdf icon:", err);
-      }
-    })();
 
     return () => {
       isMounted = false;
@@ -478,7 +455,7 @@ export function useGlobalSearch(
         "",
         "",
         p.subject,
-        p.icon || p.avatar || defaultPdfIcon,
+        require("../../assets/images/pdf-preview.png"),
         { doc: p.doc || p.pdf },
       );
     });
@@ -591,7 +568,6 @@ export function useGlobalSearch(
     videos,
     books,
     teachers,
-    defaultPdfIcon,
     getNotePreview,
     resolveTeacherAvatar,
   ]);

@@ -52,7 +52,7 @@ const CourseCardImage = ({
       style={styles.image}
       contentFit="cover"
       onError={() => {
-        setSource(require("../../../assets/images/thumb-default.jpeg"));
+        setSource(require("../../../assets/images/thumb-default.png"));
       }}
     />
   );

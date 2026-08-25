@@ -20,12 +20,15 @@ import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
 import { FloatingAssistantButton } from "../../components/home/FloatingAssistantButton";
 import { TeacherPostCard } from "../../components/home/TeacherPostCard";
 import { TopicalNotesSlider } from "../../components/home/TopicalNotesSlider";
+import { PaperCarousel } from "../../components/library/PaperCarousel";
 
 import { auth } from "../../../firebaseConfig";
 import { Header } from "../../components/ui/Header";
 import { SearchBar } from "../../components/ui/SearchBar";
+import { SectionHeader } from "../../components/ui/SectionHeader";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
+import { PaperSection, useLibraryData } from "../../hooks/useLibraryData";
 import { clearGuestMode, isGuestMode } from "../../services/guestService";
 import { getUserOnboardingState } from "../../services/userProfile";
 import LoadingScreen from "../loading";
@@ -44,9 +47,57 @@ type FeedModule = {
   render: () => React.ReactNode;
 };
 
+function HomePastPapers({
+  collections,
+  onSeeAll,
+}: {
+  collections: PaperSection[];
+  onSeeAll: (paperType?: string) => void;
+}) {
+  const groups = useMemo(() => {
+    const grouped = new Map<string, PaperSection[]>();
+
+    collections.forEach((section) => {
+      const type = section.type.trim() || "Other";
+      const sections = grouped.get(type) ?? [];
+      sections.push(section);
+      grouped.set(type, sections);
+    });
+
+    return Array.from(grouped.entries()).map(([type, sections]) => ({
+      type: type || "Other",
+      paperType: type,
+      sections: sections.sort(
+        (a, b) => Number.parseInt(b.year, 10) - Number.parseInt(a.year, 10),
+      ),
+    }));
+  }, [collections]);
+
+  return (
+    <View>
+      {groups.map((group) => (
+        <View key={group.type} style={styles.paperTypeSection}>
+          <SectionHeader
+            title={group.type}
+            onSeeAll={() => onSeeAll(group.paperType)}
+            actionLabel="See all"
+          />
+          {group.sections.map((section) => (
+            <View key={`${section.type}-${section.year}`}>
+              <Text style={styles.paperYear}>{section.title}</Text>
+              <PaperCarousel items={section.items} />
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { paperCollections } = useLibraryData();
   const [refreshing, setRefreshing] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
   const [authCheckReady, setAuthCheckReady] = useState(false);
@@ -60,6 +111,7 @@ export default function HomeScreen() {
 
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
+  const hasPastPapers = paperCollections.length > 0;
 
   useEffect(() => {
     const timer = setTimeout(() => setShowLoading(false), 1100);
@@ -128,8 +180,30 @@ export default function HomeScreen() {
         type: "books",
         render: () => <BookCarousel />,
       },
+      ...(hasPastPapers
+        ? [
+            {
+              type: "pastPapers",
+              render: () => (
+                <HomePastPapers
+                  collections={paperCollections}
+                  onSeeAll={(paperType) =>
+                    router.push(
+                      paperType
+                        ? ({
+                            pathname: "/see-all",
+                            params: { type: "papers", paperType },
+                          } as any)
+                        : "/see-all?type=papers",
+                    )
+                  }
+                />
+              ),
+            },
+          ]
+        : []),
     ],
-    [],
+    [hasPastPapers, paperCollections, router],
   );
 
   // Modern Feed Randomization Engine:
@@ -243,7 +317,7 @@ export default function HomeScreen() {
                   <Text style={styles.loaderText}>Loading more for you...</Text>
                 </View>
               ) : isAllLoaded ? (
-                <Text style={styles.endText}>You're all caught up! ✨</Text>
+                <Text style={styles.endText}>You&apos;re all caught up! ✨</Text>
               ) : null}
             </View>
           </ScrollView>
@@ -278,6 +352,15 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   section: {
+    marginBottom: spacing.sm,
+  },
+  paperTypeSection: {
+    marginBottom: spacing.lg,
+  },
+  paperYear: {
+    color: colors.subtitle,
+    fontSize: 13,
+    fontWeight: "700",
     marginBottom: spacing.sm,
   },
   feedFooter: {

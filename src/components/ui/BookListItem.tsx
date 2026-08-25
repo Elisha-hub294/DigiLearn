@@ -1,7 +1,8 @@
-import { Feather as Icon } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, shadows, spacing } from '../../constants/theme';
+import { Feather as Icon } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { FALLBACK_COVER } from "../book/bookTypes";
 
 export type BookListItemData = {
   id: string;
@@ -20,22 +21,39 @@ type BookListItemProps = {
 
 export const BookListItem = ({ item, onPress }: BookListItemProps) => (
   <View style={styles.row}>
-    <Image source={item.image} style={styles.cover} contentFit="cover" />
+    <Image
+      source={item.image || FALLBACK_COVER}
+      style={styles.cover}
+      contentFit="cover"
+    />
     <View style={styles.content}>
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.description}>{item.description}</Text>
         </View>
-        <Pressable accessibilityLabel={`Bookmark ${item.title}`} style={styles.iconButton}>
-          <Icon name={item.bookmarked ? 'bookmark' : 'bookmark'} size={16} color={item.bookmarked ? colors.primary : colors.subtitle} />
+        <Pressable
+          accessibilityLabel={`Bookmark ${item.title}`}
+          style={styles.iconButton}
+        >
+          <Icon
+            name={item.bookmarked ? "bookmark" : "bookmark"}
+            size={16}
+            color={item.bookmarked ? colors.primary : colors.subtitle}
+          />
         </Pressable>
       </View>
       <View style={styles.metaRow}>
         <Text style={styles.author}>{item.author}</Text>
-        <View style={styles.subjectBadge}><Text style={styles.subjectText}>{item.subject}</Text></View>
+        <View style={styles.subjectBadge}>
+          <Text style={styles.subjectText}>{item.subject}</Text>
+        </View>
       </View>
-      <Pressable accessibilityRole="button" onPress={onPress} style={styles.button}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onPress}
+        style={styles.button}
+      >
         <Text style={styles.buttonText}>Details</Text>
       </Pressable>
     </View>
@@ -44,7 +62,7 @@ export const BookListItem = ({ item, onPress }: BookListItemProps) => (
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     backgroundColor: colors.white,
     borderRadius: radius.xl,
     padding: spacing.md,
@@ -59,16 +77,16 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
   },
   title: {
     color: colors.text,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 4,
   },
   description: {
@@ -81,13 +99,13 @@ const styles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     backgroundColor: colors.lightBackground,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
@@ -104,10 +122,10 @@ const styles = StyleSheet.create({
   subjectText: {
     color: colors.primary,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   button: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: 8,
@@ -116,6 +134,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: colors.white,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

@@ -4,7 +4,7 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -13,18 +13,17 @@ import {
   Text,
   TextStyle,
   useWindowDimensions,
-  View
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
-import { colors, radius, spacing } from "../../constants/theme";
+import { radius, spacing, colors as themeColors } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { toggleSavedItem } from "../../services/userProfile";
 import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
-import PdfPreview from "./PdfPreview";
 
 type TeacherPost = {
   id: string;
@@ -45,7 +44,7 @@ type GradientTextProps = {
 const GradientText = ({
   text,
   style,
-  colors = [colors.primary, "#e95cf6ff", "#ff0080ff"],
+  colors = [themeColors.primary, "#e95cf6ff", "#ff0080ff"],
 }: GradientTextProps) => {
   if (Platform.OS === "web") {
     return (
@@ -68,9 +67,7 @@ const GradientText = ({
   return (
     <MaskedView
       maskElement={
-        <Text style={[style, { backgroundColor: "transparent" }]}>
-          {text}
-        </Text>
+        <Text style={[style, { backgroundColor: "transparent" }]}>{text}</Text>
       }
     >
       <LinearGradient
@@ -93,7 +90,8 @@ const getRelativeTime = (date: Date | null | undefined): string => {
   const diffSec = Math.floor(diffMs / 1000);
   if (diffSec < 60) return "Just now";
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return diffMin === 1 ? "1 minute ago" : `${diffMin} minutes ago`;
+  if (diffMin < 60)
+    return diffMin === 1 ? "1 minute ago" : `${diffMin} minutes ago`;
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return diffHr === 1 ? "1 hour ago" : `${diffHr} hours ago`;
   const diffDay = Math.floor(diffHr / 24);
@@ -189,12 +187,11 @@ export const TeacherPostCard = () => {
   const [defaultUserAvatar, setDefaultUserAvatar] = useState<string | null>(
     null,
   );
-  const [defaultPdfImage, setDefaultPdfImage] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    // Fetch default icons (user & pdf)
+    // Fetch default user icon
     const fetchDefaultIcons = async () => {
       try {
         const defaultRef = collection(db, "default");
@@ -204,9 +201,6 @@ export const TeacherPostCard = () => {
           const data = doc.data();
           if (data.name === "user" && typeof data.icon === "string") {
             if (isMounted) setDefaultUserAvatar(data.icon);
-          }
-          if (data.name === "pdf" && typeof data.icon === "string") {
-            if (isMounted) setDefaultPdfImage(data.icon);
           }
         });
       } catch (err) {
@@ -322,7 +316,6 @@ export const TeacherPostCard = () => {
           isWide={isWide}
           teacherAvatars={teacherAvatars}
           defaultUserAvatar={defaultUserAvatar}
-          defaultPdfImage={defaultPdfImage}
         />
       ))}
     </View>
@@ -335,14 +328,12 @@ const TeacherPostItem = ({
   isWide,
   teacherAvatars,
   defaultUserAvatar,
-  defaultPdfImage,
 }: {
   postItem: TeacherPost;
   index: number;
   isWide: boolean;
   teacherAvatars: Record<string, string>;
   defaultUserAvatar: string | null;
-  defaultPdfImage: string | null;
 }) => {
   const { user, profile } = useProfile();
   const router = useRouter();
@@ -350,12 +341,13 @@ const TeacherPostItem = ({
 
   const rawTeacherName = postItem.teacher || "Teacher";
   const teacherName = `Tr. ${rawTeacherName}`;
-  const subject = postItem.subject ?? "Physics";
   const description =
     postItem.description ?? "No teacher update available yet.";
   const showPreview = postItem.hasPdf ?? true;
 
-  const isSaved = Boolean(user && profile?.["saved-posts"]?.includes(postItem.id));
+  const isSaved = Boolean(
+    user && profile?.["saved-posts"]?.includes(postItem.id),
+  );
 
   const handleToggleSave = async () => {
     if (!user) {
@@ -411,19 +403,11 @@ const TeacherPostItem = ({
               }
             }}
           >
-            {postItem.document ? (
-              <PdfPreview uri={postItem.document} style={styles.preview} />
-            ) : (
-              <Image
-                source={
-                  defaultPdfImage
-                    ? { uri: defaultPdfImage }
-                    : require("../../../assets/images/pdf-preview.jpeg")
-                }
-                style={styles.preview}
-                contentFit="cover"
-              />
-            )}
+            <Image
+              source={require("../../../assets/images/pdf-preview.png")}
+              style={styles.preview}
+              contentFit="cover"
+            />
             <View style={styles.overlay} />
             <View style={styles.previewTag}>
               <Text style={styles.previewTagText}>PDF</Text>
@@ -461,7 +445,9 @@ const TeacherPostItem = ({
             >
               <View>
                 <Text style={styles.name}>{teacherName}</Text>
-                <Text style={styles.time}>{getRelativeTime(postItem.createdAt)}</Text>
+                <Text style={styles.time}>
+                  {getRelativeTime(postItem.createdAt)}
+                </Text>
               </View>
             </Pressable>
           </View>
@@ -472,7 +458,7 @@ const TeacherPostItem = ({
             <GradientText
               text={description}
               style={styles.gradientMaskedText}
-              colors={[colors.primary, "#c224f0ff", "#ff002bff"]}
+              colors={[themeColors.primary, "#c224f0ff", "#ff002bff"]}
             />
           </View>
         ) : (
@@ -489,12 +475,12 @@ const TeacherPostItem = ({
             <Ionicons
               name={isSaved ? "bookmark" : "bookmark-outline"}
               size={15}
-              color={isSaved ? colors.primary : colors.subtitle}
+              color={isSaved ? themeColors.primary : themeColors.subtitle}
             />
             <Text
               style={[
                 styles.actionLabel,
-                isSaved && { color: colors.primary, fontWeight: "700" },
+                isSaved && { color: themeColors.primary, fontWeight: "700" },
               ]}
             >
               {isSaved ? "Saved" : "Save"}
@@ -508,7 +494,7 @@ const TeacherPostItem = ({
 };
 
 const SkeletonTeacherPostCard = () => {
-  const pulseAnim = useRef(new RNAnimated.Value(0.3)).current;
+  const [pulseAnim] = useState(() => new RNAnimated.Value(0.3));
 
   useEffect(() => {
     const pulse = RNAnimated.loop(
@@ -607,7 +593,7 @@ const SkeletonTeacherPostCard = () => {
 
 const Action = ({ icon, label }: { icon: any; label: string }) => (
   <View style={styles.actionItem}>
-    <Icon name={icon} size={15} color={colors.subtitle} />
+    <Icon name={icon} size={15} color={themeColors.subtitle} />
     <Text style={styles.actionLabel}>{label}</Text>
   </View>
 );
@@ -619,7 +605,7 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     alignSelf: "center",
-    backgroundColor: colors.white,
+    backgroundColor: themeColors.white,
     marginBottom: spacing.xl,
   },
   header: {
@@ -635,11 +621,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     marginRight: spacing.sm,
   },
-  name: { color: colors.text, fontSize: 14, fontWeight: "500" },
-  time: { color: colors.subtitle, fontSize: 12, marginTop: 2 },
+  name: { color: themeColors.text, fontSize: 14, fontWeight: "500" },
+  time: { color: themeColors.subtitle, fontSize: 12, marginTop: 2 },
 
   caption: {
-    color: colors.text,
+    color: themeColors.text,
     fontSize: 14,
     marginBottom: spacing.sm,
   },
@@ -671,7 +657,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: radius.pill,
   },
-  previewTagText: { color: colors.white, fontSize: 11, fontWeight: "800" },
+  previewTagText: { color: themeColors.white, fontSize: 11, fontWeight: "800" },
   actions: {
     flexDirection: "row",
     justifyContent: "flex-start",
@@ -685,9 +671,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 999,
-    backgroundColor: colors.background,
+    backgroundColor: themeColors.background,
   },
-  actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
+  actionLabel: { color: themeColors.subtitle, fontSize: 12, fontWeight: "500" },
   skeletonBox: { backgroundColor: "#EFEFEF", borderRadius: radius.sm },
   skeletonPreview: {
     height: 250,

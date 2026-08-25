@@ -721,7 +721,7 @@ export default function TeacherProfileScreen() {
               description: item.description || "",
               image: item.image
                 ? { uri: item.image }
-                : require("../../assets/images/pdf-preview.jpeg"),
+                : require("../../assets/images/pdf-preview.png"),
             }}
             width={contentMaxWidth}
             onPress={() => {

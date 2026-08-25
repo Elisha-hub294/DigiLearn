@@ -1,7 +1,11 @@
-import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { colors, radius, shadows, spacing } from '../../constants/theme';
+import { Image } from "expo-image";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
+import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { FALLBACK_COVER } from "../book/bookTypes";
 
 export type BookItem = {
   id: string;
@@ -26,14 +30,21 @@ export const BookCard = ({ item, index, scrollX }: BookCardProps) => {
     const distance = Math.abs(offset);
     const scale = distance < 240 ? Math.max(0.94, 1 - distance / 1200) : 0.94;
     return {
-      transform: [{ scale: withSpring(scale, { damping: 18, stiffness: 120 }) }],
+      transform: [
+        { scale: withSpring(scale, { damping: 18, stiffness: 120 }) },
+      ],
     };
   });
 
   return (
     <Animated.View style={[styles.card, animatedStyle]}>
       <Pressable accessibilityRole="button" style={styles.pressable}>
-        <Image source={item.image} style={styles.image} contentFit="cover" contentPosition={'top left'} />
+        <Image
+          source={item.image || FALLBACK_COVER}
+          style={styles.image}
+          contentFit="cover"
+          contentPosition={"top left"}
+        />
         <View style={styles.content}>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.description}>{item.description}</Text>
@@ -42,7 +53,9 @@ export const BookCard = ({ item, index, scrollX }: BookCardProps) => {
             <View style={styles.ratingWrap}>
               <Text style={styles.rating}>{item.rating}</Text>
             </View>
-            <View style={styles.badge}><Text style={styles.badgeText}>{item.subject}</Text></View>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{item.subject}</Text>
+            </View>
           </View>
         </View>
       </Pressable>
@@ -56,14 +69,14 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
     borderRadius: radius.xl,
     backgroundColor: colors.white,
-    overflow: 'hidden',
+    overflow: "hidden",
     ...shadows.card,
   },
   pressable: {
     flex: 1,
   },
   image: {
-    width: '100%',
+    width: "100%",
     height: 150,
   },
   content: {
@@ -72,7 +85,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 4,
   },
   description: {
@@ -84,24 +97,24 @@ const styles = StyleSheet.create({
   author: {
     color: colors.text,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: spacing.sm,
   },
   metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   ratingWrap: {
-    backgroundColor: '#FFF6D7',
+    backgroundColor: "#FFF6D7",
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
   },
   rating: {
-    color: '#B17A00',
+    color: "#B17A00",
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   badge: {
     backgroundColor: colors.primaryLight,
@@ -112,6 +125,6 @@ const styles = StyleSheet.create({
   badgeText: {
     color: colors.primary,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

@@ -1,15 +1,11 @@
 import { Feather as Icon, Ionicons } from "@expo/vector-icons";
-import * as FileSystem from "expo-file-system";
 import { Image } from "expo-image";
-import * as IntentLauncher from "expo-intent-launcher";
 import { usePathname, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
-  Linking,
-  Platform,
   Pressable,
   Animated as RNAnimated,
   StyleSheet,
@@ -34,7 +30,6 @@ import {
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
 import { CardActionMenu } from "../ui/CardActionMenu";
-import PdfPreview from "./PdfPreview";
 
 type TopicalNote = {
   id: string;
@@ -77,40 +72,6 @@ type FeaturedNoteCardProps = {
 };
 
 const normalizeKey = (str: string) => str.trim().toLowerCase();
-
-const openPdfDocument = async (url: string) => {
-  if (!url) return;
-
-  if (Platform.OS === "android") {
-    try {
-      const filename = url.split("/").pop()?.split("?")[0] || "document.pdf";
-      const cacheDir =
-        (FileSystem as any).cacheDirectory ||
-        (FileSystem as any).documentDirectory ||
-        "";
-      const localUri = `${cacheDir}${Date.now()}_${filename}`;
-
-      const downloadResult = await FileSystem.downloadAsync(url, localUri);
-      const contentUri = await FileSystem.getContentUriAsync(
-        downloadResult.uri,
-      );
-
-      await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
-        data: contentUri,
-        type: "application/pdf",
-        flags: 1,
-      });
-    } catch (error) {
-      console.error(
-        "Failed to launch intent, opening in fallback browser:",
-        error,
-      );
-      Linking.openURL(url).catch(console.error);
-    }
-  } else {
-    Linking.openURL(url).catch(console.error);
-  }
-};
 
 export const FeaturedNoteCard = ({
   subject,
@@ -486,15 +447,6 @@ const FeaturedNoteItem = ({
     : note.subject
       ? [note.subject]
       : [];
-  const avatarUri =
-    subjectValues
-      .map((entry) => normalizeKey(entry))
-      .map((entry) => subjectAvatars[entry])
-      .find(Boolean) ||
-    (subject ? subjectAvatars[normalizeKey(subject)] : undefined) ||
-    defaultAvatar ||
-    undefined;
-
   const previewSource = source ?? "home";
   const routeTitle =
     typeof subject === "string" && subject.trim().length > 0
@@ -502,10 +454,6 @@ const FeaturedNoteItem = ({
       : typeof note.subject === "string" && note.subject.trim().length > 0
         ? note.subject
         : "Pages";
-  const subjectName =
-    typeof subject === "string" && subject.trim().length > 0
-      ? subject
-      : (subjectValues.find(Boolean) ?? routeTitle);
   const menuActions = [
     {
       label: isRead ? "Mark as unread" : "Mark as read",
@@ -558,24 +506,11 @@ const FeaturedNoteItem = ({
             } as any);
           }}
         >
-          {note.preview ? (
-            <Image
-              source={{ uri: note.preview }}
-              style={styles.preview}
-              contentFit="cover"
-              contentPosition="top"
-              transition={150}
-              placeholder={require("../../../assets/images/pdf-preview.jpeg")}
-            />
-          ) : note.document ? (
-            <PdfPreview uri={note.document} style={styles.preview} />
-          ) : (
-            <Image
-              source={require("../../../assets/images/pdf-preview.jpeg")}
-              style={styles.preview}
-              contentFit="cover"
-            />
-          )}
+          <Image
+            source={require("../../../assets/images/pdf-preview.png")}
+            style={styles.preview}
+            contentFit="cover"
+          />
           <View style={styles.overlay} />
           {isRead ? (
             <View style={styles.readBadge}>

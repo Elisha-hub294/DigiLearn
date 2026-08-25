@@ -15,11 +15,11 @@ import { auth, db } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { recordUserActivity } from "../../services/activityService";
-import { SectionHeader } from "../ui/SectionHeader";
 import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
+import { SectionHeader } from "../ui/SectionHeader";
 
 type BookItem = {
   id: string;
@@ -83,7 +83,7 @@ export const BookCarousel = () => {
             ),
             image: pickImage(
               data.image || data.coverImage || data.cover || data.thumbnail,
-              require("../../../assets/images/bookcover-default.jpeg"),
+              require("../../../assets/images/bookcover-default.png"),
             ),
           } satisfies BookItem;
         });

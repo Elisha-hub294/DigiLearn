@@ -97,7 +97,7 @@ const imageImports = {
   // math: require("../../assets/images/math.png"),
   // physics: require("../../assets/images/physics.png"),
   // chemistry: require("../../assets/images/chemistry.png"),
-  pdfPreview: require("../../assets/images/pdf-preview.jpeg"),
+  pdfPreview: require("../../assets/images/pdf-preview.png"),
   // thumb1: require("../../assets/images/thumb-1.jpeg"),
   // thumb2: require("../../assets/images/thumb-2.jpeg"),
   // thumb4: require("../../assets/images/thumb-4.jpeg"),

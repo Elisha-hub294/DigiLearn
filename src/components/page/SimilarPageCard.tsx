@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { FALLBACK_DOC_PREVIEW, TopicalNote } from "./pageTypes";
@@ -14,7 +13,7 @@ export function SimilarPageCard({
   onPress: () => void;
   index: number;
 }) {
-  const previewUri = page.preview || FALLBACK_DOC_PREVIEW;
+  const previewUri = page.preview;
 
   return (
     <Animated.View entering={FadeIn.delay(index * 70).duration(300)}>
@@ -27,7 +26,7 @@ export function SimilarPageCard({
         <View style={styles.previewWrap}>
           <Image
             source={{ uri: previewUri }}
-            placeholder={{ uri: FALLBACK_DOC_PREVIEW }}
+            placeholder={FALLBACK_DOC_PREVIEW}
             style={styles.preview}
             contentFit="cover"
             transition={180}

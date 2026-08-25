@@ -50,7 +50,7 @@ function getYoutubeEmbedUrl(rawUrl?: string) {
 
 function resolveImageSource(source?: string) {
   if (!source) {
-    return require("../../assets/images/thumb-default.jpeg");
+    return require("../../assets/images/thumb-default.png");
   }
   if (
     typeof source === "string" &&
@@ -58,7 +58,7 @@ function resolveImageSource(source?: string) {
   ) {
     return { uri: source };
   }
-  return require("../../assets/images/thumb-default.jpeg");
+  return require("../../assets/images/thumb-default.png");
 }
 
 export default function LessonPlayerScreen() {
@@ -67,6 +67,7 @@ export default function LessonPlayerScreen() {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
+  const [showExternalVideoDialog, setShowExternalVideoDialog] = useState(false);
 
   const params = useLocalSearchParams<{
     id?: string;
@@ -84,10 +85,14 @@ export default function LessonPlayerScreen() {
   const lessonId = params.id;
   const lessonReturnPath = useMemo(() => {
     const search = Object.entries(params)
-      .filter((entry): entry is [string, string] =>
-        typeof entry[1] === "string" && Boolean(entry[1]),
+      .filter(
+        (entry): entry is [string, string] =>
+          typeof entry[1] === "string" && Boolean(entry[1]),
       )
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+      .map(
+        ([key, value]) =>
+          `${encodeURIComponent(key)}=${encodeURIComponent(value)}`,
+      )
       .join("&");
 
     return search ? `/lesson-player?${search}` : "/lesson-player";
@@ -147,7 +152,7 @@ export default function LessonPlayerScreen() {
     [params.link],
   );
 
-  async function openVideo() {
+  async function launchVideo() {
     if (!embedUrl) {
       return;
     }
@@ -157,12 +162,17 @@ export default function LessonPlayerScreen() {
     });
   }
 
+  function openVideo() {
+    setShowExternalVideoDialog(true);
+  }
+
   async function handleShare() {
     try {
       await Share.share({
         title: params.title ?? "Lesson Preview",
-        message: `Check out this lesson: "${params.title ?? "Lesson"}" by ${params.teacher ?? "Teacher"
-          } on DigiLearn!`,
+        message: `Check out this lesson: "${params.title ?? "Lesson"}" by ${
+          params.teacher ?? "Teacher"
+        } on DigiLearn!`,
         url: params.link ?? embedUrl,
       });
     } catch {
@@ -228,7 +238,9 @@ export default function LessonPlayerScreen() {
       <View style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
           {/* Navigation Header */}
-          <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
+          <View
+            style={[styles.header, { paddingHorizontal: horizontalPadding }]}
+          >
             <Pressable
               accessibilityLabel="Back to videos"
               accessibilityRole="button"
@@ -336,7 +348,9 @@ export default function LessonPlayerScreen() {
               entering={FadeInDown.delay(150).duration(400)}
               style={styles.detailsCard}
             >
-              <Text style={styles.title}>{params.title ?? "Untitled Lesson"}</Text>
+              <Text style={styles.title}>
+                {params.title ?? "Untitled Lesson"}
+              </Text>
 
               {/* Instructor Profile */}
               <View style={styles.instructorRow}>
@@ -350,7 +364,11 @@ export default function LessonPlayerScreen() {
                     <Text style={styles.instructorName}>
                       {params.teacher ?? "Educator"}
                     </Text>
-                    <Ionicons name="checkmark-circle" size={16} color="#3B82F6" />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={16}
+                      color="#3B82F6"
+                    />
                   </View>
                   <Text style={styles.instructorRole}>Verified Educator</Text>
                 </View>
@@ -361,7 +379,9 @@ export default function LessonPlayerScreen() {
                 <View style={styles.specCard}>
                   <Ionicons name="time" size={18} color="#3B82F6" />
                   <Text style={styles.specLabel}>Duration</Text>
-                  <Text style={styles.specValue}>{params.duration ?? "00:00"}</Text>
+                  <Text style={styles.specValue}>
+                    {params.duration ?? "00:00"}
+                  </Text>
                 </View>
                 <View style={styles.specCard}>
                   <Ionicons name="calendar" size={18} color="#10B981" />
@@ -440,6 +460,17 @@ export default function LessonPlayerScreen() {
           } as never)
         }
         onClose={() => setShowGuestSaveDialog(false)}
+      />
+      <ActionDialog
+        visible={showExternalVideoDialog}
+        icon={<Ionicons name="play" size={24} color="#2563EB" />}
+        title="Open video externally?"
+        message="You are about to leave DigiLearn to watch this lesson in an external browser."
+        primaryText="Continue"
+        secondaryText="Cancel"
+        onPrimary={launchVideo}
+        onSecondary={() => setShowExternalVideoDialog(false)}
+        onClose={() => setShowExternalVideoDialog(false)}
       />
     </SafeAreaView>
   );

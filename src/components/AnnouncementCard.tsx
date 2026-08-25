@@ -3,9 +3,9 @@ import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import {
-    announcements,
-    subjectColors,
-    type AnnouncementItem,
+  announcements,
+  subjectColors,
+  type AnnouncementItem,
 } from "../constants/homeData";
 import { colors, radius, shadows, spacing } from "../constants/theme";
 
@@ -40,7 +40,7 @@ export const AnnouncementCard = ({ item }: { item: AnnouncementItem }) => {
     <Animated.View entering={FadeInUp.duration(520)} style={styles.card}>
       <View style={styles.imageWrap}>
         <Image
-          source={item.image ?? require("../../assets/images/pdf-preview.jpeg")}
+          source={item.image ?? require("../../assets/images/pdf-preview.png")}
           style={styles.image}
           contentFit="cover"
         />

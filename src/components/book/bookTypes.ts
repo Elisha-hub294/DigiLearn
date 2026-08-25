@@ -12,8 +12,7 @@ export type Book = {
   saves?: number;
 };
 
-export const FALLBACK_COVER =
-  "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80";
+export const FALLBACK_COVER = require("../../../assets/images/bookcover-default.png");
 
 /**
  * Normalizes strings to lower case and trims whitespace for case-insensitive comparisons

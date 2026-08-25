@@ -13,8 +13,7 @@ type SearchResultBookCardProps = {
   onPress: (item: SearchResult) => void;
 };
 
-const DEFAULT_BOOK_COVER =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/images/lib.jpeg";
+const DEFAULT_BOOK_COVER = require("../../../assets/images/bookcover-default.png");
 
 export function SearchResultBookCard({
   item,
@@ -55,7 +54,10 @@ export function SearchResultBookCard({
           {parts.map((part, idx) => {
             const isMatch = part.toLowerCase() === trimmedQ.toLowerCase();
             return (
-              <Text key={idx} style={isMatch ? styles.highlightText : undefined}>
+              <Text
+                key={idx}
+                style={isMatch ? styles.highlightText : undefined}
+              >
                 {part}
               </Text>
             );
@@ -90,14 +92,20 @@ export function SearchResultBookCard({
         <View style={styles.cardBody}>
           <View style={styles.coverWrapper}>
             <Image
-              source={{
-                uri:
-                  item.rawItem?.cover ||
-                  item.previewImage ||
-                  item.rawItem?.image ||
-                  item.rawItem?.avatar ||
-                  DEFAULT_BOOK_COVER,
-              }}
+              source={
+                item.rawItem?.cover ||
+                item.previewImage ||
+                item.rawItem?.image ||
+                item.rawItem?.avatar
+                  ? {
+                      uri:
+                        item.rawItem?.cover ||
+                        item.previewImage ||
+                        item.rawItem?.image ||
+                        item.rawItem?.avatar,
+                    }
+                  : DEFAULT_BOOK_COVER
+              }
               style={styles.coverImage}
               contentFit="cover"
               transition={200}

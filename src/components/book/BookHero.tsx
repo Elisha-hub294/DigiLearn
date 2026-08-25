@@ -9,7 +9,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
-import { Book } from "./bookTypes";
+import { Book, FALLBACK_COVER } from "./bookTypes";
 
 export function BookHero({ book, onBack }: { book: Book; onBack: () => void }) {
   const { height } = useWindowDimensions();
@@ -24,14 +24,12 @@ export function BookHero({ book, onBack }: { book: Book; onBack: () => void }) {
       {/* Fallback background block in case cover is empty/loading */}
       <View style={styles.fallbackBackground} />
 
-      {hasCover && (
-        <Image
-          source={{ uri: book.cover }}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          transition={250}
-        />
-      )}
+      <Image
+        source={hasCover ? { uri: book.cover } : FALLBACK_COVER}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        transition={250}
+      />
 
       <LinearGradient
         colors={["rgba(0,0,0,.05)", "rgba(0,0,0,.2)", "rgba(0,0,0,.75)"]}

@@ -215,7 +215,7 @@ function renderItems(items: Entry[], router: any) {
               image:
                 x.data.image ??
                 x.data.cover ??
-                require("../../../assets/images/bookcover-default.jpeg"),
+                require("../../../assets/images/bookcover-default.png"),
             }}
             onPress={() =>
               router.push({

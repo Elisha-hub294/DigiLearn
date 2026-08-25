@@ -14,8 +14,7 @@ type SearchResultVideoCardProps = {
   onPress: (item: SearchResult) => void;
 };
 
-const DEFAULT_VIDEO_THUMB =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/images/thumb-1.jpeg";
+const DEFAULT_VIDEO_THUMB = require("../../../assets/images/thumb-default.png");
 
 export function SearchResultVideoCard({
   item,
@@ -95,7 +94,11 @@ export function SearchResultVideoCard({
         {/* Thumbnail area */}
         <View style={styles.thumbWrapper}>
           <Image
-            source={{ uri: item.previewImage || DEFAULT_VIDEO_THUMB }}
+            source={
+              item.previewImage
+                ? { uri: item.previewImage }
+                : DEFAULT_VIDEO_THUMB
+            }
             style={styles.thumbnail}
             contentFit="cover"
             transition={200}

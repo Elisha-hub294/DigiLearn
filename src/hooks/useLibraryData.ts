@@ -61,9 +61,12 @@ const stringifyCandidate = (val: unknown): string => {
     }
   }
   if (typeof val === "object" && val !== null) {
-    if ("name" in val) return stringifyCandidate((val as { name: unknown }).name);
-    if ("title" in val) return stringifyCandidate((val as { title: unknown }).title);
-    if ("label" in val) return stringifyCandidate((val as { label: unknown }).label);
+    if ("name" in val)
+      return stringifyCandidate((val as { name: unknown }).name);
+    if ("title" in val)
+      return stringifyCandidate((val as { title: unknown }).title);
+    if ("label" in val)
+      return stringifyCandidate((val as { label: unknown }).label);
   }
   return "";
 };
@@ -77,7 +80,10 @@ const pickString = (candidates: unknown | unknown[], fallback = ""): string => {
   return fallback;
 };
 
-const pickImage = (candidates: unknown | unknown[], fallback: string): string => {
+const pickImage = (
+  candidates: unknown | unknown[],
+  fallback: string,
+): string => {
   const list = Array.isArray(candidates) ? candidates : [candidates];
   for (const item of list) {
     if (typeof item === "string" && item.trim()) {
@@ -160,17 +166,12 @@ export function useLibraryData() {
       ]);
 
       let defaultUserAvatar = "";
-      let defaultPdfImage = "";
-
       defaultSnapshot.docs.forEach((doc) => {
         const data = doc.data();
         const docName =
           typeof data.name === "string" ? normalizeKey(data.name) : "";
         if (docName === "user" && typeof data.icon === "string") {
           defaultUserAvatar = data.icon;
-        }
-        if (docName === "pdf" && typeof data.icon === "string") {
-          defaultPdfImage = data.icon;
         }
       });
 
@@ -290,10 +291,7 @@ export function useLibraryData() {
           subject,
           year,
           pages,
-          image: pickImage(
-            [data.image, data.coverImage, data.thumbnail],
-            defaultPdfImage,
-          ),
+          image: pickImage([data.image, data.coverImage, data.thumbnail], ""),
           document: pickString(
             [data.doc, data.document, data.pdf, data.url],
             "",

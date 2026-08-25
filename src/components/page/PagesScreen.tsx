@@ -4,18 +4,18 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, {
-    FadeIn,
-    FadeInUp,
-    SlideInDown,
+  FadeIn,
+  FadeInUp,
+  SlideInDown,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../../firebaseConfig";
@@ -149,9 +149,7 @@ const sortNotes = (notes: PageNote[], sortBy: string) => {
           (Number(b.progress ?? 0) || 0) - (Number(a.progress ?? 0) || 0),
       );
     case "Recently Updated":
-      return list.sort(
-        (a, b) => noteDate(b) - noteDate(a),
-      );
+      return list.sort((a, b) => noteDate(b) - noteDate(a));
     case "Alphabetical (A–Z)":
       return list.sort((a, b) =>
         (a.title ?? "").localeCompare(b.title ?? "", undefined, {
@@ -413,10 +411,28 @@ export default function PagesScreen() {
               },
             ]}
           >
-            <View style={styles.skeletonHeaderRow} />
-            <View style={styles.skeletonSearchRow} />
-            <View style={styles.skeletonCard} />
-            <View style={styles.skeletonCard} />
+            <View style={styles.skeletonHeaderRow}>
+              <View style={styles.skeletonBackButton} />
+              <View style={styles.skeletonHeaderTitle} />
+            </View>
+            <View style={styles.skeletonSearchSection}>
+              <View style={styles.skeletonSearchRow} />
+              <View style={styles.skeletonFilterButton} />
+            </View>
+            <View style={styles.skeletonListSection}>
+              <View style={styles.skeletonItemsCount} />
+              <View style={styles.skeletonCard}>
+                <View style={styles.skeletonPreview} />
+                <View style={styles.skeletonCardContent}>
+                  <View style={styles.skeletonAvatar} />
+                  <View style={styles.skeletonCardCopy}>
+                    <View style={styles.skeletonCardTitle} />
+                    <View style={styles.skeletonCardDescription} />
+                    <View style={styles.skeletonCardDescriptionShort} />
+                  </View>
+                </View>
+              </View>
+            </View>
           </View>
         </View>
       </SafeAreaView>
@@ -637,25 +653,100 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   skeletonHeaderRow: {
-    width: 180,
+    flexDirection: "row",
+    alignItems: "center",
     height: 40,
-    borderRadius: 12,
+    marginTop: spacing.md,
+    marginBottom: 28,
+  },
+  skeletonBackButton: {
+    width: 40,
+    height: 40,
+    marginRight: spacing.md,
+    borderRadius: 20,
     backgroundColor: "#ECEFF3",
-    marginBottom: 20,
+  },
+  skeletonHeaderTitle: {
+    width: 180,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: "#ECEFF3",
+  },
+  skeletonSearchSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.xl,
   },
   skeletonSearchRow: {
-    width: "100%",
-    height: 46,
-    borderRadius: 999,
+    flex: 1,
+    height: 88,
+    marginRight: spacing.md,
+    borderRadius: 28,
     backgroundColor: "#F1F3F5",
-    marginBottom: 20,
+  },
+  skeletonFilterButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "#ECEFF3",
+  },
+  skeletonListSection: {
+    flex: 1,
+  },
+  skeletonItemsCount: {
+    width: 72,
+    height: 17,
+    marginBottom: spacing.md,
+    borderRadius: 6,
+    backgroundColor: "#ECEFF3",
   },
   skeletonCard: {
     width: "100%",
-    height: 160,
-    borderRadius: 18,
+    borderRadius: 10,
+    overflow: "hidden",
+    backgroundColor: "#FFFFFF",
+  },
+  skeletonPreview: {
+    width: "100%",
+    height: 320,
+    borderRadius: 10,
     backgroundColor: "#F1F3F5",
-    marginBottom: 16,
+    marginBottom: spacing.sm,
+  },
+  skeletonCardContent: {
+    flexDirection: "row",
+    paddingHorizontal: spacing.xs,
+    paddingBottom: spacing.sm,
+  },
+  skeletonAvatar: {
+    width: 42,
+    height: 42,
+    marginRight: spacing.sm,
+    borderRadius: 21,
+    backgroundColor: "#E8EDF0",
+  },
+  skeletonCardCopy: {
+    flex: 1,
+  },
+  skeletonCardTitle: {
+    width: "60%",
+    height: 16,
+    marginBottom: 8,
+    borderRadius: 6,
+    backgroundColor: "#EFEFEF",
+  },
+  skeletonCardDescription: {
+    width: "90%",
+    height: 12,
+    marginBottom: 6,
+    borderRadius: 6,
+    backgroundColor: "#EFEFEF",
+  },
+  skeletonCardDescriptionShort: {
+    width: "40%",
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#EFEFEF",
   },
   contentContainer: {
     flex: 1,

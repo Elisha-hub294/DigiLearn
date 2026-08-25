@@ -1,5 +1,5 @@
 import { Image } from "expo-image";
-import React, { useState } from "react";
+import { useState } from "react";
 import { NativeModules, StyleSheet, UIManager, View } from "react-native";
 
 interface PdfPreviewProps {
@@ -26,7 +26,7 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
   if (!PdfComponent || error || !uri) {
     return (
       <Image
-        source={require("../../../assets/images/pdf-preview.jpeg")}
+        source={require("../../../assets/images/pdf-preview.png")}
         style={style}
         contentFit="cover"
         contentPosition="top"

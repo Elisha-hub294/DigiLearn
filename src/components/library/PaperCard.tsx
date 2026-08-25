@@ -2,7 +2,6 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
-import PdfPreview from "../home/PdfPreview";
 
 type PaperCardProps = {
   title: string;
@@ -41,11 +40,11 @@ export function PaperCard({
       onPress={openPdf}
     >
       <View style={styles.previewContainer}>
-        {document ? (
-          <PdfPreview uri={document} style={styles.preview} />
-        ) : (
-          <Image source={image} style={styles.preview} contentFit="cover" />
-        )}
+        <Image
+          source={require("../../../assets/images/pdf-preview.png")}
+          style={styles.preview}
+          contentFit="cover"
+        />
         <View style={styles.darkOverlay} />
       </View>
       <View style={styles.content}>

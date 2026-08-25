@@ -26,7 +26,7 @@ export function PageHero({
   const insets = useSafeAreaInsets();
 
   const heroHeight = Math.min(Math.max(height * 0.5, 320), 500);
-  const previewUri = note.preview || FALLBACK_DOC_PREVIEW;
+  const previewUri = note.preview;
 
   return (
     <Animated.View
@@ -38,7 +38,7 @@ export function PageHero({
       ) : (
         <Image
           source={{ uri: previewUri }}
-          placeholder={{ uri: FALLBACK_DOC_PREVIEW }}
+          placeholder={FALLBACK_DOC_PREVIEW}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           contentPosition="top"

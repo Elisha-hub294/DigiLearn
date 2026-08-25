@@ -1,6 +1,6 @@
 import { ImageSourcePropType } from "react-native";
 
-const FALLBACK_THUMBNAIL = require("../../assets/images/thumb-default.jpeg");
+const FALLBACK_THUMBNAIL = require("../../assets/images/thumb-default.png");
 
 type FirestoreTimestampLike = {
   seconds?: unknown;

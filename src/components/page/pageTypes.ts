@@ -28,8 +28,7 @@ export type SourceBook = {
   author?: string;
 };
 
-export const FALLBACK_DOC_PREVIEW =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/images/doc-preview.jpeg";
+export const FALLBACK_DOC_PREVIEW = require("../../../assets/images/pdf-preview.png");
 
 export const DEFAULT_SUBJECT_AVATAR =
   "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/default-2d.png";

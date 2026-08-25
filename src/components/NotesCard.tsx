@@ -11,7 +11,7 @@ export const NotesCard = () => {
   return (
     <Animated.View entering={FadeInUp.duration(400)} style={styles.card}>
       <Image
-        source={require("../../assets/images/pdf-preview.jpeg")}
+        source={require("../../assets/images/pdf-preview.png")}
         style={styles.image}
         contentFit="cover"
       />

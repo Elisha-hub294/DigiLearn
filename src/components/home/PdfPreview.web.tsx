@@ -14,7 +14,8 @@ const loadPdfJs = () => {
       return;
     }
     const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
+    script.src =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
     script.onload = () => {
       const pdfjsLib = (window as any).pdfjsLib;
       pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -87,7 +88,7 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
   if (error) {
     return (
       <Image
-        source={require("../../../assets/images/pdf-preview.jpeg")}
+        source={require("../../../assets/images/pdf-preview.png")}
         style={style}
         contentFit="cover"
         contentPosition="top"
@@ -98,7 +99,10 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
   return (
     <View style={[style, styles.container]}>
       {loading && (
-        <View style={StyleSheet.absoluteFill} className="justify-center items-center">
+        <View
+          style={StyleSheet.absoluteFill}
+          className="justify-center items-center"
+        >
           <ActivityIndicator size="small" color="#007AFF" />
         </View>
       )}
