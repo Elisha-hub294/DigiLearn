@@ -280,7 +280,7 @@ export default function TeacherProfileScreen() {
           createdAt: (entry as Record<string, unknown>).createdAt,
           image: pickString(
             (entry as Record<string, unknown>).image ||
-            (entry as Record<string, unknown>).cover,
+              (entry as Record<string, unknown>).cover,
           ),
           author: pickArray((entry as Record<string, unknown>).author),
         }));
@@ -795,30 +795,109 @@ export default function TeacherProfileScreen() {
         <Animated.View
           entering={FadeInUp.duration(420)}
           style={[
-            styles.loadingContainer,
+            styles.container,
             { maxWidth: contentMaxWidth, paddingHorizontal: horizontalPadding },
           ]}
         >
-          <RNAnimated.View
-            style={[styles.skeletonHeader, { opacity: pulseAnim }]}
+          <FlatList
+            data={["one", "two", "three"]}
+            keyExtractor={(item) => item}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.resourceList}
+            ListHeaderComponent={
+              <>
+                <View style={styles.headerWrap}>
+                  <RNAnimated.View
+                    style={[styles.skeletonHeaderPanel, { opacity: pulseAnim }]}
+                  />
+                  {!openedFromAccount && (
+                    <RNAnimated.View
+                      style={[
+                        styles.skeletonBackButton,
+                        { opacity: pulseAnim },
+                      ]}
+                    />
+                  )}
+                  {isOwnProfile && (
+                    <RNAnimated.View
+                      style={[
+                        styles.skeletonSettingsButton,
+                        { opacity: pulseAnim },
+                      ]}
+                    />
+                  )}
+                  <View style={styles.avatarShell}>
+                    <RNAnimated.View
+                      style={[styles.skeletonAvatar, { opacity: pulseAnim }]}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.profileBody}>
+                  <RNAnimated.View
+                    style={[styles.skeletonTitle, { opacity: pulseAnim }]}
+                  />
+                  <RNAnimated.View
+                    style={[styles.skeletonBio, { opacity: pulseAnim }]}
+                  />
+                  <View style={styles.statsRow}>
+                    {Array.from({ length: 4 }, (_, index) => (
+                      <RNAnimated.View
+                        key={index}
+                        style={[
+                          styles.skeletonStatChip,
+                          { opacity: pulseAnim },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                  <View style={[styles.contactRow, { gap: actionRowGap }]}>
+                    <RNAnimated.View
+                      style={[
+                        styles.skeletonContactButton,
+                        { opacity: pulseAnim },
+                      ]}
+                    />
+                    {Array.from({ length: 3 }, (_, index) => (
+                      <RNAnimated.View
+                        key={index}
+                        style={[
+                          styles.skeletonIconButton,
+                          {
+                            width: actionIconSize,
+                            height: actionIconSize,
+                            opacity: pulseAnim,
+                          },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                  <RNAnimated.View
+                    style={[
+                      styles.skeletonSectionTitle,
+                      { opacity: pulseAnim },
+                    ]}
+                  />
+                  <RNAnimated.View
+                    style={[styles.skeletonSearch, { opacity: pulseAnim }]}
+                  />
+                  <View style={styles.tabRow}>
+                    {Array.from({ length: 4 }, (_, index) => (
+                      <RNAnimated.View
+                        key={index}
+                        style={[styles.skeletonTab, { opacity: pulseAnim }]}
+                      />
+                    ))}
+                  </View>
+                </View>
+              </>
+            }
+            renderItem={() => (
+              <RNAnimated.View
+                style={[styles.skeletonResource, { opacity: pulseAnim }]}
+              />
+            )}
           />
-          <View style={styles.loadingBody}>
-            <RNAnimated.View
-              style={[styles.skeletonAvatar, { opacity: pulseAnim }]}
-            />
-            <RNAnimated.View
-              style={[styles.skeletonTitle, { opacity: pulseAnim }]}
-            />
-            <RNAnimated.View
-              style={[styles.skeletonBio, { opacity: pulseAnim }]}
-            />
-            <RNAnimated.View
-              style={[styles.skeletonLine, { opacity: pulseAnim }]}
-            />
-            <RNAnimated.View
-              style={[styles.skeletonLineShort, { opacity: pulseAnim }]}
-            />
-          </View>
         </Animated.View>
       </SafeAreaView>
     );
@@ -1062,52 +1141,94 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: spacing.xl,
   },
-  loadingContainer: {
-    flex: 1,
-    width: "100%",
-    alignSelf: "center",
-    backgroundColor: colors.background,
-  },
-  skeletonHeader: {
-    height: 250,
+  skeletonHeaderPanel: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 150,
     backgroundColor: "#E5E7EB",
   },
-  loadingBody: {
-    alignItems: "center",
-    marginTop: -70,
+  skeletonBackButton: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    backgroundColor: "#D1D5DB",
+  },
+  skeletonSettingsButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#D1D5DB",
   },
   skeletonAvatar: {
     width: 150,
     height: 150,
     borderRadius: 100,
     backgroundColor: "#D1D5DB",
-    marginBottom: 20,
   },
   skeletonTitle: {
+    alignSelf: "center",
     width: 180,
-    height: 22,
+    height: 34,
     borderRadius: 999,
     backgroundColor: "#E5E7EB",
-    marginBottom: 10,
   },
   skeletonBio: {
-    width: 260,
-    height: 14,
+    alignSelf: "center",
+    width: "72%",
+    height: 40,
+    marginTop: spacing.sm,
     borderRadius: 999,
     backgroundColor: "#E5E7EB",
-    marginBottom: 6,
   },
-  skeletonLine: {
-    width: 200,
-    height: 14,
+  skeletonStatChip: {
+    flex: 1,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: "#E5E7EB",
+  },
+  skeletonContactButton: {
+    flex: 1,
+    height: 52,
+    borderRadius: 10,
+    backgroundColor: "#E5E7EB",
+  },
+  skeletonIconButton: {
+    borderRadius: 10,
+    backgroundColor: "#E5E7EB",
+  },
+  skeletonSectionTitle: {
+    width: 130,
+    height: 30,
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
     borderRadius: 999,
     backgroundColor: "#E5E7EB",
-    marginBottom: 6,
   },
-  skeletonLineShort: {
-    width: 140,
-    height: 14,
-    borderRadius: 999,
+  skeletonSearch: {
+    width: "100%",
+    height: 52,
+    marginVertical: spacing.lg,
+    borderRadius: 28,
+    backgroundColor: "#E5E7EB",
+  },
+  skeletonTab: {
+    width: 72,
+    height: 38,
+    borderRadius: radius.pill,
+    backgroundColor: "#E5E7EB",
+  },
+  skeletonResource: {
+    width: "100%",
+    height: 190,
+    borderRadius: 16,
     backgroundColor: "#E5E7EB",
   },
 });
