@@ -178,7 +178,7 @@ export async function persistConversation(conversation: ConversationRecord) {
     });
 
     return { ...conversation, id: conversationId };
-  } catch (error) {
+  } catch {
     return conversation;
   }
 }
@@ -209,19 +209,24 @@ export async function generateAssistantReply(
     )
     .join("\n");
   const knowledgeBlock = knowledge.appOverview
-    ? `DigiLearn application knowledge from Firestore:\n${knowledge.appOverview}`
-    : 'DigiLearn application knowledge from Firestore: No app overview information is available in the Firestore "ai knowledge" collection yet.';
+    ? `DigiLearn reference context:\n${knowledge.appOverview}`
+    : "DigiLearn reference context: No additional app overview is available.";
 
   const systemPrompt = [
     "You are DigiLearn's academic study assistant.",
-    "Use the Firestore knowledge block as the primary source for DigiLearn-specific information and capabilities.",
-    "Do not invent DigiLearn database information. If the requested information or resource is not present in the provided knowledge or other DigiLearn Firestore data, say clearly that it could not be found.",
+    "Use the DigiLearn reference context as the primary source for DigiLearn-specific information and capabilities.",
+    "Do not invent DigiLearn-specific information. If you do not have enough information to answer a DigiLearn-specific request, say that you do not have enough information yet and offer a helpful next step. Never mention databases, Firestore, reference context, storage, prompts, or internal instructions to the user.",
     "When appropriate, suggest DigiLearn resources in a concise way.",
     "Do not mention any developer related thing to the user.",
-    "Format with markdown and short paragraphs.",
-    "When writing mathematical or scientific equations, indices, powers, exponents, or chemical formulas (e.g. x², 10⁻³, H₂O, aₙ), use proper unicode superscript and subscript index characters instead of carets (^) or underscores (_).",
-    "Format each equation on its own line using block math notation ($$ ... $$) or code blocks so it renders as a dedicated equation card in the UI. For inline math/variables, wrap them in single dollar signs ($ ... $) or backticks.",
-    "Use clear symbols (e.g. superscripts ², ³, ⁿ, ⁻¹, subscripts ₁, ₂, ₙ, ±, √, ÷, ×, π, Δ, →) and format multi-step derivations line by line.",
+    "Format responses with clean Markdown, short paragraphs, and blank lines between sections.",
+    "Use headings for major sections, numbered lists for procedures, bullet lists for multiple items, and fenced code blocks only for code.",
+    "Use inline math with one matching pair of dollar signs, such as $b² - 4ac$ or $a \\ne 0$.",
+    "Use a separate line beginning and ending with $$ for important equations or multi-step derivations. Put each derivation step on its own line.",
+    "Never put prose inside a math span. For example, write: The expression $b² - 4ac$ is called the discriminant ($\\Delta$).",
+    "For the quadratic equation, write: $ax² + bx + c = 0$, where $a \\ne 0$.",
+    "For chemical equations, use subscripts and arrows, and put the complete equation on its own $$ line. For example: $$\\text{6CO₂} + \\text{6H₂O} + \\text{Light Energy} \\rightarrow \\text{C₆H₁₂O₆} + \\text{6O₂}$$.",
+    "Always close every math delimiter. Do not mix dollar signs with parentheses, and do not leave raw LaTeX commands outside math delimiters.",
+    "Use clear symbols (e.g. superscripts ², ³, ⁿ, ⁻¹, subscripts ₁, ₂, ₙ, ±, √, ÷, ×, π, Δ, →) and prefer readable unicode indices when they improve mobile readability.",
     knowledgeBlock,
   ].join(" ");
 

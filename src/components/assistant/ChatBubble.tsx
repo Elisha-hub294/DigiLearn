@@ -110,9 +110,13 @@ function convertIndices(text: string): string {
 
 function formatMathString(latexOrMath: string): string {
   const formatted = latexOrMath
+    .replace(/\\left|\\right/g, "")
     .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, "($1 / $2)")
     .replace(/\\sqrt\{([^}]+)\}/g, "√($1)")
     .replace(/\\sqrt\s*([a-zA-Z0-9]+)/g, "√$1")
+    .replace(/\\boxed\{([^}]+)\}/g, "$1")
+    .replace(/\\(?:mathrm|mathbf|mathit)\{([^}]+)\}/g, "$1")
+    .replace(/\\text\{([^}]+)\}/g, "$1")
     .replace(/\\pm/g, "±")
     .replace(/\\times/g, "×")
     .replace(/\\div/g, "÷")
@@ -127,8 +131,16 @@ function formatMathString(latexOrMath: string): string {
     .replace(/\\beta/g, "β")
     .replace(/\\Delta/g, "Δ")
     .replace(/\\delta/g, "δ")
+    .replace(/\\gamma/g, "γ")
+    .replace(/\\lambda/g, "λ")
+    .replace(/\\mu/g, "μ")
+    .replace(/\\sigma/g, "σ")
+    .replace(/\\omega/g, "ω")
     .replace(/\\cdot/g, "·")
     .replace(/\\rightarrow/g, "→")
+    .replace(/\\le/g, "≤")
+    .replace(/\\ge/g, "≥")
+    .replace(/\\ne/g, "≠")
     .replace(/\\\$/g, "$");
 
   return convertIndices(formatted);
@@ -261,19 +273,35 @@ type Segment =
   | { type: "math"; value: string }
   | { type: "bolditalic"; value: string };
 
+function repairInlineMathBoundaries(line: string): string {
+  return line.replace(/\$([^$\n]+)\$/g, (full, content: string) => {
+    const proseMatch = content.match(
+      /\s+(?:is called|where|which means|because|when)\b/i,
+    );
+    if (!proseMatch || proseMatch.index === undefined) {
+      return full;
+    }
+
+    const mathPart = content.slice(0, proseMatch.index).trim();
+    const prosePart = content.slice(proseMatch.index).trim();
+    return mathPart ? `$${mathPart}$ ${prosePart}` : full;
+  });
+}
+
 function parseInline(line: string): Segment[] {
   const segments: Segment[] = [];
+  const repairedLine = repairInlineMathBoundaries(line);
   // Order matters: bolditalic before bold before italic, math before plain text
   const pattern =
     /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|__(.+?)__|_(.+?)_|\*(.+?)\*|`(.+?)`|\$(.+?)\$|\\\((.+?)\\\))/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
 
-  while ((match = pattern.exec(line)) !== null) {
+  while ((match = pattern.exec(repairedLine)) !== null) {
     if (match.index > lastIndex) {
       segments.push({
         type: "text",
-        value: line.slice(lastIndex, match.index),
+        value: repairedLine.slice(lastIndex, match.index),
       });
     }
     const full = match[0];
@@ -292,8 +320,8 @@ function parseInline(line: string): Segment[] {
     lastIndex = match.index + full.length;
   }
 
-  if (lastIndex < line.length) {
-    segments.push({ type: "text", value: line.slice(lastIndex) });
+  if (lastIndex < repairedLine.length) {
+    segments.push({ type: "text", value: repairedLine.slice(lastIndex) });
   }
   return segments;
 }
@@ -312,19 +340,19 @@ function InlineText({
           case "bold":
             return (
               <Text key={i} style={inlineStyles.bold}>
-                {convertIndices(seg.value)}
+                {formatMathString(seg.value)}
               </Text>
             );
           case "italic":
             return (
               <Text key={i} style={inlineStyles.italic}>
-                {convertIndices(seg.value)}
+                {formatMathString(seg.value)}
               </Text>
             );
           case "bolditalic":
             return (
               <Text key={i} style={inlineStyles.boldItalic}>
-                {convertIndices(seg.value)}
+                {formatMathString(seg.value)}
               </Text>
             );
           case "code":
@@ -336,11 +364,11 @@ function InlineText({
           case "math":
             return (
               <Text key={i} style={inlineStyles.mathInline}>
-                {convertIndices(seg.value)}
+                {formatMathString(seg.value)}
               </Text>
             );
           default:
-            return <Text key={i}>{convertIndices(seg.value)}</Text>;
+            return <Text key={i}>{formatMathString(seg.value)}</Text>;
         }
       })}
     </Text>
@@ -421,6 +449,16 @@ function parseBlocks(markdown: string): Block[] {
         i++;
       }
       blocks.push({ kind: "codeblock", code: codeLines.join("\n") });
+      i++;
+      continue;
+    }
+
+    // Standalone chemical equations sometimes arrive without math delimiters.
+    if (line.trim().includes("\\text{") && /(?:\\rightarrow|→|=)/.test(line)) {
+      blocks.push({
+        kind: "mathblock",
+        formula: formatMathString(line.trim()),
+      });
       i++;
       continue;
     }
@@ -509,7 +547,7 @@ function MarkdownView({ text }: { text: string }) {
             ];
             return (
               <Text key={idx} style={headingStyle}>
-                {block.text}
+                {formatMathString(block.text)}
               </Text>
             );
           }
