@@ -6,33 +6,33 @@ import { usePathname, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    Linking,
-    Platform,
-    Pressable,
-    Animated as RNAnimated,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Alert,
+  FlatList,
+  Linking,
+  Platform,
+  Pressable,
+  Animated as RNAnimated,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { recordUserActivity } from "../../services/activityService";
+import {
+  getHiddenPageEntries,
+  getMarkedReadItemIds,
+  setPageHiddenState,
+  togglePageReadState,
+  toggleSavedItem,
+} from "../../services/userProfile";
 import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
-import { recordUserActivity } from "../../services/activityService";
-import {
-    getHiddenPageEntries,
-    getMarkedReadItemIds,
-    setPageHiddenState,
-    togglePageReadState,
-    toggleSavedItem,
-} from "../../services/userProfile";
 import { CardActionMenu } from "../ui/CardActionMenu";
 import PdfPreview from "./PdfPreview";
 
@@ -55,7 +55,7 @@ type TopicalNote = {
 type FeaturedNoteCardProps = {
   subject?: string;
   hideAvatar?: boolean;
-  notes?: Array<{
+  notes?: {
     id: string;
     title?: string;
     description?: string;
@@ -70,7 +70,7 @@ type FeaturedNoteCardProps = {
     readStatus?: string;
     isRead?: boolean;
     progress?: number;
-  }>;
+  }[];
   loading?: boolean;
   source?: "home" | "library" | "pages";
   includeHiddenItems?: boolean;
@@ -643,7 +643,7 @@ const FeaturedNoteItem = ({
           >
             <Ionicons
               name={isSaved ? "bookmark" : "bookmark-outline"}
-              size={20}
+              size={25}
               color={isSaved ? colors.primary : colors.subtitle}
             />
           </Pressable>
@@ -742,16 +742,13 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     flexWrap: "wrap",
     gap: 8,
-    paddingHorizontal: spacing.xs,
     paddingBottom: spacing.xs,
   },
   actionItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    paddingVertical: 8,
     paddingHorizontal: 3,
-    borderRadius: 999,
   },
   actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
   skeletonBox: { backgroundColor: "#EFEFEF", borderRadius: radius.sm },

@@ -6,6 +6,7 @@ import {
   getDoc,
   serverTimestamp,
   setDoc,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
@@ -102,7 +103,7 @@ export async function setPageHiddenState(
 
     const nextHidden = [
       ...currentHidden,
-      { id: itemId, hiddenAt: serverTimestamp() },
+      { id: itemId, hiddenAt: Timestamp.now() },
     ];
     await setDoc(userRef, { "hidden-pages": nextHidden }, { merge: true });
     return;
@@ -151,11 +152,11 @@ export const getHiddenPageEntries = (
   const hiddenPages = profile?.["hidden-pages"] ?? [];
   return Array.isArray(hiddenPages)
     ? hiddenPages.filter(
-      (entry): entry is HiddenPageRecord =>
-        typeof entry === "object" &&
-        entry !== null &&
-        typeof entry.id === "string",
-    )
+        (entry): entry is HiddenPageRecord =>
+          typeof entry === "object" &&
+          entry !== null &&
+          typeof entry.id === "string",
+      )
     : [];
 };
 
@@ -201,7 +202,7 @@ export async function toggleHiddenPage(
     {
       "hidden-pages": [
         ...currentHidden,
-        { id: itemId, hiddenAt: serverTimestamp() },
+        { id: itemId, hiddenAt: Timestamp.now() },
       ],
     },
     { merge: true },

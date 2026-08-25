@@ -137,7 +137,7 @@ export default function AssistantScreen() {
     return words.length > 0 ? words : "Learning";
   };
 
-  const handleSend = async (promptOverride?: string) => {
+  const handleSend = async (promptOverride?: string, isRetry = false) => {
     const prompt = (promptOverride ?? message).trim();
     if (!prompt) {
       return;
@@ -150,7 +150,7 @@ export default function AssistantScreen() {
       createdAt: new Date().toISOString(),
     };
 
-    const nextMessages = [...messages, userMessage];
+    const nextMessages = isRetry ? messages : [...messages, userMessage];
     setMessages(nextMessages);
     setMessage("");
     setErrorText(null);
@@ -369,7 +369,7 @@ export default function AssistantScreen() {
                 <View style={styles.errorCard}>
                   <Text style={styles.errorText}>{errorText}</Text>
                   <Pressable
-                    onPress={() => handleSend(failedPrompt ?? undefined)}
+                    onPress={() => handleSend(failedPrompt ?? undefined, true)}
                     style={styles.retryButton}
                   >
                     <Text style={styles.retryText}>Retry</Text>
