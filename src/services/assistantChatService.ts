@@ -149,7 +149,7 @@ export async function loadConversationHistory(): Promise<ConversationRecord[]> {
     }));
   } catch (error) {
     console.warn("Unable to load conversations", error);
-    return [];
+    return getCachedConversations();
   }
 }
 
@@ -163,10 +163,9 @@ export async function persistConversation(conversation: ConversationRecord) {
   }
 
   try {
-    const conversationRef = doc(
-      conversationCollection,
-      conversation.id.startsWith("local-") ? undefined : conversation.id,
-    );
+    const conversationRef = conversation.id.startsWith("local-")
+      ? doc(conversationCollection)
+      : doc(conversationCollection, conversation.id);
     const conversationId = conversationRef.id;
 
     await setDoc(conversationRef, {
@@ -178,7 +177,9 @@ export async function persistConversation(conversation: ConversationRecord) {
     });
 
     return { ...conversation, id: conversationId };
-  } catch {
+  } catch (error) {
+    console.warn("Unable to save assistant conversation remotely", error);
+    await saveConversationLocally(conversation);
     return conversation;
   }
 }
@@ -224,7 +225,7 @@ export async function generateAssistantReply(
     "Use a separate line beginning and ending with $$ for important equations or multi-step derivations. Put each derivation step on its own line.",
     "Never put prose inside a math span. For example, write: The expression $b² - 4ac$ is called the discriminant ($\\Delta$).",
     "For the quadratic equation, write: $ax² + bx + c = 0$, where $a \\ne 0$.",
-    "For chemical equations, use subscripts and arrows, and put the complete equation on its own $$ line. For example: $$\\text{6CO₂} + \\text{6H₂O} + \\text{Light Energy} \\rightarrow \\text{C₆H₁₂O₆} + \\text{6O₂}$$.",
+    "For chemical equations, use subscripts and the actual → symbol or \\rightarrow command, never the word 'arrow', and put the complete equation on its own $$ line. For example: $$\\text{6CO₂} + \\text{6H₂O} + \\text{Light Energy} \\rightarrow \\text{C₆H₁₂O₆} + \\text{6O₂}$$.",
     "Always close every math delimiter. Do not mix dollar signs with parentheses, and do not leave raw LaTeX commands outside math delimiters.",
     "Use clear symbols (e.g. superscripts ², ³, ⁿ, ⁻¹, subscripts ₁, ₂, ₙ, ±, √, ÷, ×, π, Δ, →) and prefer readable unicode indices when they improve mobile readability.",
     knowledgeBlock,

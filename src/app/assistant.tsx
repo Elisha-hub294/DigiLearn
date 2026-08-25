@@ -207,10 +207,16 @@ export default function AssistantScreen() {
       return;
     }
 
+    setMessage("");
     setActiveConversationId(conversationId);
     setMessages(selectedConversation.messages);
     setErrorText(null);
     setFailedPrompt(null);
+  };
+
+  const handlePromptChipPress = (suggestion: string) => {
+    setMessage("");
+    void handleSend(suggestion);
   };
 
   const handleBackToMain = () => {
@@ -307,7 +313,7 @@ export default function AssistantScreen() {
                         <PromptChip
                           key={suggestion}
                           label={suggestion}
-                          onPress={() => handleSend(suggestion)}
+                          onPress={() => handlePromptChipPress(suggestion)}
                         />
                       ))}
                     </View>

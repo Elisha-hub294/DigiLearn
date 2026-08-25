@@ -137,13 +137,18 @@ function formatMathString(latexOrMath: string): string {
     .replace(/\\sigma/g, "σ")
     .replace(/\\omega/g, "ω")
     .replace(/\\cdot/g, "·")
-    .replace(/\\rightarrow/g, "→")
+    .replace(/\\(?:longrightarrow|rightarrow|to)/g, "→")
+    .replace(/=>|->/g, "→")
     .replace(/\\le/g, "≤")
     .replace(/\\ge/g, "≥")
     .replace(/\\ne/g, "≠")
     .replace(/\\\$/g, "$");
 
   return convertIndices(formatted);
+}
+
+function formatEquationString(value: string): string {
+  return formatMathString(value).replace(/\s+arrow\s+/gi, " → ");
 }
 
 // ─── Fraction & Formula Component ───────────────────────────────────────────
@@ -410,7 +415,7 @@ function parseBlocks(markdown: string): Block[] {
       ) {
         blocks.push({
           kind: "mathblock",
-          formula: formatMathString(inlineContent),
+          formula: formatEquationString(inlineContent),
         });
         i++;
         continue;
@@ -435,7 +440,7 @@ function parseBlocks(markdown: string): Block[] {
       }
       blocks.push({
         kind: "mathblock",
-        formula: formatMathString(codeLines.join("\n").trim()),
+        formula: formatEquationString(codeLines.join("\n").trim()),
       });
       continue;
     }
@@ -454,10 +459,13 @@ function parseBlocks(markdown: string): Block[] {
     }
 
     // Standalone chemical equations sometimes arrive without math delimiters.
-    if (line.trim().includes("\\text{") && /(?:\\rightarrow|→|=)/.test(line)) {
+    if (
+      line.trim().includes("\\text{") &&
+      /(?:\\(?:longrightarrow|rightarrow|to)|→|=>|->|\barrow\b|=)/i.test(line)
+    ) {
       blocks.push({
         kind: "mathblock",
-        formula: formatMathString(line.trim()),
+        formula: formatEquationString(line.trim()),
       });
       i++;
       continue;
