@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
-import { collection, getDocs } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { collection, getDocs } from "firebase/firestore";
 
 import { db } from "../../firebaseConfig";
 
@@ -20,7 +20,10 @@ export async function isAssistantEnabled(): Promise<boolean> {
 
 export async function setAssistantEnabled(enabled: boolean): Promise<void> {
   try {
-    await AsyncStorage.setItem(ASSISTANT_ENABLED_KEY, enabled ? "true" : "false");
+    await AsyncStorage.setItem(
+      ASSISTANT_ENABLED_KEY,
+      enabled ? "true" : "false",
+    );
   } catch (error) {
     console.warn("Unable to save assistant enabled state", error);
   }
@@ -65,10 +68,7 @@ const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
 
 const getAvatarFromData = (data: Record<string, unknown>): string | null => {
-  const candidates = [
-    data.avatar,
-    data.gif
-  ];
+  const candidates = [data.avatar, data.gif];
 
   return candidates.find(isNonEmptyString) ?? null;
 };
@@ -164,7 +164,7 @@ async function generateAIContentFromKnowledge(
   try {
     const ai = new GoogleGenAI({ apiKey: geminiApiKey });
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.5-flash-lite",
       contents: prompt,
     });
 
@@ -254,10 +254,11 @@ export async function getAssistantContent(
         .map((doc) => (doc.data() as Record<string, unknown>).gemini_api_key)
         .find(isNonEmptyString) ?? null;
 
-    const { floatingMessages, suggestions } = await generateAIContentFromKnowledge(
-      geminiApiKey,
-      knowledgeContext.appOverview,
-    );
+    const { floatingMessages, suggestions } =
+      await generateAIContentFromKnowledge(
+        geminiApiKey,
+        knowledgeContext.appOverview,
+      );
 
     const content = {
       avatar: firstAvatar,

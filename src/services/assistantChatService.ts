@@ -1,19 +1,19 @@
 import { GoogleGenAI } from "@google/genai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-    collection,
-    doc,
-    getDocs,
-    orderBy,
-    query,
-    serverTimestamp,
-    setDoc,
+  collection,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
 } from "firebase/firestore";
 
 import { auth, db } from "../../firebaseConfig";
 import {
-    getAssistantContent,
-    getDigiLearnKnowledgeContext,
+  getAssistantContent,
+  getDigiLearnKnowledgeContext,
 } from "./aiAssistantService";
 
 export type ChatMessage = {
@@ -228,7 +228,7 @@ export async function generateAssistantReply(
   try {
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.5-flash-lite",
       contents: `${systemPrompt}\n\nConversation:\n${history}\n\nUser prompt:\n${prompt}`,
     });
     const text = response.text ?? ASSISTANT_UNAVAILABLE_MESSAGE;

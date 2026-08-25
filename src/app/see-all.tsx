@@ -4,21 +4,21 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { auth, db } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { PaperItem, useLibraryData } from "../hooks/useLibraryData";
 import {
-    TrendingLesson,
-    useTrendingLessons,
+  TrendingLesson,
+  useTrendingLessons,
 } from "../hooks/useTrendingLessons";
 import { recordUserActivity } from "../services/activityService";
 import { resolveVideoImageSource } from "../utils/videoUtils";
@@ -122,7 +122,6 @@ export default function SeeAllScreen() {
             accessibilityRole="button"
             accessibilityLabel="Go back"
             onPress={() => router.back()}
-            style={styles.backButton}
           >
             <Feather name="chevron-left" size={22} color={colors.text} />
           </Pressable>
@@ -308,14 +307,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     paddingBottom: spacing.lg,
     backgroundColor: colors.white,
-  },
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: radius.pill,
-    backgroundColor: colors.border,
-    alignItems: "center",
-    justifyContent: "center",
   },
   eyebrow: {
     color: colors.primary,
