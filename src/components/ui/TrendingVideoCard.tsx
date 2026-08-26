@@ -35,9 +35,11 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function TrendingVideoCard({
   item: rawItem,
   width,
+  marginRight = 14,
 }: {
   item: VideoLesson;
   width: number;
+  marginRight?: number;
 }) {
   const router = useRouter();
   const scale = useSharedValue(1);
@@ -81,7 +83,7 @@ export function TrendingVideoCard({
         scale.value = withSpring(1, { damping: 15, stiffness: 300 });
       }}
       onPress={openLesson}
-      style={[styles.card, { width }, animatedStyle]}
+      style={[styles.card, { width, marginRight }, animatedStyle]}
     >
       <View style={styles.thumbnail}>
         <Image

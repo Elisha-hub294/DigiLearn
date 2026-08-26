@@ -1,12 +1,14 @@
 import { Feather as Icon, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { subjectColors, type TeacherPost } from "../constants/homeData";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { toggleSavedItem } from "../services/userProfile";
+import { ActionDialog } from "./ui/ActionDialog";
 
 export const TeacherPostCard = ({
   post,
@@ -19,7 +21,9 @@ export const TeacherPostCard = ({
 }) => {
   const router = useRouter();
   const { user, profile } = useProfile();
-  const accent = (post.subject && subjectColors[post.subject]) || colors.primary;
+  const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
+  const accent =
+    (post.subject && subjectColors[post.subject]) || colors.primary;
   const contentStyle = [
     styles.content,
     post.type === "announcement" && styles.announcementContent,
@@ -29,7 +33,7 @@ export const TeacherPostCard = ({
 
   const handleToggleSave = async () => {
     if (!user) {
-      router.push("/welcome");
+      setShowGuestSaveDialog(true);
       return;
     }
     try {
@@ -40,66 +44,78 @@ export const TeacherPostCard = ({
   };
 
   return (
-    <Animated.View entering={FadeInUp.duration(500)} style={styles.card}>
-      <View style={styles.header}>
-        <View style={styles.profileRow}>
-          <Image
-            source={post.teacherImage}
-            style={styles.avatar}
-            contentFit="cover"
-          />
-          <View style={styles.profileMeta}>
-            <View style={styles.nameRow}>
-              <Text style={styles.name}>{post.teacherName}</Text>
-              {post.verified ? (
-                <Icon name="check-circle" size={14} color={colors.primary} />
-              ) : null}
+    <>
+      <Animated.View entering={FadeInUp.duration(500)} style={styles.card}>
+        <View style={styles.header}>
+          <View style={styles.profileRow}>
+            <Image
+              source={post.teacherImage}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+            <View style={styles.profileMeta}>
+              <View style={styles.nameRow}>
+                <Text style={styles.name}>{post.teacherName}</Text>
+                {post.verified ? (
+                  <Icon name="check-circle" size={14} color={colors.primary} />
+                ) : null}
+              </View>
+              <Text style={styles.time}>{post.time}</Text>
             </View>
-            <Text style={styles.time}>{post.time}</Text>
           </View>
         </View>
-      </View>
-      <Text style={contentStyle}>{post.content}</Text>
-      {!hidePreview && (
-        <View style={styles.previewWrap}>
-          <Image
-            source={post.previewImage}
-            style={styles.preview}
-            contentFit="cover"
-          />
-          <View style={styles.overlay} />
-          <View style={styles.previewBadge}>
-            <Icon
-              name={
-                post.type === "pdf"
-                  ? "file-text"
-                  : post.type === "image"
-                    ? "image"
-                    : "message-circle"
-              }
-              size={16}
-              color={colors.white}
+        <Text style={contentStyle}>{post.content}</Text>
+        {!hidePreview && (
+          <View style={styles.previewWrap}>
+            <Image
+              source={post.previewImage}
+              style={styles.preview}
+              contentFit="cover"
             />
-            <Text style={styles.previewText}>{post.type.toUpperCase()}</Text>
+            <View style={styles.overlay} />
+            <View style={styles.previewBadge}>
+              <Icon
+                name={
+                  post.type === "pdf"
+                    ? "file-text"
+                    : post.type === "image"
+                      ? "image"
+                      : "message-circle"
+                }
+                size={16}
+                color={colors.white}
+              />
+              <Text style={styles.previewText}>{post.type.toUpperCase()}</Text>
+            </View>
           </View>
-        </View>
-      )}
-      {!hideActions && (
-        <View style={styles.footer}>
-          <Pressable
-            style={styles.action}
-            accessibilityLabel={isSaved ? "Remove bookmark" : "Save post"}
-            onPress={handleToggleSave}
-          >
-            <Ionicons
-              name={isSaved ? "bookmark" : "bookmark-outline"}
-              size={16}
-              color={isSaved ? colors.primary : colors.subtitle}
-            />
-          </Pressable>
-        </View>
-      )}
-    </Animated.View>
+        )}
+        {!hideActions && (
+          <View style={styles.footer}>
+            <Pressable
+              style={styles.action}
+              accessibilityLabel={isSaved ? "Remove bookmark" : "Save post"}
+              onPress={handleToggleSave}
+            >
+              <Ionicons
+                name={isSaved ? "bookmark" : "bookmark-outline"}
+                size={16}
+                color={isSaved ? colors.primary : colors.subtitle}
+              />
+            </Pressable>
+          </View>
+        )}
+        <ActionDialog
+          visible={showGuestSaveDialog}
+          title="Save resources to your library"
+          message="Save this resource to your personal library and access it anytime. Log in or create a free account to continue."
+          primaryText="Log in"
+          secondaryText="Sign up"
+          onPrimary={() => router.push("/login" as never)}
+          onSecondary={() => router.push("/signup" as never)}
+          onClose={() => setShowGuestSaveDialog(false)}
+        />
+      </Animated.View>
+    </>
   );
 };
 

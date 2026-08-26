@@ -17,13 +17,19 @@ type BookCardProps = {
   item: BookCardItem;
   onPress?: () => void;
   width?: number;
+  marginRight?: number;
 };
 
-export function BookCard({ item, onPress, width = 200 }: BookCardProps) {
+export function BookCard({
+  item,
+  onPress,
+  width = 200,
+  marginRight = spacing.md,
+}: BookCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      style={[styles.card, { width }]}
+      style={[styles.card, { width, marginRight }]}
       onPress={onPress}
     >
       <Image

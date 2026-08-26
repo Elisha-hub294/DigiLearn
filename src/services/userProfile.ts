@@ -2,6 +2,7 @@ import { User } from "firebase/auth";
 import {
   arrayRemove,
   arrayUnion,
+  deleteField,
   doc,
   getDoc,
   serverTimestamp,
@@ -36,6 +37,7 @@ export type UserProfile = {
   "saved-books": string[];
   "saved-lessons": string[];
   "saved-posts": string[];
+  savedAt?: Record<string, unknown>;
 };
 
 export type SavedItemType =
@@ -60,6 +62,11 @@ export async function toggleSavedItem(
     userRef,
     {
       [itemType]: isCurrentlySaved ? arrayRemove(itemId) : arrayUnion(itemId),
+      savedAt: {
+        [`${itemType}:${itemId}`]: isCurrentlySaved
+          ? deleteField()
+          : serverTimestamp(),
+      },
     },
     { merge: true },
   );
@@ -144,6 +151,7 @@ export const defaultUserProfile = (user: User): UserProfile => ({
   "saved-books": [],
   "saved-lessons": [],
   "saved-posts": [],
+  savedAt: {},
 });
 
 export const getHiddenPageEntries = (

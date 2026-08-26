@@ -12,6 +12,10 @@ import {
 import Animated, { FadeIn } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
+import {
+  TeacherPostCard,
+  normalizeTeacherPost,
+} from "../../components/home/TeacherPostCard";
 import { BookCard } from "../../components/library/BookCard";
 import {
   TrendingVideoCard,
@@ -24,6 +28,7 @@ type Entry = {
   id: string;
   type: Exclude<Filter, "All">;
   data: Record<string, any>;
+  savedAt?: unknown;
 };
 const filters: Filter[] = ["All", "Pages", "Books", "Lessons", "Posts"];
 const details: Record<Exclude<Filter, "All">, [string, string]> = {
@@ -38,6 +43,21 @@ const field: Record<Exclude<Filter, "All">, [keyof UserProfile, string]> = {
   Lessons: ["saved-lessons", "trendingLessons"],
   Posts: ["saved-posts", "teacherPosts"],
 };
+const savedAtValue = (value: unknown) => {
+  if (
+    value &&
+    typeof (value as { toMillis?: () => number }).toMillis === "function"
+  ) {
+    return (value as { toMillis: () => number }).toMillis();
+  }
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+};
 export function SavedResources({
   profile,
   signedIn,
@@ -48,6 +68,7 @@ export function SavedResources({
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>("All");
   const [items, setItems] = useState<Entry[]>([]);
+  const [resultsWidth, setResultsWidth] = useState(0);
   const [loading, setLoading] = useState(Boolean(profile));
   const key =
     JSON.stringify(profile?.["saved-pages"] ?? []) +
@@ -73,7 +94,12 @@ export function SavedResources({
             try {
               const snap = await getDoc(doc(db, collectionName, id));
               return snap.exists()
-                ? ({ id: snap.id, type, data: snap.data() } as Entry)
+                ? ({
+                    id: snap.id,
+                    type,
+                    data: snap.data(),
+                    savedAt: profile.savedAt?.[`${profileKey}:${id}`],
+                  } as Entry)
                 : null;
             } catch {
               return null;
@@ -84,7 +110,19 @@ export function SavedResources({
       }),
     )
       .then((groups) => {
-        if (active) setItems(groups.flat());
+        if (active) {
+          const flattened = groups.flat();
+          setItems(
+            flattened
+              .map((item, index) => ({ item, index }))
+              .sort(
+                (left, right) =>
+                  savedAtValue(right.item.savedAt) -
+                    savedAtValue(left.item.savedAt) || left.index - right.index,
+              )
+              .map(({ item }) => item),
+          );
+        }
       })
       .catch(() => active && setItems([]))
       .finally(() => active && setLoading(false));
@@ -167,8 +205,18 @@ export function SavedResources({
           <View style={s.skeleton} />
         </View>
       ) : displayed.length ? (
-        <Animated.View entering={FadeIn.duration(180)} style={s.results}>
-          {renderItems(displayed, router)}
+        <Animated.View
+          entering={FadeIn.duration(180)}
+          onLayout={(event) => setResultsWidth(event.nativeEvent.layout.width)}
+          style={s.results}
+        >
+          {resultsWidth > 0
+            ? renderItems(
+                displayed,
+                router,
+                (resultsWidth - spacing.lg * 2) * 0.8,
+              )
+            : null}
         </Animated.View>
       ) : (
         <Empty filter={filter} />
@@ -191,7 +239,7 @@ function Empty({ filter }: { filter: Filter }) {
     </View>
   );
 }
-function renderItems(items: Entry[], router: any) {
+function renderItems(items: Entry[], router: any, itemWidth: number) {
   const pages = items.filter((x) => x.type === "Pages");
   return (
     <>
@@ -204,63 +252,59 @@ function renderItems(items: Entry[], router: any) {
       {items
         .filter((x) => x.type === "Books")
         .map((x) => (
-          <BookCard
-            key={x.id}
-            width={500}
-            item={{
-              id: x.id,
-              title: x.data.title ?? "Untitled book",
-              author: x.data.author ?? "Unknown author",
-              description: x.data.description ?? "",
-              image:
-                x.data.image ??
-                x.data.cover ??
-                require("../../../assets/images/bookcover-default.png"),
-            }}
-            onPress={() =>
-              router.push({
-                pathname: "/book-preview",
-                params: { id: x.id, source: "saved", returnTo: "/profile" },
-              })
-            }
-          />
+          <View key={x.id} style={s.centeredItem}>
+            <BookCard
+              width={itemWidth}
+              marginRight={0}
+              item={{
+                id: x.id,
+                title: x.data.title ?? "Untitled book",
+                author: x.data.author ?? "Unknown author",
+                description: x.data.description ?? "",
+                image:
+                  x.data.image ??
+                  x.data.cover ??
+                  require("../../../assets/images/bookcover-default.png"),
+              }}
+              onPress={() =>
+                router.push({
+                  pathname: "/book-preview",
+                  params: { id: x.id, source: "saved", returnTo: "/profile" },
+                })
+              }
+            />
+          </View>
         ))}
       {items
         .filter((x) => x.type === "Lessons")
         .map((x) => (
-          <TrendingVideoCard
-            key={x.id}
-            width={260}
-            item={
-              {
-                id: x.id,
-                title: x.data.title ?? "Untitled lesson",
-                teacher: x.data.teacher ?? "DigiLearn",
-                subject: x.data.subject ?? "",
-                uploadedAt: x.data.uploadedAt ?? "",
-                duration: x.data.duration ?? "",
-                thumbnail: x.data.thumbnail,
-                avatar: x.data.avatar,
-                link: x.data.link,
-              } as VideoLesson
-            }
-          />
-        ))}
-      {items
-        .filter((x) => x.type === "Posts")
-        .map((x) => (
-          <View key={x.id} style={s.post}>
-            <Text style={s.postTitle}>
-              {x.data.teacher ?? x.data.teacherName ?? "Teacher"}
-            </Text>
-            <Text numberOfLines={3} style={s.postCopy}>
-              {x.data.description ??
-                x.data.content ??
-                x.data.message ??
-                "Teacher post"}
-            </Text>
+          <View key={x.id} style={[s.centeredItem, s.videoItem]}>
+            <TrendingVideoCard
+              width={itemWidth}
+              marginRight={0}
+              item={
+                {
+                  id: x.id,
+                  title: x.data.title ?? "Untitled lesson",
+                  teacher: x.data.teacher ?? "DigiLearn",
+                  subject: x.data.subject ?? "",
+                  uploadedAt: x.data.uploadedAt ?? "",
+                  duration: x.data.duration ?? "",
+                  thumbnail: x.data.thumbnail,
+                  avatar: x.data.avatar,
+                  link: x.data.link,
+                } as VideoLesson
+              }
+            />
           </View>
         ))}
+      {items.filter((x) => x.type === "Posts").length ? (
+        <TeacherPostCard
+          posts={items
+            .filter((x) => x.type === "Posts")
+            .map((x) => normalizeTeacherPost({ id: x.id, data: () => x.data }))}
+        />
+      ) : null}
     </>
   );
 }
@@ -291,6 +335,8 @@ const s = StyleSheet.create({
   chipText: { color: "#52709B", fontSize: 13, fontWeight: "700" },
   chipTextActive: { color: "#fff" },
   results: { paddingHorizontal: spacing.lg },
+  centeredItem: { width: "100%", alignItems: "center" },
+  videoItem: { marginBottom: spacing.md },
   loading: { paddingHorizontal: spacing.lg, gap: 10 },
   skeleton: { height: 96, borderRadius: 14, backgroundColor: "#EEF2F7" },
   empty: {
@@ -331,12 +377,4 @@ const s = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   signupText: { color: "#fff", fontWeight: "700" },
-  post: {
-    padding: 15,
-    borderRadius: 14,
-    backgroundColor: "#F7FAFF",
-    marginBottom: 12,
-  },
-  postTitle: { color: colors.dark, fontWeight: "700", marginBottom: 4 },
-  postCopy: { color: colors.subtitle, lineHeight: 19 },
 });

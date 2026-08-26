@@ -31,6 +31,7 @@ import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
+import { ActionDialog } from "../ui/ActionDialog";
 import { CardActionMenu } from "../ui/CardActionMenu";
 import PdfPreview from "./PdfPreview";
 
@@ -362,6 +363,7 @@ const FeaturedNoteItem = ({
   const isHidden = hiddenIds.has(note.id);
   const isSaved = Boolean(user && profile?.["saved-pages"]?.includes(note.id));
   const [loadedPdfUri, setLoadedPdfUri] = useState<string | null>(null);
+  const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const pdfLoading = Boolean(
     note.document && isVisible && loadedPdfUri !== note.document,
   );
@@ -459,7 +461,7 @@ const FeaturedNoteItem = ({
 
   const handleToggleSave = async () => {
     if (!user) {
-      router.push("/welcome");
+      setShowGuestSaveDialog(true);
       return;
     }
     try {
@@ -500,61 +502,66 @@ const FeaturedNoteItem = ({
   ] as const;
 
   return (
-    <Animated.View
-      entering={FadeInUp.duration(420)}
-      style={[styles.itemWrapper, isWide && styles.itemWrapperWide]}
-    >
-      <View
-        onPointerEnter={() => setHovered(true)}
-        onPointerLeave={() => setHovered(false)}
-        style={[styles.card, hovered && styles.cardHovered]}
+    <>
+      <Animated.View
+        entering={FadeInUp.duration(420)}
+        style={[styles.itemWrapper, isWide && styles.itemWrapperWide]}
       >
-        <Pressable
-          style={styles.previewWrap}
-          onHoverIn={() => setHovered(true)}
-          onHoverOut={() => setHovered(false)}
-          onPress={() => {
-            if (auth.currentUser?.uid) {
-              recordUserActivity(auth.currentUser.uid, "page", note.id);
-            }
-            router.push({
-              pathname: "/page-preview",
-              params: {
-                id: note.id,
-                source: previewSource,
-                returnTo: pathname,
-                title: routeTitle,
-              },
-            } as any);
-          }}
+        <View
+          onPointerEnter={() => setHovered(true)}
+          onPointerLeave={() => setHovered(false)}
+          style={[styles.card, hovered && styles.cardHovered]}
         >
-          {note.document && isVisible ? (
-            <PdfPreview
-              uri={note.document}
-              style={styles.preview}
-              showLoadingIndicator={false}
-              onLoad={() => setLoadedPdfUri(note.document ?? null)}
-              onError={() => setLoadedPdfUri(note.document ?? null)}
-            />
-          ) : (
-            <View style={[styles.preview, styles.previewFallback]} />
-          )}
-          {pdfLoading ? (
-            <View style={styles.pdfLoading}>
-              <ActivityIndicator color={colors.white} />
-            </View>
-          ) : null}
-          <View style={styles.overlay} />
-          {isRead ? (
-            <View style={styles.readBadge}>
-              <Ionicons name="checkmark-done" size={12} color={colors.white} />
-              <Text style={styles.readBadgeText}>Read</Text>
-            </View>
-          ) : null}
-        </Pressable>
+          <Pressable
+            style={styles.previewWrap}
+            onHoverIn={() => setHovered(true)}
+            onHoverOut={() => setHovered(false)}
+            onPress={() => {
+              if (auth.currentUser?.uid) {
+                recordUserActivity(auth.currentUser.uid, "page", note.id);
+              }
+              router.push({
+                pathname: "/page-preview",
+                params: {
+                  id: note.id,
+                  source: previewSource,
+                  returnTo: pathname,
+                  title: routeTitle,
+                },
+              } as any);
+            }}
+          >
+            {note.document && isVisible ? (
+              <PdfPreview
+                uri={note.document}
+                style={styles.preview}
+                showLoadingIndicator={false}
+                onLoad={() => setLoadedPdfUri(note.document ?? null)}
+                onError={() => setLoadedPdfUri(note.document ?? null)}
+              />
+            ) : (
+              <View style={[styles.preview, styles.previewFallback]} />
+            )}
+            {pdfLoading ? (
+              <View style={styles.pdfLoading}>
+                <ActivityIndicator color={colors.white} />
+              </View>
+            ) : null}
+            <View style={styles.overlay} />
+            {isRead ? (
+              <View style={styles.readBadge}>
+                <Ionicons
+                  name="checkmark-done"
+                  size={12}
+                  color={colors.white}
+                />
+                <Text style={styles.readBadgeText}>Read</Text>
+              </View>
+            ) : null}
+          </Pressable>
 
-        <View style={styles.content}>
-          {/* {!hideAvatar && (
+          <View style={styles.content}>
+            {/* {!hideAvatar && (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Open ${subjectName} profile`}
@@ -573,52 +580,63 @@ const FeaturedNoteItem = ({
               />
             </Pressable>
           )} */}
-          <View
-            style={[
-              styles.contentData,
-              hideAvatar && styles.contentDataNoAvatar,
-            ]}
-          >
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.description}>{description}</Text>
-          </View>
-          <Pressable
-            ref={menuButtonRef}
-            accessibilityRole="button"
-            accessibilityLabel="More options"
-            style={styles.menuButton}
-            onPress={handleOpenMenu}
-          >
-            <Icon name="more-vertical" size={18} color={colors.subtitle} />
-          </Pressable>
-          <CardActionMenu
-            visible={activeMenuId === note.id && !!menuAnchor}
-            anchor={menuAnchor}
-            actions={menuActions.map((action) => ({
-              ...action,
-              icon: action.icon as any,
-            }))}
-            onClose={handleCloseMenu}
-          />
-        </View>
-
-        <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={isSaved ? "Remove bookmark" : "Save note"}
-            style={styles.actionItem}
-            onPress={handleToggleSave}
-          >
-            <Ionicons
-              name={isSaved ? "bookmark" : "bookmark-outline"}
-              size={25}
-              color={isSaved ? colors.primary : colors.subtitle}
+            <View
+              style={[
+                styles.contentData,
+                hideAvatar && styles.contentDataNoAvatar,
+              ]}
+            >
+              <Text style={styles.title}>{title}</Text>
+              <Text style={styles.description}>{description}</Text>
+            </View>
+            <Pressable
+              ref={menuButtonRef}
+              accessibilityRole="button"
+              accessibilityLabel="More options"
+              style={styles.menuButton}
+              onPress={handleOpenMenu}
+            >
+              <Icon name="more-vertical" size={18} color={colors.subtitle} />
+            </Pressable>
+            <CardActionMenu
+              visible={activeMenuId === note.id && !!menuAnchor}
+              anchor={menuAnchor}
+              actions={menuActions.map((action) => ({
+                ...action,
+                icon: action.icon as any,
+              }))}
+              onClose={handleCloseMenu}
             />
-          </Pressable>
-          <Action icon="share-2" label="Share" />
+          </View>
+
+          <View style={styles.actions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={isSaved ? "Remove bookmark" : "Save note"}
+              style={styles.actionItem}
+              onPress={handleToggleSave}
+            >
+              <Ionicons
+                name={isSaved ? "bookmark" : "bookmark-outline"}
+                size={25}
+                color={isSaved ? colors.primary : colors.subtitle}
+              />
+            </Pressable>
+            <Action icon="share-2" label="Share" />
+          </View>
         </View>
-      </View>
-    </Animated.View>
+      </Animated.View>
+      <ActionDialog
+        visible={showGuestSaveDialog}
+        title="Save resources to your library"
+        message="Save this resource to your personal library and access it anytime. Log in or create a free account to continue."
+        primaryText="Log in"
+        secondaryText="Sign up"
+        onPrimary={() => router.push("/login" as never)}
+        onSecondary={() => router.push("/signup" as never)}
+        onClose={() => setShowGuestSaveDialog(false)}
+      />
+    </>
   );
 };
 

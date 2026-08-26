@@ -27,9 +27,10 @@ import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
+import { ActionDialog } from "../ui/ActionDialog";
 import PdfPreview from "./PdfPreview";
 
-type TeacherPost = {
+export type TeacherPost = {
   id: string;
   teacher?: string;
   subject?: string;
@@ -108,7 +109,7 @@ const getRelativeTime = (date: Date | null | undefined): string => {
   return diffYr === 1 ? "1 year ago" : `${diffYr} years ago`;
 };
 
-const normalizeTeacherPost = (doc: {
+export const normalizeTeacherPost = (doc: {
   id: string;
   data: () => Record<string, unknown>;
 }) => {
@@ -177,12 +178,16 @@ const teacherPostCollections = [
   "teacherUpdates",
 ];
 
-export const TeacherPostCard = () => {
+export const TeacherPostCard = ({
+  posts: providedPosts,
+}: {
+  posts?: TeacherPost[];
+} = {}) => {
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
   const isWide = width >= 900;
-  const [posts, setPosts] = useState<TeacherPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<TeacherPost[]>(providedPosts ?? []);
+  const [loading, setLoading] = useState(!providedPosts);
 
   // Database assets states
   const [teacherAvatars, setTeacherAvatars] = useState<Record<string, string>>(
@@ -258,6 +263,11 @@ export const TeacherPostCard = () => {
 
     // Fetch posts
     const fetchTeacherPost = async () => {
+      if (providedPosts) {
+        setPosts(providedPosts);
+        setLoading(false);
+        return;
+      }
       try {
         for (const collectionName of teacherPostCollections) {
           try {
@@ -306,7 +316,7 @@ export const TeacherPostCard = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [providedPosts]);
 
   const displayedPosts = useMemo(() => {
     if (!shouldFilterByInterests(profile)) return posts;
@@ -370,6 +380,7 @@ const TeacherPostItem = ({
   const { user, profile } = useProfile();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
+  const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [loadedPdfUri, setLoadedPdfUri] = useState<string | null>(null);
   const pdfLoading = Boolean(
     postItem.document && isVisible && loadedPdfUri !== postItem.document,
@@ -387,7 +398,7 @@ const TeacherPostItem = ({
 
   const handleToggleSave = async () => {
     if (!user) {
-      router.push("/welcome");
+      setShowGuestSaveDialog(true);
       return;
     }
     try {
@@ -536,6 +547,16 @@ const TeacherPostItem = ({
           <Action icon="share-2" label="Share" />
         </View>
       </Pressable>
+      <ActionDialog
+        visible={showGuestSaveDialog}
+        title="Save resources to your library"
+        message="Save this resource to your personal library and access it anytime. Log in or create a free account to continue."
+        primaryText="Log in"
+        secondaryText="Sign up"
+        onPrimary={() => router.push("/login" as never)}
+        onSecondary={() => router.push("/signup" as never)}
+        onClose={() => setShowGuestSaveDialog(false)}
+      />
     </Animated.View>
   );
 };
