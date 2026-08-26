@@ -1,8 +1,8 @@
 import { Feather } from "@expo/vector-icons";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -31,9 +31,9 @@ export function PdfReaderScreen() {
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  const downloadProgressAnim = useRef(new Animated.Value(0)).current;
-  const downloadScale = useRef(new Animated.Value(1)).current;
+  const [progressAnim] = useState(() => new Animated.Value(0));
+  const [downloadProgressAnim] = useState(() => new Animated.Value(0));
+  const [downloadScale] = useState(() => new Animated.Value(1));
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const decodedUri = uri ? decodeURIComponent(uri as string) : null;
@@ -46,12 +46,15 @@ export function PdfReaderScreen() {
     : null;
 
   // Animate the progress bar to a target value
-  const animateTo = (toValue: number, duration = 400) =>
-    Animated.timing(progressAnim, {
-      toValue,
-      duration,
-      useNativeDriver: false,
-    }).start();
+  const animateTo = useCallback(
+    (toValue: number, duration = 400) =>
+      Animated.timing(progressAnim, {
+        toValue,
+        duration,
+        useNativeDriver: false,
+      }).start(),
+    [progressAnim],
+  );
 
   // Start a safety-net timer that dismisses the loading screen if the
   // WebView never fires onLoadEnd (common with large PDFs / slow connections)
@@ -64,7 +67,7 @@ export function PdfReaderScreen() {
     animateTo(0.3, 200); // immediately fill 30 % to show something is happening
     startTimeout();
     return () => clearTimeout(timeoutRef.current!);
-  }, []);
+  }, [animateTo]);
 
   const handleLoadEnd = () => {
     clearTimeout(timeoutRef.current!);
@@ -182,7 +185,7 @@ export function PdfReaderScreen() {
     outputRange: ["0%", "100%"],
   });
 
-  if (!decodedUri || !googleDocsUrl) {
+  if (!decodedUri || !webViewUrl) {
     return (
       <View style={styles.center}>
         <Feather name="alert-circle" size={48} color="#CBD5E1" />

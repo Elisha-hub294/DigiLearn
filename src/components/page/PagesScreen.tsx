@@ -496,7 +496,7 @@ export default function PagesScreen() {
             ]}
           >
             {!isPageDataReady ? (
-              <FeaturedNoteCard loading={true} layout="stack" />
+              <FeaturedNoteCard loading={true} />
             ) : visibleNotes.length === 0 ? (
               <Animated.View
                 entering={FadeIn.duration(240)}

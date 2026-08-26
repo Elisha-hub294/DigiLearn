@@ -65,7 +65,9 @@ export function PdfReaderScreen() {
         }
       }
 
-      const blob = new Blob(chunks, { type: "application/pdf" });
+      const blob = new Blob(chunks as unknown as BlobPart[], {
+        type: "application/pdf",
+      });
       setDownloadProgress(1);
       triggerBlobDownload(blob);
       await saveDownloadedFile({

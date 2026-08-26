@@ -93,6 +93,10 @@ export type AnnouncementItem = {
   subject?: SubjectKey;
 };
 
+export const topicalNotes: TopicalNote[] = [];
+export const courses: CourseItem[] = [];
+export const books: BookItem[] = [];
+
 // export const topicalNotes: TopicalNote[] = [
 //   {
 //     id: "note-1",

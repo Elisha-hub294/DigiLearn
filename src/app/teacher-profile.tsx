@@ -2,7 +2,7 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -136,7 +136,7 @@ export default function TeacherProfileScreen() {
   const [activeTab, setActiveTab] = useState<TeacherTab>("All");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isCommunityDialogVisible, setCommunityDialogVisible] = useState(false);
-  const pulseAnim = useRef(new RNAnimated.Value(0.45)).current;
+  const [pulseAnim] = useState(() => new RNAnimated.Value(0.45));
 
   const teacherName = String(params.name ?? "Teacher").trim();
   const normalizedTeacherName = normalizeKey(teacherName);
@@ -685,6 +685,10 @@ export default function TeacherProfileScreen() {
       stats.pages,
       teacher,
       teacherName,
+      actionIconSize,
+      actionRowGap,
+      isOwnProfile,
+      openCommunityDialog,
     ],
   );
 

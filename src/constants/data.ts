@@ -40,9 +40,7 @@ export type PastPaperItem = {
   tags: string[];
 };
 
-const imageImports = {
-  panda: require("../../assets/images/panda.png"),
-};
+export const carouselData: CarouselItem[] = [];
 
 // export const carouselData: CarouselItem[] = [
 //   {
@@ -101,7 +99,6 @@ const imageImports = {
 //     image: imageImports.brain,
 //   },
 // ];
-
 
 // export const videosData: VideoItem[] = [
 //   {

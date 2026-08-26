@@ -1,34 +1,30 @@
-import { useRef } from 'react';
-import { FlatList, StyleSheet } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
-import { spacing } from '../../constants/theme';
-import { BookCard, BookItem } from './BookCard';
+import { FlatList, StyleSheet } from "react-native";
+import type { BookItem } from "../../constants/homeData";
+import { spacing } from "../../constants/theme";
+import { BookCard } from "../library/BookCard";
 
 type RecommendedBookCarouselProps = {
   data: BookItem[];
 };
 
-export const RecommendedBookCarousel = ({ data }: RecommendedBookCarouselProps) => {
-  const scrollX = useSharedValue(0);
-  const flatListRef = useRef<FlatList<BookItem>>(null);
-
-  const onScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollX.value = event.contentOffset.x;
-    },
-  });
-
+export const RecommendedBookCarousel = ({
+  data,
+}: RecommendedBookCarouselProps) => {
   return (
-    <Animated.FlatList
-      ref={flatListRef}
+    <FlatList
       horizontal
       data={data}
       showsHorizontalScrollIndicator={false}
       keyExtractor={(item, index) => `${item.id}-${index}`}
-      renderItem={({ item, index }) => <BookCard item={item} index={index} scrollX={scrollX} />}
+      renderItem={({ item }) => (
+        <BookCard
+          item={{
+            ...item,
+            description: "",
+          }}
+        />
+      )}
       contentContainerStyle={styles.list}
-      onScroll={onScroll}
-      scrollEventThrottle={16}
       decelerationRate="fast"
       snapToAlignment="start"
       snapToInterval={240}
