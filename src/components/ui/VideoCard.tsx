@@ -14,7 +14,7 @@ import { PlayButton } from "./PlayButton";
 import { TeacherInfo } from "./TeacherInfo";
 import { VideoLesson } from "./TrendingVideoCard";
 
-export function LatestVideoCard({
+export function VideoCard({
   item: rawItem,
   index,
   isGrid = false,

@@ -23,8 +23,8 @@ import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
 import { BookCard } from "../components/library/BookCard";
 import { TeacherPostCard } from "../components/TeacherPostCard";
 import { ActionDialog } from "../components/ui/ActionDialog";
-import { LatestVideoCard } from "../components/ui/LatestVideoCard";
 import { SearchBar } from "../components/ui/SearchBar";
+import { VideoCard } from "../components/ui/VideoCard";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
@@ -767,7 +767,7 @@ export default function TeacherProfileScreen() {
       }
 
       return (
-        <LatestVideoCard
+        <VideoCard
           item={{
             id: item.id,
             title: item.title,

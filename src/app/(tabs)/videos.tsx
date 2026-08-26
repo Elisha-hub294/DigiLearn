@@ -1,22 +1,22 @@
-import { LatestVideoCard } from "@/components/ui/LatestVideoCard";
 import { getTrendingCardWidth } from "@/components/ui/TrendingCarousel";
 import { VideoLesson } from "@/components/ui/TrendingVideoCard";
+import { VideoCard } from "@/components/ui/VideoCard";
 import { VideosScreenHeader } from "@/components/ui/VideosScreenHeader";
 import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -133,7 +133,7 @@ export default function VideosScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const flashListRef = useRef<FlashList<LessonRecord>>(null);
+  const flashListRef = useRef<FlashListRef<LessonRecord>>(null);
   const trendingSectionY = useRef<number>(0);
   const isTablet = width >= 768;
   const horizontalPadding = getHorizontalPadding(width);
@@ -254,7 +254,7 @@ export default function VideosScreen() {
             data={visibleLatest}
             numColumns={isTablet ? 2 : 1}
             renderItem={({ item, index }) => (
-              <LatestVideoCard item={item} index={index} isGrid={isTablet} />
+              <VideoCard item={item} index={index} isGrid={isTablet} />
             )}
             keyExtractor={(item) => item.id}
             ListHeaderComponent={header}
