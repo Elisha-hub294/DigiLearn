@@ -1,17 +1,19 @@
 import { Feather as Icon, Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { usePathname, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
+  Linking,
   Pressable,
   Animated as RNAnimated,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
+  type ViewToken,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
@@ -30,6 +32,7 @@ import {
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
 import { CardActionMenu } from "../ui/CardActionMenu";
+import PdfPreview from "./PdfPreview";
 
 type TopicalNote = {
   id: string;
@@ -90,6 +93,25 @@ export const FeaturedNoteCard = ({
   );
   const [defaultAvatar, setDefaultAvatar] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [visibleNoteIds, setVisibleNoteIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const viewabilityConfig = useMemo(
+    () => ({ itemVisiblePercentThreshold: 1 }),
+    [],
+  );
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      setVisibleNoteIds(
+        new Set(
+          viewableItems
+            .map((token) => (token.item as TopicalNote | undefined)?.id)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      );
+    },
+    [],
+  );
   const hiddenIds = useMemo(
     () =>
       new Set(
@@ -148,16 +170,12 @@ export const FeaturedNoteCard = ({
           })
         : allNotes;
 
-      if (providedNotes) {
-        setNotes(providedNotes);
-      } else {
+      if (!providedNotes) {
         setNotes(filteredNotes);
       }
     };
 
     if (providedNotes) {
-      setNotes(providedNotes);
-      setLoading(Boolean(externalLoading));
       loadMetadata().catch((e) => {
         console.error("Error loading featured note metadata:", e);
         if (active) setNotes([]);
@@ -167,7 +185,6 @@ export const FeaturedNoteCard = ({
       };
     }
 
-    setLoading(true);
     loadMetadata()
       .catch((e) => {
         console.error("Error loading featured notes:", e);
@@ -181,9 +198,10 @@ export const FeaturedNoteCard = ({
   }, [externalLoading, providedNotes, subject]);
 
   const listData = useMemo(() => {
+    const sourceNotes = providedNotes ?? notes;
     let result = includeHiddenItems
-      ? notes
-      : notes.filter((note) => !hiddenIds.has(note.id));
+      ? sourceNotes
+      : sourceNotes.filter((note) => !hiddenIds.has(note.id));
 
     if (shouldFilterByInterests(profile)) {
       result = result.filter((note) =>
@@ -191,9 +209,9 @@ export const FeaturedNoteCard = ({
       );
     }
     return result;
-  }, [hiddenIds, includeHiddenItems, notes, profile]);
+  }, [hiddenIds, includeHiddenItems, notes, profile, providedNotes]);
 
-  if (loading || externalLoading) {
+  if ((providedNotes ? Boolean(externalLoading) : loading) || externalLoading) {
     return (
       <View style={[styles.list, isWide && styles.listWide]}>
         <SkeletonNoteCard isWide={isWide} />
@@ -211,6 +229,8 @@ export const FeaturedNoteCard = ({
         showsVerticalScrollIndicator={source === "pages"}
         scrollEnabled={source === "pages"}
         contentContainerStyle={styles.listContent}
+        viewabilityConfig={viewabilityConfig}
+        onViewableItemsChanged={onViewableItemsChanged}
         renderItem={({ item }) => (
           <FeaturedNoteItem
             note={item}
@@ -221,6 +241,7 @@ export const FeaturedNoteCard = ({
             subject={subject}
             hideAvatar={hideAvatar}
             includeHiddenItems={includeHiddenItems}
+            isVisible={visibleNoteIds.has(item.id)}
           />
         )}
       />
@@ -229,7 +250,7 @@ export const FeaturedNoteCard = ({
 };
 
 const SkeletonNoteCard = ({ isWide }: { isWide: boolean }) => {
-  const pulseAnim = useRef(new RNAnimated.Value(0.3)).current;
+  const [pulseAnim] = useState(() => new RNAnimated.Value(0.3));
 
   useEffect(() => {
     const pulse = RNAnimated.loop(
@@ -303,6 +324,7 @@ const FeaturedNoteItem = ({
   subject,
   hideAvatar,
   includeHiddenItems,
+  isVisible,
 }: {
   note: TopicalNote;
   subjectAvatars: Record<string, string>;
@@ -312,6 +334,7 @@ const FeaturedNoteItem = ({
   subject?: string;
   hideAvatar?: boolean;
   includeHiddenItems?: boolean;
+  isVisible: boolean;
 }) => {
   const { user, profile } = useProfile();
   const [hovered, setHovered] = useState(false);
@@ -338,6 +361,10 @@ const FeaturedNoteItem = ({
   );
   const isHidden = hiddenIds.has(note.id);
   const isSaved = Boolean(user && profile?.["saved-pages"]?.includes(note.id));
+  const [loadedPdfUri, setLoadedPdfUri] = useState<string | null>(null);
+  const pdfLoading = Boolean(
+    note.document && isVisible && loadedPdfUri !== note.document,
+  );
 
   const showAuthPrompt = (title: string, message: string) => {
     Alert.alert(title, message, [
@@ -442,11 +469,6 @@ const FeaturedNoteItem = ({
     }
   };
 
-  const subjectValues = Array.isArray(note.subject)
-    ? note.subject
-    : note.subject
-      ? [note.subject]
-      : [];
   const previewSource = source ?? "home";
   const routeTitle =
     typeof subject === "string" && subject.trim().length > 0
@@ -506,11 +528,22 @@ const FeaturedNoteItem = ({
             } as any);
           }}
         >
-          <Image
-            source={require("../../../assets/images/pdf-preview.png")}
-            style={styles.preview}
-            contentFit="cover"
-          />
+          {note.document && isVisible ? (
+            <PdfPreview
+              uri={note.document}
+              style={styles.preview}
+              showLoadingIndicator={false}
+              onLoad={() => setLoadedPdfUri(note.document ?? null)}
+              onError={() => setLoadedPdfUri(note.document ?? null)}
+            />
+          ) : (
+            <View style={[styles.preview, styles.previewFallback]} />
+          )}
+          {pdfLoading ? (
+            <View style={styles.pdfLoading}>
+              <ActivityIndicator color={colors.white} />
+            </View>
+          ) : null}
           <View style={styles.overlay} />
           {isRead ? (
             <View style={styles.readBadge}>
@@ -637,6 +670,13 @@ const styles = StyleSheet.create({
   preview: {
     width: "100%",
     height: 320,
+  },
+  previewFallback: { backgroundColor: "#D1D5DB" },
+  pdfLoading: {
+    ...StyleSheet.absoluteFill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(209, 213, 219, 0.75)",
   },
   overlay: {
     ...StyleSheet.absoluteFill,

@@ -11,7 +11,7 @@ import {
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import PdfPreview from "../home/PdfPreview";
-import { FALLBACK_DOC_PREVIEW, TopicalNote } from "./pageTypes";
+import { TopicalNote } from "./pageTypes";
 
 export function PageHero({
   note,
@@ -35,15 +35,16 @@ export function PageHero({
     >
       {note.document ? (
         <PdfPreview uri={note.document} style={StyleSheet.absoluteFill} />
-      ) : (
+      ) : previewUri ? (
         <Image
           source={{ uri: previewUri }}
-          placeholder={FALLBACK_DOC_PREVIEW}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           contentPosition="top"
           transition={250}
         />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, styles.previewFallback]} />
       )}
 
       <LinearGradient
@@ -87,6 +88,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     position: "relative",
   },
+  previewFallback: { backgroundColor: "#D1D5DB" },
   nav: {
     flexDirection: "row",
     justifyContent: "space-between",

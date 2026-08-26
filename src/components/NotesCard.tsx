@@ -1,5 +1,4 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { subjectColors } from "../constants/homeData";
@@ -10,11 +9,7 @@ export const NotesCard = () => {
 
   return (
     <Animated.View entering={FadeInUp.duration(400)} style={styles.card}>
-      <Image
-        source={require("../../assets/images/pdf-preview.png")}
-        style={styles.image}
-        contentFit="cover"
-      />
+      <View style={[styles.image, styles.imageFallback]} />
       <View style={styles.overlay} />
       <View style={[styles.badge, { backgroundColor: accent }]}>
         <Icon name="book-open" size={14} color={colors.white} />
@@ -58,6 +53,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   image: { width: "100%", height: 280, position: "absolute" },
+  imageFallback: { backgroundColor: "#D1D5DB" },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.25)" },
   badge: {
     position: "absolute",

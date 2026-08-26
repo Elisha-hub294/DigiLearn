@@ -719,9 +719,7 @@ export default function TeacherProfileScreen() {
                 ? item.author[0] || "Unknown author"
                 : item.author || "Unknown author",
               description: item.description || "",
-              image: item.image
-                ? { uri: item.image }
-                : require("../../assets/images/pdf-preview.png"),
+              image: item.image ? { uri: item.image } : undefined,
             }}
             width={contentMaxWidth}
             onPress={() => {

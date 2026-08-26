@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
-import { FALLBACK_DOC_PREVIEW, TopicalNote } from "./pageTypes";
+import { TopicalNote } from "./pageTypes";
 
 export function SimilarPageCard({
   page,
@@ -24,13 +24,16 @@ export function SimilarPageCard({
         style={styles.card}
       >
         <View style={styles.previewWrap}>
-          <Image
-            source={{ uri: previewUri }}
-            placeholder={FALLBACK_DOC_PREVIEW}
-            style={styles.preview}
-            contentFit="cover"
-            transition={180}
-          />
+          {previewUri ? (
+            <Image
+              source={{ uri: previewUri }}
+              style={styles.preview}
+              contentFit="cover"
+              transition={180}
+            />
+          ) : (
+            <View style={[styles.preview, styles.previewFallback]} />
+          )}
           <View style={styles.overlay} />
           <View style={styles.iconContainer}>
             <Feather name="file-text" size={20} color="#FFFFFF" />
@@ -66,6 +69,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  previewFallback: { backgroundColor: "#D1D5DB" },
   overlay: {
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.25)",

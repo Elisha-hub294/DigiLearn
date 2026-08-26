@@ -4,8 +4,10 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
+  FlatList,
   Platform,
   Pressable,
   Animated as RNAnimated,
@@ -14,6 +16,7 @@ import {
   TextStyle,
   useWindowDimensions,
   View,
+  type ViewToken,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
@@ -24,6 +27,7 @@ import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
+import PdfPreview from "./PdfPreview";
 
 type TeacherPost = {
   id: string;
@@ -187,6 +191,25 @@ export const TeacherPostCard = () => {
   const [defaultUserAvatar, setDefaultUserAvatar] = useState<string | null>(
     null,
   );
+  const [visiblePostIds, setVisiblePostIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const viewabilityConfig = useMemo(
+    () => ({ itemVisiblePercentThreshold: 1 }),
+    [],
+  );
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      setVisiblePostIds(
+        new Set(
+          viewableItems
+            .map((token) => (token.item as TeacherPost | undefined)?.id)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      );
+    },
+    [],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -307,8 +330,14 @@ export const TeacherPostCard = () => {
   }
 
   return (
-    <View style={styles.list}>
-      {displayedPosts.map((postItem, index) => (
+    <FlatList
+      data={displayedPosts}
+      keyExtractor={(item) => item.id}
+      style={styles.list}
+      scrollEnabled={false}
+      viewabilityConfig={viewabilityConfig}
+      onViewableItemsChanged={onViewableItemsChanged}
+      renderItem={({ item: postItem, index }) => (
         <TeacherPostItem
           key={postItem.id}
           postItem={postItem}
@@ -316,9 +345,10 @@ export const TeacherPostCard = () => {
           isWide={isWide}
           teacherAvatars={teacherAvatars}
           defaultUserAvatar={defaultUserAvatar}
+          isVisible={visiblePostIds.has(postItem.id)}
         />
-      ))}
-    </View>
+      )}
+    />
   );
 };
 
@@ -328,16 +358,22 @@ const TeacherPostItem = ({
   isWide,
   teacherAvatars,
   defaultUserAvatar,
+  isVisible,
 }: {
   postItem: TeacherPost;
   index: number;
   isWide: boolean;
   teacherAvatars: Record<string, string>;
   defaultUserAvatar: string | null;
+  isVisible: boolean;
 }) => {
   const { user, profile } = useProfile();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
+  const [loadedPdfUri, setLoadedPdfUri] = useState<string | null>(null);
+  const pdfLoading = Boolean(
+    postItem.document && isVisible && loadedPdfUri !== postItem.document,
+  );
 
   const rawTeacherName = postItem.teacher || "Teacher";
   const teacherName = `Tr. ${rawTeacherName}`;
@@ -403,11 +439,22 @@ const TeacherPostItem = ({
               }
             }}
           >
-            <Image
-              source={require("../../../assets/images/pdf-preview.png")}
-              style={styles.preview}
-              contentFit="cover"
-            />
+            {postItem.document && isVisible ? (
+              <PdfPreview
+                uri={postItem.document}
+                style={styles.preview}
+                showLoadingIndicator={false}
+                onLoad={() => setLoadedPdfUri(postItem.document ?? null)}
+                onError={() => setLoadedPdfUri(postItem.document ?? null)}
+              />
+            ) : (
+              <View style={[styles.preview, styles.previewFallback]} />
+            )}
+            {pdfLoading ? (
+              <View style={styles.pdfLoading}>
+                <ActivityIndicator color="#FFFFFF" />
+              </View>
+            ) : null}
             <View style={styles.overlay} />
             <View style={styles.previewTag}>
               <Text style={styles.previewTagText}>PDF</Text>
@@ -644,6 +691,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   preview: { width: "100%", height: 250 },
+  previewFallback: { backgroundColor: "#D1D5DB" },
+  pdfLoading: {
+    ...StyleSheet.absoluteFill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(209, 213, 219, 0.75)",
+  },
   overlay: {
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.1)",

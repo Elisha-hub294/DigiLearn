@@ -1,5 +1,5 @@
-import React from "react";
-import { ScrollView, StyleSheet } from "react-native";
+import { useCallback, useMemo, useState } from "react";
+import { FlatList, StyleSheet, type ViewToken } from "react-native";
 import { spacing } from "../../constants/theme";
 import { PaperCard } from "./PaperCard";
 
@@ -19,13 +19,36 @@ type PaperCarouselProps = {
 };
 
 export function PaperCarousel({ items }: PaperCarouselProps) {
+  const [visiblePaperIds, setVisiblePaperIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const viewabilityConfig = useMemo(
+    () => ({ itemVisiblePercentThreshold: 1 }),
+    [],
+  );
+  const onViewableItemsChanged = useCallback(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      setVisiblePaperIds(
+        new Set(
+          viewableItems
+            .map((token) => (token.item as PaperItem | undefined)?.id)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      );
+    },
+    [],
+  );
+
   return (
-    <ScrollView
+    <FlatList
+      data={items}
       horizontal
+      keyExtractor={(item) => item.id}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.content}
-    >
-      {items.map((item) => (
+      viewabilityConfig={viewabilityConfig}
+      onViewableItemsChanged={onViewableItemsChanged}
+      renderItem={({ item }) => (
         <PaperCard
           key={item.id}
           title={item.title}
@@ -34,9 +57,10 @@ export function PaperCarousel({ items }: PaperCarouselProps) {
           pages={item.pages}
           image={item.image}
           document={item.document}
+          isVisible={visiblePaperIds.has(item.id)}
         />
-      ))}
-    </ScrollView>
+      )}
+    />
   );
 }
 

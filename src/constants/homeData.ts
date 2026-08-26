@@ -50,7 +50,7 @@ export type TeacherPost = {
   verified: boolean;
   time: string;
   content: string;
-  previewImage: ImageSourcePropType;
+  previewImage?: ImageSourcePropType;
   type: "pdf" | "image" | "announcement";
   subject: SubjectKey;
 };
@@ -69,7 +69,7 @@ export type ResourceItem = {
   title: string;
   subject: SubjectKey;
   metadata: string;
-  previewImage: ImageSourcePropType;
+  previewImage?: ImageSourcePropType;
   accent: string;
 };
 
@@ -91,23 +91,6 @@ export type AnnouncementItem = {
   image?: ImageSourcePropType;
   quote?: string;
   subject?: SubjectKey;
-};
-
-const imageImports = {
-  // math: require("../../assets/images/math.png"),
-  // physics: require("../../assets/images/physics.png"),
-  // chemistry: require("../../assets/images/chemistry.png"),
-  pdfPreview: require("../../assets/images/pdf-preview.png"),
-  // thumb1: require("../../assets/images/thumb-1.jpeg"),
-  // thumb2: require("../../assets/images/thumb-2.jpeg"),
-  // thumb4: require("../../assets/images/thumb-4.jpeg"),
-  // book1: require("../../assets/images/book1.jpg"),
-  // book2: require("../../assets/images/book2.png"),
-  // book3: require("../../assets/images/book3.jpeg"),
-  // tr1: require("../../assets/images/tr-1.webp"),
-  // tr2: require("../../assets/images/tr-2.jpg"),
-  // tr3: require("../../assets/images/tr-3.jpg"),
-  trDefault: require("../../assets/images/user-default.png"),
 };
 
 // export const topicalNotes: TopicalNote[] = [
@@ -143,7 +126,6 @@ const imageImports = {
 //     time: "10 min ago",
 //     content:
 //       "Shared a polished PDF pack for last-minute revision with worked examples and mnemonics.",
-//     previewImage: imageImports.pdfPreview,
 //     type: "pdf",
 //     subject: "Mathematics",
 //   },
@@ -155,7 +137,6 @@ const imageImports = {
 //     time: "1 hr ago",
 //     content:
 //       "New conceptual diagrams for motion and vectors are live in the classroom library.",
-//     previewImage: imageImports.pdfPreview,
 //     type: "image",
 //     subject: "Physics",
 //   },
@@ -194,7 +175,6 @@ export const unebPapers: ResourceItem[] = [
     title: "UNEB 2024 Paper",
     subject: "Biology",
     metadata: "12 pages • PDF • Updated 3 days ago",
-    previewImage: imageImports.pdfPreview,
     accent: subjectColors.Biology,
   },
   {
@@ -202,7 +182,6 @@ export const unebPapers: ResourceItem[] = [
     title: "Marking Guide",
     subject: "English",
     metadata: "8 pages • PDF • Updated 1 day ago",
-    previewImage: imageImports.pdfPreview,
     accent: subjectColors.English,
   },
 ];
@@ -213,7 +192,6 @@ export const markingGuides: ResourceItem[] = [
     title: "Chemistry Marking Guide",
     subject: "Chemistry",
     metadata: "10 pages • PDF • Updated 2 days ago",
-    previewImage: imageImports.pdfPreview,
     accent: subjectColors.Chemistry,
   },
   {
@@ -221,7 +199,6 @@ export const markingGuides: ResourceItem[] = [
     title: "History Revision Guide",
     subject: "History",
     metadata: "7 pages • PDF • Updated 5 days ago",
-    previewImage: imageImports.pdfPreview,
     accent: subjectColors.History,
   },
 ];
@@ -260,7 +237,6 @@ export const announcements: AnnouncementItem[] = [
     teacherName: "Tr. Clara",
     time: "Today • 08:30",
     variant: 1,
-    image: imageImports.pdfPreview,
     subject: "Geography",
   },
   {

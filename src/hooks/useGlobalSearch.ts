@@ -34,7 +34,7 @@ export type SearchResult = {
   author?: string;
   teacher?: string;
   subject?: string | string[];
-  previewImage: string;
+  previewImage?: string;
   avatar?: string;
   duration?: string;
   uploadedAt?: string;
@@ -368,7 +368,7 @@ export function useGlobalSearch(
       author: string,
       teacher: string,
       subjectProp: any,
-      previewImage: string,
+      previewImage: string | undefined,
       extra?: Partial<SearchResult>,
     ) => {
       const lowerTitle = title.toLowerCase();
@@ -455,7 +455,7 @@ export function useGlobalSearch(
         "",
         "",
         p.subject,
-        require("../../assets/images/pdf-preview.png"),
+        undefined,
         { doc: p.doc || p.pdf },
       );
     });

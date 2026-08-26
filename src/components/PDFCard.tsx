@@ -17,11 +17,15 @@ export const PDFCard = ({
     style={[styles.card, compact && styles.compact]}
   >
     <View style={styles.imageWrap}>
-      <Image
-        source={item.previewImage}
-        style={styles.image}
-        contentFit="cover"
-      />
+      {item.previewImage ? (
+        <Image
+          source={item.previewImage}
+          style={styles.image}
+          contentFit="cover"
+        />
+      ) : (
+        <View style={[styles.image, styles.imageFallback]} />
+      )}
       <View style={styles.overlay} />
       <View style={[styles.badge, { backgroundColor: item.accent }]}>
         <Text style={styles.badgeText}>{item.subject}</Text>
@@ -53,6 +57,7 @@ const styles = StyleSheet.create({
   compact: { marginBottom: spacing.md },
   imageWrap: { height: 154, position: "relative" },
   image: { width: "100%", height: "100%" },
+  imageFallback: { backgroundColor: "#D1D5DB" },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.25)" },
   badge: {
     position: "absolute",

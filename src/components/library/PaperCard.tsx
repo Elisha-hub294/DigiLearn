@@ -1,7 +1,14 @@
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { colors, spacing } from "../../constants/theme";
+import PdfPreview from "../home/PdfPreview";
 
 type PaperCardProps = {
   title: string;
@@ -10,6 +17,7 @@ type PaperCardProps = {
   pages: string;
   image: any;
   document?: string;
+  isVisible?: boolean;
 };
 
 export function PaperCard({
@@ -17,10 +25,15 @@ export function PaperCard({
   subject,
   year,
   pages,
-  image,
+  image: _image,
   document,
+  isVisible = false,
 }: PaperCardProps) {
   const router = useRouter();
+  const [loadedPdfUri, setLoadedPdfUri] = useState<string | null>(null);
+  const pdfLoading = Boolean(
+    document && isVisible && loadedPdfUri !== document,
+  );
 
   const openPdf = () => {
     if (!document) return;
@@ -40,11 +53,22 @@ export function PaperCard({
       onPress={openPdf}
     >
       <View style={styles.previewContainer}>
-        <Image
-          source={require("../../../assets/images/pdf-preview.png")}
-          style={styles.preview}
-          contentFit="cover"
-        />
+        {document ? (
+          <PdfPreview
+            uri={document}
+            style={styles.preview}
+            showLoadingIndicator={false}
+            onLoad={() => setLoadedPdfUri(document ?? null)}
+            onError={() => setLoadedPdfUri(document ?? null)}
+          />
+        ) : (
+          <View style={[styles.preview, styles.previewFallback]} />
+        )}
+        {pdfLoading ? (
+          <View style={styles.pdfLoading}>
+            <ActivityIndicator color="#FFFFFF" />
+          </View>
+        ) : null}
         <View style={styles.darkOverlay} />
       </View>
       <View style={styles.content}>
@@ -77,6 +101,13 @@ const styles = StyleSheet.create({
   preview: {
     width: "100%",
     height: "100%",
+  },
+  previewFallback: { backgroundColor: "#D1D5DB" },
+  pdfLoading: {
+    ...StyleSheet.absoluteFill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(209, 213, 219, 0.75)",
   },
   darkOverlay: {
     ...StyleSheet.absoluteFill,

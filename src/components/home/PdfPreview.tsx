@@ -1,10 +1,12 @@
-import { Image } from "expo-image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NativeModules, StyleSheet, UIManager, View } from "react-native";
 
 interface PdfPreviewProps {
   uri: string;
   style?: any;
+  onLoad?: () => void;
+  onError?: () => void;
+  showLoadingIndicator?: boolean;
 }
 
 let PdfComponent: any = null;
@@ -20,18 +22,21 @@ try {
   PdfComponent = null;
 }
 
-export default function PdfPreview({ uri, style }: PdfPreviewProps) {
+export default function PdfPreview({
+  uri,
+  style,
+  onLoad,
+  onError,
+  showLoadingIndicator = true,
+}: PdfPreviewProps) {
   const [error, setError] = useState(false);
 
+  useEffect(() => {
+    if (!PdfComponent || !uri || error) onError?.();
+  }, [error, onError, uri]);
+
   if (!PdfComponent || error || !uri) {
-    return (
-      <Image
-        source={require("../../../assets/images/pdf-preview.png")}
-        style={style}
-        contentFit="cover"
-        contentPosition="top"
-      />
-    );
+    return <View style={[style, styles.fallback]} />;
   }
 
   const source = { uri, cache: true };
@@ -52,9 +57,15 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
         onError={(err: any) => {
           console.warn("PdfPreview render error:", err);
           setError(true);
+          onError?.();
         }}
+        onLoadComplete={onLoad}
         style={StyleSheet.absoluteFill}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  fallback: { backgroundColor: "#D1D5DB" },
+});

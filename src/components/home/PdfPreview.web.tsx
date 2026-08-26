@@ -1,10 +1,12 @@
-import { Image } from "expo-image";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 interface PdfPreviewProps {
   uri: string;
   style: any;
+  onLoad?: () => void;
+  onError?: () => void;
+  showLoadingIndicator?: boolean;
 }
 
 const loadPdfJs = () => {
@@ -27,7 +29,13 @@ const loadPdfJs = () => {
   });
 };
 
-export default function PdfPreview({ uri, style }: PdfPreviewProps) {
+export default function PdfPreview({
+  uri,
+  style,
+  onLoad,
+  onError,
+  showLoadingIndicator = true,
+}: PdfPreviewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -63,12 +71,14 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
           await page.render(renderContext).promise;
           if (active) {
             setLoading(false);
+            onLoad?.();
           }
         } catch (err) {
           console.error("Error rendering PDF on web:", err);
           if (active) {
             setError(true);
             setLoading(false);
+            onError?.();
           }
         }
       })
@@ -77,6 +87,7 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
         if (active) {
           setError(true);
           setLoading(false);
+          onError?.();
         }
       });
 
@@ -86,19 +97,12 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
   }, [uri]);
 
   if (error) {
-    return (
-      <Image
-        source={require("../../../assets/images/pdf-preview.png")}
-        style={style}
-        contentFit="cover"
-        contentPosition="top"
-      />
-    );
+    return <View style={[style, styles.fallback]} />;
   }
 
   return (
     <View style={[style, styles.container]}>
-      {loading && (
+      {loading && showLoadingIndicator && (
         <View
           style={StyleSheet.absoluteFill}
           className="justify-center items-center"
@@ -121,6 +125,7 @@ export default function PdfPreview({ uri, style }: PdfPreviewProps) {
 }
 
 const styles = StyleSheet.create({
+  fallback: { backgroundColor: "#D1D5DB" },
   container: {
     overflow: "hidden",
     justifyContent: "flex-start",

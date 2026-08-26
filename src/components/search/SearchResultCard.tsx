@@ -97,12 +97,16 @@ export function SearchResultCard({
         style={styles.card}
       >
         <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: item.previewImage }}
-            style={styles.previewImage}
-            contentFit="contain"
-            transition={200}
-          />
+          {item.previewImage ? (
+            <Image
+              source={{ uri: item.previewImage }}
+              style={styles.previewImage}
+              contentFit="contain"
+              transition={200}
+            />
+          ) : (
+            <View style={styles.previewFallback} />
+          )}
         </View>
 
         <View style={styles.textContainer}>
@@ -155,6 +159,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  previewFallback: { flex: 1, backgroundColor: "#D1D5DB" },
   textContainer: {
     flex: 1,
     justifyContent: "center",

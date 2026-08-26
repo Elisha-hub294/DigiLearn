@@ -39,11 +39,11 @@ export const AnnouncementCard = ({ item }: { item: AnnouncementItem }) => {
   return (
     <Animated.View entering={FadeInUp.duration(520)} style={styles.card}>
       <View style={styles.imageWrap}>
-        <Image
-          source={item.image ?? require("../../assets/images/pdf-preview.png")}
-          style={styles.image}
-          contentFit="cover"
-        />
+        {item.image ? (
+          <Image source={item.image} style={styles.image} contentFit="cover" />
+        ) : (
+          <View style={[styles.image, styles.imageFallback]} />
+        )}
         <View style={styles.overlay} />
       </View>
       <View style={styles.content}>
@@ -85,6 +85,7 @@ const styles = StyleSheet.create({
   },
   imageWrap: { height: 140, position: "relative" },
   image: { width: "100%", height: "100%" },
+  imageFallback: { backgroundColor: "#D1D5DB" },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.25)" },
   content: { padding: spacing.lg },
   title: {
