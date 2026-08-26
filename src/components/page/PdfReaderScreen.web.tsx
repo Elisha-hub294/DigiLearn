@@ -7,9 +7,13 @@ import { colors, radius, spacing } from "../../constants/theme";
 import { saveDownloadedFile } from "../../services/downloadService";
 
 export function PdfReaderScreen() {
-  const { uri, title } = useLocalSearchParams<{ uri: string; title?: string }>();
+  const { uri, title } = useLocalSearchParams<{
+    uri: string;
+    title?: string;
+  }>();
   const [iframeError, setIframeError] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
 
   const goBack = () => {
@@ -19,7 +23,7 @@ export function PdfReaderScreen() {
   const decodedUri = uri ? decodeURIComponent(uri as string) : null;
 
   const handleDownload = async () => {
-    if (!decodedUri || downloading) return;
+    if (!decodedUri || downloading || downloaded) return;
 
     setDownloading(true);
     setDownloadProgress(0);
@@ -40,6 +44,7 @@ export function PdfReaderScreen() {
           uri: decodedUri,
           localUri: decodedUri,
         });
+        setDownloaded(true);
         return;
       }
 
@@ -68,11 +73,13 @@ export function PdfReaderScreen() {
         uri: decodedUri,
         localUri: decodedUri,
       });
+      setDownloaded(true);
     } catch (err) {
       console.warn("Web download error, falling back to direct link:", err);
       const a = document.createElement("a");
       a.href = decodedUri;
-      a.download = (title ? title.replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") + ".pdf";
+      a.download =
+        (title ? title.replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") + ".pdf";
       a.target = "_blank";
       document.body.appendChild(a);
       a.click();
@@ -102,7 +109,11 @@ export function PdfReaderScreen() {
     <View style={styles.screen}>
       {/* ── Header ── */}
       <View style={styles.header}>
-        <Pressable style={styles.headerBack} onPress={goBack} accessibilityLabel="Close PDF">
+        <Pressable
+          style={styles.headerBack}
+          onPress={goBack}
+          accessibilityLabel="Close PDF"
+        >
           <Feather name="chevron-left" size={22} color={colors.text} />
         </Pressable>
 
@@ -128,11 +139,12 @@ export function PdfReaderScreen() {
           {decodedUri && (
             <Pressable
               onPress={handleDownload}
-              disabled={downloading}
+              disabled={downloading || downloaded}
               accessibilityLabel="Download PDF"
               style={({ pressed }) => [
                 styles.downloadBtn,
                 pressed && { opacity: 0.85 },
+                (downloading || downloaded) && { opacity: 0.5 },
               ]}
             >
               <LinearGradient
@@ -144,7 +156,9 @@ export function PdfReaderScreen() {
                 <Text style={styles.downloadText}>
                   {downloading
                     ? `${Math.round(downloadProgress * 100)}%`
-                    : "Download"}
+                    : downloaded
+                      ? "Downloaded"
+                      : "Download"}
                 </Text>
               </LinearGradient>
             </Pressable>

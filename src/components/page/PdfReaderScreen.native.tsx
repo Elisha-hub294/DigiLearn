@@ -21,11 +21,15 @@ import { saveDownloadedFile } from "../../services/downloadService";
 const LOAD_TIMEOUT_MS = 20_000;
 
 export function PdfReaderScreen() {
-  const { uri, title } = useLocalSearchParams<{ uri: string; title?: string }>();
+  const { uri, title } = useLocalSearchParams<{
+    uri: string;
+    title?: string;
+  }>();
 
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const progressAnim = useRef(new Animated.Value(0)).current;
   const downloadProgressAnim = useRef(new Animated.Value(0)).current;
@@ -43,7 +47,11 @@ export function PdfReaderScreen() {
 
   // Animate the progress bar to a target value
   const animateTo = (toValue: number, duration = 400) =>
-    Animated.timing(progressAnim, { toValue, duration, useNativeDriver: false }).start();
+    Animated.timing(progressAnim, {
+      toValue,
+      duration,
+      useNativeDriver: false,
+    }).start();
 
   // Start a safety-net timer that dismisses the loading screen if the
   // WebView never fires onLoadEnd (common with large PDFs / slow connections)
@@ -76,7 +84,7 @@ export function PdfReaderScreen() {
 
   /** Download the PDF with real-time progress animation */
   const handleDownload = async () => {
-    if (!decodedUri || downloading || isLocalFile) return;
+    if (!decodedUri || downloading || downloaded || isLocalFile) return;
 
     setDownloading(true);
     setDownloadProgress(0);
@@ -84,8 +92,16 @@ export function PdfReaderScreen() {
 
     // Quick bounce animation for tactile feedback
     Animated.sequence([
-      Animated.timing(downloadScale, { toValue: 0.85, duration: 100, useNativeDriver: true }),
-      Animated.timing(downloadScale, { toValue: 1, duration: 150, useNativeDriver: true }),
+      Animated.timing(downloadScale, {
+        toValue: 0.85,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(downloadScale, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
     ]).start();
 
     try {
@@ -107,7 +123,7 @@ export function PdfReaderScreen() {
               useNativeDriver: false,
             }).start();
           }
-        }
+        },
       );
 
       const downloadResult = await downloadResumable.downloadAsync();
@@ -127,18 +143,27 @@ export function PdfReaderScreen() {
           uri: decodedUri,
           localUri: downloadResult.uri,
         });
+        setDownloaded(true);
 
         setTimeout(() => {
-          Alert.alert("Download Complete", `"${fileName}" has been saved to your device.`, [
-            { text: "OK" },
-          ]);
+          Alert.alert(
+            "Download Complete",
+            `"${fileName}" has been saved to your device.`,
+            [{ text: "OK" }],
+          );
         }, 300);
       } else {
-        Alert.alert("Download Failed", "The file could not be downloaded. Please try again.");
+        Alert.alert(
+          "Download Failed",
+          "The file could not be downloaded. Please try again.",
+        );
       }
     } catch (err) {
       console.warn("PDF download error:", err);
-      Alert.alert("Download Error", "Something went wrong while downloading the file.");
+      Alert.alert(
+        "Download Error",
+        "Something went wrong while downloading the file.",
+      );
     } finally {
       setTimeout(() => {
         setDownloading(false);
@@ -173,7 +198,11 @@ export function PdfReaderScreen() {
     <View style={styles.screen}>
       {/* ── Header ── */}
       <View style={styles.header}>
-        <Pressable style={styles.headerBack} onPress={goBack} accessibilityLabel="Close PDF">
+        <Pressable
+          style={styles.headerBack}
+          onPress={goBack}
+          accessibilityLabel="Close PDF"
+        >
           <Feather name="arrow-left" size={22} color={colors.text} />
         </Pressable>
 
@@ -188,11 +217,12 @@ export function PdfReaderScreen() {
           <Animated.View style={{ transform: [{ scale: downloadScale }] }}>
             <Pressable
               onPress={handleDownload}
-              disabled={downloading}
+              disabled={downloading || downloaded}
               accessibilityLabel="Download PDF"
               style={({ pressed }) => [
                 styles.downloadBtn,
                 pressed && { opacity: 0.85 },
+                (downloading || downloaded) && { opacity: 0.5 },
               ]}
             >
               <LinearGradient
@@ -204,7 +234,9 @@ export function PdfReaderScreen() {
                 <Text style={styles.downloadText}>
                   {downloading
                     ? `${Math.round(downloadProgress * 100)}%`
-                    : "Download"}
+                    : downloaded
+                      ? "Downloaded"
+                      : "Download"}
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -222,7 +254,9 @@ export function PdfReaderScreen() {
             </Text>
           </View>
           <View style={styles.downloadTrack}>
-            <Animated.View style={[styles.downloadFill, { width: downloadBarWidth }]}>
+            <Animated.View
+              style={[styles.downloadFill, { width: downloadBarWidth }]}
+            >
               <LinearGradient
                 colors={["#006eff", "#6C63FF", "#A855F7"]}
                 start={{ x: 0, y: 0 }}
@@ -237,7 +271,9 @@ export function PdfReaderScreen() {
       {/* ── Animated progress bar ── */}
       {!loaded && !downloading && (
         <View style={styles.progressTrack}>
-          <Animated.View style={[styles.progressBar, { width: progressBarWidth }]} />
+          <Animated.View
+            style={[styles.progressBar, { width: progressBarWidth }]}
+          />
         </View>
       )}
 
@@ -248,7 +284,9 @@ export function PdfReaderScreen() {
             <Feather name="file-text" size={36} color={colors.primary} />
             <Text style={styles.loadingLabel}>Opening PDF…</Text>
             <View style={styles.loadingTrack}>
-              <Animated.View style={[styles.loadingFill, { width: progressBarWidth }]} />
+              <Animated.View
+                style={[styles.loadingFill, { width: progressBarWidth }]}
+              />
             </View>
           </View>
         </View>
