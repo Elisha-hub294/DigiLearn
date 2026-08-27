@@ -6,6 +6,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 import { saveDownloadedFile } from "../../services/downloadService";
 
+import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
+
 export function PdfReaderScreen() {
   const { uri, title } = useLocalSearchParams<{
     uri: string;
@@ -20,7 +22,8 @@ export function PdfReaderScreen() {
     if (router.canGoBack()) router.back();
   };
 
-  const decodedUri = uri ? decodeURIComponent(uri as string) : null;
+  const originalDecodedUri = uri ? decodeURIComponent(uri as string) : null;
+  const decodedUri = useFirebaseStorageUrl(originalDecodedUri ?? undefined) || originalDecodedUri;
 
   const handleDownload = async () => {
     if (!decodedUri || downloading || downloaded) return;

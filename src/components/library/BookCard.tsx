@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 import { FALLBACK_COVER } from "../book/bookTypes";

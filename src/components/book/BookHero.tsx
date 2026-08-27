@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Pressable,

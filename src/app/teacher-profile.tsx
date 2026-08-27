@@ -1,5 +1,5 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -527,7 +527,7 @@ export default function TeacherProfileScreen() {
               source={{
                 uri:
                   teacher?.avatar ||
-                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/user-default.png",
+                  "TeacherProfile/user-default.png",
               }}
               style={[styles.avatar, { borderColor: accentColor }]}
               contentFit="cover"
@@ -750,7 +750,7 @@ export default function TeacherProfileScreen() {
               teacherImage: {
                 uri:
                   teacher?.avatar ||
-                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/user-default.png",
+                  "TeacherProfile/user-default.png",
               },
               verified: teacher?.verified ?? false,
               time: formatResourceTime(item.createdAt),
@@ -759,7 +759,7 @@ export default function TeacherProfileScreen() {
                 uri:
                   item.image ||
                   teacher?.avatar ||
-                  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/user-default.png",
+                  "TeacherProfile/user-default.png",
               },
               type: "announcement",
               subject: (item.subject as any) || "English",

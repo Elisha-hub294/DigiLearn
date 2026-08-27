@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { useRouter } from "expo-router";
 import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -122,7 +122,7 @@ export const TopicalNotesSlider = () => {
   }, [ready, startAutoScroll, stopAutoScroll]);
 
   // Seamlessly loop: when nearing either edge, silently snap to the mirror
-  // position inside the middle third � user never sees the jump.
+  // position inside the middle third — user never sees the jump.
   const onScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       const x = e.nativeEvent.contentOffset.x;

@@ -1,6 +1,6 @@
 import { colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";

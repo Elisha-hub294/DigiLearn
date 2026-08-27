@@ -1,9 +1,9 @@
 import { colors } from "@/constants/theme";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { getTeacherAvatar } from "../../constants/teacherAvatar";
+import { FirebaseImage } from "./FirebaseImage";
 // import { videoColors } from "./videoDesign";
 
 export function TeacherInfo({
@@ -15,7 +15,7 @@ export function TeacherInfo({
 }) {
   return (
     <Animated.View entering={FadeIn.duration(360)} style={styles.row}>
-      <Image
+      <FirebaseImage
         source={{ uri: getTeacherAvatar(name) }}
         style={styles.avatar}
         contentFit="cover"

@@ -20,6 +20,8 @@ import { saveDownloadedFile } from "../../services/downloadService";
 // hide the loading overlay after 20 seconds so the user isn't stuck.
 const LOAD_TIMEOUT_MS = 20_000;
 
+import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
+
 export function PdfReaderScreen() {
   const { uri, title } = useLocalSearchParams<{
     uri: string;
@@ -36,7 +38,8 @@ export function PdfReaderScreen() {
   const [downloadScale] = useState(() => new Animated.Value(1));
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const decodedUri = uri ? decodeURIComponent(uri as string) : null;
+  const originalDecodedUri = uri ? decodeURIComponent(uri as string) : null;
+  const decodedUri = useFirebaseStorageUrl(originalDecodedUri ?? undefined) || originalDecodedUri;
   const isLocalFile = Boolean(decodedUri?.startsWith("file://"));
 
   const webViewUrl = decodedUri

@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -13,8 +13,7 @@ type SearchResultTeacherCardProps = {
   onPress: (item: SearchResult) => void;
 };
 
-const DEFAULT_TEACHER_AVATAR =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/opero-stephen.jpeg";
+const DEFAULT_TEACHER_AVATAR = "TeacherProfile/tr-default.png";
 
 export function SearchResultTeacherCard({
   item,

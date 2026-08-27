@@ -29,6 +29,8 @@ const loadPdfJs = () => {
   });
 };
 
+import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
+
 export default function PdfPreview({
   uri,
   style,
@@ -39,14 +41,16 @@ export default function PdfPreview({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const resolvedUri = useFirebaseStorageUrl(uri) || uri;
 
   useEffect(() => {
     let active = true;
+    if (!resolvedUri) return;
 
     loadPdfJs()
       .then(async (pdfjsLib) => {
         try {
-          const loadingTask = pdfjsLib.getDocument(uri);
+          const loadingTask = pdfjsLib.getDocument(resolvedUri);
           const pdf = await loadingTask.promise;
           if (!active) return;
 

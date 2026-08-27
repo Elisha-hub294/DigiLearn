@@ -1,4 +1,4 @@
-import { Image } from "expo-image";
+import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -18,7 +18,7 @@ export function SearchEmptyState({
     <View style={styles.container}>
       <Image
         source={{
-          uri: "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/images/empty.png",
+          uri: "images/empty.png",
         }}
         style={styles.illustration}
         contentFit="contain"

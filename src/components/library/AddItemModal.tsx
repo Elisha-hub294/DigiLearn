@@ -55,8 +55,7 @@ const INITIAL_FORM_STATE: FormState = {
   schoolClass: "",
 };
 
-const FALLBACK_ICON_URL =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/default-2d.png";
+const FALLBACK_ICON_URL = "icons/default-2d.png";
 
 const getTitleDocId = (title: string) => {
   const sanitized = title

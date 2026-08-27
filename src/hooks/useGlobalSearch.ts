@@ -7,8 +7,7 @@ import { getVideoThumbnailUrl } from "../utils/videoUtils";
 
 const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
 const MAX_RECENT_ITEMS = 10;
-const FALLBACK_TEACHER_AVATAR =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/opero-stephen.jpeg";
+const FALLBACK_TEACHER_AVATAR = "TeacherProfile/tr-default.png";
 
 export type SearchCategory =
   | "All"

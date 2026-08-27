@@ -28,5 +28,4 @@ export type SourceBook = {
   author?: string;
 };
 
-export const DEFAULT_SUBJECT_AVATAR =
-  "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/Icons/default-2d.png";
+export const DEFAULT_SUBJECT_AVATAR = "icons/default-2d.png";

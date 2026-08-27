@@ -22,6 +22,8 @@ try {
   PdfComponent = null;
 }
 
+import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
+
 export default function PdfPreview({
   uri,
   style,
@@ -30,16 +32,17 @@ export default function PdfPreview({
   showLoadingIndicator = true,
 }: PdfPreviewProps) {
   const [error, setError] = useState(false);
+  const resolvedUri = useFirebaseStorageUrl(uri) || uri;
 
   useEffect(() => {
-    if (!PdfComponent || !uri || error) onError?.();
-  }, [error, onError, uri]);
+    if (!PdfComponent || !resolvedUri || error) onError?.();
+  }, [error, onError, resolvedUri]);
 
-  if (!PdfComponent || error || !uri) {
+  if (!PdfComponent || error || !resolvedUri) {
     return <View style={[style, styles.fallback]} />;
   }
 
-  const source = { uri, cache: true };
+  const source = { uri: resolvedUri, cache: true };
 
   return (
     <View

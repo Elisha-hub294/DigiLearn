@@ -1,6 +1,6 @@
 import { Feather as Icon, Ionicons } from "@expo/vector-icons";
 import MaskedView from "@react-native-masked-view/masked-view";
-import { Image } from "expo-image";
+import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
@@ -412,7 +412,7 @@ const TeacherPostItem = ({
   const resolvedAvatar =
     (postItem.teacher && teacherAvatars[postItem.teacher]) ||
     defaultUserAvatar ||
-    "https://phgtiaffpozgzjxyruhg.supabase.co/storage/v1/object/public/TeacherProfile/tr-default.png";
+    "TeacherProfile/tr-default.png";
 
   return (
     <Animated.View

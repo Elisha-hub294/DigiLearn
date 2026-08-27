@@ -1,5 +1,5 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { Image } from "expo-image";
+import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, shadows, spacing } from "../../constants/theme";
 import { FALLBACK_COVER } from "../book/bookTypes";
