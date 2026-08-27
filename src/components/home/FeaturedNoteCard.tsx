@@ -33,7 +33,7 @@ import {
 } from "../../utils/interestFilter";
 import { ActionDialog } from "../ui/ActionDialog";
 import { CardActionMenu } from "../ui/CardActionMenu";
-import PdfPreview from "./PdfPreview";
+import { FirebaseImage } from "../ui/FirebaseImage";
 
 type TopicalNote = {
   id: string;
@@ -42,6 +42,8 @@ type TopicalNote = {
   subject?: string | string[];
   author?: string;
   preview?: string;
+  cover?: string;
+  image?: string;
   document?: string;
   book?: string | string[];
   updatedAt?: any;
@@ -61,6 +63,8 @@ type FeaturedNoteCardProps = {
     subject?: string | string[];
     author?: string;
     preview?: string;
+    cover?: string;
+    image?: string;
     document?: string;
     book?: string | string[];
     updatedAt?: any;
@@ -531,22 +535,15 @@ const FeaturedNoteItem = ({
               } as any);
             }}
           >
-            {note.document && isVisible ? (
-              <PdfPreview
-                uri={note.document}
+            {note.cover || note.image || note.preview ? (
+              <FirebaseImage
+                source={note.cover || note.image || note.preview}
                 style={styles.preview}
-                showLoadingIndicator={false}
-                onLoad={() => setLoadedPdfUri(note.document ?? null)}
-                onError={() => setLoadedPdfUri(note.document ?? null)}
+                contentFit="cover"
               />
             ) : (
               <View style={[styles.preview, styles.previewFallback]} />
             )}
-            {pdfLoading ? (
-              <View style={styles.pdfLoading}>
-                <ActivityIndicator color={colors.white} />
-              </View>
-            ) : null}
             <View style={styles.overlay} />
             {isRead ? (
               <View style={styles.readBadge}>

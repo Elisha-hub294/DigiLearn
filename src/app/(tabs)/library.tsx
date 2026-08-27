@@ -295,28 +295,26 @@ export default function LibraryScreen() {
           </Animated.View>
         </ScrollView>
       </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Add a new book"
-        style={styles.fab}
-        onPress={() => {
-          setFormType("book");
-          setShowModal(true);
-        }}
-      >
-        <Icon name="plus" size={24} color={colors.white} />
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Add a new page"
-        style={styles.fabSecondary}
-        onPress={() => {
-          setFormType("page");
-          setShowModal(true);
-        }}
-      >
-        <Icon name="file-text" size={22} color={colors.white} />
-      </Pressable>
+      {profile?.type === "admin" && (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add a new book"
+            style={styles.fab}
+            onPress={() => { setFormType("book"); setShowModal(true); }}
+          >
+            <Icon name="plus" size={24} color={colors.white} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Add a new page"
+            style={styles.fabSecondary}
+            onPress={() => { setFormType("page"); setShowModal(true); }}
+          >
+            <Icon name="file-text" size={22} color={colors.white} />
+          </Pressable>
+        </>
+      )}
       <AddItemModal
         visible={showModal}
         formType={formType}

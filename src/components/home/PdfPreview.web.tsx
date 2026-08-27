@@ -45,12 +45,23 @@ export default function PdfPreview({
 
   useEffect(() => {
     let active = true;
-    if (!resolvedUri) return;
+    if (
+      !resolvedUri ||
+      (!resolvedUri.startsWith("http://") &&
+        !resolvedUri.startsWith("https://") &&
+        !resolvedUri.startsWith("blob:") &&
+        !resolvedUri.startsWith("data:"))
+    ) {
+      return;
+    }
 
     loadPdfJs()
       .then(async (pdfjsLib) => {
         try {
-          const loadingTask = pdfjsLib.getDocument(resolvedUri);
+          const loadingTask = pdfjsLib.getDocument({
+            url: resolvedUri,
+            withCredentials: false,
+          });
           const pdf = await loadingTask.promise;
           if (!active) return;
 
@@ -78,7 +89,7 @@ export default function PdfPreview({
             onLoad?.();
           }
         } catch (err) {
-          console.error("Error rendering PDF on web:", err);
+          console.warn("Error rendering PDF on web:", err);
           if (active) {
             setError(true);
             setLoading(false);
@@ -87,7 +98,7 @@ export default function PdfPreview({
         }
       })
       .catch((err) => {
-        console.error("Error loading PDF.js:", err);
+        console.warn("Error loading PDF.js:", err);
         if (active) {
           setError(true);
           setLoading(false);
@@ -98,7 +109,7 @@ export default function PdfPreview({
     return () => {
       active = false;
     };
-  }, [uri]);
+  }, [resolvedUri]);
 
   if (error) {
     return <View style={[style, styles.fallback]} />;

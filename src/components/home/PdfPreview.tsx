@@ -35,10 +35,22 @@ export default function PdfPreview({
   const resolvedUri = useFirebaseStorageUrl(uri) || uri;
 
   useEffect(() => {
-    if (!PdfComponent || !resolvedUri || error) onError?.();
-  }, [error, onError, resolvedUri]);
+    setError(false);
+  }, [resolvedUri]);
 
-  if (!PdfComponent || error || !resolvedUri) {
+  const isValidUrl =
+    typeof resolvedUri === "string" &&
+    (resolvedUri.startsWith("http://") ||
+      resolvedUri.startsWith("https://") ||
+      resolvedUri.startsWith("file://") ||
+      resolvedUri.startsWith("data:") ||
+      resolvedUri.startsWith("blob:"));
+
+  useEffect(() => {
+    if (!PdfComponent || !isValidUrl || error) onError?.();
+  }, [error, onError, isValidUrl]);
+
+  if (!PdfComponent || error || !isValidUrl) {
     return <View style={[style, styles.fallback]} />;
   }
 

@@ -10,12 +10,14 @@ import {
     TextInput,
     View,
 } from "react-native";
-import { db } from "../../../firebaseConfig";
+import { db, storage } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import {
     appendNotificationToAllUsers,
     buildLibraryNotification,
 } from "../../services/notifications";
+import * as DocumentPicker from "expo-document-picker";
+import { getDownloadURL, ref, uploadBytes, getMetadata } from "firebase/storage";
 
 export type FormType = "book" | "banner" | "paper" | "page";
 
@@ -76,6 +78,22 @@ type AddItemModalProps = {
   onSuccess: () => void;
 };
 
+const uriToBlob = (uri: string): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function () {
+      resolve(xhr.response);
+    };
+    xhr.onerror = function (e) {
+      console.error("XHR failed", e);
+      reject(new TypeError("Network request failed"));
+    };
+    xhr.responseType = "blob";
+    xhr.open("GET", uri, true);
+    xhr.send(null);
+  });
+};
+
 export function AddItemModal({
   visible,
   formType,
@@ -86,9 +104,28 @@ export function AddItemModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [levelDropdownOpen, setLevelDropdownOpen] = useState(false);
   const [classDropdownOpen, setClassDropdownOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
 
   const updateField = (key: keyof FormState, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({});
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+      const file = result.assets[0];
+      // Enforce 5 MB max size
+      if (file.size && file.size > 5 * 1024 * 1024) {
+        Alert.alert("File Too Large", "Please select a file smaller than 5 MB.");
+        return;
+      }
+      setSelectedFile(result);
+    } catch (e) {
+      console.error("Error picking document", e);
+    }
   };
 
   const pageClassOptions =
@@ -177,15 +214,36 @@ export function AddItemModal({
         createdItemId = itemId;
         notificationType = "page";
 
+        let documentUrl = formData.document.trim();
+        let coverUrl = FALLBACK_ICON_URL;
+
+        // If a file was selected, upload it to Firebase Storage
+        if (selectedFile && !selectedFile.canceled && selectedFile.assets && selectedFile.assets.length > 0) {
+          const file = selectedFile.assets[0];
+          try {
+            const blob = await uriToBlob(file.uri);
+            const uniqueName = `${Date.now()}_${file.name || "document"}`;
+            const storageRef = ref(storage, `docs/${uniqueName}`);
+            await uploadBytes(storageRef, blob);
+            documentUrl = await getDownloadURL(storageRef);
+          } catch (e: any) {
+            console.error("File upload failed", e);
+            Alert.alert("Upload Failed", `Unable to upload the selected file: ${e?.message || e}`);
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
         await setDoc(doc(db, "pages", itemId), {
-          title: formData.title.trim() || "Untitled note",
-          subject: formData.subject.trim() || "General",
-          description: formData.description.trim() || "",
-          document: formData.document.trim() || "",
           book: bookList,
+          cover: coverUrl,
+          description: formData.description.trim() || "",
+          document: documentUrl,
           level: formData.level || "Ordinary",
-          schoolClass: formData.schoolClass.trim() || "",
+          subject: formData.subject.trim() || "General",
+          title: formData.title.trim() || "Untitled note",
           updatedAt: serverTimestamp(),
+          ...(formData.schoolClass.trim() ? { schoolClass: formData.schoolClass.trim() } : {}),
         });
       } else {
         const itemId = getTitleDocId(formData.title);
@@ -211,12 +269,13 @@ export function AddItemModal({
       }
 
       setFormData(INITIAL_FORM_STATE);
+      setSelectedFile(null);
       onClose();
       Alert.alert("Added", "The new item was saved.");
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to add library item", error);
-      Alert.alert("Error", "The item could not be added. Please try again.");
+      Alert.alert("Error", `The item could not be added: ${error?.message || error}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -432,13 +491,12 @@ export function AddItemModal({
                   multiline
                   numberOfLines={4}
                 />
-                <Text style={styles.fieldLabel}>Document URL</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="https://example.com/document.pdf"
-                  value={formData.document}
-                  onChangeText={(val) => updateField("document", val)}
-                />
+                <Text style={styles.fieldLabel}>Document File</Text>
+                <Pressable style={styles.filePicker} onPress={pickDocument} disabled={isSubmitting}>
+                  <Text style={styles.filePickerText}>
+                    {selectedFile?.assets?.[0] ? selectedFile.assets[0].name : "Tap to select a file (max 5 MB)"}
+                  </Text>
+                </Pressable>
                 <Text style={styles.fieldLabel}>Book</Text>
                 <TextInput
                   style={styles.input}
@@ -527,6 +585,20 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: spacing.lg,
     maxHeight: "85%",
+  },
+  filePicker: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.md,
+    backgroundColor: colors.white,
+    justifyContent: "center",
+  },
+  filePickerText: {
+    color: colors.text,
+    fontSize: 14,
   },
   modalContent: {
     paddingBottom: spacing.xl,
