@@ -1,23 +1,24 @@
+import { Feather } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useState } from "react";
 import {
-    Alert,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { db, storage } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import {
-    appendNotificationToAllUsers,
-    buildLibraryNotification,
+  appendNotificationToAllUsers,
+  buildLibraryNotification,
 } from "../../services/notifications";
-import * as DocumentPicker from "expo-document-picker";
-import { getDownloadURL, ref, uploadBytes, getMetadata } from "firebase/storage";
 
 export type FormType = "book" | "banner" | "paper" | "page";
 
@@ -76,6 +77,7 @@ type AddItemModalProps = {
   formType: FormType;
   onClose: () => void;
   onSuccess: () => void;
+  screen?: boolean;
 };
 
 const uriToBlob = (uri: string): Promise<Blob> => {
@@ -99,12 +101,14 @@ export function AddItemModal({
   formType,
   onClose,
   onSuccess,
+  screen = false,
 }: AddItemModalProps) {
   const [formData, setFormData] = useState<FormState>(INITIAL_FORM_STATE);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [levelDropdownOpen, setLevelDropdownOpen] = useState(false);
   const [classDropdownOpen, setClassDropdownOpen] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
+  const [selectedFile, setSelectedFile] =
+    useState<DocumentPicker.DocumentPickerResult | null>(null);
 
   const updateField = (key: keyof FormState, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -119,7 +123,10 @@ export function AddItemModal({
       const file = result.assets[0];
       // Enforce 5 MB max size
       if (file.size && file.size > 5 * 1024 * 1024) {
-        Alert.alert("File Too Large", "Please select a file smaller than 5 MB.");
+        Alert.alert(
+          "File Too Large",
+          "Please select a file smaller than 5 MB.",
+        );
         return;
       }
       setSelectedFile(result);
@@ -218,7 +225,12 @@ export function AddItemModal({
         let coverUrl = FALLBACK_ICON_URL;
 
         // If a file was selected, upload it to Firebase Storage
-        if (selectedFile && !selectedFile.canceled && selectedFile.assets && selectedFile.assets.length > 0) {
+        if (
+          selectedFile &&
+          !selectedFile.canceled &&
+          selectedFile.assets &&
+          selectedFile.assets.length > 0
+        ) {
           const file = selectedFile.assets[0];
           try {
             const blob = await uriToBlob(file.uri);
@@ -228,7 +240,10 @@ export function AddItemModal({
             documentUrl = await getDownloadURL(storageRef);
           } catch (e: any) {
             console.error("File upload failed", e);
-            Alert.alert("Upload Failed", `Unable to upload the selected file: ${e?.message || e}`);
+            Alert.alert(
+              "Upload Failed",
+              `Unable to upload the selected file: ${e?.message || e}`,
+            );
             setIsSubmitting(false);
             return;
           }
@@ -243,7 +258,9 @@ export function AddItemModal({
           subject: formData.subject.trim() || "General",
           title: formData.title.trim() || "Untitled note",
           updatedAt: serverTimestamp(),
-          ...(formData.schoolClass.trim() ? { schoolClass: formData.schoolClass.trim() } : {}),
+          ...(formData.schoolClass.trim()
+            ? { schoolClass: formData.schoolClass.trim() }
+            : {}),
         });
       } else {
         const itemId = getTitleDocId(formData.title);
@@ -275,11 +292,332 @@ export function AddItemModal({
       onSuccess();
     } catch (error: any) {
       console.error("Failed to add library item", error);
-      Alert.alert("Error", `The item could not be added: ${error?.message || error}`);
+      Alert.alert(
+        "Error",
+        `The item could not be added: ${error?.message || error}`,
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const composerContent = (
+    <View style={screen ? styles.screenContainer : styles.modalBackdrop}>
+      <View style={screen ? styles.screenCard : styles.modalCard}>
+        {screen && (
+          <View style={styles.screenHeader}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              hitSlop={8}
+              onPress={onClose}
+              style={styles.backButton}
+            >
+              <Feather name="arrow-left" size={21} color={colors.text} />
+            </Pressable>
+            <View style={styles.screenHeaderCopy}>
+              <Text style={styles.screenHeaderTitle}>
+                {formType === "book"
+                  ? "Add Book"
+                  : formType === "banner"
+                    ? "Add an Announcement"
+                    : formType === "page"
+                      ? "Add Page"
+                      : "Add Past Paper"}
+              </Text>
+            </View>
+          </View>
+        )}
+        <ScrollView
+          contentContainerStyle={styles.modalContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {!screen && (
+            <Text style={styles.modalTitle}>
+              {formType === "book"
+                ? "Add Book"
+                : formType === "banner"
+                  ? "Post Announcement"
+                  : formType === "page"
+                    ? "Add page"
+                    : "Add Past Paper"}
+            </Text>
+          )}
+
+          <Text style={styles.fieldLabel}>Title</Text>
+          <TextInput
+            style={styles.input}
+            placeholder={
+              formType === "book"
+                ? "Book title"
+                : formType === "banner"
+                  ? "Announcement title"
+                  : "Page title"
+            }
+            value={formData.title}
+            onChangeText={(val) => updateField("title", val)}
+          />
+
+          {formType === "book" && (
+            <>
+              <Text style={styles.fieldLabel}>Author</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Author"
+                value={formData.author}
+                onChangeText={(val) => updateField("author", val)}
+              />
+              <Text style={styles.fieldLabel}>Subtitle</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Short description"
+                value={formData.subtitle}
+                onChangeText={(val) => updateField("subtitle", val)}
+              />
+              <Text style={styles.fieldLabel}>Cover</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Image URL"
+                value={formData.cover}
+                onChangeText={(val) => updateField("cover", val)}
+              />
+              <Text style={styles.fieldLabel}>Rating</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="4.8"
+                value={formData.rating}
+                onChangeText={(val) => updateField("rating", val)}
+                keyboardType="numeric"
+              />
+              <Text style={styles.fieldLabel}>Featured</Text>
+              <View style={styles.toggleRow}>
+                <Pressable
+                  style={[
+                    styles.toggleChip,
+                    formData.isTop && styles.toggleChipActive,
+                  ]}
+                  onPress={() => updateField("isTop", true)}
+                >
+                  <Text
+                    style={[
+                      styles.toggleChipText,
+                      formData.isTop && styles.toggleChipTextActive,
+                    ]}
+                  >
+                    Yes
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.toggleChip,
+                    !formData.isTop && styles.toggleChipActive,
+                  ]}
+                  onPress={() => updateField("isTop", false)}
+                >
+                  <Text
+                    style={[
+                      styles.toggleChipText,
+                      !formData.isTop && styles.toggleChipTextActive,
+                    ]}
+                  >
+                    No
+                  </Text>
+                </Pressable>
+              </View>
+            </>
+          )}
+
+          {formType === "banner" && (
+            <>
+              <Text style={styles.fieldLabel}>Description</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Short description"
+                value={formData.subtitle}
+                onChangeText={(val) => updateField("subtitle", val)}
+              />
+            </>
+          )}
+
+          {formType === "page" && (
+            <>
+              <Text style={styles.fieldLabel}>Subject</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Subject"
+                value={formData.subject}
+                onChangeText={(val) => updateField("subject", val)}
+              />
+              <Text style={styles.fieldLabel}>Level</Text>
+              <View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Select page level"
+                  style={styles.dropdownTrigger}
+                  onPress={() => setLevelDropdownOpen((prev) => !prev)}
+                >
+                  <Text style={styles.dropdownText}>{formData.level}</Text>
+                </Pressable>
+                {levelDropdownOpen && (
+                  <View style={styles.dropdownMenu}>
+                    {[
+                      { label: "Ordinary", value: "Ordinary" },
+                      { label: "Advanced", value: "Advanced" },
+                    ].map((option) => (
+                      <Pressable
+                        key={option.value}
+                        accessibilityRole="button"
+                        style={styles.dropdownItem}
+                        onPress={() => handleLevelSelect(option.value)}
+                      >
+                        <Text
+                          style={[
+                            styles.dropdownItemText,
+                            formData.level === option.value &&
+                              styles.dropdownItemTextActive,
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
+              <Text style={styles.fieldLabel}>Class</Text>
+              <View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Select class"
+                  style={styles.dropdownTrigger}
+                  onPress={() => setClassDropdownOpen((prev) => !prev)}
+                >
+                  <Text style={styles.dropdownText}>
+                    {formData.schoolClass || "Select class"}
+                  </Text>
+                </Pressable>
+                {classDropdownOpen && (
+                  <View style={styles.dropdownMenu}>
+                    {pageClassOptions.map((option) => (
+                      <Pressable
+                        key={option.value}
+                        accessibilityRole="button"
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          updateField("schoolClass", option.value);
+                          setClassDropdownOpen(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.dropdownItemText,
+                            formData.schoolClass === option.value &&
+                              styles.dropdownItemTextActive,
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
+              <Text style={styles.fieldLabel}>Description</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Page description"
+                value={formData.description}
+                onChangeText={(val) => updateField("description", val)}
+                multiline
+                numberOfLines={4}
+              />
+              <Text style={styles.fieldLabel}>Document File</Text>
+              <Pressable
+                style={styles.filePicker}
+                onPress={pickDocument}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.filePickerText}>
+                  {selectedFile?.assets?.[0]
+                    ? selectedFile.assets[0].name
+                    : "Tap to select a file (max 5 MB)"}
+                </Text>
+              </Pressable>
+              <Text style={styles.fieldLabel}>Book</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Book A, Book B, Book C"
+                value={formData.book}
+                onChangeText={(val) => updateField("book", val)}
+              />
+            </>
+          )}
+
+          {formType === "paper" && (
+            <>
+              <Text style={styles.fieldLabel}>Subject</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Subject"
+                value={formData.subtitle}
+                onChangeText={(val) => updateField("subtitle", val)}
+              />
+              <Text style={styles.fieldLabel}>Type</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="UNEB / MOCK"
+                value={formData.author}
+                onChangeText={(val) => updateField("author", val)}
+              />
+              <Text style={styles.fieldLabel}>Year</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="2026"
+                value={formData.extra}
+                onChangeText={(val) => updateField("extra", val)}
+              />
+              <Text style={styles.fieldLabel}>Pages</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="12"
+                value={formData.pages}
+                onChangeText={(val) => updateField("pages", val)}
+                keyboardType="numeric"
+              />
+              <Text style={styles.fieldLabel}>Doc</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Document URL"
+                value={formData.doc}
+                onChangeText={(val) => updateField("doc", val)}
+              />
+            </>
+          )}
+
+          <View style={styles.modalActions}>
+            <Pressable
+              style={styles.secondaryButton}
+              onPress={onClose}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.secondaryButtonText}>Cancel</Text>
+            </Pressable>
+            <Pressable
+              style={styles.primaryButton}
+              onPress={handleAddItem}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.primaryButtonText}>
+                {isSubmitting ? "Saving..." : "Save"}
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </View>
+    </View>
+  );
+
+  if (screen) return composerContent;
 
   return (
     <Modal
@@ -288,287 +626,7 @@ export function AddItemModal({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalCard}>
-          <ScrollView
-            contentContainerStyle={styles.modalContent}
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={styles.modalTitle}>
-              {formType === "book"
-                ? "(ADMIN) Add a book"
-                : formType === "banner"
-                  ? "(ADMIN) Add a banner"
-                  : formType === "page"
-                    ? "(ADMIN) Add a page"
-                    : "(ADMIN) Add a past paper"}
-            </Text>
-
-            <Text style={styles.fieldLabel}>Title</Text>
-            <TextInput
-              style={styles.input}
-              placeholder={
-                formType === "book"
-                  ? "Book title"
-                  : formType === "banner"
-                    ? "Banner title"
-                    : "Paper title"
-              }
-              value={formData.title}
-              onChangeText={(val) => updateField("title", val)}
-            />
-
-            {formType === "book" && (
-              <>
-                <Text style={styles.fieldLabel}>Author</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Author"
-                  value={formData.author}
-                  onChangeText={(val) => updateField("author", val)}
-                />
-                <Text style={styles.fieldLabel}>Subtitle</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Short description"
-                  value={formData.subtitle}
-                  onChangeText={(val) => updateField("subtitle", val)}
-                />
-                <Text style={styles.fieldLabel}>Cover</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Image URL"
-                  value={formData.cover}
-                  onChangeText={(val) => updateField("cover", val)}
-                />
-                <Text style={styles.fieldLabel}>Rating</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="4.8"
-                  value={formData.rating}
-                  onChangeText={(val) => updateField("rating", val)}
-                  keyboardType="numeric"
-                />
-                <Text style={styles.fieldLabel}>Featured</Text>
-                <View style={styles.toggleRow}>
-                  <Pressable
-                    style={[
-                      styles.toggleChip,
-                      formData.isTop && styles.toggleChipActive,
-                    ]}
-                    onPress={() => updateField("isTop", true)}
-                  >
-                    <Text
-                      style={[
-                        styles.toggleChipText,
-                        formData.isTop && styles.toggleChipTextActive,
-                      ]}
-                    >
-                      Yes
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={[
-                      styles.toggleChip,
-                      !formData.isTop && styles.toggleChipActive,
-                    ]}
-                    onPress={() => updateField("isTop", false)}
-                  >
-                    <Text
-                      style={[
-                        styles.toggleChipText,
-                        !formData.isTop && styles.toggleChipTextActive,
-                      ]}
-                    >
-                      No
-                    </Text>
-                  </Pressable>
-                </View>
-              </>
-            )}
-
-            {formType === "banner" && (
-              <>
-                <Text style={styles.fieldLabel}>Description</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Short description"
-                  value={formData.subtitle}
-                  onChangeText={(val) => updateField("subtitle", val)}
-                />
-              </>
-            )}
-
-            {formType === "page" && (
-              <>
-                <Text style={styles.fieldLabel}>Subject</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Subject"
-                  value={formData.subject}
-                  onChangeText={(val) => updateField("subject", val)}
-                />
-                <Text style={styles.fieldLabel}>Level</Text>
-                <View>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Select page level"
-                    style={styles.dropdownTrigger}
-                    onPress={() => setLevelDropdownOpen((prev) => !prev)}
-                  >
-                    <Text style={styles.dropdownText}>{formData.level}</Text>
-                  </Pressable>
-                  {levelDropdownOpen && (
-                    <View style={styles.dropdownMenu}>
-                      {[
-                        { label: "Ordinary", value: "Ordinary" },
-                        { label: "Advanced", value: "Advanced" },
-                      ].map((option) => (
-                        <Pressable
-                          key={option.value}
-                          accessibilityRole="button"
-                          style={styles.dropdownItem}
-                          onPress={() => handleLevelSelect(option.value)}
-                        >
-                          <Text
-                            style={[
-                              styles.dropdownItemText,
-                              formData.level === option.value &&
-                                styles.dropdownItemTextActive,
-                            ]}
-                          >
-                            {option.label}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.fieldLabel}>Class</Text>
-                <View>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Select class"
-                    style={styles.dropdownTrigger}
-                    onPress={() => setClassDropdownOpen((prev) => !prev)}
-                  >
-                    <Text style={styles.dropdownText}>
-                      {formData.schoolClass || "Select class"}
-                    </Text>
-                  </Pressable>
-                  {classDropdownOpen && (
-                    <View style={styles.dropdownMenu}>
-                      {pageClassOptions.map((option) => (
-                        <Pressable
-                          key={option.value}
-                          accessibilityRole="button"
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            updateField("schoolClass", option.value);
-                            setClassDropdownOpen(false);
-                          }}
-                        >
-                          <Text
-                            style={[
-                              styles.dropdownItemText,
-                              formData.schoolClass === option.value &&
-                                styles.dropdownItemTextActive,
-                            ]}
-                          >
-                            {option.label}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.fieldLabel}>Description</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Page description"
-                  value={formData.description}
-                  onChangeText={(val) => updateField("description", val)}
-                  multiline
-                  numberOfLines={4}
-                />
-                <Text style={styles.fieldLabel}>Document File</Text>
-                <Pressable style={styles.filePicker} onPress={pickDocument} disabled={isSubmitting}>
-                  <Text style={styles.filePickerText}>
-                    {selectedFile?.assets?.[0] ? selectedFile.assets[0].name : "Tap to select a file (max 5 MB)"}
-                  </Text>
-                </Pressable>
-                <Text style={styles.fieldLabel}>Book</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Book A, Book B, Book C"
-                  value={formData.book}
-                  onChangeText={(val) => updateField("book", val)}
-                />
-              </>
-            )}
-
-            {formType === "paper" && (
-              <>
-                <Text style={styles.fieldLabel}>Subject</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Subject"
-                  value={formData.subtitle}
-                  onChangeText={(val) => updateField("subtitle", val)}
-                />
-                <Text style={styles.fieldLabel}>Type</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="UNEB / MOCK"
-                  value={formData.author}
-                  onChangeText={(val) => updateField("author", val)}
-                />
-                <Text style={styles.fieldLabel}>Year</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="2026"
-                  value={formData.extra}
-                  onChangeText={(val) => updateField("extra", val)}
-                />
-                <Text style={styles.fieldLabel}>Pages</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="12"
-                  value={formData.pages}
-                  onChangeText={(val) => updateField("pages", val)}
-                  keyboardType="numeric"
-                />
-                <Text style={styles.fieldLabel}>Doc</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Document URL"
-                  value={formData.doc}
-                  onChangeText={(val) => updateField("doc", val)}
-                />
-              </>
-            )}
-
-            <View style={styles.modalActions}>
-              <Pressable
-                style={styles.secondaryButton}
-                onPress={onClose}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.secondaryButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={styles.primaryButton}
-                onPress={handleAddItem}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.primaryButtonText}>
-                  {isSubmitting ? "Saving..." : "Save"}
-                </Text>
-              </Pressable>
-            </View>
-          </ScrollView>
-        </View>
-      </View>
+      {composerContent}
     </Modal>
   );
 }
@@ -585,6 +643,49 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: spacing.lg,
     maxHeight: "85%",
+  },
+  screenContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  screenCard: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 760,
+    alignSelf: "center",
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+  },
+  screenHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginBottom: spacing.lg,
+  },
+  backButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E0E7F0",
+  },
+  screenHeaderCopy: { flex: 1 },
+  screenEyebrow: {
+    color: colors.primary,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.6,
+    marginBottom: 3,
+  },
+  screenHeaderTitle: {
+    color: colors.text,
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: "800",
   },
   filePicker: {
     borderWidth: 1,
@@ -605,9 +706,10 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     color: colors.text,
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: spacing.md,
+    fontSize: 28,
+    lineHeight: 34,
+    fontWeight: "800",
+    marginBottom: spacing.xl,
   },
   fieldLabel: {
     color: colors.subtitle,
@@ -617,12 +719,13 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
+    borderColor: "#DCE3ED",
+    borderRadius: 14,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: 13,
     marginBottom: spacing.md,
     color: colors.text,
+    backgroundColor: colors.white,
   },
   textArea: {
     minHeight: 96,
@@ -630,9 +733,12 @@ const styles = StyleSheet.create({
   },
   modalActions: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     gap: 12,
-    marginTop: spacing.sm,
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: "#E6EBF2",
   },
   toggleRow: {
     flexDirection: "row",
@@ -691,19 +797,21 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   secondaryButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: colors.background,
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: "#E9EEF5",
   },
   secondaryButtonText: {
     color: colors.text,
     fontWeight: "700",
   },
   primaryButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 999,
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 14,
+    borderRadius: 14,
     backgroundColor: colors.primary,
   },
   primaryButtonText: {

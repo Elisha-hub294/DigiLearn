@@ -10,6 +10,7 @@ export default function AddPageScreen() {
     <View style={styles.screen}>
       <AddItemModal
         visible
+        screen
         formType="page"
         onClose={() => router.back()}
         onSuccess={() => router.replace("/library")}

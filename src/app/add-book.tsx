@@ -10,6 +10,7 @@ export default function AddBookScreen() {
     <View style={styles.screen}>
       <AddItemModal
         visible
+        screen
         formType="book"
         onClose={() => router.back()}
         onSuccess={() => router.replace("/library")}

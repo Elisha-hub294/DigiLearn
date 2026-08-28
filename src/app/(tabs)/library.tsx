@@ -52,13 +52,8 @@ const yearNumber = (year: string) => {
 export default function LibraryScreen() {
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
-  const {
-    loading,
-    refreshing,
-    heroSlides,
-    paperCollections,
-    onRefresh,
-  } = useLibraryData();
+  const { loading, refreshing, heroSlides, paperCollections, onRefresh } =
+    useLibraryData();
   const [selectedCategory, setSelectedCategory] = useState<Category>("all");
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);

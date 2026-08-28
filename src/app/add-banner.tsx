@@ -10,6 +10,7 @@ export default function AddBannerScreen() {
     <View style={styles.screen}>
       <AddItemModal
         visible
+        screen
         formType="banner"
         onClose={() => router.back()}
         onSuccess={() => router.replace("/library")}
