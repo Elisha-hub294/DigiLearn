@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, { ZoomIn } from "react-native-reanimated";
+import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import { DEFAULT_SUBJECT_AVATAR } from "./pageTypes";
 
 export function SubjectBadge({
@@ -25,6 +26,8 @@ export function SubjectBadge({
   accentColor?: string;
 }) {
   const avatarSource = avatarUrl || DEFAULT_SUBJECT_AVATAR;
+  const resolvedAvatarUrl = useFirebaseStorageUrl(avatarSource) || avatarSource;
+  const resolvedPlaceholderUrl = useFirebaseStorageUrl(DEFAULT_SUBJECT_AVATAR) || DEFAULT_SUBJECT_AVATAR;
   const activeAccent = accentColor || "#000000";
 
   return (
@@ -32,8 +35,8 @@ export function SubjectBadge({
       <View style={styles.topRow}>
         <Animated.View entering={ZoomIn.duration(400)} style={styles.avatarWrap}>
           <Image
-            source={{ uri: avatarSource }}
-            placeholder={{ uri: DEFAULT_SUBJECT_AVATAR }}
+            source={{ uri: resolvedAvatarUrl }}
+            placeholder={{ uri: resolvedPlaceholderUrl }}
             style={styles.avatar}
             contentFit="contain"
             transition={200}

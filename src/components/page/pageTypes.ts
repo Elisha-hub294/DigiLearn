@@ -5,6 +5,7 @@ export type TopicalNote = {
   title?: string;
   description?: string;
   preview?: string;
+  cover?: string;
   document?: string;
   createdAt?: any;
   subject?: string | string[];

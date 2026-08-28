@@ -1,5 +1,4 @@
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Pressable,
@@ -10,7 +9,7 @@ import {
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import PdfPreview from "../home/PdfPreview";
+import { FirebaseImage } from "../ui/FirebaseImage";
 import { TopicalNote } from "./pageTypes";
 
 export function PageHero({
@@ -26,18 +25,16 @@ export function PageHero({
   const insets = useSafeAreaInsets();
 
   const heroHeight = Math.min(Math.max(height * 0.5, 320), 500);
-  const previewUri = note.preview;
+  const coverUri = note.cover || note.preview;
 
   return (
     <Animated.View
       entering={FadeIn.duration(450)}
       style={[styles.hero, { height: heroHeight }]}
     >
-      {note.document ? (
-        <PdfPreview uri={note.document} style={StyleSheet.absoluteFill} />
-      ) : previewUri ? (
-        <Image
-          source={{ uri: previewUri }}
+      {coverUri ? (
+        <FirebaseImage
+          source={{ uri: coverUri }}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           contentPosition="top"

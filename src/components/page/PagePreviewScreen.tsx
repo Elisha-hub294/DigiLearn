@@ -163,6 +163,8 @@ export function PagePreviewScreen() {
               typeof data.description === "string" ? data.description : "",
             preview:
               typeof data.preview === "string" ? data.preview : undefined,
+            cover:
+              typeof data.cover === "string" ? data.cover : undefined,
             document:
               typeof data.document === "string" ? data.document : undefined,
             createdAt: data.createdAt,
@@ -187,6 +189,8 @@ export function PagePreviewScreen() {
               typeof data.description === "string" ? data.description : "",
             preview:
               typeof data.preview === "string" ? data.preview : undefined,
+            cover:
+              typeof data.cover === "string" ? data.cover : undefined,
             document:
               typeof data.document === "string" ? data.document : undefined,
             createdAt: data.createdAt,
