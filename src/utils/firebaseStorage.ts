@@ -73,7 +73,7 @@ export async function getFirebaseStorageUrl(url: string | undefined): Promise<st
  * React Hook to resolve a storage URL or bare path to a Firebase Storage download URL.
  */
 export function useFirebaseStorageUrl(url: string | undefined): string | undefined {
-  const [resolvedUrl, setResolvedUrl] = useState<string | undefined>(url);
+  const [resolvedUrl, setResolvedUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let active = true;

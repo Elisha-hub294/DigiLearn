@@ -39,14 +39,62 @@ export function PdfReaderScreen() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const originalDecodedUri = uri ? decodeURIComponent(uri as string) : null;
-  const decodedUri = useFirebaseStorageUrl(originalDecodedUri ?? undefined) || originalDecodedUri;
+  const resolvedUri = useFirebaseStorageUrl(originalDecodedUri ?? undefined);
+  // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
+  const decodedUri = resolvedUri ?? null;
+  const isResolving = originalDecodedUri != null && decodedUri == null;
   const isLocalFile = Boolean(decodedUri?.startsWith("file://"));
 
-  const webViewUrl = decodedUri
-    ? isLocalFile
-      ? decodedUri
-      : `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(decodedUri)}`
-    : null;
+  // iOS WebView renders PDFs natively; Android needs pdf.js
+  const webViewSource = (() => {
+    if (!decodedUri) return null;
+    if (isLocalFile) return { uri: decodedUri };
+    if (Platform.OS === "ios") return { uri: decodedUri };
+
+    // Android: self-contained pdf.js HTML viewer
+    const escapedUrl = decodedUri
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'")
+      .replace(/\n/g, "");
+    return {
+      html: `<!DOCTYPE html>
+<html><head>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=3">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#525659;overflow-x:hidden}
+canvas{display:block;margin:4px auto;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+#error{color:#fff;text-align:center;padding:40px;font-family:sans-serif;display:none}
+</style></head><body>
+<div id="container"></div>
+<div id="error"></div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+(async()=>{
+  try{
+    const pdf=await pdfjsLib.getDocument('${escapedUrl}').promise;
+    const c=document.getElementById('container');
+    for(let i=1;i<=pdf.numPages;i++){
+      const pg=await pdf.getPage(i);
+      const s=window.innerWidth/pg.getViewport({scale:1}).width;
+      const vp=pg.getViewport({scale:s});
+      const cv=document.createElement('canvas');
+      cv.width=vp.width;cv.height=vp.height;
+      c.appendChild(cv);
+      await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    }
+    window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'loaded',pages:pdf.numPages}));
+  }catch(e){
+    document.getElementById('error').style.display='block';
+    document.getElementById('error').textContent='Failed to load PDF: '+e.message;
+    window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'error',message:e.message}));
+  }
+})();
+</script></body></html>`,
+      baseUrl: "https://cdnjs.cloudflare.com",
+    };
+  })();
 
   // Animate the progress bar to a target value
   const animateTo = useCallback(
@@ -188,7 +236,34 @@ export function PdfReaderScreen() {
     outputRange: ["0%", "100%"],
   });
 
-  if (!decodedUri || !webViewUrl) {
+  if (isResolving) {
+    return (
+      <View style={styles.screen}>
+        <View style={styles.header}>
+          <Pressable
+            style={styles.headerBack}
+            onPress={goBack}
+            accessibilityLabel="Close PDF"
+          >
+            <Feather name="arrow-left" size={22} color={colors.text} />
+          </Pressable>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {title || "PDF Reader"}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingCard}>
+            <Feather name="file-text" size={36} color={colors.primary} />
+            <Text style={styles.loadingLabel}>Loading PDF…</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  if (!decodedUri || !webViewSource) {
     return (
       <View style={styles.center}>
         <Feather name="alert-circle" size={48} color="#CBD5E1" />
@@ -313,9 +388,9 @@ export function PdfReaderScreen() {
       )}
 
       {/* ── WebView — always mounted so it loads in the background ── */}
-      {!loadError && webViewUrl && (
+      {!loadError && webViewSource && (
         <WebView
-          source={{ uri: webViewUrl }}
+          source={webViewSource}
           style={[styles.webview, !loaded && styles.webviewHidden]}
           onLoadEnd={handleLoadEnd}
           onError={handleError}
@@ -326,6 +401,7 @@ export function PdfReaderScreen() {
           originWhitelist={["*"]}
           startInLoadingState={false}
           allowsFullscreenVideo={false}
+          mixedContentMode="compatibility"
         />
       )}
     </View>

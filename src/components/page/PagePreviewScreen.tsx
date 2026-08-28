@@ -166,7 +166,9 @@ export function PagePreviewScreen() {
             cover:
               typeof data.cover === "string" ? data.cover : undefined,
             document:
-              typeof data.document === "string" ? data.document : undefined,
+              [data.doc, data.document, data.pdf, data.url].find(
+                (v): v is string => typeof v === "string" && v.length > 0,
+              ) ?? undefined,
             createdAt: data.createdAt,
             subject: normalizeArray(data.subject),
             book: normalizeArray(data.book),
@@ -192,7 +194,9 @@ export function PagePreviewScreen() {
             cover:
               typeof data.cover === "string" ? data.cover : undefined,
             document:
-              typeof data.document === "string" ? data.document : undefined,
+              [data.doc, data.document, data.pdf, data.url].find(
+                (v): v is string => typeof v === "string" && v.length > 0,
+              ) ?? undefined,
             createdAt: data.createdAt,
             subject: normalizeArray(data.subject),
             book: normalizeArray(data.book),

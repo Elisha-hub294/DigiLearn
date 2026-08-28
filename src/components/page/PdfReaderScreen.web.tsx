@@ -23,7 +23,10 @@ export function PdfReaderScreen() {
   };
 
   const originalDecodedUri = uri ? decodeURIComponent(uri as string) : null;
-  const decodedUri = useFirebaseStorageUrl(originalDecodedUri ?? undefined) || originalDecodedUri;
+  const resolvedUri = useFirebaseStorageUrl(originalDecodedUri ?? undefined);
+  // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
+  const decodedUri = resolvedUri ?? null;
+  const isResolving = originalDecodedUri != null && decodedUri == null;
 
   const handleDownload = async () => {
     if (!decodedUri || downloading || downloaded) return;
@@ -199,7 +202,12 @@ export function PdfReaderScreen() {
       )}
 
       {/* ── Content ── */}
-      {!decodedUri || iframeError ? (
+      {isResolving ? (
+        <View style={styles.center}>
+          <Feather name="file-text" size={48} color={colors.primary} />
+          <Text style={styles.errorTitle}>Loading PDF…</Text>
+        </View>
+      ) : !decodedUri || iframeError ? (
         <View style={styles.center}>
           <Feather name="alert-circle" size={48} color="#CBD5E1" />
           <Text style={styles.errorTitle}>PDF unavailable</Text>
