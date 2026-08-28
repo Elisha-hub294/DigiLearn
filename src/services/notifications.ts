@@ -3,8 +3,8 @@ import {
     doc,
     getDoc,
     getDocs,
-    serverTimestamp,
     setDoc,
+    Timestamp,
     updateDoc,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
@@ -100,7 +100,7 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
       typeof candidate.message === "string" && candidate.message.trim()
         ? candidate.message
         : "New update available",
-    createdAt: candidate.createdAt ?? serverTimestamp(),
+    createdAt: candidate.createdAt ?? Timestamp.now(),
     read: Boolean(candidate.read),
     itemId: typeof candidate.itemId === "string" ? candidate.itemId : undefined,
     collection:
@@ -245,7 +245,7 @@ export async function appendNotificationForUser(
         ...current,
         {
           ...notification,
-          createdAt: notification.createdAt ?? serverTimestamp(),
+          createdAt: notification.createdAt ?? Timestamp.now(),
         },
       ],
     },
@@ -270,7 +270,7 @@ export async function appendNotificationToAllUsers(
           ...current,
           {
             ...notification,
-            createdAt: notification.createdAt ?? serverTimestamp(),
+            createdAt: notification.createdAt ?? Timestamp.now(),
           },
         ],
       });
@@ -337,7 +337,7 @@ export function buildLibraryNotification(
     publisherName,
     publisherAvatar,
     message: details.message,
-    createdAt: serverTimestamp(),
+    createdAt: Timestamp.now(),
     read: false,
     itemId,
     collection: details.collection,
