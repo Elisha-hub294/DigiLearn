@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
   RefreshControl,
@@ -10,8 +11,8 @@ import {
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DownloadedResources } from "../../components/profile/DownloadedResources";
-import { InterestsCarousel } from "../../components/profile/InterestsCarousel";
 import { ProfileHeader } from "../../components/profile/ProfileHeader";
+import { PublishButton } from "../../components/profile/PublishButton";
 import { SavedResources } from "../../components/profile/SavedResources";
 import { UserInfoCard } from "../../components/profile/UserInfoCard";
 import { colors, spacing } from "../../constants/theme";
@@ -37,6 +38,7 @@ function Skeleton() {
   );
 }
 export default function ProfileScreen() {
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, profile, loading, error, refresh } = useProfile();
   const [refreshing, setRefreshing] = useState(false);
@@ -78,9 +80,14 @@ export default function ProfileScreen() {
         ) : profile ? (
           <Animated.View entering={FadeIn.duration(220)} style={s.sections}>
             <ProfileHeader profile={profile} photoURL={user.photoURL} />
+            {profile.type === "admin" && (
+              <PublishButton
+                onPress={() => router.push("/add-trending-lesson")}
+              />
+            )}
             <UserInfoCard profile={profile} />
             <DownloadedResources />
-            <InterestsCarousel subjects={profile.subjects} />
+            {/* <InterestsCarousel subjects={profile.subjects} /> */}
             <SavedResources profile={profile} signedIn />
           </Animated.View>
         ) : (

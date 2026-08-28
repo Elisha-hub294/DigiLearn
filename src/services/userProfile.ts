@@ -11,7 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
-export type AccountType = "student" | "teacher" | "";
+export type AccountType = "student" | "teacher" | "admin" | "";
 
 export type HiddenPageRecord = {
   id: string;

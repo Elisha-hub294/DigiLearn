@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -21,6 +22,16 @@ export function ProfileHeader({
   return (
     <View style={s.wrap}>
       <View style={s.banner}>
+        {profile.type === "admin" && (
+          <LinearGradient
+            colors={["rgba(255,255,255,0.18)", "transparent"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={s.adminBadge}
+          >
+            <Text style={s.adminText}>ADMIN</Text>
+          </LinearGradient>
+        )}
         <Pressable
           onPress={() => router.push("/settings")}
           accessibilityRole="button"
@@ -62,7 +73,23 @@ const s = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: colors.white,
   },
-  banner: { height: 132, backgroundColor: colors.primaryDark },
+  banner: { height: 132, backgroundColor: colors.primaryDark, overflow: "hidden" },
+  adminBadge: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderBottomRightRadius: 14,
+    opacity: 0.72,
+  },
+  adminText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 3,
+    textTransform: "uppercase",
+  },
   settings: {
     position: "absolute",
     right: 14,
