@@ -2,19 +2,18 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BookCarousel } from "../../components/home/BookCarousel";
 import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
-import { AddItemModal, FormType } from "../../components/library/AddItemModal";
 import { HeroBookCarousel } from "../../components/library/HeroBookCarousel";
 import { PaperCarousel } from "../../components/library/PaperCarousel";
 import { Header } from "../../components/ui/Header";
@@ -25,8 +24,8 @@ import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { PaperSection, useLibraryData } from "../../hooks/useLibraryData";
 import {
-    matchesUserInterests,
-    shouldFilterByInterests,
+  matchesUserInterests,
+  shouldFilterByInterests,
 } from "../../utils/interestFilter";
 
 type Category = "all" | "pages" | "uneb" | "mock" | "umta" | "books" | "other";
@@ -58,12 +57,9 @@ export default function LibraryScreen() {
     refreshing,
     heroSlides,
     paperCollections,
-    loadLibraryData,
     onRefresh,
   } = useLibraryData();
   const [selectedCategory, setSelectedCategory] = useState<Category>("all");
-  const [showModal, setShowModal] = useState(false);
-  const [formType, setFormType] = useState<FormType>("book");
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
   const filteredPaperCollections = useMemo<PaperSection[]>(() => {
@@ -254,7 +250,12 @@ export default function LibraryScreen() {
                   <View key={group.key} style={styles.paperSection}>
                     <SectionHeader
                       title={group.label}
-                      onSeeAll={() => router.push({ pathname: "/see-all", params: { type: "papers", paperType: group.key } } as any)}
+                      onSeeAll={() =>
+                        router.push({
+                          pathname: "/see-all",
+                          params: { type: "papers", paperType: group.key },
+                        } as any)
+                      }
                       actionLabel="See all"
                     />
                     {group.collections.map((section) => (
@@ -277,7 +278,12 @@ export default function LibraryScreen() {
                 >
                   <SectionHeader
                     title={section.title}
-                    onSeeAll={() => router.push({ pathname: "/see-all", params: { type: "papers", paperType: section.type } } as any)}
+                    onSeeAll={() =>
+                      router.push({
+                        pathname: "/see-all",
+                        params: { type: "papers", paperType: section.type },
+                      } as any)
+                    }
                     actionLabel="See all"
                   />
                   <PaperCarousel items={section.items} />
@@ -296,31 +302,15 @@ export default function LibraryScreen() {
         </ScrollView>
       </View>
       {profile?.type === "admin" && (
-        <>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Add a new book"
-            style={styles.fab}
-            onPress={() => { setFormType("book"); setShowModal(true); }}
-          >
-            <Icon name="plus" size={24} color={colors.white} />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Add a new page"
-            style={styles.fabSecondary}
-            onPress={() => { setFormType("page"); setShowModal(true); }}
-          >
-            <Icon name="file-text" size={22} color={colors.white} />
-          </Pressable>
-        </>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Add a new book"
+          style={styles.fab}
+          onPress={() => router.push("/add-book" as never)}
+        >
+          <Icon name="plus" size={24} color={colors.white} />
+        </Pressable>
       )}
-      <AddItemModal
-        visible={showModal}
-        formType={formType}
-        onClose={() => setShowModal(false)}
-        onSuccess={loadLibraryData}
-      />
     </SafeAreaView>
   );
 }
@@ -393,22 +383,6 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 29,
     backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 8,
-    shadowColor: colors.text,
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  fabSecondary: {
-    position: "absolute",
-    right: spacing.lg,
-    bottom: spacing.xl + 74,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: colors.purple,
     alignItems: "center",
     justifyContent: "center",
     elevation: 8,

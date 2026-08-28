@@ -81,9 +81,7 @@ export default function ProfileScreen() {
           <Animated.View entering={FadeIn.duration(220)} style={s.sections}>
             <ProfileHeader profile={profile} photoURL={user.photoURL} />
             {profile.type === "admin" && (
-              <PublishButton
-                onPress={() => router.push("/add-trending-lesson")}
-              />
+              <PublishButton onPress={() => router.push("/publish")} />
             )}
             <UserInfoCard profile={profile} />
             <DownloadedResources />
