@@ -1,7 +1,13 @@
 import * as DocumentPicker from "expo-document-picker";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Modal,
@@ -107,8 +113,32 @@ export function AddItemModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [levelDropdownOpen, setLevelDropdownOpen] = useState(false);
   const [classDropdownOpen, setClassDropdownOpen] = useState(false);
+  const [subjectDropdownOpen, setSubjectDropdownOpen] = useState(false);
+  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
   const [selectedFile, setSelectedFile] =
     useState<DocumentPicker.DocumentPickerResult | null>(null);
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "subject"));
+        const subjectList = snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            name: doc.data().name as string,
+          }))
+          .filter((item) => item.name)
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setSubjects(subjectList);
+      } catch (error) {
+        console.error("Error fetching subjects:", error);
+      }
+    };
+
+    if (formType === "page" && visible) {
+      fetchSubjects();
+    }
+  }, [formType, visible]);
 
   const updateField = (key: keyof FormState, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -432,12 +462,43 @@ export function AddItemModal({
           {formType === "page" && (
             <>
               <Text style={styles.fieldLabel}>Subject</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Subject"
-                value={formData.subject}
-                onChangeText={(val) => updateField("subject", val)}
-              />
+              <View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Select subject"
+                  style={styles.dropdownTrigger}
+                  onPress={() => setSubjectDropdownOpen((prev) => !prev)}
+                >
+                  <Text style={styles.dropdownText}>
+                    {formData.subject || "Select subject"}
+                  </Text>
+                </Pressable>
+                {subjectDropdownOpen && (
+                  <View style={styles.dropdownMenu}>
+                    {subjects.map((option) => (
+                      <Pressable
+                        key={option.id}
+                        accessibilityRole="button"
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          updateField("subject", option.name);
+                          setSubjectDropdownOpen(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.dropdownItemText,
+                            formData.subject === option.name &&
+                              styles.dropdownItemTextActive,
+                          ]}
+                        >
+                          {option.name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
               <Text style={styles.fieldLabel}>Level</Text>
               <View>
                 <Pressable
@@ -546,12 +607,43 @@ export function AddItemModal({
           {formType === "paper" && (
             <>
               <Text style={styles.fieldLabel}>Subject</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Subject"
-                value={formData.subtitle}
-                onChangeText={(val) => updateField("subtitle", val)}
-              />
+              <View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Select subject"
+                  style={styles.dropdownTrigger}
+                  onPress={() => setSubjectDropdownOpen((prev) => !prev)}
+                >
+                  <Text style={styles.dropdownText}>
+                    {formData.subject || "Select subject"}
+                  </Text>
+                </Pressable>
+                {subjectDropdownOpen && (
+                  <View style={styles.dropdownMenu}>
+                    {subjects.map((option) => (
+                      <Pressable
+                        key={option.id}
+                        accessibilityRole="button"
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          updateField("subject", option.name);
+                          setSubjectDropdownOpen(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.dropdownItemText,
+                            formData.subject === option.name &&
+                              styles.dropdownItemTextActive,
+                          ]}
+                        >
+                          {option.name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
               <Text style={styles.fieldLabel}>Type</Text>
               <TextInput
                 style={styles.input}

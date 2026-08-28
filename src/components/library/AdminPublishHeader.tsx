@@ -21,7 +21,6 @@ export function AdminPublishHeader({
         <Feather name="arrow-left" size={21} color={colors.text} />
       </Pressable>
       <View style={styles.copy}>
-        <Text style={styles.eyebrow}>ADMIN STUDIO</Text>
         <Text style={styles.title}>{title}</Text>
       </View>
     </View>
