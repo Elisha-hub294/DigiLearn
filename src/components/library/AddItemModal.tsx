@@ -7,10 +7,11 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -25,6 +26,18 @@ import {
   buildLibraryNotification,
 } from "../../services/notifications";
 import { AdminPublishHeader } from "./AdminPublishHeader";
+
+let WebView: any = null;
+let FileSystem: any = null;
+
+if (Platform.OS !== "web") {
+  try {
+    WebView = require("react-native-webview").WebView;
+    FileSystem = require("expo-file-system");
+  } catch (error) {
+    console.error("Failed to load native dependencies in AddItemModal:", error);
+  }
+}
 
 export type FormType = "book" | "banner" | "paper" | "page";
 
@@ -102,6 +115,126 @@ const uriToBlob = (uri: string): Promise<Blob> => {
   });
 };
 
+const webviewHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  </script>
+  <style>
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: white; }
+    canvas { display: none; }
+  </style>
+</head>
+<body>
+  <canvas id="pdf-canvas"></canvas>
+  <script>
+    // Signal to React Native that we are ready
+    setTimeout(() => {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'ready' }));
+      }
+    }, 150);
+
+    window.addEventListener('message', async (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (!data.base64Data) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'error', error: 'No PDF data provided' }));
+          return;
+        }
+        
+        const binaryString = window.atob(data.base64Data);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        const loadingTask = pdfjsLib.getDocument({ data: bytes.buffer });
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+        
+        const canvas = document.getElementById('pdf-canvas');
+        const context = canvas.getContext('2d');
+        
+        const viewport = page.getViewport({ scale: 1.0 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        
+        await page.render({
+          canvasContext: context,
+          viewport: viewport
+        }).promise;
+        
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'success', dataUrl }));
+      } catch (err) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'error', error: err.message || String(err) }));
+      }
+    });
+  </script>
+</body>
+</html>
+`;
+
+const generatePdfFirstPageThumbnail = async (
+  fileUri: string,
+  setPdfToProcess: (state: any) => void,
+  webViewRef: React.RefObject<any>
+): Promise<string> => {
+  if (Platform.OS === "web") {
+    const pdfjsLib = await new Promise<any>((resolve, reject) => {
+      if ((window as any).pdfjsLib) {
+        resolve((window as any).pdfjsLib);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
+      script.onload = () => {
+        const lib = (window as any).pdfjsLib;
+        lib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+        resolve(lib);
+      };
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+
+    const loadingTask = pdfjsLib.getDocument({ url: fileUri, withCredentials: false });
+    const pdf = await loadingTask.promise;
+    const page = await pdf.getPage(1);
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Could not get 2D context");
+
+    const viewport = page.getViewport({ scale: 1.0 });
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({ canvasContext: context, viewport }).promise;
+    return canvas.toDataURL("image/jpeg", 0.85);
+  } else {
+    if (!FileSystem) {
+      throw new Error("FileSystem native module is not loaded");
+    }
+    const base64Data = await FileSystem.readAsStringAsync(fileUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    return new Promise<string>((resolve, reject) => {
+      setPdfToProcess({
+        base64Data,
+        resolve,
+        reject,
+      });
+    });
+  }
+};
+
 export function AddItemModal({
   visible,
   formType,
@@ -117,6 +250,19 @@ export function AddItemModal({
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
   const [selectedFile, setSelectedFile] =
     useState<DocumentPicker.DocumentPickerResult | null>(null);
+
+  const [pdfToProcess, setPdfToProcess] = useState<{
+    base64Data: string;
+    resolve: (url: string) => void;
+    reject: (err: any) => void;
+  } | null>(null);
+  const webViewRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!visible) {
+      setPdfToProcess(null);
+    }
+  }, [visible]);
 
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -168,29 +314,29 @@ export function AddItemModal({
   const pageClassOptions =
     formData.level === "Advanced"
       ? [
-          { label: "Senior 5", value: "Senior 5" },
-          { label: "Senior 6", value: "Senior 6" },
-        ]
+        { label: "Senior 5", value: "Senior 5" },
+        { label: "Senior 6", value: "Senior 6" },
+      ]
       : [
-          { label: "Senior 1", value: "Senior 1" },
-          { label: "Senior 2", value: "Senior 2" },
-          { label: "Senior 3", value: "Senior 3" },
-          { label: "Senior 4", value: "Senior 4" },
-        ];
+        { label: "Senior 1", value: "Senior 1" },
+        { label: "Senior 2", value: "Senior 2" },
+        { label: "Senior 3", value: "Senior 3" },
+        { label: "Senior 4", value: "Senior 4" },
+      ];
 
   const handleLevelSelect = (level: string) => {
     const nextClassOptions =
       level === "Advanced"
         ? [
-            { label: "Senior 5", value: "Senior 5" },
-            { label: "Senior 6", value: "Senior 6" },
-          ]
+          { label: "Senior 5", value: "Senior 5" },
+          { label: "Senior 6", value: "Senior 6" },
+        ]
         : [
-            { label: "Senior 1", value: "Senior 1" },
-            { label: "Senior 2", value: "Senior 2" },
-            { label: "Senior 3", value: "Senior 3" },
-            { label: "Senior 4", value: "Senior 4" },
-          ];
+          { label: "Senior 1", value: "Senior 1" },
+          { label: "Senior 2", value: "Senior 2" },
+          { label: "Senior 3", value: "Senior 3" },
+          { label: "Senior 4", value: "Senior 4" },
+        ];
 
     updateField("level", level);
     if (
@@ -268,6 +414,29 @@ export function AddItemModal({
             const storageRef = ref(storage, `docs/${uniqueName}`);
             await uploadBytes(storageRef, blob);
             documentUrl = await getDownloadURL(storageRef);
+
+            // Auto generate the file's first page image and store it in Firebase Storage
+            try {
+              console.log("Generating first page cover thumbnail...");
+              const coverDataUrl = await generatePdfFirstPageThumbnail(
+                file.uri,
+                setPdfToProcess,
+                webViewRef
+              );
+              console.log("Generated cover data URL successfully.");
+
+              const coverBlob = await uriToBlob(coverDataUrl);
+              const uniqueCoverId = `${Date.now()}_${Math.random()
+                .toString(36)
+                .substring(2, 9)}.jpg`;
+              const coverRef = ref(storage, `page-covers/${uniqueCoverId}`);
+              await uploadBytes(coverRef, coverBlob);
+              coverUrl = await getDownloadURL(coverRef);
+              console.log("Uploaded cover successfully: ", coverUrl);
+            } catch (coverError: any) {
+              console.error("Failed to generate or upload cover image", coverError);
+              coverUrl = FALLBACK_ICON_URL;
+            }
           } catch (e: any) {
             console.error("File upload failed", e);
             Alert.alert(
@@ -401,15 +570,8 @@ export function AddItemModal({
                 value={formData.cover}
                 onChangeText={(val) => updateField("cover", val)}
               />
-              <Text style={styles.fieldLabel}>Rating</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="4.8"
-                value={formData.rating}
-                onChangeText={(val) => updateField("rating", val)}
-                keyboardType="numeric"
-              />
-              <Text style={styles.fieldLabel}>Featured</Text>
+
+              <Text style={styles.fieldLabel}>top</Text>
               <View style={styles.toggleRow}>
                 <Pressable
                   style={[
@@ -489,7 +651,7 @@ export function AddItemModal({
                           style={[
                             styles.dropdownItemText,
                             formData.subject === option.name &&
-                              styles.dropdownItemTextActive,
+                            styles.dropdownItemTextActive,
                           ]}
                         >
                           {option.name}
@@ -525,7 +687,7 @@ export function AddItemModal({
                           style={[
                             styles.dropdownItemText,
                             formData.level === option.value &&
-                              styles.dropdownItemTextActive,
+                            styles.dropdownItemTextActive,
                           ]}
                         >
                           {option.label}
@@ -563,7 +725,7 @@ export function AddItemModal({
                           style={[
                             styles.dropdownItemText,
                             formData.schoolClass === option.value &&
-                              styles.dropdownItemTextActive,
+                            styles.dropdownItemTextActive,
                           ]}
                         >
                           {option.label}
@@ -634,7 +796,7 @@ export function AddItemModal({
                           style={[
                             styles.dropdownItemText,
                             formData.subject === option.name &&
-                              styles.dropdownItemTextActive,
+                            styles.dropdownItemTextActive,
                           ]}
                         >
                           {option.name}
@@ -696,6 +858,35 @@ export function AddItemModal({
           </View>
         </ScrollView>
       </View>
+      {pdfToProcess && Platform.OS !== "web" && WebView && (
+        <View style={{ width: 0, height: 0, opacity: 0, position: "absolute" }}>
+          <WebView
+            ref={webViewRef}
+            source={{ html: webviewHtml }}
+            onMessage={(event: any) => {
+              try {
+                const res = JSON.parse(event.nativeEvent.data);
+                if (res.status === "ready") {
+                  webViewRef.current?.postMessage(
+                    JSON.stringify({ base64Data: pdfToProcess.base64Data })
+                  );
+                } else if (res.status === "success") {
+                  pdfToProcess.resolve(res.dataUrl);
+                  setPdfToProcess(null);
+                } else {
+                  pdfToProcess.reject(new Error(res.error || "Unknown rendering error"));
+                  setPdfToProcess(null);
+                }
+              } catch (e) {
+                pdfToProcess.reject(e);
+                setPdfToProcess(null);
+              }
+            }}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+          />
+        </View>
+      )}
     </View>
   );
 
