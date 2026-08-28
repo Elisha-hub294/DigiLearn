@@ -21,7 +21,9 @@ import {
   View,
 } from "react-native";
 import { db } from "../../firebaseConfig";
+import { AdminPublishHeader } from "../components/library/AdminPublishHeader";
 import { useSubjects } from "../components/ui/SubjectFilter";
+import { colors, spacing } from "../constants/theme";
 
 export default function AddTrendingLessonScreen() {
   const router = useRouter();
@@ -81,82 +83,83 @@ export default function AddTrendingLessonScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.iconButton}>
-          <Ionicons name="arrow-back" size={22} color="#111" />
-        </Pressable>
-        <Text style={styles.title}>~ADMIN~ Add trending lesson</Text>
+      <View style={styles.page}>
+        <AdminPublishHeader
+          title="Add Trending Lesson"
+          onBack={() => router.back()}
+        />
+
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.label}>Title</Text>
+          <TextInput
+            value={title}
+            onChangeText={setTitle}
+            placeholder="e.g. Quadratic equations revision"
+            style={styles.input}
+          />
+
+          <Text style={styles.label}>Subject</Text>
+          <Pressable
+            style={styles.dropdown}
+            onPress={() => setDropdownVisible(true)}
+          >
+            <Text style={styles.dropdownText}>{subject}</Text>
+            <Ionicons name="chevron-down" size={18} color="#6B7280" />
+          </Pressable>
+
+          <Text style={styles.label}>Teacher</Text>
+          <TextInput
+            value={teacher}
+            onChangeText={setTeacher}
+            placeholder="e.g. Tr. Elisha"
+            style={styles.input}
+          />
+
+          <Text style={styles.label}>Duration</Text>
+          <TextInput
+            value={duration}
+            onChangeText={setDuration}
+            placeholder="e.g. 12:58"
+            style={styles.input}
+          />
+
+          <Text style={styles.label}>Thumbnail URL</Text>
+          <TextInput
+            value={thumbnail}
+            onChangeText={setThumbnail}
+            placeholder="https://example.com/thumb.jpg"
+            style={styles.input}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+
+          <Text style={styles.label}>YouTube Link</Text>
+          <TextInput
+            value={link}
+            onChangeText={setLink}
+            placeholder="https://www.youtube.com/watch?v=..."
+            style={styles.input}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+
+          <Pressable
+            style={styles.submitButton}
+            onPress={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitText}>Save lesson</Text>
+            )}
+          </Pressable>
+        </ScrollView>
       </View>
-
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.label}>Title</Text>
-        <TextInput
-          value={title}
-          onChangeText={setTitle}
-          placeholder="e.g. Quadratic equations revision"
-          style={styles.input}
-        />
-
-        <Text style={styles.label}>Subject</Text>
-        <Pressable
-          style={styles.dropdown}
-          onPress={() => setDropdownVisible(true)}
-        >
-          <Text style={styles.dropdownText}>{subject}</Text>
-          <Ionicons name="chevron-down" size={18} color="#6B7280" />
-        </Pressable>
-
-        <Text style={styles.label}>Teacher</Text>
-        <TextInput
-          value={teacher}
-          onChangeText={setTeacher}
-          placeholder="e.g. Tr. Elisha"
-          style={styles.input}
-        />
-
-        <Text style={styles.label}>Duration</Text>
-        <TextInput
-          value={duration}
-          onChangeText={setDuration}
-          placeholder="e.g. 12:58"
-          style={styles.input}
-        />
-
-        <Text style={styles.label}>Thumbnail URL</Text>
-        <TextInput
-          value={thumbnail}
-          onChangeText={setThumbnail}
-          placeholder="https://example.com/thumb.jpg"
-          style={styles.input}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        <Text style={styles.label}>YouTube Link</Text>
-        <TextInput
-          value={link}
-          onChangeText={setLink}
-          placeholder="https://www.youtube.com/watch?v=..."
-          style={styles.input}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        <Pressable
-          style={styles.submitButton}
-          onPress={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitText}>Save lesson</Text>
-          )}
-        </Pressable>
-      </ScrollView>
 
       <Modal visible={dropdownVisible} transparent animationType="fade">
         <Pressable
@@ -190,49 +193,47 @@ export default function AddTrendingLessonScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fff" },
-  header: {
-    alignItems: "center",
-    borderBottomColor: "#E5E7EB",
-    borderBottomWidth: 1,
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  page: {
+    flex: 1,
+    width: "100%",
+    maxWidth: 760,
+    alignSelf: "center",
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
   },
-  iconButton: { padding: 4 },
-  title: { color: "#111", fontSize: 20, fontWeight: "700" },
-  content: { padding: 20, paddingBottom: 40 },
+  content: { paddingBottom: spacing.xxl },
   label: {
-    color: "#111",
+    color: colors.subtitle,
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 8,
-    marginTop: 10,
+    marginTop: spacing.md,
   },
   input: {
-    backgroundColor: "#F3F4F6",
-    borderColor: "#D1D5DB",
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderColor: "#DCE3ED",
+    borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 13,
+    color: colors.text,
   },
   dropdown: {
     alignItems: "center",
-    backgroundColor: "#F3F4F6",
-    borderColor: "#D1D5DB",
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderColor: "#DCE3ED",
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 14,
     paddingVertical: 14,
   },
-  dropdownText: { color: "#111", fontSize: 15 },
+  dropdownText: { color: colors.text, fontSize: 15 },
   submitButton: {
     alignItems: "center",
-    backgroundColor: "#2563EB",
+    backgroundColor: colors.primary,
     borderRadius: 14,
     marginTop: 24,
     paddingVertical: 14,

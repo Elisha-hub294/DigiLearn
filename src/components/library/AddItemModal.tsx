@@ -1,4 +1,3 @@
-import { Feather } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
@@ -19,6 +18,7 @@ import {
   appendNotificationToAllUsers,
   buildLibraryNotification,
 } from "../../services/notifications";
+import { AdminPublishHeader } from "./AdminPublishHeader";
 
 export type FormType = "book" | "banner" | "paper" | "page";
 
@@ -305,28 +305,18 @@ export function AddItemModal({
     <View style={screen ? styles.screenContainer : styles.modalBackdrop}>
       <View style={screen ? styles.screenCard : styles.modalCard}>
         {screen && (
-          <View style={styles.screenHeader}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-              hitSlop={8}
-              onPress={onClose}
-              style={styles.backButton}
-            >
-              <Feather name="arrow-left" size={21} color={colors.text} />
-            </Pressable>
-            <View style={styles.screenHeaderCopy}>
-              <Text style={styles.screenHeaderTitle}>
-                {formType === "book"
-                  ? "Add Book"
-                  : formType === "banner"
-                    ? "Add an Announcement"
-                    : formType === "page"
-                      ? "Add Page"
-                      : "Add Past Paper"}
-              </Text>
-            </View>
-          </View>
+          <AdminPublishHeader
+            onBack={onClose}
+            title={
+              formType === "book"
+                ? "Add Book"
+                : formType === "banner"
+                  ? "Add an Announcement"
+                  : formType === "page"
+                    ? "Add Page"
+                    : "Add Past Paper"
+            }
+          />
         )}
         <ScrollView
           contentContainerStyle={styles.modalContent}
@@ -656,36 +646,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
-  },
-  screenHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    marginBottom: spacing.lg,
-  },
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    backgroundColor: colors.white,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#E0E7F0",
-  },
-  screenHeaderCopy: { flex: 1 },
-  screenEyebrow: {
-    color: colors.primary,
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1.6,
-    marginBottom: 3,
-  },
-  screenHeaderTitle: {
-    color: colors.text,
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: "800",
   },
   filePicker: {
     borderWidth: 1,

@@ -90,8 +90,7 @@ export default function PublishScreen() {
             <Icon name="arrow-left" size={21} color={colors.text} />
           </Pressable>
           <View>
-            <Text style={styles.eyebrow}>ADMIN STUDIO</Text>
-            <Text style={styles.title}>What would you like to publish?</Text>
+            <Text style={styles.title}>Post on OS Platform</Text>
           </View>
         </View>
 
@@ -105,9 +104,9 @@ export default function PublishScreen() {
             <Icon name="send" size={22} color="#FFFFFF" />
           </View>
           <View style={styles.introCopy}>
-            <Text style={styles.introTitle}>Create something valuable</Text>
+            <Text style={styles.introTitle}>Upload files on the Platform</Text>
             <Text style={styles.introText}>
-              Choose a format to add fresh resources to DigiLearn.
+              Choose a format to add resources.
             </Text>
           </View>
         </LinearGradient>
