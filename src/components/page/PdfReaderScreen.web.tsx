@@ -139,14 +139,18 @@ export function PdfReaderScreen() {
         downloadUrl = `${downloadUrl}${separator}response-content-disposition=attachment%3Bfilename%3D%22${encodeURIComponent(safeTitle)}.pdf%22`;
       }
 
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download =
-        (title ? title.replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") + ".pdf";
-      a.target = "_blank";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      // Trigger direct download via hidden iframe without opening a new tab
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.src = downloadUrl;
+      document.body.appendChild(iframe);
+      setTimeout(() => {
+        try {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        } catch {}
+      }, 6000);
 
       try {
         await saveDownloadedFile({
