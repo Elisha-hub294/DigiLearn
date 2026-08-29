@@ -59,6 +59,10 @@ export default function PublishScreen() {
       router.push("/add-page" as never);
       return;
     }
+    if (route === "paper") {
+      router.push("/add-paper" as never);
+      return;
+    }
     if (route === "book") {
       router.push("/add-book" as never);
       return;

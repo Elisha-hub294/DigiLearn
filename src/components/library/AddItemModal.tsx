@@ -146,30 +146,36 @@ const webviewHtml = `
           window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'error', error: 'No PDF data provided' }));
           return;
         }
-        
-        const binaryString = window.atob(data.base64Data);
+
+        const { base64Data, mode = 'cover' } = data;
+        const binaryString = window.atob(base64Data);
         const len = binaryString.length;
         const bytes = new Uint8Array(len);
         for (let i = 0; i < len; i++) {
           bytes[i] = binaryString.charCodeAt(i);
         }
-        
+
         const loadingTask = pdfjsLib.getDocument({ data: bytes.buffer });
         const pdf = await loadingTask.promise;
         const page = await pdf.getPage(1);
-        
+
         const canvas = document.getElementById('pdf-canvas');
         const context = canvas.getContext('2d');
-        
+
         const viewport = page.getViewport({ scale: 1.0 });
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-        
+
         await page.render({
           canvasContext: context,
           viewport: viewport
         }).promise;
-        
+
+        if (mode === 'pageCount') {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'success', pageCount: pdf.numPages || 1 }));
+          return;
+        }
+
         const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
         window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'success', dataUrl }));
       } catch (err) {
@@ -184,7 +190,7 @@ const webviewHtml = `
 const generatePdfFirstPageThumbnail = async (
   fileUri: string,
   setPdfToProcess: (state: any) => void,
-  webViewRef: React.RefObject<any>
+  webViewRef: React.RefObject<any>,
 ): Promise<string> => {
   if (Platform.OS === "web") {
     const pdfjsLib = await new Promise<any>((resolve, reject) => {
@@ -193,17 +199,22 @@ const generatePdfFirstPageThumbnail = async (
         return;
       }
       const script = document.createElement("script");
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
+      script.src =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
       script.onload = () => {
         const lib = (window as any).pdfjsLib;
-        lib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+        lib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
         resolve(lib);
       };
       script.onerror = reject;
       document.head.appendChild(script);
     });
 
-    const loadingTask = pdfjsLib.getDocument({ url: fileUri, withCredentials: false });
+    const loadingTask = pdfjsLib.getDocument({
+      url: fileUri,
+      withCredentials: false,
+    });
     const pdf = await loadingTask.promise;
     const page = await pdf.getPage(1);
 
@@ -235,6 +246,56 @@ const generatePdfFirstPageThumbnail = async (
   }
 };
 
+const getPdfPageCount = async (
+  fileUri: string,
+  setPdfToProcess: (state: any) => void,
+  webViewRef: React.RefObject<any>,
+): Promise<number> => {
+  if (Platform.OS === "web") {
+    const pdfjsLib = await new Promise<any>((resolve, reject) => {
+      if ((window as any).pdfjsLib) {
+        resolve((window as any).pdfjsLib);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
+      script.onload = () => {
+        const lib = (window as any).pdfjsLib;
+        lib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+        resolve(lib);
+      };
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+
+    const pdf = await pdfjsLib.getDocument({
+      url: fileUri,
+      withCredentials: false,
+    }).promise;
+
+    return pdf.numPages || 1;
+  }
+
+  if (!FileSystem) {
+    throw new Error("FileSystem native module is not loaded");
+  }
+
+  const base64Data = await FileSystem.readAsStringAsync(fileUri, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+
+  return new Promise<number>((resolve, reject) => {
+    setPdfToProcess({
+      base64Data,
+      resolve: (result: any) => resolve(Number(result) || 1),
+      reject,
+      mode: "pageCount",
+    });
+  });
+};
+
 export function AddItemModal({
   visible,
   formType,
@@ -253,8 +314,9 @@ export function AddItemModal({
 
   const [pdfToProcess, setPdfToProcess] = useState<{
     base64Data: string;
-    resolve: (url: string) => void;
+    resolve: (value: any) => void;
     reject: (err: any) => void;
+    mode?: "cover" | "pageCount";
   } | null>(null);
   const webViewRef = useRef<any>(null);
 
@@ -281,7 +343,7 @@ export function AddItemModal({
       }
     };
 
-    if (formType === "page" && visible) {
+    if ((formType === "page" || formType === "paper") && visible) {
       fetchSubjects();
     }
   }, [formType, visible]);
@@ -314,29 +376,29 @@ export function AddItemModal({
   const pageClassOptions =
     formData.level === "Advanced"
       ? [
-        { label: "Senior 5", value: "Senior 5" },
-        { label: "Senior 6", value: "Senior 6" },
-      ]
-      : [
-        { label: "Senior 1", value: "Senior 1" },
-        { label: "Senior 2", value: "Senior 2" },
-        { label: "Senior 3", value: "Senior 3" },
-        { label: "Senior 4", value: "Senior 4" },
-      ];
-
-  const handleLevelSelect = (level: string) => {
-    const nextClassOptions =
-      level === "Advanced"
-        ? [
           { label: "Senior 5", value: "Senior 5" },
           { label: "Senior 6", value: "Senior 6" },
         ]
-        : [
+      : [
           { label: "Senior 1", value: "Senior 1" },
           { label: "Senior 2", value: "Senior 2" },
           { label: "Senior 3", value: "Senior 3" },
           { label: "Senior 4", value: "Senior 4" },
         ];
+
+  const handleLevelSelect = (level: string) => {
+    const nextClassOptions =
+      level === "Advanced"
+        ? [
+            { label: "Senior 5", value: "Senior 5" },
+            { label: "Senior 6", value: "Senior 6" },
+          ]
+        : [
+            { label: "Senior 1", value: "Senior 1" },
+            { label: "Senior 2", value: "Senior 2" },
+            { label: "Senior 3", value: "Senior 3" },
+            { label: "Senior 4", value: "Senior 4" },
+          ];
 
     updateField("level", level);
     if (
@@ -421,7 +483,7 @@ export function AddItemModal({
               const coverDataUrl = await generatePdfFirstPageThumbnail(
                 file.uri,
                 setPdfToProcess,
-                webViewRef
+                webViewRef,
               );
               console.log("Generated cover data URL successfully.");
 
@@ -434,7 +496,10 @@ export function AddItemModal({
               coverUrl = await getDownloadURL(coverRef);
               console.log("Uploaded cover successfully: ", coverUrl);
             } catch (coverError: any) {
-              console.error("Failed to generate or upload cover image", coverError);
+              console.error(
+                "Failed to generate or upload cover image",
+                coverError,
+              );
               coverUrl = FALLBACK_ICON_URL;
             }
           } catch (e: any) {
@@ -461,19 +526,93 @@ export function AddItemModal({
             ? { schoolClass: formData.schoolClass.trim() }
             : {}),
         });
-      } else {
-        const itemId = getTitleDocId(formData.title);
+      } else if (formType === "paper") {
+        const paperTitle = formData.title.trim() || "untitled-paper";
+        const itemId = `${getTitleDocId(paperTitle)}-${Date.now()}_${Math.random()
+          .toString(36)
+          .slice(2, 9)}`;
         createdItemId = itemId;
         notificationType = "lesson";
+
+        let documentUrl = formData.document.trim();
+        let coverUrl = FALLBACK_ICON_URL;
+        let pageCount = 1;
+
+        if (
+          selectedFile &&
+          !selectedFile.canceled &&
+          selectedFile.assets &&
+          selectedFile.assets.length > 0
+        ) {
+          const file = selectedFile.assets[0];
+          try {
+            const blob = await uriToBlob(file.uri);
+            const uniqueName = `${Date.now()}_${file.name || "past-paper"}`;
+            const storageRef = ref(storage, `past-papers/${uniqueName}`);
+            await uploadBytes(storageRef, blob);
+            documentUrl = await getDownloadURL(storageRef);
+
+            try {
+              console.log("Generating past paper cover thumbnail...");
+              const coverDataUrl = await generatePdfFirstPageThumbnail(
+                file.uri,
+                setPdfToProcess,
+                webViewRef,
+              );
+              console.log("Generated past paper cover data URL successfully.");
+
+              const coverBlob = await uriToBlob(coverDataUrl);
+              const uniqueCoverId = `${Date.now()}_${Math.random()
+                .toString(36)
+                .substring(2, 9)}.jpg`;
+              const coverRef = ref(
+                storage,
+                `past-paper-covers/${uniqueCoverId}`,
+              );
+              await uploadBytes(coverRef, coverBlob);
+              coverUrl = await getDownloadURL(coverRef);
+              console.log("Uploaded past paper cover successfully: ", coverUrl);
+            } catch (coverError: any) {
+              console.error(
+                "Failed to generate or upload past paper cover image",
+                coverError,
+              );
+              coverUrl = FALLBACK_ICON_URL;
+            }
+
+            try {
+              pageCount = await getPdfPageCount(
+                file.uri,
+                setPdfToProcess,
+                webViewRef,
+              );
+            } catch (pageCountError: any) {
+              console.error(
+                "Failed to read past paper page count",
+                pageCountError,
+              );
+              pageCount = 1;
+            }
+          } catch (e: any) {
+            console.error("Past paper file upload failed", e);
+            Alert.alert(
+              "Upload Failed",
+              `Unable to upload the selected document: ${e?.message || e}`,
+            );
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
         await setDoc(doc(db, "pastPaper", itemId), {
-          ...payload,
-          subject: formData.subtitle.trim() || "General",
+          title: formData.title.trim() || "Untitled paper",
+          description: formData.description.trim() || "",
+          subject: formData.subject.trim() || "General",
+          document: documentUrl || "",
+          cover: coverUrl,
+          pageNumber: pageCount,
           type: formData.author.trim() || "UNEB",
-          year: formData.extra.trim() || "2026",
-          pages: formData.pages.trim() || "12 Pages",
-          doc: formData.doc.trim() || "",
-          image: FALLBACK_ICON_URL,
-          document: formData.doc.trim() || "",
+          year: formData.extra.trim() || String(new Date().getFullYear()),
           updatedAt: serverTimestamp(),
         });
       }
@@ -533,19 +672,23 @@ export function AddItemModal({
             </Text>
           )}
 
-          <Text style={styles.fieldLabel}>Title</Text>
-          <TextInput
-            style={styles.input}
-            placeholder={
-              formType === "book"
-                ? "Book title"
-                : formType === "banner"
-                  ? "Announcement title"
-                  : "Page title"
-            }
-            value={formData.title}
-            onChangeText={(val) => updateField("title", val)}
-          />
+          {formType !== "paper" && (
+            <>
+              <Text style={styles.fieldLabel}>Title</Text>
+              <TextInput
+                style={styles.input}
+                placeholder={
+                  formType === "book"
+                    ? "Book title"
+                    : formType === "banner"
+                      ? "Announcement title"
+                      : "Page title"
+                }
+                value={formData.title}
+                onChangeText={(val) => updateField("title", val)}
+              />
+            </>
+          )}
 
           {formType === "book" && (
             <>
@@ -651,7 +794,7 @@ export function AddItemModal({
                           style={[
                             styles.dropdownItemText,
                             formData.subject === option.name &&
-                            styles.dropdownItemTextActive,
+                              styles.dropdownItemTextActive,
                           ]}
                         >
                           {option.name}
@@ -687,7 +830,7 @@ export function AddItemModal({
                           style={[
                             styles.dropdownItemText,
                             formData.level === option.value &&
-                            styles.dropdownItemTextActive,
+                              styles.dropdownItemTextActive,
                           ]}
                         >
                           {option.label}
@@ -725,7 +868,7 @@ export function AddItemModal({
                           style={[
                             styles.dropdownItemText,
                             formData.schoolClass === option.value &&
-                            styles.dropdownItemTextActive,
+                              styles.dropdownItemTextActive,
                           ]}
                         >
                           {option.label}
@@ -756,18 +899,34 @@ export function AddItemModal({
                     : "Tap to select a file (max 5 MB)"}
                 </Text>
               </Pressable>
-              <Text style={styles.fieldLabel}>Book</Text>
+              {/* <Text style={styles.fieldLabel}>Book</Text>
               <TextInput
                 style={styles.input}
                 placeholder="Book A, Book B, Book C"
                 value={formData.book}
                 onChangeText={(val) => updateField("book", val)}
-              />
+              /> */}
             </>
           )}
 
           {formType === "paper" && (
             <>
+              <Text style={styles.fieldLabel}>Title</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Paper title"
+                value={formData.title}
+                onChangeText={(val) => updateField("title", val)}
+              />
+              <Text style={styles.fieldLabel}>Description</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Brief description of this paper"
+                value={formData.description}
+                onChangeText={(val) => updateField("description", val)}
+                multiline
+                numberOfLines={4}
+              />
               <Text style={styles.fieldLabel}>Subject</Text>
               <View>
                 <Pressable
@@ -796,7 +955,7 @@ export function AddItemModal({
                           style={[
                             styles.dropdownItemText,
                             formData.subject === option.name &&
-                            styles.dropdownItemTextActive,
+                              styles.dropdownItemTextActive,
                           ]}
                         >
                           {option.name}
@@ -806,10 +965,22 @@ export function AddItemModal({
                   </View>
                 )}
               </View>
+              <Text style={styles.fieldLabel}>Document file</Text>
+              <Pressable
+                style={styles.filePicker}
+                onPress={pickDocument}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.filePickerText}>
+                  {selectedFile?.assets?.[0]
+                    ? selectedFile.assets[0].name
+                    : "Tap to select a document (max 5 MB)"}
+                </Text>
+              </Pressable>
               <Text style={styles.fieldLabel}>Type</Text>
               <TextInput
                 style={styles.input}
-                placeholder="UNEB / MOCK"
+                placeholder="UNEB / Mock / Final"
                 value={formData.author}
                 onChangeText={(val) => updateField("author", val)}
               />
@@ -819,21 +990,7 @@ export function AddItemModal({
                 placeholder="2026"
                 value={formData.extra}
                 onChangeText={(val) => updateField("extra", val)}
-              />
-              <Text style={styles.fieldLabel}>Pages</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="12"
-                value={formData.pages}
-                onChangeText={(val) => updateField("pages", val)}
                 keyboardType="numeric"
-              />
-              <Text style={styles.fieldLabel}>Doc</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Document URL"
-                value={formData.doc}
-                onChangeText={(val) => updateField("doc", val)}
               />
             </>
           )}
@@ -868,13 +1025,22 @@ export function AddItemModal({
                 const res = JSON.parse(event.nativeEvent.data);
                 if (res.status === "ready") {
                   webViewRef.current?.postMessage(
-                    JSON.stringify({ base64Data: pdfToProcess.base64Data })
+                    JSON.stringify({
+                      base64Data: pdfToProcess.base64Data,
+                      mode: pdfToProcess.mode ?? "cover",
+                    }),
                   );
                 } else if (res.status === "success") {
-                  pdfToProcess.resolve(res.dataUrl);
+                  const result =
+                    pdfToProcess.mode === "pageCount"
+                      ? (res.pageCount ?? 1)
+                      : res.dataUrl;
+                  pdfToProcess.resolve(result);
                   setPdfToProcess(null);
                 } else {
-                  pdfToProcess.reject(new Error(res.error || "Unknown rendering error"));
+                  pdfToProcess.reject(
+                    new Error(res.error || "Unknown rendering error"),
+                  );
                   setPdfToProcess(null);
                 }
               } catch (e) {
