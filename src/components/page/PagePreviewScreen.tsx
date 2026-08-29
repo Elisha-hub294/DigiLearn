@@ -439,13 +439,13 @@ export function PagePreviewScreen() {
   };
 
   const handleOpenPdf = () => {
-    if (!note.document) {
+    if (!note?.document) {
       Alert.alert("Notice", "No PDF document link is available for this note.");
       return;
     }
     router.push({
       pathname: "/pdf-reader",
-      params: { uri: note.document, title: note.title ?? "PDF" },
+      params: { uri: encodeURIComponent(note.document), title: note.title ?? "PDF" },
     } as any);
   };
 

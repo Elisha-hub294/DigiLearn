@@ -22,6 +22,26 @@ const LOAD_TIMEOUT_MS = 20_000;
 
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 
+function normalizeUriParam(raw: string | string[] | undefined | null): string | null {
+  if (!raw) return null;
+  const str = Array.isArray(raw) ? raw[0] : raw;
+  if (!str) return null;
+  let result = str.trim();
+  if (
+    result.startsWith("http%3A") ||
+    result.startsWith("https%3A") ||
+    result.startsWith("file%3A") ||
+    result.startsWith("%2F")
+  ) {
+    try {
+      result = decodeURIComponent(result);
+    } catch {
+      // keep as is
+    }
+  }
+  return result;
+}
+
 export function PdfReaderScreen() {
   const { uri, title } = useLocalSearchParams<{
     uri: string;
@@ -38,11 +58,11 @@ export function PdfReaderScreen() {
   const [downloadScale] = useState(() => new Animated.Value(1));
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const originalDecodedUri = uri ? decodeURIComponent(uri as string) : null;
-  const resolvedUri = useFirebaseStorageUrl(originalDecodedUri ?? undefined);
+  const rawUri = normalizeUriParam(uri);
+  const resolvedUri = useFirebaseStorageUrl(rawUri ?? undefined);
   // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
   const decodedUri = resolvedUri ?? null;
-  const isResolving = originalDecodedUri != null && decodedUri == null;
+  const isResolving = rawUri != null && decodedUri == null;
   const isLocalFile = Boolean(decodedUri?.startsWith("file://"));
 
   // iOS WebView renders PDFs natively; Android needs pdf.js

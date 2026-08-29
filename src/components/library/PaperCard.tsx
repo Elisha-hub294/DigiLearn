@@ -39,7 +39,7 @@ export function PaperCard({
     if (!document) return;
     router.push({
       pathname: "/pdf-reader",
-      params: { uri: document, title },
+      params: { uri: encodeURIComponent(document), title },
     } as any);
   };
 

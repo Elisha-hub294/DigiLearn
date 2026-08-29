@@ -15,17 +15,39 @@ export async function getFirebaseStorageUrl(url: string | undefined): Promise<st
 
   let storagePath: string | null = null;
 
-  // Resolve Supabase public URL → extract the storage path
+  // 1. Resolve Supabase public URL → extract the storage path
   if (url.includes("supabase.co/storage/v1/object/public/")) {
     const raw = url.split("supabase.co/storage/v1/object/public/")[1]?.split("?")[0];
     if (raw) storagePath = decodeURIComponent(raw);
   }
-  // Resolve bare Firebase Storage paths (e.g. "page-covers/...", "book-covers/...", "icons/default-2d.png")
+  // 2. Resolve Firebase Storage URLs (e.g. https://firebasestorage.googleapis.com/.../o/path or https://...firebasestorage.app/...)
+  else if (
+    url.includes("firebasestorage.googleapis.com") ||
+    url.includes(".firebasestorage.app") ||
+    url.includes(".appspot.com")
+  ) {
+    const match = url.match(/\/o\/([^?#]+)/);
+    if (match && match[1]) {
+      storagePath = decodeURIComponent(match[1]);
+    }
+  }
+  // 3. Resolve gs:// URLs (e.g. gs://bucket-name/docs/file.pdf)
+  else if (url.startsWith("gs://")) {
+    const withoutGs = url.substring(5);
+    const firstSlash = withoutGs.indexOf("/");
+    if (firstSlash !== -1) {
+      storagePath = decodeURIComponent(withoutGs.substring(firstSlash + 1));
+    } else {
+      storagePath = decodeURIComponent(withoutGs);
+    }
+  }
+  // 4. Resolve bare Firebase Storage paths (e.g. "page-covers/...", "book-covers/...", "icons/default-2d.png", "docs/...")
   else if (
     !url.startsWith("http://") &&
     !url.startsWith("https://") &&
     !url.startsWith("file://") &&
     !url.startsWith("data:") &&
+    !url.startsWith("blob:") &&
     !url.startsWith("/")
   ) {
     storagePath = url;
@@ -60,9 +82,20 @@ export async function getFirebaseStorageUrl(url: string | undefined): Promise<st
     })
     .catch((err) => {
       console.warn("Failed to get Firebase Storage URL for path:", storagePath, err);
-      urlCache.set(storagePath!, url);
+      // If resolving failed, fallback to properly encoded URL if it was a Firebase Storage URL with bad /o/ encoding
+      let fallbackUrl = url;
+      if (
+        (url.includes("firebasestorage.googleapis.com") ||
+          url.includes(".firebasestorage.app") ||
+          url.includes(".appspot.com")) &&
+        storagePath
+      ) {
+        const bucket = storage.app.options.storageBucket || "digilearn-af86d.firebasestorage.app";
+        fallbackUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(storagePath)}?alt=media`;
+      }
+      urlCache.set(storagePath!, fallbackUrl);
       urlPromises.delete(storagePath!);
-      return url;
+      return fallbackUrl;
     });
 
   urlPromises.set(storagePath, promise);

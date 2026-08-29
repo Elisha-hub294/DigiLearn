@@ -161,9 +161,17 @@ export const FeaturedNoteCard = ({
       });
       setSubjectAvatars(subjectMap);
 
-      const allNotes = notesSnap.docs.map(
-        (d) => ({ id: d.id, ...d.data() }) as TopicalNote,
-      );
+      const allNotes = notesSnap.docs.map((d) => {
+        const data = d.data() as Record<string, unknown>;
+        return {
+          id: d.id,
+          ...data,
+          document:
+            [data.doc, data.document, data.pdf, data.url].find(
+              (v): v is string => typeof v === "string" && v.length > 0,
+            ) ?? undefined,
+        } as TopicalNote;
+      });
       const filteredNotes = subject
         ? allNotes.filter((note) => {
             const noteSubjects = Array.isArray(note.subject)

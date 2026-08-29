@@ -202,7 +202,7 @@ export default function SeeAllScreen() {
                       item.document &&
                       router.push({
                         pathname: "/pdf-reader",
-                        params: { uri: item.document, title: item.title },
+                        params: { uri: encodeURIComponent(item.document), title: item.title },
                       } as any)
                     }
                   />
