@@ -30,12 +30,12 @@ import {
 
 type Category = "all" | "pages" | "uneb" | "mock" | "umta" | "books" | "other";
 
-const categories: Array<{
+const categories: {
   key: Category;
   label: string;
   paperType?: string;
   icon?: keyof typeof Icon.glyphMap;
-}> = [
+}[] = [
   { key: "all", label: "All", icon: "list" },
   { key: "pages", label: "Pages", icon: "file-text" },
   { key: "uneb", label: "UNEB", paperType: "uneb", icon: "file-text" },
@@ -276,7 +276,11 @@ export default function LibraryScreen() {
                     onSeeAll={() =>
                       router.push({
                         pathname: "/see-all",
-                        params: { type: "papers", paperType: section.type },
+                        params: {
+                          type: "papers",
+                          paperType: section.type,
+                          paperYear: section.year,
+                        },
                       } as any)
                     }
                     actionLabel="See all"

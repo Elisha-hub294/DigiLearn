@@ -39,7 +39,11 @@ export default function SeeAllScreen() {
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
-  const params = useLocalSearchParams<{ type?: string; paperType?: string }>();
+  const params = useLocalSearchParams<{
+    type?: string;
+    paperType?: string;
+    paperYear?: string;
+  }>();
   const mode: ViewMode =
     params.type === "courses" || params.type === "papers"
       ? params.type
@@ -92,19 +96,34 @@ export default function SeeAllScreen() {
 
   const papers = useMemo(() => {
     const requestedType = params.paperType?.trim().toLowerCase();
+    const requestedYear = params.paperYear?.trim();
+
     return paperCollections
-      .filter(
-        (section) =>
-          !requestedType || section.type.trim().toLowerCase() === requestedType,
-      )
+      .filter((section) => {
+        const matchesType =
+          !requestedType || section.type.trim().toLowerCase() === requestedType;
+        const matchesYear =
+          !requestedYear || section.year.trim() === requestedYear;
+        return matchesType && matchesYear;
+      })
       .flatMap((section) => section.items);
-  }, [paperCollections, params.paperType]);
+  }, [paperCollections, params.paperType, params.paperYear]);
 
   const title =
     mode === "courses"
       ? "Trending Lessons"
       : mode === "papers"
-        ? `${params.paperType ? `${params.paperType.toUpperCase()} ` : ""}Past Papers`
+        ? (() => {
+            const typePart = params.paperType?.trim()
+              ? `${params.paperType.trim().toUpperCase()} `
+              : "";
+            const yearPart = params.paperYear?.trim()
+              ? params.paperYear.trim()
+              : "";
+            return yearPart
+              ? `${typePart}${yearPart}`
+              : `${typePart}Past Papers`;
+          })()
         : "Books";
   const data = mode === "books" ? books : mode === "courses" ? lessons : papers;
   const loading =
@@ -202,7 +221,10 @@ export default function SeeAllScreen() {
                       item.document &&
                       router.push({
                         pathname: "/pdf-reader",
-                        params: { uri: encodeURIComponent(item.document), title: item.title },
+                        params: {
+                          uri: encodeURIComponent(item.document),
+                          title: item.title,
+                        },
                       } as any)
                     }
                   />

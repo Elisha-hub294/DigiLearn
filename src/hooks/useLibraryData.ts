@@ -107,6 +107,18 @@ const formatPages = (value: unknown): string => {
   return "2 Pages";
 };
 
+const formatPaperSectionTitle = (type: string, year: string): string => {
+  const cleanedType = type.trim();
+  const cleanedYear = year.trim();
+  const normalizedType = cleanedType || "Other";
+
+  if (normalizedType.toLowerCase() === "other") {
+    return cleanedYear ? `Other ${cleanedYear}` : "Other";
+  }
+
+  return `${normalizedType.toUpperCase()} ${cleanedYear || "Unknown year"}`;
+};
+
 const normalizeKey = (key: string): string => key.trim().toLowerCase();
 
 const resolveAuthorAvatar = (
@@ -273,25 +285,32 @@ export function useLibraryData() {
         const data = doc.data() as Record<string, unknown>;
         const type = pickString(
           [data.type, data.examType, data.category, data.paperType],
-          "",
+          "Other",
         );
         const year = pickString(
           [data.year, data.examYear, data.session, data.publishedYear],
-          "2025",
+          String(new Date().getFullYear()),
         );
+        const normalizedType = type.trim() || "Other";
+        const normalizedYear = year.trim() || String(new Date().getFullYear());
         const title = pickString([data.title, data.name], `Paper ${index + 1}`);
         const subject = pickString([data.subject, data.topic], "General");
-        const pages = formatPages(data.pages ?? data.pageCount);
+        const pages = formatPages(
+          data.pages ?? data.pageCount ?? data.pageNumber,
+        );
 
-        const sectionKey = `${type}::${year}`;
+        const sectionKey = `${normalizedType}::${normalizedYear}`;
         const sectionItems = paperGroups.get(sectionKey) ?? [];
         sectionItems.push({
           id: doc.id || `paper-${index}`,
           title,
           subject,
-          year,
+          year: normalizedYear,
           pages,
-          image: pickImage([data.image, data.coverImage, data.thumbnail], ""),
+          image: pickImage(
+            [data.cover, data.image, data.coverImage, data.thumbnail],
+            "",
+          ),
           document: pickString(
             [data.doc, data.document, data.pdf, data.url],
             "",
@@ -300,15 +319,24 @@ export function useLibraryData() {
         paperGroups.set(sectionKey, sectionItems);
       });
 
-      const sections = Array.from(paperGroups.entries()).map(([key, items]) => {
-        const [type, year] = key.split("::");
-        return {
-          title: `${type || "Other"} ${year}`,
-          type,
-          year,
-          items,
-        };
-      });
+      const sections = Array.from(paperGroups.entries())
+        .map(([key, items]) => {
+          const [type, year] = key.split("::");
+          const normalizedType = type || "Other";
+          const normalizedYear = year || String(new Date().getFullYear());
+          return {
+            title: formatPaperSectionTitle(normalizedType, normalizedYear),
+            type: normalizedType,
+            year: normalizedYear,
+            items,
+          };
+        })
+        .sort((a, b) => {
+          const aYear = Number.parseInt(a.year, 10) || 0;
+          const bYear = Number.parseInt(b.year, 10) || 0;
+          if (bYear !== aYear) return bYear - aYear;
+          return a.type.localeCompare(b.type);
+        });
 
       setHeroSlides(dynamicHeroSlides);
       setTopBooks(topSellingItems);

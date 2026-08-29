@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -15,7 +16,7 @@ type PaperCardProps = {
   subject: string;
   year: string;
   pages: string;
-  image: any;
+  image?: string;
   document?: string;
   isVisible?: boolean;
 };
@@ -25,7 +26,7 @@ export function PaperCard({
   subject,
   year,
   pages,
-  image: _image,
+  image,
   document,
   isVisible = false,
 }: PaperCardProps) {
@@ -53,7 +54,13 @@ export function PaperCard({
       onPress={openPdf}
     >
       <View style={styles.previewContainer}>
-        {document ? (
+        {image ? (
+          <Image
+            source={{ uri: image }}
+            style={styles.preview}
+            resizeMode="cover"
+          />
+        ) : document ? (
           <PdfPreview
             uri={document}
             style={styles.preview}

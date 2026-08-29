@@ -78,7 +78,7 @@ function HomePastPapers({
       {groups.map((group) => (
         <View key={group.type} style={styles.paperTypeSection}>
           <SectionHeader
-            title={group.type}
+            title={group.type.toUpperCase()}
             onSeeAll={() => onSeeAll(group.paperType)}
             actionLabel="See all"
           />
