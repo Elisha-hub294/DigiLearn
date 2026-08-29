@@ -1,19 +1,15 @@
-import { Feather as Icon, Ionicons } from "@expo/vector-icons";
-import MaskedView from "@react-native-masked-view/masked-view";
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
-import { LinearGradient } from "expo-linear-gradient";
+import { Feather as Icon, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
-  Platform,
+  Modal,
   Pressable,
   Animated as RNAnimated,
   StyleSheet,
   Text,
-  TextStyle,
   useWindowDimensions,
   View,
   type ViewToken,
@@ -28,62 +24,18 @@ import {
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
 import { ActionDialog } from "../ui/ActionDialog";
-import PdfPreview from "./PdfPreview";
 
 export type TeacherPost = {
   id: string;
+  title?: string;
   teacher?: string;
+  owner?: string;
   subject?: string;
   description?: string;
-  hasPdf?: boolean;
+  hasCover?: boolean;
+  cover?: string;
   createdAt?: Date | null;
   document?: string;
-};
-
-type GradientTextProps = {
-  text: string;
-  style?: TextStyle | TextStyle[];
-  colors?: [string, string, ...string[]];
-};
-
-const GradientText = ({
-  text,
-  style,
-  colors = [themeColors.primary, "#e95cf6ff", "#ff0080ff"],
-}: GradientTextProps) => {
-  if (Platform.OS === "web") {
-    return (
-      <Text
-        style={[
-          style,
-          {
-            backgroundImage: `linear-gradient(135deg, ${colors.join(", ")})`,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            color: "transparent",
-          } as any,
-        ]}
-      >
-        {text}
-      </Text>
-    );
-  }
-
-  return (
-    <MaskedView
-      maskElement={
-        <Text style={[style, { backgroundColor: "transparent" }]}>{text}</Text>
-      }
-    >
-      <LinearGradient
-        colors={colors}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <Text style={[style, { opacity: 0 }]}>{text}</Text>
-      </LinearGradient>
-    </MaskedView>
-  );
 };
 
 const getRelativeTime = (date: Date | null | undefined): string => {
@@ -115,6 +67,8 @@ export const normalizeTeacherPost = (doc: {
 }) => {
   const data = doc.data();
 
+  const title = typeof data.title === "string" ? data.title : undefined;
+
   const teacher =
     typeof data.teacher === "string"
       ? data.teacher
@@ -132,18 +86,18 @@ export const normalizeTeacherPost = (doc: {
   const description =
     typeof data.description === "string"
       ? data.description
-      : typeof data.content === "string"
-        ? data.content
-        : typeof data.message === "string"
-          ? data.message
-          : undefined;
+      : typeof data.descriprion === "string"
+        ? data.descriprion
+        : typeof data.content === "string"
+          ? data.content
+          : typeof data.message === "string"
+            ? data.message
+            : undefined;
 
-  const hasPdf =
-    typeof data.hasPdf === "boolean"
-      ? data.hasPdf
-      : typeof data.type === "string"
-        ? data.type === "pdf"
-        : true;
+  const cover = typeof data.cover === "string" ? data.cover : undefined;
+  const hasCover =
+    typeof data.hasCover === "boolean" ? data.hasCover : Boolean(cover);
+  const owner = typeof data.owner === "string" ? data.owner : undefined;
 
   const document =
     typeof data.document === "string" ? data.document : undefined;
@@ -163,10 +117,13 @@ export const normalizeTeacherPost = (doc: {
 
   return {
     id: doc.id,
+    title,
     teacher,
+    owner,
     subject,
     description,
-    hasPdf,
+    hasCover,
+    cover,
     document,
     createdAt,
   } satisfies TeacherPost;
@@ -193,6 +150,9 @@ export const TeacherPostCard = ({
   const [teacherAvatars, setTeacherAvatars] = useState<Record<string, string>>(
     {},
   );
+  const [ownerProfiles, setOwnerProfiles] = useState<
+    Record<string, { name: string; avatar?: string }>
+  >({});
   const [defaultUserAvatar, setDefaultUserAvatar] = useState<string | null>(
     null,
   );
@@ -242,9 +202,15 @@ export const TeacherPostCard = ({
         const teachersRef = collection(db, "teachers");
         const teachersSnap = await getDocs(teachersRef);
         const avatarMap: Record<string, string> = {};
+        const profiles: Record<string, { name: string; avatar?: string }> = {};
 
         teachersSnap.docs.forEach((doc) => {
           const data = doc.data();
+          const name = typeof data.name === "string" ? data.name : "Teacher";
+          const avatar =
+            typeof data.avatar === "string" ? data.avatar : undefined;
+          avatarMap[name] = avatar || "";
+          profiles[doc.id] = { name, avatar };
           if (
             typeof data.name === "string" &&
             typeof data.avatar === "string"
@@ -255,6 +221,7 @@ export const TeacherPostCard = ({
 
         if (isMounted) {
           setTeacherAvatars(avatarMap);
+          setOwnerProfiles(profiles);
         }
       } catch (err) {
         console.warn("Could not fetch teachers list", err);
@@ -354,6 +321,7 @@ export const TeacherPostCard = ({
           index={index}
           isWide={isWide}
           teacherAvatars={teacherAvatars}
+          ownerProfiles={ownerProfiles}
           defaultUserAvatar={defaultUserAvatar}
           isVisible={visiblePostIds.has(postItem.id)}
         />
@@ -367,6 +335,7 @@ const TeacherPostItem = ({
   index,
   isWide,
   teacherAvatars,
+  ownerProfiles,
   defaultUserAvatar,
   isVisible,
 }: {
@@ -374,6 +343,7 @@ const TeacherPostItem = ({
   index: number;
   isWide: boolean;
   teacherAvatars: Record<string, string>;
+  ownerProfiles: Record<string, { name: string; avatar?: string }>;
   defaultUserAvatar: string | null;
   isVisible: boolean;
 }) => {
@@ -381,16 +351,30 @@ const TeacherPostItem = ({
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
-  const [loadedPdfUri, setLoadedPdfUri] = useState<string | null>(null);
-  const pdfLoading = Boolean(
-    postItem.document && isVisible && loadedPdfUri !== postItem.document,
-  );
-
-  const rawTeacherName = postItem.teacher || "Teacher";
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const ownerProfile = postItem.owner
+    ? ownerProfiles[postItem.owner]
+    : undefined;
+  const rawTeacherName = ownerProfile?.name || postItem.teacher || "Teacher";
   const teacherName = `Tr. ${rawTeacherName}`;
   const description =
     postItem.description ?? "No teacher update available yet.";
-  const showPreview = postItem.hasPdf ?? true;
+  const title = postItem.title || "Teacher update";
+
+  const handlePreviewPress = () => {
+    if (postItem.document) {
+      router.push({
+        pathname: "/pdf-reader",
+        params: {
+          uri: encodeURIComponent(postItem.document),
+          title,
+        },
+      } as never);
+      return;
+    }
+
+    setShowImagePreview(true);
+  };
 
   const isSaved = Boolean(
     user && profile?.["saved-posts"]?.includes(postItem.id),
@@ -410,6 +394,7 @@ const TeacherPostItem = ({
 
   // Resolve Teacher Avatar from DB or Fallback
   const resolvedAvatar =
+    ownerProfile?.avatar ||
     (postItem.teacher && teacherAvatars[postItem.teacher]) ||
     defaultUserAvatar ||
     "TeacherProfile/tr-default.png";
@@ -431,47 +416,58 @@ const TeacherPostItem = ({
           },
         ]}
       >
-        {showPreview ? (
+        {postItem.hasCover && postItem.cover ? (
           <Pressable
             {...({
               onHoverIn: () => setIsHovered(true),
               onHoverOut: () => setIsHovered(false),
             } as any)}
             style={styles.previewWrap}
-            onPress={() => {
-              if (postItem.document) {
-                router.push({
-                  pathname: "/pdf-reader",
-                  params: {
-                    uri: encodeURIComponent(postItem.document),
-                    title: `Document by ${rawTeacherName}`,
-                  },
-                });
-              }
-            }}
+            onPress={handlePreviewPress}
+            accessibilityRole="button"
+            accessibilityLabel={
+              postItem.document ? "Open PDF" : "Open image preview"
+            }
           >
-            {postItem.document && isVisible ? (
-              <PdfPreview
-                uri={postItem.document}
-                style={styles.preview}
-                showLoadingIndicator={false}
-                onLoad={() => setLoadedPdfUri(postItem.document ?? null)}
-                onError={() => setLoadedPdfUri(postItem.document ?? null)}
-              />
-            ) : (
-              <View style={[styles.preview, styles.previewFallback]} />
-            )}
-            {pdfLoading ? (
-              <View style={styles.pdfLoading}>
-                <ActivityIndicator color="#FFFFFF" />
-              </View>
-            ) : null}
-            <View style={styles.overlay} />
-            <View style={styles.previewTag}>
-              <Text style={styles.previewTagText}>PDF</Text>
-            </View>
+            <Image
+              source={{ uri: postItem.cover }}
+              style={styles.preview}
+              contentFit="cover"
+            />
           </Pressable>
         ) : null}
+
+        <Modal
+          visible={showImagePreview}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowImagePreview(false)}
+        >
+          <View style={styles.imagePreviewBackdrop}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setShowImagePreview(false)}
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close image preview"
+              style={styles.closePreviewButton}
+              onPress={() => setShowImagePreview(false)}
+            >
+              <Icon name="x" size={24} color={themeColors.white} />
+            </Pressable>
+            <Pressable
+              style={styles.fullImagePreviewFrame}
+              onPress={(event) => event.stopPropagation()}
+            >
+              <Image
+                source={{ uri: postItem.cover }}
+                style={styles.fullImagePreview}
+                contentFit="contain"
+              />
+            </Pressable>
+          </View>
+        </Modal>
 
         <View style={styles.header}>
           <View style={styles.profileRow}>
@@ -511,17 +507,8 @@ const TeacherPostItem = ({
           </View>
         </View>
 
-        {!showPreview ? (
-          <View style={styles.noPdfTextContainer}>
-            <GradientText
-              text={description}
-              style={styles.gradientMaskedText}
-              colors={[themeColors.primary, "#c224f0ff", "#ff002bff"]}
-            />
-          </View>
-        ) : (
-          <Text style={styles.caption}>{description}</Text>
-        )}
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.caption}>{description}</Text>
 
         <View style={styles.actions}>
           <Pressable
@@ -697,14 +684,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: spacing.sm,
   },
-  noPdfTextContainer: {
-    marginBottom: spacing.sm,
-  },
-  gradientMaskedText: {
-    fontSize: 20,
+  title: {
+    color: themeColors.text,
+    fontSize: 17,
     fontWeight: "700",
-    lineHeight: 28,
-    letterSpacing: -0.3,
+    marginBottom: 4,
   },
   previewWrap: {
     overflow: "hidden",
@@ -713,26 +697,27 @@ const styles = StyleSheet.create({
   },
   preview: { width: "100%", height: 250 },
   previewFallback: { backgroundColor: "#D1D5DB" },
-  pdfLoading: {
-    ...StyleSheet.absoluteFill,
+  imagePreviewBackdrop: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(209, 213, 219, 0.75)",
+    backgroundColor: "rgba(0, 0, 0, 0.82)",
+    padding: spacing.md,
   },
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
-  },
-  previewTag: {
+  fullImagePreviewFrame: { width: "100%", height: "82%" },
+  fullImagePreview: { width: "100%", height: "100%" },
+  closePreviewButton: {
     position: "absolute",
-    left: spacing.md,
-    top: spacing.md,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
+    top: spacing.xl,
+    right: spacing.lg,
+    zIndex: 1,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
   },
-  previewTagText: { color: themeColors.white, fontSize: 11, fontWeight: "800" },
   actions: {
     flexDirection: "row",
     justifyContent: "flex-start",

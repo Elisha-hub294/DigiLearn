@@ -1,4 +1,6 @@
+import { Feather as Icon } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import {
   collection,
   doc,
@@ -19,7 +21,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { db, storage } from "../../../firebaseConfig";
+import { auth, db, storage } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import {
   appendNotificationToAllUsers,
@@ -311,6 +313,8 @@ export function AddItemModal({
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
   const [selectedFile, setSelectedFile] =
     useState<DocumentPicker.DocumentPickerResult | null>(null);
+  const [selectedImage, setSelectedImage] =
+    useState<ImagePicker.ImagePickerAsset | null>(null);
 
   const [pdfToProcess, setPdfToProcess] = useState<{
     base64Data: string;
@@ -343,7 +347,10 @@ export function AddItemModal({
       }
     };
 
-    if ((formType === "page" || formType === "paper") && visible) {
+    if (
+      (formType === "page" || formType === "paper" || formType === "banner") &&
+      visible
+    ) {
       fetchSubjects();
     }
   }, [formType, visible]);
@@ -368,8 +375,31 @@ export function AddItemModal({
         return;
       }
       setSelectedFile(result);
+      setSelectedImage(null);
     } catch (e) {
       console.error("Error picking document", e);
+    }
+  };
+
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 0.85,
+      });
+      if (result.canceled || !result.assets?.[0]) return;
+      const image = result.assets[0];
+      if (image.fileSize && image.fileSize > 5 * 1024 * 1024) {
+        Alert.alert(
+          "Image Too Large",
+          "Please select an image smaller than 5 MB.",
+        );
+        return;
+      }
+      setSelectedImage(image);
+      setSelectedFile(null);
+    } catch (error) {
+      console.error("Error picking image", error);
     }
   };
 
@@ -440,16 +470,58 @@ export function AddItemModal({
           updatedAt: serverTimestamp(),
         });
       } else if (formType === "banner") {
-        await setDoc(
-          doc(db, "promotionalBanner", getTitleDocId(formData.title)),
-          {
-            ...payload,
-            description: formData.subtitle.trim() || "",
-            image: FALLBACK_ICON_URL,
-            avatar: FALLBACK_ICON_URL,
-            updatedAt: serverTimestamp(),
-          },
-        );
+        const currentUserId = auth.currentUser?.uid;
+        if (!currentUserId) {
+          Alert.alert(
+            "Sign in required",
+            "You must be signed in to add a banner.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        let coverUrl = "";
+        const hasCover = Boolean(selectedImage || selectedFile?.assets?.[0]);
+        try {
+          if (selectedImage) {
+            const imageRef = ref(
+              storage,
+              `post-covers/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
+            );
+            await uploadBytes(imageRef, await uriToBlob(selectedImage.uri));
+            coverUrl = await getDownloadURL(imageRef);
+          } else if (selectedFile?.assets?.[0]) {
+            const file = selectedFile.assets[0];
+            const coverDataUrl = await generatePdfFirstPageThumbnail(
+              file.uri,
+              setPdfToProcess,
+              webViewRef,
+            );
+            const coverRef = ref(
+              storage,
+              `post-covers/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
+            );
+            await uploadBytes(coverRef, await uriToBlob(coverDataUrl));
+            coverUrl = await getDownloadURL(coverRef);
+          }
+        } catch (error: any) {
+          Alert.alert(
+            "Upload Failed",
+            `Unable to upload the cover: ${error?.message || error}`,
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        await setDoc(doc(collection(db, "teacherPosts")), {
+          title: formData.title.trim() || "Untitled",
+          descriprion: formData.subtitle.trim() || "",
+          hasCover,
+          cover: coverUrl,
+          createdAt: serverTimestamp(),
+          subject: formData.subject.trim() || "General",
+          owner: currentUserId,
+        });
       } else if (formType === "page") {
         const bookList = formData.book
           .split(",")
@@ -625,6 +697,7 @@ export function AddItemModal({
 
       setFormData(INITIAL_FORM_STATE);
       setSelectedFile(null);
+      setSelectedImage(null);
       onClose();
       Alert.alert("Added", "The new item was saved.");
       onSuccess();
@@ -756,11 +829,67 @@ export function AddItemModal({
             <>
               <Text style={styles.fieldLabel}>Description</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, styles.textArea]}
                 placeholder="Short description"
                 value={formData.subtitle}
                 onChangeText={(val) => updateField("subtitle", val)}
+                multiline
+                numberOfLines={4}
               />
+              <Text style={styles.fieldLabel}>Subject</Text>
+              <View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Select subject"
+                  style={styles.dropdownTrigger}
+                  onPress={() => setSubjectDropdownOpen((prev) => !prev)}
+                >
+                  <Text style={styles.dropdownText}>
+                    {formData.subject || "Select subject"}
+                  </Text>
+                </Pressable>
+                {subjectDropdownOpen && (
+                  <View style={styles.dropdownMenu}>
+                    {subjects.map((option) => (
+                      <Pressable
+                        key={option.id}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          updateField("subject", option.name);
+                          setSubjectDropdownOpen(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemText}>
+                          {option.name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+              </View>
+              <Text style={styles.fieldLabel}>Attachment</Text>
+              <View style={styles.attachmentRow}>
+                <Pressable
+                  style={styles.attachmentButton}
+                  onPress={pickDocument}
+                  disabled={isSubmitting}
+                >
+                  <Icon name="file-text" size={18} color={colors.primary} />
+                  <Text style={styles.attachmentButtonText} numberOfLines={1}>
+                    {selectedFile?.assets?.[0]?.name || "Add document"}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={styles.attachmentButton}
+                  onPress={pickImage}
+                  disabled={isSubmitting}
+                >
+                  <Icon name="image" size={18} color={colors.primary} />
+                  <Text style={styles.attachmentButtonText} numberOfLines={1}>
+                    {selectedImage?.fileName || "Add image"}
+                  </Text>
+                </Pressable>
+              </View>
             </>
           )}
 
@@ -1109,6 +1238,29 @@ const styles = StyleSheet.create({
   filePickerText: {
     color: colors.text,
     fontSize: 14,
+  },
+  attachmentRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: spacing.md,
+  },
+  attachmentButton: {
+    flex: 1,
+    minHeight: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#DCE3ED",
+    borderRadius: 14,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.white,
+  },
+  attachmentButtonText: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "600",
   },
   modalContent: {
     paddingBottom: spacing.xl,

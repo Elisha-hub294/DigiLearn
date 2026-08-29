@@ -2,9 +2,9 @@ import { Feather as Icon, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { subjectColors, type TeacherPost } from "../constants/homeData";
+import { type TeacherPost } from "../constants/homeData";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { toggleSavedItem } from "../services/userProfile";
@@ -22,12 +22,12 @@ export const TeacherPostCard = ({
   const router = useRouter();
   const { user, profile } = useProfile();
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
-  const accent =
-    (post.subject && subjectColors[post.subject]) || colors.primary;
+  const [showImagePreview, setShowImagePreview] = useState(false);
   const contentStyle = [
     styles.content,
     post.type === "announcement" && styles.announcementContent,
   ];
+  const hideOwner = post.ownerType?.trim().toUpperCase() === "ID";
 
   const isSaved = Boolean(user && profile?.["saved-posts"]?.includes(post.id));
 
@@ -43,30 +43,67 @@ export const TeacherPostCard = ({
     }
   };
 
+  const handlePreviewPress = () => {
+    if (post.type === "image") {
+      setShowImagePreview(true);
+      return;
+    }
+
+    if (post.type === "pdf" && post.document) {
+      router.push({
+        pathname: "/pdf-reader",
+        params: {
+          uri: encodeURIComponent(post.document),
+          title: post.teacherName,
+        },
+      } as never);
+    }
+  };
+
   return (
     <>
       <Animated.View entering={FadeInUp.duration(500)} style={styles.card}>
         <View style={styles.header}>
-          <View style={styles.profileRow}>
-            <Image
-              source={post.teacherImage}
-              style={styles.avatar}
-              contentFit="cover"
-            />
-            <View style={styles.profileMeta}>
-              <View style={styles.nameRow}>
-                <Text style={styles.name}>{post.teacherName}</Text>
-                {post.verified ? (
-                  <Icon name="check-circle" size={14} color={colors.primary} />
-                ) : null}
+          {!hideOwner && (
+            <View style={styles.profileRow}>
+              <Image
+                source={post.teacherImage}
+                style={styles.avatar}
+                contentFit="cover"
+              />
+              <View style={styles.profileMeta}>
+                <View style={styles.nameRow}>
+                  <Text style={styles.name}>{post.teacherName}</Text>
+                  {post.verified ? (
+                    <Icon
+                      name="check-circle"
+                      size={14}
+                      color={colors.primary}
+                    />
+                  ) : null}
+                </View>
+                <Text style={styles.time}>{post.time}</Text>
               </View>
-              <Text style={styles.time}>{post.time}</Text>
             </View>
-          </View>
+          )}
         </View>
         <Text style={contentStyle}>{post.content}</Text>
         {!hidePreview && (
-          <View style={styles.previewWrap}>
+          <Pressable
+            style={styles.previewWrap}
+            onPress={handlePreviewPress}
+            disabled={post.type === "announcement"}
+            accessibilityRole={
+              post.type === "announcement" ? undefined : "button"
+            }
+            accessibilityLabel={
+              post.type === "image"
+                ? "Open image preview"
+                : post.type === "pdf"
+                  ? "Open PDF"
+                  : undefined
+            }
+          >
             <Image
               source={post.previewImage}
               style={styles.preview}
@@ -87,7 +124,7 @@ export const TeacherPostCard = ({
               />
               <Text style={styles.previewText}>{post.type.toUpperCase()}</Text>
             </View>
-          </View>
+          </Pressable>
         )}
         {!hideActions && (
           <View style={styles.footer}>
@@ -104,6 +141,37 @@ export const TeacherPostCard = ({
             </Pressable>
           </View>
         )}
+        <Modal
+          visible={showImagePreview}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowImagePreview(false)}
+        >
+          <View style={styles.imagePreviewBackdrop}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setShowImagePreview(false)}
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close image preview"
+              style={styles.closePreviewButton}
+              onPress={() => setShowImagePreview(false)}
+            >
+              <Icon name="x" size={24} color={colors.white} />
+            </Pressable>
+            <Pressable
+              style={styles.fullImagePreviewFrame}
+              onPress={(event) => event.stopPropagation()}
+            >
+              <Image
+                source={post.previewImage}
+                style={styles.fullImagePreview}
+                contentFit="contain"
+              />
+            </Pressable>
+          </View>
+        </Modal>
         <ActionDialog
           visible={showGuestSaveDialog}
           title="Save resources to your library"
@@ -154,6 +222,27 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   preview: { width: "100%", height: 180 },
+  imagePreviewBackdrop: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.82)",
+    padding: spacing.md,
+  },
+  fullImagePreviewFrame: { width: "100%", height: "82%" },
+  fullImagePreview: { width: "100%", height: "100%" },
+  closePreviewButton: {
+    position: "absolute",
+    top: spacing.xl,
+    right: spacing.lg,
+    zIndex: 1,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+  },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.25)" },
   previewBadge: {
     position: "absolute",

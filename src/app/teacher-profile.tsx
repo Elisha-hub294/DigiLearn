@@ -1,5 +1,5 @@
-import { Feather as Icon } from "@expo/vector-icons";
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
+import { Feather as Icon } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -45,13 +45,13 @@ type TeacherRecord = {
 
 type ResourceItem = {
   id: string;
-  type: "page" | "book" | "announcement" | "lesson";
+  type: "page" | "book" | "announcement" | "lesson" | "pdf" | "image";
   title: string;
   description?: string;
   createdAt?: unknown;
   subject?: string;
   document?: string;
-  hasPdf?: boolean;
+  ownerType?: string;
   teacher?: string;
   image?: string;
   link?: string;
@@ -292,25 +292,28 @@ export default function TeacherProfileScreen() {
         .map((doc) => {
           const data = doc.data() as Record<string, unknown>;
           const teacherValue = pickString(data.teacher || data.teacherName);
-          const hasPdf = Boolean(data.hasPdf ?? data.document);
+          const document = pickString(data.document);
+          const rawType = pickString(data.type).toLowerCase();
+          const type =
+            rawType === "image" ? "image" : document ? "pdf" : "announcement";
           return {
             id: doc.id,
-            type: "announcement",
-            title: pickString(data.subject || data.title || "Teacher update"),
+            type,
+            title: pickString(data.title || data.subject || "Teacher update"),
             description: pickString(
-              data.description || data.content || data.message,
+              data.description ||
+                data.descriprion ||
+                data.content ||
+                data.message,
             ),
             createdAt: data.createdAt,
             teacher: teacherValue,
-            document: pickString(data.document),
-            hasPdf,
+            document,
+            ownerType: pickString(data.ownerType),
+            image: pickString(data.cover || data.image),
           } as ResourceItem;
         })
-        .filter(
-          (item) =>
-            normalizeKey(item.teacher) === normalizedTeacherName &&
-            !item.hasPdf,
-        );
+        .filter((item) => normalizeKey(item.teacher) === normalizedTeacherName);
 
       const lessonResources: ResourceItem[] = lessonsSnap.docs
         .map((doc) => {
@@ -525,9 +528,7 @@ export default function TeacherProfileScreen() {
           <View style={styles.avatarShell}>
             <Image
               source={{
-                uri:
-                  teacher?.avatar ||
-                  "TeacherProfile/user-default.png",
+                uri: teacher?.avatar || "TeacherProfile/user-default.png",
               }}
               style={[styles.avatar, { borderColor: accentColor }]}
               contentFit="cover"
@@ -741,16 +742,19 @@ export default function TeacherProfileScreen() {
         );
       }
 
-      if (item.type === "announcement") {
+      if (
+        item.type === "announcement" ||
+        item.type === "image" ||
+        item.type === "pdf"
+      ) {
         return (
           <TeacherPostCard
             post={{
               id: item.id,
+              ownerType: item.ownerType,
               teacherName: teacher?.name || teacherName,
               teacherImage: {
-                uri:
-                  teacher?.avatar ||
-                  "TeacherProfile/user-default.png",
+                uri: teacher?.avatar || "TeacherProfile/user-default.png",
               },
               verified: teacher?.verified ?? false,
               time: formatResourceTime(item.createdAt),
@@ -761,6 +765,7 @@ export default function TeacherProfileScreen() {
                   teacher?.avatar ||
                   "TeacherProfile/user-default.png",
               },
+              document: item.document,
               type: "announcement",
               subject: (item.subject as any) || "English",
             }}

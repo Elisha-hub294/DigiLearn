@@ -45,12 +45,14 @@ export type TopicalNote = {
 
 export type TeacherPost = {
   id: string;
+  ownerType?: string;
   teacherName: string;
   teacherImage: ImageSourcePropType;
   verified: boolean;
   time: string;
   content: string;
   previewImage?: ImageSourcePropType;
+  document?: string;
   type: "pdf" | "image" | "announcement";
   subject: SubjectKey;
 };
