@@ -12,6 +12,7 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useEffect, useRef, useState } from "react";
 import {
   Alert,
+  Image,
   Modal,
   Platform,
   Pressable,
@@ -454,7 +455,7 @@ export function AddItemModal({
     const normalizedDescription = normalizeText(formData.subtitle);
     const normalizedSubject = normalizeText(formData.subject);
 
-    if (formType === "banner" && !normalizedTitle) {
+    if ((formType === "book" || formType === "banner") && !normalizedTitle) {
       Alert.alert("Title required", "Enter a title before saving the post.");
       return;
     }
@@ -471,20 +472,50 @@ export function AddItemModal({
         "book";
 
       if (formType === "book") {
-        const parsedRating = Number.parseFloat(formData.rating.trim());
-        const itemId = getTitleDocId(formData.title);
+        const currentUserId = auth.currentUser?.uid;
+        if (!currentUserId) {
+          Alert.alert(
+            "Sign in required",
+            "You must be signed in to add a book.",
+          );
+          setIsSubmitting(false);
+          return;
+        }
+
+        const itemId = `${getTitleDocId(normalizedTitle)}-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 9)}`;
+        let coverUrl = "";
+
+        if (selectedImage) {
+          try {
+            const coverRef = ref(
+              storage,
+              `book-covers/${itemId}.${selectedImage.mimeType?.split("/")[1] || "jpg"}`,
+            );
+            await uploadBytes(coverRef, await uriToBlob(selectedImage.uri), {
+              contentType: selectedImage.mimeType || "image/jpeg",
+            });
+            coverUrl = await getDownloadURL(coverRef);
+          } catch (error: any) {
+            Alert.alert(
+              "Upload Failed",
+              `Unable to upload the cover: ${error?.message || error}`,
+            );
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
         createdItemId = itemId;
         notificationType = "book";
         await setDoc(doc(db, "books", itemId), {
           ...payload,
-          author: formData.author.trim() || "Added from app",
-          subtitle:
-            formData.subtitle.trim() ||
-            "Freshly created from the library screen",
-          image: formData.cover.trim() || FALLBACK_ICON_URL,
-          avatar: FALLBACK_ICON_URL,
-          rating: Number.isFinite(parsedRating) ? parsedRating : 4.8,
-          isTop: formData.isTop,
+          author:
+            profile?.name || auth.currentUser?.displayName || "Unknown author",
+          owner: currentUserId,
+          description: normalizedDescription,
+          cover: coverUrl,
           updatedAt: serverTimestamp(),
         });
       } else if (formType === "banner") {
@@ -814,28 +845,43 @@ export function AddItemModal({
           {formType === "book" && (
             <>
               <Text style={styles.fieldLabel}>Author</Text>
+              <View style={styles.readOnlyField}>
+                <Icon name="user" size={16} color={colors.subtitle} />
+                <Text style={styles.readOnlyFieldText}>
+                  {profile?.name ||
+                    auth.currentUser?.displayName ||
+                    "Your profile name"}
+                </Text>
+              </View>
+              <Text style={styles.fieldLabel}>Description</Text>
               <TextInput
-                style={styles.input}
-                placeholder="Author"
-                value={formData.author}
-                onChangeText={(val) => updateField("author", val)}
-              />
-              <Text style={styles.fieldLabel}>Subtitle</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Short description"
+                style={[styles.input, styles.textArea]}
+                placeholder="Book description"
                 value={formData.subtitle}
                 onChangeText={(val) => updateField("subtitle", val)}
+                multiline
+                numberOfLines={4}
               />
               <Text style={styles.fieldLabel}>Cover</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Image URL"
-                value={formData.cover}
-                onChangeText={(val) => updateField("cover", val)}
-              />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Choose book cover image"
+                style={styles.attachmentButton}
+                onPress={pickImage}
+              >
+                <Icon name="image" size={18} color={colors.primary} />
+                <Text style={styles.attachmentButtonText} numberOfLines={1}>
+                  {selectedImage?.fileName || "Choose cover image"}
+                </Text>
+              </Pressable>
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage.uri }}
+                  style={styles.coverPreview}
+                />
+              )}
 
-              <Text style={styles.fieldLabel}>top</Text>
+              {/* <Text style={styles.fieldLabel}>top</Text>
               <View style={styles.toggleRow}>
                 <Pressable
                   style={[
@@ -869,7 +915,7 @@ export function AddItemModal({
                     No
                   </Text>
                 </Pressable>
-              </View>
+              </View> */}
             </>
           )}
 
@@ -1342,6 +1388,30 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     color: colors.text,
     backgroundColor: colors.white,
+  },
+  readOnlyField: {
+    minHeight: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#DCE3ED",
+    borderRadius: 14,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+    backgroundColor: "#F5F7FA",
+  },
+  readOnlyFieldText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  coverPreview: {
+    width: 112,
+    height: 148,
+    borderRadius: 12,
+    marginBottom: spacing.md,
+    resizeMode: "cover",
   },
   textArea: {
     minHeight: 96,
