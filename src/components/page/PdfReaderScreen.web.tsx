@@ -1,10 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
-import { saveDownloadedFile } from "../../services/downloadService";
+import { getDownloadedFiles, saveDownloadedFile } from "../../services/downloadService";
 
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 
@@ -47,6 +47,28 @@ export function PdfReaderScreen() {
   // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
   const decodedUri = resolvedUri ?? null;
   const isResolving = rawUri != null && decodedUri == null;
+
+  // Check if already downloaded
+  useEffect(() => {
+    let active = true;
+    getDownloadedFiles().then((files) => {
+      if (!active) return;
+      const isAlreadyDownloaded = files.some(
+        (f) =>
+          (decodedUri && f.uri === decodedUri) ||
+          (decodedUri && f.localUri === decodedUri) ||
+          (rawUri && f.uri === rawUri) ||
+          (rawUri && f.localUri === rawUri) ||
+          (title && f.title === title)
+      );
+      if (isAlreadyDownloaded) {
+        setDownloaded(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [decodedUri, rawUri, title]);
 
   const handleDownload = async () => {
     if (!decodedUri || downloading || downloaded) return;
@@ -104,14 +126,38 @@ export function PdfReaderScreen() {
       setDownloaded(true);
     } catch (err) {
       console.warn("Web download error, falling back to direct link:", err);
+      let downloadUrl = decodedUri;
+      if (
+        downloadUrl.includes("firebasestorage.googleapis.com") ||
+        downloadUrl.includes(".firebasestorage.app") ||
+        downloadUrl.includes(".appspot.com")
+      ) {
+        const separator = downloadUrl.includes("?") ? "&" : "?";
+        const safeTitle =
+          (title ? title.trim().replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") ||
+          "document";
+        downloadUrl = `${downloadUrl}${separator}response-content-disposition=attachment%3Bfilename%3D%22${encodeURIComponent(safeTitle)}.pdf%22`;
+      }
+
       const a = document.createElement("a");
-      a.href = decodedUri;
+      a.href = downloadUrl;
       a.download =
         (title ? title.replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") + ".pdf";
       a.target = "_blank";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+
+      try {
+        await saveDownloadedFile({
+          title: title || "PDF Document",
+          uri: decodedUri,
+          localUri: decodedUri,
+        });
+        setDownloaded(true);
+      } catch (saveErr) {
+        console.warn("Failed to register download in-app:", saveErr);
+      }
     } finally {
       setTimeout(() => {
         setDownloading(false);

@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { colors, radius, spacing } from "../../constants/theme";
-import { saveDownloadedFile } from "../../services/downloadService";
+import { getDownloadedFiles, saveDownloadedFile } from "../../services/downloadService";
 
 // Fallback timeout: if onLoadEnd never fires (can happen with some PDFs),
 // hide the loading overlay after 20 seconds so the user isn't stuck.
@@ -53,6 +53,7 @@ export function PdfReaderScreen() {
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [localBase64, setLocalBase64] = useState<string | null>(null);
   const [progressAnim] = useState(() => new Animated.Value(0));
   const [downloadProgressAnim] = useState(() => new Animated.Value(0));
   const [downloadScale] = useState(() => new Animated.Value(1));
@@ -65,13 +66,94 @@ export function PdfReaderScreen() {
   const isResolving = rawUri != null && decodedUri == null;
   const isLocalFile = Boolean(decodedUri?.startsWith("file://"));
 
+  // Check if file is already downloaded in storage
+  useEffect(() => {
+    let active = true;
+    getDownloadedFiles().then((files) => {
+      if (!active) return;
+      const isAlreadyDownloaded = files.some(
+        (f) =>
+          (decodedUri && f.uri === decodedUri) ||
+          (decodedUri && f.localUri === decodedUri) ||
+          (rawUri && f.uri === rawUri) ||
+          (rawUri && f.localUri === rawUri) ||
+          (title && f.title === title)
+      );
+      if (isAlreadyDownloaded || isLocalFile) {
+        setDownloaded(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [decodedUri, isLocalFile, rawUri, title]);
+
+  // Read local file as base64 on Android for pdf.js offline rendering
+  useEffect(() => {
+    if (Platform.OS === "android" && isLocalFile && decodedUri) {
+      FileSystem.readAsStringAsync(decodedUri, {
+        encoding: FileSystem.EncodingType?.Base64 ?? "base64",
+      })
+        .then((b64) => setLocalBase64(b64))
+        .catch((err) => {
+          console.warn("Failed to read local PDF as base64 for Android:", err);
+        });
+    }
+  }, [isLocalFile, decodedUri]);
+
   // iOS WebView renders PDFs natively; Android needs pdf.js
   const webViewSource = (() => {
     if (!decodedUri) return null;
-    if (isLocalFile) return { uri: decodedUri };
     if (Platform.OS === "ios") return { uri: decodedUri };
 
     // Android: self-contained pdf.js HTML viewer
+    if (isLocalFile) {
+      if (!localBase64) return null;
+      return {
+        html: `<!DOCTYPE html>
+<html><head>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=3">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#525659;overflow-x:hidden}
+canvas{display:block;margin:4px auto;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+#error{color:#fff;text-align:center;padding:40px;font-family:sans-serif;display:none}
+</style></head><body>
+<div id="container"></div>
+<div id="error"></div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+(async()=>{
+  try{
+    const rawData = atob('${localBase64}');
+    const uint8Array = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; i++) {
+      uint8Array[i] = rawData.charCodeAt(i);
+    }
+    const pdf=await pdfjsLib.getDocument({data: uint8Array}).promise;
+    const c=document.getElementById('container');
+    for(let i=1;i<=pdf.numPages;i++){
+      const pg=await pdf.getPage(i);
+      const s=window.innerWidth/pg.getViewport({scale:1}).width;
+      const vp=pg.getViewport({scale:s});
+      const cv=document.createElement('canvas');
+      cv.width=vp.width;cv.height=vp.height;
+      c.appendChild(cv);
+      await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    }
+    window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'loaded',pages:pdf.numPages}));
+  }catch(e){
+    document.getElementById('error').style.display='block';
+    document.getElementById('error').textContent='Failed to load PDF: '+e.message;
+    window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'error',message:e.message}));
+  }
+})();
+</script></body></html>`,
+        baseUrl: "https://cdnjs.cloudflare.com",
+      };
+    }
+
     const escapedUrl = decodedUri
       .replace(/\\/g, "\\\\")
       .replace(/'/g, "\\'")
@@ -179,9 +261,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     ]).start();
 
     try {
-      const fileName =
-        (title ? title.replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") + ".pdf";
-      const fileUri = FileSystem.documentDirectory + fileName;
+      const safeTitle =
+        (title ? title.trim().replace(/[^a-zA-Z0-9_\- ]/g, "") : "Document") ||
+        "Document";
+      const fileName = `${safeTitle}.pdf`;
+      const fileUri = `${FileSystem.documentDirectory}${fileName}`;
 
       const downloadResumable = FileSystem.createDownloadResumable(
         decodedUri,
@@ -211,18 +295,29 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
           useNativeDriver: false,
         }).start();
 
+        let fileSize: number | undefined;
+        try {
+          const fileInfo = await FileSystem.getInfoAsync(downloadResult.uri);
+          if (fileInfo.exists && typeof (fileInfo as any).size === "number") {
+            fileSize = (fileInfo as any).size;
+          }
+        } catch (infoErr) {
+          console.warn("Could not determine downloaded file size:", infoErr);
+        }
+
         // Save to Downloaded files registry
         await saveDownloadedFile({
           title: title || "PDF Document",
           uri: decodedUri,
           localUri: downloadResult.uri,
+          fileSize,
         });
         setDownloaded(true);
 
         setTimeout(() => {
           Alert.alert(
             "Download Complete",
-            `"${fileName}" has been saved to your device.`,
+            `"${fileName}" has been saved to your downloads for offline reading.`,
             [{ text: "OK" }],
           );
         }, 300);
