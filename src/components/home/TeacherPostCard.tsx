@@ -1,5 +1,7 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Feather as Icon, Ionicons } from "@expo/vector-icons";
+import MaskedView from "@react-native-masked-view/masked-view";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -10,6 +12,7 @@ import {
   Animated as RNAnimated,
   StyleSheet,
   Text,
+  TextStyle,
   useWindowDimensions,
   View,
   type ViewToken,
@@ -30,13 +33,39 @@ export type TeacherPost = {
   title?: string;
   teacher?: string;
   owner?: string;
+  ownerType?: string;
   subject?: string;
   description?: string;
   hasCover?: boolean;
   cover?: string;
   createdAt?: Date | null;
   document?: string;
+  fileType?: "image" | "doc" | "";
 };
+
+const GradientTitle = ({
+  text,
+  style,
+}: {
+  text: string;
+  style?: TextStyle;
+}) => (
+  <MaskedView
+    style={styles.gradientTitleMask}
+    maskElement={
+      <Text style={[style, { backgroundColor: "transparent" }]}>{text}</Text>
+    }
+  >
+    <LinearGradient
+      style={styles.gradientTitleGradient}
+      colors={[themeColors.primary, "#c224f0", "#ff002b"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <Text style={[style, styles.gradientTitleText]}>{text}</Text>
+    </LinearGradient>
+  </MaskedView>
+);
 
 const getRelativeTime = (date: Date | null | undefined): string => {
   if (!date) return "Recently shared";
@@ -98,6 +127,10 @@ export const normalizeTeacherPost = (doc: {
   const hasCover =
     typeof data.hasCover === "boolean" ? data.hasCover : Boolean(cover);
   const owner = typeof data.owner === "string" ? data.owner : undefined;
+  const ownerType =
+    typeof data.ownerType === "string" ? data.ownerType : undefined;
+  const fileType =
+    data.fileType === "image" || data.fileType === "doc" ? data.fileType : "";
 
   const document =
     typeof data.document === "string" ? data.document : undefined;
@@ -120,11 +153,13 @@ export const normalizeTeacherPost = (doc: {
     title,
     teacher,
     owner,
+    ownerType,
     subject,
     description,
     hasCover,
     cover,
     document,
+    fileType,
     createdAt,
   } satisfies TeacherPost;
 };
@@ -360,9 +395,10 @@ const TeacherPostItem = ({
   const description =
     postItem.description ?? "No teacher update available yet.";
   const title = postItem.title || "Teacher update";
+  const hideOwner = postItem.ownerType?.trim().toLowerCase() === "admin";
 
   const handlePreviewPress = () => {
-    if (postItem.document) {
+    if (postItem.fileType === "doc" && postItem.document) {
       router.push({
         pathname: "/pdf-reader",
         params: {
@@ -373,7 +409,7 @@ const TeacherPostItem = ({
       return;
     }
 
-    setShowImagePreview(true);
+    if (postItem.fileType === "image") setShowImagePreview(true);
   };
 
   const isSaved = Boolean(
@@ -426,7 +462,7 @@ const TeacherPostItem = ({
             onPress={handlePreviewPress}
             accessibilityRole="button"
             accessibilityLabel={
-              postItem.document ? "Open PDF" : "Open image preview"
+              postItem.fileType === "doc" ? "Open PDF" : "Open image preview"
             }
           >
             <Image
@@ -434,6 +470,7 @@ const TeacherPostItem = ({
               style={styles.preview}
               contentFit="cover"
             />
+            <View pointerEvents="none" style={styles.previewOverlay} />
           </Pressable>
         ) : null}
 
@@ -470,44 +507,50 @@ const TeacherPostItem = ({
         </Modal>
 
         <View style={styles.header}>
-          <View style={styles.profileRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Open teacher profile: ${rawTeacherName}`}
-              onPress={() =>
-                router.push({
-                  pathname: "/teacher-profile",
-                  params: { name: rawTeacherName },
-                } as never)
-              }
-            >
-              <Image
-                source={{ uri: resolvedAvatar }}
-                style={styles.avatar}
-                contentFit="cover"
-              />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Open teacher profile: ${rawTeacherName}`}
-              onPress={() =>
-                router.push({
-                  pathname: "/teacher-profile",
-                  params: { name: rawTeacherName },
-                } as never)
-              }
-            >
-              <View>
-                <Text style={styles.name}>{teacherName}</Text>
-                <Text style={styles.time}>
-                  {getRelativeTime(postItem.createdAt)}
-                </Text>
-              </View>
-            </Pressable>
-          </View>
+          {!hideOwner && (
+            <View style={styles.profileRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Open teacher profile: ${rawTeacherName}`}
+                onPress={() =>
+                  router.push({
+                    pathname: "/teacher-profile",
+                    params: { name: rawTeacherName },
+                  } as never)
+                }
+              >
+                <Image
+                  source={{ uri: resolvedAvatar }}
+                  style={styles.avatar}
+                  contentFit="cover"
+                />
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Open teacher profile: ${rawTeacherName}`}
+                onPress={() =>
+                  router.push({
+                    pathname: "/teacher-profile",
+                    params: { name: rawTeacherName },
+                  } as never)
+                }
+              >
+                <View>
+                  <Text style={styles.name}>{teacherName}</Text>
+                  <Text style={styles.time}>
+                    {getRelativeTime(postItem.createdAt)}
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+          )}
         </View>
 
-        <Text style={styles.title}>{title}</Text>
+        {postItem.hasCover ? (
+          <Text style={styles.title}>{title}</Text>
+        ) : (
+          <GradientTitle text={title} style={styles.title} />
+        )}
         <Text style={styles.caption}>{description}</Text>
 
         <View style={styles.actions}>
@@ -690,12 +733,25 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 4,
   },
+  gradientTitleMask: {
+    alignSelf: "stretch",
+  },
+  gradientTitleGradient: {
+    alignSelf: "stretch",
+  },
+  gradientTitleText: {
+    opacity: 0,
+  },
   previewWrap: {
     overflow: "hidden",
     position: "relative",
     marginBottom: spacing.xs,
   },
   preview: { width: "100%", height: 250 },
+  previewOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+  },
   previewFallback: { backgroundColor: "#D1D5DB" },
   imagePreviewBackdrop: {
     flex: 1,

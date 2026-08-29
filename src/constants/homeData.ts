@@ -45,7 +45,10 @@ export type TopicalNote = {
 
 export type TeacherPost = {
   id: string;
+  title?: string;
+  hasCover?: boolean | string;
   ownerType?: string;
+  fileType?: "image" | "doc" | "";
   teacherName: string;
   teacherImage: ImageSourcePropType;
   verified: boolean;

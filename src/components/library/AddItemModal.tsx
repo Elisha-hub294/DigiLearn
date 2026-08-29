@@ -23,6 +23,7 @@ import {
 } from "react-native";
 import { auth, db, storage } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
 import {
   appendNotificationToAllUsers,
   buildLibraryNotification,
@@ -80,6 +81,13 @@ const INITIAL_FORM_STATE: FormState = {
 };
 
 const FALLBACK_ICON_URL = "icons/default-2d.png";
+const BANNER_TITLE_MAX_LENGTH = 100;
+
+const normalizeText = (value: string) =>
+  value
+    .replace(/[\u0000-\u001F\u007F]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const getTitleDocId = (title: string) => {
   const sanitized = title
@@ -305,6 +313,7 @@ export function AddItemModal({
   onSuccess,
   screen = false,
 }: AddItemModalProps) {
+  const { profile } = useProfile();
   const [formData, setFormData] = useState<FormState>(INITIAL_FORM_STATE);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [levelDropdownOpen, setLevelDropdownOpen] = useState(false);
@@ -441,11 +450,20 @@ export function AddItemModal({
   };
 
   const handleAddItem = async () => {
+    const normalizedTitle = normalizeText(formData.title);
+    const normalizedDescription = normalizeText(formData.subtitle);
+    const normalizedSubject = normalizeText(formData.subject);
+
+    if (formType === "banner" && !normalizedTitle) {
+      Alert.alert("Title required", "Enter a title before saving the post.");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
       const payload = {
-        title: formData.title.trim() || "Untitled",
+        title: normalizedTitle || "Untitled",
       };
 
       let createdItemId = "";
@@ -481,7 +499,16 @@ export function AddItemModal({
         }
 
         let coverUrl = "";
+        let documentUrl = "";
         const hasCover = Boolean(selectedImage || selectedFile?.assets?.[0]);
+        const fileType = selectedImage
+          ? "image"
+          : selectedFile?.assets?.[0]
+            ? "doc"
+            : "";
+        const bannerId = `${getTitleDocId(normalizedTitle)}-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 9)}`;
         try {
           if (selectedImage) {
             const imageRef = ref(
@@ -492,6 +519,16 @@ export function AddItemModal({
             coverUrl = await getDownloadURL(imageRef);
           } else if (selectedFile?.assets?.[0]) {
             const file = selectedFile.assets[0];
+            const uniqueDocumentId = `${Date.now()}_${Math.random()
+              .toString(36)
+              .slice(2, 9)}`;
+            const documentRef = ref(
+              storage,
+              `post-documents/${uniqueDocumentId}.pdf`,
+            );
+            await uploadBytes(documentRef, await uriToBlob(file.uri));
+            documentUrl = await getDownloadURL(documentRef);
+
             const coverDataUrl = await generatePdfFirstPageThumbnail(
               file.uri,
               setPdfToProcess,
@@ -513,14 +550,17 @@ export function AddItemModal({
           return;
         }
 
-        await setDoc(doc(collection(db, "teacherPosts")), {
-          title: formData.title.trim() || "Untitled",
-          descriprion: formData.subtitle.trim() || "",
+        await setDoc(doc(db, "teacherPosts", bannerId), {
+          title: normalizedTitle,
+          descriprion: normalizedDescription,
           hasCover,
           cover: coverUrl,
+          document: documentUrl,
           createdAt: serverTimestamp(),
-          subject: formData.subject.trim() || "General",
+          subject: normalizedSubject || "General",
           owner: currentUserId,
+          ownerType: profile?.type || "",
+          fileType,
         });
       } else if (formType === "page") {
         const bookList = formData.book
@@ -759,7 +799,15 @@ export function AddItemModal({
                 }
                 value={formData.title}
                 onChangeText={(val) => updateField("title", val)}
+                maxLength={
+                  formType === "banner" ? BANNER_TITLE_MAX_LENGTH : undefined
+                }
               />
+              {formType === "banner" && (
+                <Text style={styles.titleCharacterCount}>
+                  {formData.title.length}/{BANNER_TITLE_MAX_LENGTH}
+                </Text>
+              )}
             </>
           )}
 
@@ -1277,6 +1325,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "600",
     marginBottom: 6,
+  },
+  titleCharacterCount: {
+    alignSelf: "flex-end",
+    color: colors.subtitle,
+    fontSize: 12,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
   },
   input: {
     borderWidth: 1,

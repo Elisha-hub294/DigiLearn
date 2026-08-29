@@ -51,7 +51,9 @@ type ResourceItem = {
   createdAt?: unknown;
   subject?: string;
   document?: string;
+  hasCover?: boolean | string;
   ownerType?: string;
+  fileType?: "image" | "doc" | "";
   teacher?: string;
   image?: string;
   link?: string;
@@ -309,7 +311,15 @@ export default function TeacherProfileScreen() {
             createdAt: data.createdAt,
             teacher: teacherValue,
             document,
+            hasCover:
+              typeof data.hasCover === "boolean"
+                ? data.hasCover
+                : pickString(data.hasCover),
             ownerType: pickString(data.ownerType),
+            fileType:
+              data.fileType === "image" || data.fileType === "doc"
+                ? data.fileType
+                : "",
             image: pickString(data.cover || data.image),
           } as ResourceItem;
         })
@@ -751,7 +761,10 @@ export default function TeacherProfileScreen() {
           <TeacherPostCard
             post={{
               id: item.id,
+              title: item.title,
+              hasCover: item.hasCover,
               ownerType: item.ownerType,
+              fileType: item.fileType,
               teacherName: teacher?.name || teacherName,
               teacherImage: {
                 uri: teacher?.avatar || "TeacherProfile/user-default.png",

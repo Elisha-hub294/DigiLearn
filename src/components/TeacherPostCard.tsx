@@ -1,14 +1,47 @@
 import { Feather as Icon, Ionicons } from "@expo/vector-icons";
+import MaskedView from "@react-native-masked-view/masked-view";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextStyle,
+  View,
+} from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { type TeacherPost } from "../constants/homeData";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { toggleSavedItem } from "../services/userProfile";
 import { ActionDialog } from "./ui/ActionDialog";
+
+const GradientTitle = ({
+  text,
+  style,
+}: {
+  text: string;
+  style?: TextStyle;
+}) => (
+  <MaskedView
+    style={styles.gradientTitleMask}
+    maskElement={
+      <Text style={[style, { backgroundColor: "transparent" }]}>{text}</Text>
+    }
+  >
+    <LinearGradient
+      style={styles.gradientTitleGradient}
+      colors={[colors.primary, "#c224f0", "#ff002b"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <Text style={[style, styles.gradientTitleText]}>{text}</Text>
+    </LinearGradient>
+  </MaskedView>
+);
 
 export const TeacherPostCard = ({
   post,
@@ -27,7 +60,9 @@ export const TeacherPostCard = ({
     styles.content,
     post.type === "announcement" && styles.announcementContent,
   ];
-  const hideOwner = post.ownerType?.trim().toUpperCase() === "ID";
+  const title = post.title || post.content;
+  const hasNoCover = post.hasCover === false || post.hasCover === "false";
+  const hideOwner = post.ownerType?.trim().toLowerCase() === "admin";
 
   const isSaved = Boolean(user && profile?.["saved-posts"]?.includes(post.id));
 
@@ -44,12 +79,12 @@ export const TeacherPostCard = ({
   };
 
   const handlePreviewPress = () => {
-    if (post.type === "image") {
+    if (post.fileType === "image") {
       setShowImagePreview(true);
       return;
     }
 
-    if (post.type === "pdf" && post.document) {
+    if (post.fileType === "doc" && post.document) {
       router.push({
         pathname: "/pdf-reader",
         params: {
@@ -87,19 +122,22 @@ export const TeacherPostCard = ({
             </View>
           )}
         </View>
+        {hasNoCover ? (
+          <GradientTitle text={title} style={styles.title} />
+        ) : (
+          <Text style={styles.title}>{title}</Text>
+        )}
         <Text style={contentStyle}>{post.content}</Text>
         {!hidePreview && (
           <Pressable
             style={styles.previewWrap}
             onPress={handlePreviewPress}
-            disabled={post.type === "announcement"}
-            accessibilityRole={
-              post.type === "announcement" ? undefined : "button"
-            }
+            disabled={!post.fileType}
+            accessibilityRole={post.fileType ? "button" : undefined}
             accessibilityLabel={
-              post.type === "image"
+              post.fileType === "image"
                 ? "Open image preview"
-                : post.type === "pdf"
+                : post.fileType === "doc"
                   ? "Open PDF"
                   : undefined
             }
@@ -109,13 +147,13 @@ export const TeacherPostCard = ({
               style={styles.preview}
               contentFit="cover"
             />
-            <View style={styles.overlay} />
+            <View style={styles.previewOverlay} />
             <View style={styles.previewBadge}>
               <Icon
                 name={
-                  post.type === "pdf"
+                  post.fileType === "doc"
                     ? "file-text"
-                    : post.type === "image"
+                    : post.fileType === "image"
                       ? "image"
                       : "message-circle"
                 }
@@ -215,6 +253,15 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 22,
   },
+  title: {
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  gradientTitleMask: { alignSelf: "stretch" },
+  gradientTitleGradient: { alignSelf: "stretch" },
+  gradientTitleText: { opacity: 0 },
   previewWrap: {
     borderRadius: 18,
     overflow: "hidden",
@@ -222,6 +269,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   preview: { width: "100%", height: 180 },
+  previewOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
+  },
   imagePreviewBackdrop: {
     flex: 1,
     alignItems: "center",
