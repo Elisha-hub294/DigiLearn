@@ -243,22 +243,25 @@ export default function LibraryScreen() {
 
                 {groupedPaperCollections.map((group) => (
                   <View key={group.key} style={styles.paperSection}>
-                    <SectionHeader
-                      title={group.label}
-                      onSeeAll={() =>
-                        router.push({
-                          pathname: "/see-all",
-                          params: { type: "papers", paperType: group.key },
-                        } as any)
-                      }
-                      actionLabel="See all"
-                    />
                     {group.collections.map((section) => (
                       <View
                         key={`${section.type}-${section.year}`}
                         style={styles.subSection}
                       >
-                        <Text style={styles.sectionTitle}>{section.title}</Text>
+                        <SectionHeader
+                          title={section.title}
+                          onSeeAll={() =>
+                            router.push({
+                              pathname: "/see-all",
+                              params: {
+                                type: "papers",
+                                paperType: section.type,
+                                paperYear: section.year,
+                              },
+                            } as any)
+                          }
+                          actionLabel="See all"
+                        />
                         <PaperCarousel items={section.items} />
                       </View>
                     ))}

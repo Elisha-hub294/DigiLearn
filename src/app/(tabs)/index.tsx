@@ -52,7 +52,7 @@ function HomePastPapers({
   onSeeAll,
 }: {
   collections: PaperSection[];
-  onSeeAll: (paperType?: string) => void;
+  onSeeAll: (paperType?: string, paperYear?: string) => void;
 }) {
   const groups = useMemo(() => {
     const grouped = new Map<string, PaperSection[]>();
@@ -77,14 +77,13 @@ function HomePastPapers({
     <View>
       {groups.map((group) => (
         <View key={group.type} style={styles.paperTypeSection}>
-          <SectionHeader
-            title={group.type.toUpperCase()}
-            onSeeAll={() => onSeeAll(group.paperType)}
-            actionLabel="See all"
-          />
           {group.sections.map((section) => (
             <View key={`${section.type}-${section.year}`}>
-              <Text style={styles.paperYear}>{section.title}</Text>
+              <SectionHeader
+                title={section.title}
+                onSeeAll={() => onSeeAll(section.type, section.year)}
+                actionLabel="See all"
+              />
               <PaperCarousel items={section.items} />
             </View>
           ))}
@@ -187,12 +186,16 @@ export default function HomeScreen() {
               render: () => (
                 <HomePastPapers
                   collections={paperCollections}
-                  onSeeAll={(paperType) =>
+                  onSeeAll={(paperType, paperYear) =>
                     router.push(
                       paperType
                         ? ({
                             pathname: "/see-all",
-                            params: { type: "papers", paperType },
+                            params: {
+                              type: "papers",
+                              paperType,
+                              ...(paperYear ? { paperYear } : {}),
+                            },
                           } as any)
                         : "/see-all?type=papers",
                     )
