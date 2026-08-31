@@ -62,6 +62,7 @@ type FormState = {
   book: string;
   level: string;
   schoolClass: string;
+  notifyUsers: boolean;
 };
 
 const INITIAL_FORM_STATE: FormState = {
@@ -80,6 +81,7 @@ const INITIAL_FORM_STATE: FormState = {
   book: "",
   level: "Ordinary",
   schoolClass: "",
+  notifyUsers: true,
 };
 
 const FALLBACK_ICON_URL = "icons/default-2d.png";
@@ -564,8 +566,12 @@ export function AddItemModal({
       };
 
       let createdItemId = "";
-      let notificationType: "book" | "page" | "lesson" | "announcement" =
-        "book";
+      let notificationType:
+        | "book"
+        | "page"
+        | "lesson"
+        | "announcement"
+        | "paper" = "book";
 
       if (formType === "book") {
         const currentUserId = auth.currentUser?.uid;
@@ -578,7 +584,7 @@ export function AddItemModal({
           return;
         }
 
-        const itemId = `${getTitleDocId(normalizedTitle)}-${Date.now()}-${Math.random()
+        const itemId = `${getTitleDocId(sanitizedTitle)}-${Date.now()}-${Math.random()
           .toString(36)
           .slice(2, 9)}`;
         let coverUrl = "";
@@ -633,7 +639,7 @@ export function AddItemModal({
           : selectedFile?.assets?.[0]
             ? "doc"
             : "";
-        const bannerId = `${getTitleDocId(normalizedTitle)}-${Date.now()}-${Math.random()
+        const bannerId = `${getTitleDocId(sanitizedTitle)}-${Date.now()}-${Math.random()
           .toString(36)
           .slice(2, 9)}`;
         try {
@@ -677,6 +683,8 @@ export function AddItemModal({
           return;
         }
 
+        createdItemId = bannerId;
+        notificationType = "announcement";
         await setDoc(doc(db, "teacherPosts", bannerId), {
           title: sanitizedTitle,
           descriprion: sanitizedDescription,
@@ -771,7 +779,7 @@ export function AddItemModal({
           .toString(36)
           .slice(2, 9)}`;
         createdItemId = itemId;
-        notificationType = "lesson";
+        notificationType = "paper";
 
         let documentUrl = formData.document.trim();
         let coverUrl = FALLBACK_ICON_URL;
@@ -857,7 +865,7 @@ export function AddItemModal({
         });
       }
 
-      if (createdItemId) {
+      if (createdItemId && formData.notifyUsers) {
         await appendNotificationToAllUsers(
           buildLibraryNotification(notificationType, createdItemId),
         );
@@ -1159,6 +1167,15 @@ export function AddItemModal({
 
           {formType === "page" && (
             <>
+              <Text style={styles.fieldLabel}>Description</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Page description"
+                value={formData.description}
+                onChangeText={(val) => updateField("description", val)}
+                multiline
+                numberOfLines={4}
+              />
               <Text style={styles.fieldLabel}>Subject</Text>
               <View>
                 <Pressable
@@ -1200,6 +1217,7 @@ export function AddItemModal({
                   </View>
                 )}
               </View>
+
               <Text style={styles.fieldLabel}>Level</Text>
               <View>
                 <Pressable
@@ -1280,15 +1298,7 @@ export function AddItemModal({
                   </View>
                 )}
               </View>
-              <Text style={styles.fieldLabel}>Description</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Page description"
-                value={formData.description}
-                onChangeText={(val) => updateField("description", val)}
-                multiline
-                numberOfLines={4}
-              />
+
               <Text style={styles.fieldLabel}>Document File</Text>
               <Pressable
                 style={styles.filePicker}
@@ -1461,6 +1471,36 @@ export function AddItemModal({
               />
             </>
           )}
+
+          <View style={styles.notifySection}>
+            <View style={styles.notifySectionContent}>
+              <View>
+                <Text style={styles.notifyLabel}>Notify Community</Text>
+                <Text style={styles.notifyDescription}>
+                  Send notifications to users about this post
+                </Text>
+              </View>
+              <Pressable
+                style={[
+                  styles.toggleSwitch,
+                  formData.notifyUsers && styles.toggleSwitchActive,
+                ]}
+                onPress={() =>
+                  updateField("notifyUsers", !formData.notifyUsers)
+                }
+                accessibilityRole="switch"
+                accessibilityLabel="Notify Community"
+                accessibilityState={{ checked: formData.notifyUsers }}
+              >
+                <View
+                  style={[
+                    styles.toggleCircle,
+                    formData.notifyUsers && styles.toggleCircleActive,
+                  ]}
+                />
+              </Pressable>
+            </View>
+          </View>
 
           <View style={styles.modalActions}>
             <Pressable
@@ -1684,7 +1724,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   previewOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(15, 23, 42, 0.2)",
   },
   previewRemoveButton: {
@@ -1809,5 +1849,50 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: colors.white,
     fontWeight: "700",
+  },
+  notifySection: {
+    backgroundColor: "rgba(37, 99, 235, 0.06)",
+    borderRadius: 14,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    marginTop: spacing.lg,
+  },
+  notifySectionContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  notifyLabel: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  notifyDescription: {
+    color: colors.subtitle,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  toggleSwitch: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#DCE3ED",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
+  toggleSwitchActive: {
+    backgroundColor: colors.primary,
+    alignItems: "flex-end",
+  },
+  toggleCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+  },
+  toggleCircleActive: {
+    backgroundColor: colors.white,
   },
 });

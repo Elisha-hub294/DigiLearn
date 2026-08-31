@@ -1,15 +1,20 @@
 import {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    setDoc,
-    Timestamp,
-    updateDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  Timestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
-export type NotificationType = "book" | "lesson" | "page" | "announcement";
+export type NotificationType =
+  | "book"
+  | "lesson"
+  | "page"
+  | "announcement"
+  | "paper";
 
 export type NotificationRecord = {
   id: string;
@@ -49,6 +54,12 @@ export const NOTIFICATION_TYPE_META: Record<
     icon: "file-text",
     background: "#3F82F4",
   },
+  paper: {
+    label: "Past Papers",
+    color: "#F59E0B",
+    icon: "award",
+    background: "#F59E0B",
+  },
   announcement: {
     label: "Announcements",
     color: "#4B5563",
@@ -72,6 +83,7 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
     type === "book" ||
     type === "lesson" ||
     type === "page" ||
+    type === "paper" ||
     type === "announcement";
 
   if (!validType) {
@@ -299,7 +311,7 @@ export async function markNotificationAsRead(
 }
 
 export const libraryNotificationMap: Record<
-  "book" | "page" | "announcement" | "lesson",
+  "book" | "page" | "announcement" | "lesson" | "paper",
   { message: string; collection: string; navigation: string }
 > = {
   book: {
@@ -311,6 +323,11 @@ export const libraryNotificationMap: Record<
     message: "Published a new page",
     collection: "pages",
     navigation: "/page-preview",
+  },
+  paper: {
+    message: "Added a new past paper",
+    collection: "pastPaper",
+    navigation: "/pdf-reader",
   },
   announcement: {
     message: "New announcement",

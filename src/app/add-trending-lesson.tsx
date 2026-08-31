@@ -24,6 +24,10 @@ import { db } from "../../firebaseConfig";
 import { AdminPublishHeader } from "../components/library/AdminPublishHeader";
 import { useSubjects } from "../components/ui/SubjectFilter";
 import { colors, spacing } from "../constants/theme";
+import {
+  appendNotificationToAllUsers,
+  buildLibraryNotification,
+} from "../services/notifications";
 
 export default function AddTrendingLessonScreen() {
   const router = useRouter();
@@ -36,6 +40,7 @@ export default function AddTrendingLessonScreen() {
   const [link, setLink] = useState("");
   const [loading, setLoading] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [notifyUsers, setNotifyUsers] = useState(true);
 
   async function handleSubmit() {
     if (!title.trim() || !teacher.trim() || !duration.trim()) {
@@ -72,6 +77,12 @@ export default function AddTrendingLessonScreen() {
         link: link.trim(),
         avatar: "",
       });
+
+      if (notifyUsers) {
+        await appendNotificationToAllUsers(
+          buildLibraryNotification("lesson", lessonRef.id),
+        );
+      }
 
       router.replace("/videos");
     } catch (error) {
@@ -146,6 +157,34 @@ export default function AddTrendingLessonScreen() {
             autoCapitalize="none"
             autoCorrect={false}
           />
+
+          <View style={styles.notifySection}>
+            <View style={styles.notifySectionContent}>
+              <View>
+                <Text style={styles.notifyLabel}>Notify Community</Text>
+                <Text style={styles.notifyDescription}>
+                  Send notifications to users about this lesson
+                </Text>
+              </View>
+              <Pressable
+                style={[
+                  styles.toggleSwitch,
+                  notifyUsers && styles.toggleSwitchActive,
+                ]}
+                onPress={() => setNotifyUsers(!notifyUsers)}
+                accessibilityRole="switch"
+                accessibilityLabel="Notify Community"
+                accessibilityState={{ checked: notifyUsers }}
+              >
+                <View
+                  style={[
+                    styles.toggleCircle,
+                    notifyUsers && styles.toggleCircleActive,
+                  ]}
+                />
+              </Pressable>
+            </View>
+          </View>
 
           <Pressable
             style={styles.submitButton}
@@ -239,6 +278,51 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   submitText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  notifySection: {
+    backgroundColor: "rgba(37, 99, 235, 0.06)",
+    borderRadius: 14,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    marginTop: spacing.md,
+  },
+  notifySectionContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  notifyLabel: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  notifyDescription: {
+    color: colors.subtitle,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  toggleSwitch: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#DCE3ED",
+    alignItems: "flex-start",
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
+  toggleSwitchActive: {
+    backgroundColor: colors.primary,
+    alignItems: "flex-end",
+  },
+  toggleCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+  },
+  toggleCircleActive: {
+    backgroundColor: colors.white,
+  },
   modalOverlay: {
     alignItems: "center",
     backgroundColor: "rgba(17,24,39,0.45)",

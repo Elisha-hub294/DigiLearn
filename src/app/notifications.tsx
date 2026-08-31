@@ -1,22 +1,22 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import {
-    Alert,
-    BackHandler,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
-    useWindowDimensions,
+  Alert,
+  BackHandler,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { db } from "../../firebaseConfig";
 import {
-    NotificationCard,
-    NotificationSectionHeader,
+  NotificationCard,
+  NotificationSectionHeader,
 } from "../components/ui/NotificationCard";
 import { NotificationEmptyState } from "../components/ui/NotificationEmptyState";
 import { NotificationSkeleton } from "../components/ui/NotificationSkeleton";
@@ -24,8 +24,8 @@ import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useNotifications } from "../hooks/useNotifications";
 import {
-    NotificationRecord,
-    getNotificationSections,
+  NotificationRecord,
+  getNotificationSections,
 } from "../services/notifications";
 
 export default function NotificationsScreen() {
@@ -34,8 +34,6 @@ export default function NotificationsScreen() {
   const { user, notifications, loading, error, markRead } = useNotifications();
   const horizontalPadding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - horizontalPadding * 2);
-
-  const [navigating, setNavigating] = useState(false);
 
   useEffect(() => {
     const callback = () => {
@@ -85,12 +83,16 @@ export default function NotificationsScreen() {
         return;
       }
 
-      const itemPath =
-        notification.type === "book"
-          ? "/book-preview"
-          : notification.type === "lesson"
-            ? "/lesson-player"
-            : "/page-preview";
+      let itemPath = "/book-preview";
+      if (notification.type === "book") {
+        itemPath = "/book-preview";
+      } else if (notification.type === "lesson") {
+        itemPath = "/lesson-player";
+      } else if (notification.type === "page") {
+        itemPath = "/page-preview";
+      } else if (notification.type === "paper") {
+        itemPath = "/pdf-reader";
+      }
 
       try {
         const ref = doc(
@@ -105,16 +107,15 @@ export default function NotificationsScreen() {
           return;
         }
 
-        const params =
-          notification.type === "book"
-            ? {
-                id: notification.itemId,
-                source: "notifications",
-                returnTo: "/notifications",
-              }
-            : { id: notification.itemId };
         if (notification.type === "book") {
-          router.push({ pathname: itemPath, params } as never);
+          router.push({
+            pathname: itemPath,
+            params: {
+              id: notification.itemId,
+              source: "notifications",
+              returnTo: "/notifications",
+            },
+          } as never);
         } else if (notification.type === "lesson") {
           const lessonData = snapshot.data() as Record<string, unknown>;
           router.push({
@@ -152,6 +153,30 @@ export default function NotificationsScreen() {
               avatar:
                 typeof lessonData.avatar === "string"
                   ? lessonData.avatar
+                  : undefined,
+            },
+          } as never);
+        } else if (notification.type === "paper") {
+          const paperData = snapshot.data() as Record<string, unknown>;
+          router.push({
+            pathname: itemPath,
+            params: {
+              id: notification.itemId,
+              title:
+                typeof paperData.title === "string"
+                  ? paperData.title
+                  : undefined,
+              document:
+                typeof paperData.document === "string"
+                  ? paperData.document
+                  : undefined,
+              cover:
+                typeof paperData.cover === "string"
+                  ? paperData.cover
+                  : undefined,
+              description:
+                typeof paperData.description === "string"
+                  ? paperData.description
                   : undefined,
             },
           } as never);
