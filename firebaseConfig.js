@@ -1,24 +1,51 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { initializeApp, getApps, getApp } from "firebase/app";
+import Constants from "expo-constants";
+import { getApp, getApps, initializeApp } from "firebase/app";
 import {
   getAuth,
-  initializeAuth,
   getReactNativePersistence,
+  initializeAuth,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { Platform } from "react-native";
 
+const extra = Constants.expoConfig?.extra ?? {};
+
 const firebaseConfig = {
-  apiKey: "AIzaSyCKAYN1h2binUbKcJAZhcXZL8KQ_rBs21I",
-  authDomain: "digilearn-af86d.firebaseapp.com",
-  projectId: "digilearn-af86d",
-  storageBucket: "digilearn-af86d.firebasestorage.app",
-  messagingSenderId: "851245099108",
-  appId: "1:851245099108:web:fab0d172231b2a550a9771",
+  apiKey:
+    process.env.EXPO_PUBLIC_FIREBASE_API_KEY || extra.firebaseApiKey || "",
+  authDomain:
+    process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ||
+    extra.firebaseAuthDomain ||
+    "",
+  projectId:
+    process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ||
+    extra.firebaseProjectId ||
+    "",
+  storageBucket:
+    process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ||
+    extra.firebaseStorageBucket ||
+    "",
+  messagingSenderId:
+    process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ||
+    extra.firebaseMessagingSenderId ||
+    "",
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID || extra.firebaseAppId || "",
 };
 
-export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+if (
+  !firebaseConfig.apiKey ||
+  !firebaseConfig.projectId ||
+  !firebaseConfig.appId
+) {
+  console.warn(
+    "Firebase config is missing. Set EXPO_PUBLIC_FIREBASE_* values in your local environment or app.config.ts extra values.",
+  );
+}
+
+export const app =
+  getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
@@ -36,4 +63,3 @@ if (Platform.OS === "web") {
 }
 
 export const auth = firebaseAuth;
-
