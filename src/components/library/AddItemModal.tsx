@@ -29,6 +29,7 @@ import {
   appendNotificationToAllUsers,
   buildLibraryNotification,
 } from "../../services/notifications";
+import PdfPreview from "../home/PdfPreview";
 import { AdminPublishHeader } from "./AdminPublishHeader";
 
 let WebView: any = null;
@@ -82,7 +83,8 @@ const INITIAL_FORM_STATE: FormState = {
 };
 
 const FALLBACK_ICON_URL = "icons/default-2d.png";
-const BANNER_TITLE_MAX_LENGTH = 100;
+const TITLE_MAX_LENGTH = 100;
+const DEFAULT_USER_AVATAR = require("../../../assets/images/user-default.png");
 
 const normalizeText = (value: string) =>
   value
@@ -334,11 +336,10 @@ export function AddItemModal({
   } | null>(null);
   const webViewRef = useRef<any>(null);
 
-  useEffect(() => {
-    if (!visible) {
-      setPdfToProcess(null);
-    }
-  }, [visible]);
+  const handleClose = () => {
+    setPdfToProcess(null);
+    onClose();
+  };
 
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -358,7 +359,10 @@ export function AddItemModal({
     };
 
     if (
-      (formType === "page" || formType === "paper" || formType === "banner") &&
+      (formType === "book" ||
+        formType === "page" ||
+        formType === "paper" ||
+        formType === "banner") &&
       visible
     ) {
       fetchSubjects();
@@ -369,14 +373,60 @@ export function AddItemModal({
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setSelectedImage(null);
+  };
+
+  const isAllowedDocument = (fileName: string, mimeType?: string | null) => {
+    const lowerName = fileName.toLowerCase();
+    const lowerMime = (mimeType || "").toLowerCase();
+
+    return (
+      lowerName.endsWith(".pdf") ||
+      lowerName.endsWith(".docx") ||
+      lowerMime === "application/pdf" ||
+      lowerMime ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    );
+  };
+
+  const isAllowedImage = (fileName: string, mimeType?: string | null) => {
+    const lowerName = fileName.toLowerCase();
+    const lowerMime = (mimeType || "").toLowerCase();
+
+    return (
+      lowerName.endsWith(".jpg") ||
+      lowerName.endsWith(".jpeg") ||
+      lowerName.endsWith(".png") ||
+      lowerMime === "image/jpeg" ||
+      lowerMime === "image/png"
+    );
+  };
+
   const pickDocument = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({});
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ],
+      });
       if (result.canceled || !result.assets || result.assets.length === 0) {
         return;
       }
       const file = result.assets[0];
-      // Enforce 5 MB max size
+      const fileName = file.name || "";
+      const mimeType = file.mimeType || "";
+
+      if (!isAllowedDocument(fileName, mimeType)) {
+        Alert.alert(
+          "Unsupported file type",
+          "Please select a PDF or DOCX file only.",
+        );
+        return;
+      }
+
       if (file.size && file.size > 5 * 1024 * 1024) {
         Alert.alert(
           "File Too Large",
@@ -399,6 +449,17 @@ export function AddItemModal({
       });
       if (result.canceled || !result.assets?.[0]) return;
       const image = result.assets[0];
+      const fileName = image.fileName || "";
+      const mimeType = image.mimeType || "";
+
+      if (!isAllowedImage(fileName, mimeType)) {
+        Alert.alert(
+          "Unsupported image type",
+          "Please select a JPG, JPEG, or PNG image only.",
+        );
+        return;
+      }
+
       if (image.fileSize && image.fileSize > 5 * 1024 * 1024) {
         Alert.alert(
           "Image Too Large",
@@ -412,6 +473,37 @@ export function AddItemModal({
       console.error("Error picking image", error);
     }
   };
+
+  const selectedPreviewAsset = (() => {
+    if (selectedImage) {
+      return {
+        type: "image" as const,
+        uri: selectedImage.uri,
+        name: selectedImage.fileName || "Selected image",
+      };
+    }
+
+    const file = selectedFile?.assets?.[0];
+    if (!file) return null;
+
+    const mimeType = (file.mimeType || "").toLowerCase();
+    const fileName = file.name || "";
+    const isPdf =
+      mimeType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf");
+    const isImage =
+      mimeType.startsWith("image/") ||
+      /\.(png|jpe?g|gif|webp|bmp)$/i.test(fileName);
+
+    if (isImage) {
+      return { type: "image" as const, uri: file.uri, name: fileName };
+    }
+
+    if (isPdf) {
+      return { type: "pdf" as const, uri: file.uri, name: fileName };
+    }
+
+    return null;
+  })();
 
   const pageClassOptions =
     formData.level === "Advanced"
@@ -451,11 +543,15 @@ export function AddItemModal({
   };
 
   const handleAddItem = async () => {
-    const normalizedTitle = normalizeText(formData.title);
-    const normalizedDescription = normalizeText(formData.subtitle);
-    const normalizedSubject = normalizeText(formData.subject);
+    const sanitizedTitle = normalizeText(formData.title);
+    const sanitizedDescription = normalizeText(formData.subtitle);
+    const sanitizedSubject = normalizeText(formData.subject);
+    const sanitizedBookDescription = normalizeText(formData.description);
+    const sanitizedAuthor = normalizeText(
+      profile?.name || auth.currentUser?.displayName || "Unknown author",
+    );
 
-    if ((formType === "book" || formType === "banner") && !normalizedTitle) {
+    if (!sanitizedTitle) {
       Alert.alert("Title required", "Enter a title before saving the post.");
       return;
     }
@@ -464,7 +560,7 @@ export function AddItemModal({
       setIsSubmitting(true);
 
       const payload = {
-        title: normalizedTitle || "Untitled",
+        title: sanitizedTitle,
       };
 
       let createdItemId = "";
@@ -511,10 +607,10 @@ export function AddItemModal({
         notificationType = "book";
         await setDoc(doc(db, "books", itemId), {
           ...payload,
-          author:
-            profile?.name || auth.currentUser?.displayName || "Unknown author",
+          author: sanitizedAuthor,
           owner: currentUserId,
-          description: normalizedDescription,
+          subject: sanitizedSubject || "General",
+          description: sanitizedDescription,
           cover: coverUrl,
           updatedAt: serverTimestamp(),
         });
@@ -582,13 +678,13 @@ export function AddItemModal({
         }
 
         await setDoc(doc(db, "teacherPosts", bannerId), {
-          title: normalizedTitle,
-          descriprion: normalizedDescription,
+          title: sanitizedTitle,
+          descriprion: sanitizedDescription,
           hasCover,
           cover: coverUrl,
           document: documentUrl,
           createdAt: serverTimestamp(),
-          subject: normalizedSubject || "General",
+          subject: sanitizedSubject || "General",
           owner: currentUserId,
           ownerType: profile?.type || "",
           fileType,
@@ -659,14 +755,14 @@ export function AddItemModal({
         await setDoc(doc(db, "pages", itemId), {
           book: bookList,
           cover: coverUrl,
-          description: formData.description.trim() || "",
+          description: sanitizedBookDescription || "",
           document: documentUrl,
           level: formData.level || "Ordinary",
-          subject: formData.subject.trim() || "General",
-          title: formData.title.trim() || "Untitled note",
+          subject: sanitizedSubject || "General",
+          title: sanitizedTitle,
           updatedAt: serverTimestamp(),
-          ...(formData.schoolClass.trim()
-            ? { schoolClass: formData.schoolClass.trim() }
+          ...(normalizeText(formData.schoolClass)
+            ? { schoolClass: normalizeText(formData.schoolClass) }
             : {}),
         });
       } else if (formType === "paper") {
@@ -748,14 +844,15 @@ export function AddItemModal({
         }
 
         await setDoc(doc(db, "pastPaper", itemId), {
-          title: formData.title.trim() || "Untitled paper",
-          description: formData.description.trim() || "",
-          subject: formData.subject.trim() || "General",
+          title: sanitizedTitle,
+          description: sanitizedBookDescription || "",
+          subject: sanitizedSubject || "General",
           document: documentUrl || "",
           cover: coverUrl,
           pageNumber: pageCount,
-          type: formData.author.trim() || "UNEB",
-          year: formData.extra.trim() || String(new Date().getFullYear()),
+          type: normalizeText(formData.author) || "UNEB",
+          year:
+            normalizeText(formData.extra) || String(new Date().getFullYear()),
           updatedAt: serverTimestamp(),
         });
       }
@@ -830,15 +927,11 @@ export function AddItemModal({
                 }
                 value={formData.title}
                 onChangeText={(val) => updateField("title", val)}
-                maxLength={
-                  formType === "banner" ? BANNER_TITLE_MAX_LENGTH : undefined
-                }
+                maxLength={TITLE_MAX_LENGTH}
               />
-              {formType === "banner" && (
-                <Text style={styles.titleCharacterCount}>
-                  {formData.title.length}/{BANNER_TITLE_MAX_LENGTH}
-                </Text>
-              )}
+              <Text style={styles.titleCharacterCount}>
+                {formData.title.length}/{TITLE_MAX_LENGTH}
+              </Text>
             </>
           )}
 
@@ -846,12 +939,60 @@ export function AddItemModal({
             <>
               <Text style={styles.fieldLabel}>Author</Text>
               <View style={styles.readOnlyField}>
-                <Icon name="user" size={16} color={colors.subtitle} />
+                <Image
+                  source={
+                    profile?.photoURL && profile.photoURL.trim()
+                      ? { uri: profile.photoURL }
+                      : auth.currentUser?.photoURL &&
+                          auth.currentUser.photoURL.trim()
+                        ? { uri: auth.currentUser.photoURL }
+                        : DEFAULT_USER_AVATAR
+                  }
+                  style={styles.authorAvatar}
+                />
                 <Text style={styles.readOnlyFieldText}>
                   {profile?.name ||
                     auth.currentUser?.displayName ||
                     "Your profile name"}
                 </Text>
+              </View>
+              <Text style={styles.fieldLabel}>Subject</Text>
+              <View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Select book subject"
+                  style={styles.dropdownTrigger}
+                  onPress={() => setSubjectDropdownOpen((prev) => !prev)}
+                >
+                  <Text style={styles.dropdownText}>
+                    {formData.subject || "Select subject"}
+                  </Text>
+                </Pressable>
+                {subjectDropdownOpen && (
+                  <View style={styles.dropdownMenu}>
+                    {subjects.map((option) => (
+                      <Pressable
+                        key={option.id}
+                        accessibilityRole="button"
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          updateField("subject", option.name);
+                          setSubjectDropdownOpen(false);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.dropdownItemText,
+                            formData.subject === option.name &&
+                              styles.dropdownItemTextActive,
+                          ]}
+                        >
+                          {option.name}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
               </View>
               <Text style={styles.fieldLabel}>Description</Text>
               <TextInput
@@ -938,9 +1079,12 @@ export function AddItemModal({
                   style={styles.dropdownTrigger}
                   onPress={() => setSubjectDropdownOpen((prev) => !prev)}
                 >
-                  <Text style={styles.dropdownText}>
-                    {formData.subject || "Select subject"}
-                  </Text>
+                  <View style={styles.dropdownContent}>
+                    <Icon name="book-open" size={16} color={colors.primary} />
+                    <Text style={styles.dropdownText}>
+                      {formData.subject || "Select subject"}
+                    </Text>
+                  </View>
                 </Pressable>
                 {subjectDropdownOpen && (
                   <View style={styles.dropdownMenu}>
@@ -984,6 +1128,32 @@ export function AddItemModal({
                   </Text>
                 </Pressable>
               </View>
+              {selectedPreviewAsset && (
+                <View style={styles.previewContainer}>
+                  <View style={styles.coverPreviewFrame}>
+                    {selectedPreviewAsset.type === "image" ? (
+                      <Image
+                        source={{ uri: selectedPreviewAsset.uri }}
+                        style={styles.documentPreviewImage}
+                      />
+                    ) : (
+                      <PdfPreview
+                        uri={selectedPreviewAsset.uri}
+                        style={styles.documentPreviewPdf}
+                      />
+                    )}
+                    <View style={styles.previewOverlay} pointerEvents="none" />
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Remove selected file"
+                      style={styles.previewRemoveButton}
+                      onPress={clearSelectedFile}
+                    >
+                      <Icon name="x" size={14} color={colors.white} />
+                    </Pressable>
+                  </View>
+                </View>
+              )}
             </>
           )}
 
@@ -997,9 +1167,12 @@ export function AddItemModal({
                   style={styles.dropdownTrigger}
                   onPress={() => setSubjectDropdownOpen((prev) => !prev)}
                 >
-                  <Text style={styles.dropdownText}>
-                    {formData.subject || "Select subject"}
-                  </Text>
+                  <View style={styles.dropdownContent}>
+                    <Icon name="book-open" size={16} color={colors.primary} />
+                    <Text style={styles.dropdownText}>
+                      {formData.subject || "Select subject"}
+                    </Text>
+                  </View>
                 </Pressable>
                 {subjectDropdownOpen && (
                   <View style={styles.dropdownMenu}>
@@ -1035,7 +1208,10 @@ export function AddItemModal({
                   style={styles.dropdownTrigger}
                   onPress={() => setLevelDropdownOpen((prev) => !prev)}
                 >
-                  <Text style={styles.dropdownText}>{formData.level}</Text>
+                  <View style={styles.dropdownContent}>
+                    <Icon name="layers" size={16} color={colors.primary} />
+                    <Text style={styles.dropdownText}>{formData.level}</Text>
+                  </View>
                 </Pressable>
                 {levelDropdownOpen && (
                   <View style={styles.dropdownMenu}>
@@ -1071,9 +1247,12 @@ export function AddItemModal({
                   style={styles.dropdownTrigger}
                   onPress={() => setClassDropdownOpen((prev) => !prev)}
                 >
-                  <Text style={styles.dropdownText}>
-                    {formData.schoolClass || "Select class"}
-                  </Text>
+                  <View style={styles.dropdownContent}>
+                    <Icon name="users" size={16} color={colors.primary} />
+                    <Text style={styles.dropdownText}>
+                      {formData.schoolClass || "Select class"}
+                    </Text>
+                  </View>
                 </Pressable>
                 {classDropdownOpen && (
                   <View style={styles.dropdownMenu}>
@@ -1116,12 +1295,41 @@ export function AddItemModal({
                 onPress={pickDocument}
                 disabled={isSubmitting}
               >
-                <Text style={styles.filePickerText}>
-                  {selectedFile?.assets?.[0]
-                    ? selectedFile.assets[0].name
-                    : "Tap to select a file (max 5 MB)"}
-                </Text>
+                <View style={styles.filePickerContent}>
+                  <Icon name="file-text" size={16} color={colors.primary} />
+                  <Text style={styles.filePickerText}>
+                    {selectedFile?.assets?.[0]
+                      ? selectedFile.assets[0].name
+                      : "Tap to select a file (max 5 MB)"}
+                  </Text>
+                </View>
               </Pressable>
+              {selectedPreviewAsset && (
+                <View style={styles.previewContainer}>
+                  <View style={styles.coverPreviewFrame}>
+                    {selectedPreviewAsset.type === "image" ? (
+                      <Image
+                        source={{ uri: selectedPreviewAsset.uri }}
+                        style={styles.documentPreviewImage}
+                      />
+                    ) : (
+                      <PdfPreview
+                        uri={selectedPreviewAsset.uri}
+                        style={styles.documentPreviewPdf}
+                      />
+                    )}
+                    <View style={styles.previewOverlay} pointerEvents="none" />
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Remove selected file"
+                      style={styles.previewRemoveButton}
+                      onPress={clearSelectedFile}
+                    >
+                      <Icon name="x" size={14} color={colors.white} />
+                    </Pressable>
+                  </View>
+                </View>
+              )}
               {/* <Text style={styles.fieldLabel}>Book</Text>
               <TextInput
                 style={styles.input}
@@ -1140,7 +1348,11 @@ export function AddItemModal({
                 placeholder="Paper title"
                 value={formData.title}
                 onChangeText={(val) => updateField("title", val)}
+                maxLength={TITLE_MAX_LENGTH}
               />
+              <Text style={styles.titleCharacterCount}>
+                {formData.title.length}/{TITLE_MAX_LENGTH}
+              </Text>
               <Text style={styles.fieldLabel}>Description</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -1158,9 +1370,12 @@ export function AddItemModal({
                   style={styles.dropdownTrigger}
                   onPress={() => setSubjectDropdownOpen((prev) => !prev)}
                 >
-                  <Text style={styles.dropdownText}>
-                    {formData.subject || "Select subject"}
-                  </Text>
+                  <View style={styles.dropdownContent}>
+                    <Icon name="book-open" size={16} color={colors.primary} />
+                    <Text style={styles.dropdownText}>
+                      {formData.subject || "Select subject"}
+                    </Text>
+                  </View>
                 </Pressable>
                 {subjectDropdownOpen && (
                   <View style={styles.dropdownMenu}>
@@ -1194,12 +1409,41 @@ export function AddItemModal({
                 onPress={pickDocument}
                 disabled={isSubmitting}
               >
-                <Text style={styles.filePickerText}>
-                  {selectedFile?.assets?.[0]
-                    ? selectedFile.assets[0].name
-                    : "Tap to select a document (max 5 MB)"}
-                </Text>
+                <View style={styles.filePickerContent}>
+                  <Icon name="file-text" size={16} color={colors.primary} />
+                  <Text style={styles.filePickerText}>
+                    {selectedFile?.assets?.[0]
+                      ? selectedFile.assets[0].name
+                      : "Tap to select a document (max 5 MB)"}
+                  </Text>
+                </View>
               </Pressable>
+              {selectedPreviewAsset && (
+                <View style={styles.previewContainer}>
+                  <View style={styles.coverPreviewFrame}>
+                    {selectedPreviewAsset.type === "image" ? (
+                      <Image
+                        source={{ uri: selectedPreviewAsset.uri }}
+                        style={styles.documentPreviewImage}
+                      />
+                    ) : (
+                      <PdfPreview
+                        uri={selectedPreviewAsset.uri}
+                        style={styles.documentPreviewPdf}
+                      />
+                    )}
+                    <View style={styles.previewOverlay} pointerEvents="none" />
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Remove selected file"
+                      style={styles.previewRemoveButton}
+                      onPress={clearSelectedFile}
+                    >
+                      <Icon name="x" size={14} color={colors.white} />
+                    </Pressable>
+                  </View>
+                </View>
+              )}
               <Text style={styles.fieldLabel}>Type</Text>
               <TextInput
                 style={styles.input}
@@ -1221,7 +1465,7 @@ export function AddItemModal({
           <View style={styles.modalActions}>
             <Pressable
               style={styles.secondaryButton}
-              onPress={onClose}
+              onPress={handleClose}
               disabled={isSubmitting}
             >
               <Text style={styles.secondaryButtonText}>Cancel</Text>
@@ -1286,7 +1530,7 @@ export function AddItemModal({
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       {composerContent}
     </Modal>
@@ -1321,17 +1565,24 @@ const styles = StyleSheet.create({
   },
   filePicker: {
     borderWidth: 1,
-    borderColor: "#E5E7EB",
+    borderColor: "rgba(37, 99, 235, 0.28)",
     borderRadius: 12,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     marginBottom: spacing.md,
-    backgroundColor: colors.white,
+    backgroundColor: "rgba(37, 99, 235, 0.06)",
     justifyContent: "center",
   },
+  filePickerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   filePickerText: {
-    color: colors.text,
+    flex: 1,
+    color: colors.primary,
     fontSize: 14,
+    fontWeight: "600",
   },
   attachmentRow: {
     flexDirection: "row",
@@ -1345,16 +1596,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     borderWidth: 1,
-    borderColor: "#DCE3ED",
+    borderColor: "rgba(16, 185, 129, 0.28)",
     borderRadius: 14,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.white,
+    backgroundColor: "rgba(16, 185, 129, 0.06)",
   },
   attachmentButtonText: {
     flex: 1,
-    color: colors.text,
+    color: "#0F766E",
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   modalContent: {
     paddingBottom: spacing.xl,
@@ -1406,12 +1657,62 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  authorAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#E5E7EB",
+  },
   coverPreview: {
     width: 112,
     height: 148,
     borderRadius: 12,
     marginBottom: spacing.md,
     resizeMode: "cover",
+  },
+  previewContainer: {
+    marginBottom: spacing.md,
+  },
+  coverPreviewFrame: {
+    position: "relative",
+    alignSelf: "flex-start",
+    marginBottom: spacing.md,
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    backgroundColor: colors.white,
+  },
+  previewOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(15, 23, 42, 0.2)",
+  },
+  previewRemoveButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.6)",
+    zIndex: 1,
+  },
+  documentPreviewImage: {
+    width: 112,
+    height: 148,
+    borderRadius: 12,
+    resizeMode: "cover",
+    backgroundColor: "#F3F4F6",
+  },
+  documentPreviewPdf: {
+    width: 112,
+    height: 148,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
   },
   textArea: {
     minHeight: 96,
@@ -1446,6 +1747,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     marginBottom: spacing.md,
     backgroundColor: colors.white,
+  },
+  dropdownContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   dropdownText: {
     color: colors.text,

@@ -7,6 +7,14 @@
     "icon": "./assets/images/panda.png",
     "scheme": "digilearn",
     "userInterfaceStyle": "automatic",
+    "extra": {
+      "firebaseApiKey": "AIzaSyCKAYN1h2binUbKcJAZhcXZL8KQ_rBs21I",
+      "firebaseAuthDomain": "digilearn-af86d.firebaseapp.com",
+      "firebaseProjectId": "digilearn-af86d",
+      "firebaseStorageBucket": "digilearn-af86d.firebasestorage.app",
+      "firebaseMessagingSenderId": "851245099108",
+      "firebaseAppId": "1:851245099108:web:fab0d172231b2a550a9771"
+    },
     "ios": {
       "icon": "./assets/expo.icon"
     },
@@ -20,7 +28,17 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/panda.png"
+      "favicon": "./assets/images/panda.png",
+      "config": {
+        "firebase": {
+          "apiKey": "AIzaSyCKAYN1h2binUbKcJAZhcXZL8KQ_rBs21I",
+          "authDomain": "digilearn-af86d.firebaseapp.com",
+          "projectId": "digilearn-af86d",
+          "storageBucket": "digilearn-af86d.firebasestorage.app",
+          "messagingSenderId": "851245099108",
+          "appId": "1:851245099108:web:fab0d172231b2a550a9771"
+        }
+      }
     },
     "plugins": [
       "expo-router",
