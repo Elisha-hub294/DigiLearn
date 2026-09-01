@@ -9,10 +9,52 @@ type PaperCardProps = {
   pages?: string;
   image?: string;
   document?: string;
+  description?: string;
+  level?: string;
+  pageNumber?: string | number;
+  paperCode?: string;
+  paperNumber?: string | number;
 };
 
-export function PaperCard({ title, image, document }: PaperCardProps) {
+export function PaperCard({
+  title,
+  image,
+  document,
+  subject,
+  description,
+  level,
+  pageNumber,
+  paperCode,
+  paperNumber,
+}: PaperCardProps) {
   const router = useRouter();
+
+  const normalizedPaperCode = paperCode?.trim();
+  const normalizedPaperNumber =
+    typeof paperNumber === "number"
+      ? String(paperNumber)
+      : paperNumber?.trim();
+  const paperReference = normalizedPaperCode
+    ? normalizedPaperNumber
+      ? `${normalizedPaperCode}/${normalizedPaperNumber}`
+      : normalizedPaperCode
+    : "";
+
+  const normalizedPageNumber =
+    typeof pageNumber === "number"
+      ? String(pageNumber)
+      : pageNumber?.trim();
+  const pageCountText = normalizedPageNumber
+    ? `${normalizedPageNumber} ${Number(normalizedPageNumber) === 1 ? "page" : "pages"}`
+    : "";
+
+  const details = [
+    subject?.trim() || "",
+    paperReference,
+    level?.trim() || "",
+    pageCountText,
+    description?.trim() || "",
+  ].filter(Boolean);
 
   const openPdf = () => {
     if (!document) return;
@@ -47,6 +89,15 @@ export function PaperCard({ title, image, document }: PaperCardProps) {
         <Text style={styles.title} numberOfLines={2}>
           {title}
         </Text>
+        {details.length > 0 && (
+          <View style={styles.details}>
+            {details.map((detail, index) => (
+              <Text key={`${detail}-${index}`} style={styles.detailText} numberOfLines={2}>
+                {detail}
+              </Text>
+            ))}
+          </View>
+        )}
       </View>
     </Pressable>
   );
@@ -90,5 +141,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     lineHeight: 20,
+  },
+  details: {
+    marginTop: spacing.xs,
+    gap: 2,
+  },
+  detailText: {
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 16,
   },
 });

@@ -10,6 +10,11 @@ type PaperItem = {
   pages?: string;
   image?: any;
   document?: string;
+  description?: string;
+  level?: string;
+  pageNumber?: string | number;
+  paperCode?: string;
+  paperNumber?: string | number;
 };
 
 type PaperCarouselProps = {
@@ -32,6 +37,11 @@ export function PaperCarousel({ items }: PaperCarouselProps) {
           subject={item.subject}
           year={item.year}
           pages={item.pages}
+          description={item.description}
+          level={item.level}
+          pageNumber={item.pageNumber}
+          paperCode={item.paperCode}
+          paperNumber={item.paperNumber}
           image={item.image}
           document={item.document}
         />

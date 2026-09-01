@@ -38,6 +38,11 @@ export type PaperItem = {
   pages: string;
   image: ImageSource;
   document?: string;
+  description?: string;
+  level?: string;
+  pageNumber?: string | number;
+  paperCode?: string;
+  paperNumber?: string | number;
 };
 
 export type PaperSection = {
@@ -295,6 +300,20 @@ export function useLibraryData() {
         const normalizedYear = year.trim() || String(new Date().getFullYear());
         const title = pickString([data.title, data.name], `Paper ${index + 1}`);
         const subject = pickString([data.subject, data.topic], "General");
+        const description = pickString(
+          [data.description, data.summary, data.caption],
+          "",
+        );
+        const level = pickString(
+          [data.level, data.examLevel, data.classLevel, data.educationLevel],
+          "",
+        );
+        const pageNumber = pickString(
+          [data.pageNumber, data.pages, data.pageCount, data.totalPages],
+          "",
+        );
+        const paperCode = pickString([data.paperCode, data.code], "");
+        const paperNumber = pickString([data.paperNumber, data.number], "");
         const pages = formatPages(
           data.pages ?? data.pageCount ?? data.pageNumber,
         );
@@ -307,6 +326,11 @@ export function useLibraryData() {
           subject,
           year: normalizedYear,
           pages,
+          description,
+          level,
+          pageNumber,
+          paperCode,
+          paperNumber,
           image: pickImage(
             [data.cover, data.image, data.coverImage, data.thumbnail],
             "",
