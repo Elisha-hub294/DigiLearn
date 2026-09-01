@@ -15,6 +15,7 @@ export type FormState = {
   document: string;
   book: string;
   level: string;
+  paperCode: string;
   schoolClass: string;
   notifyUsers: boolean;
 };
@@ -34,6 +35,7 @@ export const INITIAL_FORM_STATE: FormState = {
   document: "",
   book: "",
   level: "",
+  paperCode: "",
   schoolClass: "",
   notifyUsers: true,
 };

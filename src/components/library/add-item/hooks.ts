@@ -94,7 +94,16 @@ export const useFormOptions = (
   formType: "book" | "banner" | "paper" | "page",
   visible: boolean,
 ) => {
-  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
+  const [subjects, setSubjects] = useState<
+    {
+      id: string;
+      name: string;
+      ordinary?: string;
+      advanced?: string;
+      ordinaryPapers?: number;
+      advancedPapers?: number;
+    }[]
+  >([]);
   const [pastPaperTypes, setPastPaperTypes] = useState<
     { id: string; name: string }[]
   >([]);

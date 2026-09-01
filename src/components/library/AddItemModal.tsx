@@ -357,6 +357,57 @@ export function AddItemModal({
     return null;
   })();
 
+  const selectedSubject = subjects.find(
+    (subject) => subject.name === formData.subject,
+  );
+  const selectedPaperCodePrefix =
+    formData.level?.toLowerCase() === "ordinary"
+      ? (selectedSubject?.ordinary ?? "")
+      : formData.level?.toLowerCase() === "advanced"
+        ? (selectedSubject?.advanced ?? "")
+        : "";
+  const subjectPaperCount =
+    formData.level?.toLowerCase() === "ordinary"
+      ? (selectedSubject?.ordinaryPapers ?? 0)
+      : formData.level?.toLowerCase() === "advanced"
+        ? (selectedSubject?.advancedPapers ?? 0)
+        : 0;
+
+  const paperCodeOptions = Array.from(
+    { length: Math.max(subjectPaperCount, 0) },
+    (_, index) => index + 1,
+  );
+
+  useEffect(() => {
+    if (!formData.subject || !formData.level) {
+      if (formData.paperCode) {
+        updateField("paperCode", "");
+      }
+      return;
+    }
+
+    if (!selectedPaperCodePrefix) {
+      if (formData.paperCode) {
+        updateField("paperCode", "");
+      }
+      return;
+    }
+
+    const isValidPaperCode =
+      formData.paperCode === selectedPaperCodePrefix ||
+      formData.paperCode.startsWith(`${selectedPaperCodePrefix}/`);
+
+    if (!formData.paperCode || !isValidPaperCode) {
+      updateField("paperCode", selectedPaperCodePrefix);
+    }
+  }, [
+    formData.level,
+    formData.paperCode,
+    formData.subject,
+    selectedPaperCodePrefix,
+    updateField,
+  ]);
+
   const yearPickerDate = getYearPickerDate(formData.extra || currentYear);
 
   const sanitizeYearInputValue = (value: string) => {
@@ -695,6 +746,7 @@ export function AddItemModal({
           pageCount,
           coverUrl,
           documentUrl,
+          normalizeText(formData.paperCode),
         );
         notificationType = "paper";
       }
@@ -1312,6 +1364,53 @@ export function AddItemModal({
                   </View>
                 </View>
 
+                {formData.subject &&
+                  formData.level &&
+                  selectedPaperCodePrefix && (
+                    <View style={styles.paperCodeSection}>
+                      <Text style={styles.fieldLabel}>Paper code</Text>
+                      <TextInput
+                        style={styles.paperCodeInput}
+                        value={formData.paperCode || selectedPaperCodePrefix}
+                        editable={false}
+                        placeholder="Paper code"
+                      />
+                      {paperCodeOptions.length > 0 && (
+                        <View style={styles.paperCodeRow}>
+                          {paperCodeOptions.map((paperNumber) => {
+                            const paperCodeValue = `${selectedPaperCodePrefix}/${paperNumber}`;
+                            const isSelected =
+                              formData.paperCode === paperCodeValue;
+                            return (
+                              <Pressable
+                                key={paperNumber}
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: isSelected }}
+                                style={[
+                                  styles.paperCodeChip,
+                                  isSelected && styles.paperCodeChipSelected,
+                                ]}
+                                onPress={() =>
+                                  updateField("paperCode", paperCodeValue)
+                                }
+                              >
+                                <Text
+                                  style={[
+                                    styles.paperCodeChipText,
+                                    isSelected &&
+                                      styles.paperCodeChipTextSelected,
+                                  ]}
+                                >
+                                  {`Paper ${paperNumber}`}
+                                </Text>
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      )}
+                    </View>
+                  )}
+
                 <Text style={styles.fieldLabel}>Document file</Text>
                 <View {...getWebDropHandlers("document")}>
                   <Pressable
@@ -1748,6 +1847,46 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.6)",
     zIndex: 1,
+  },
+  paperCodeSection: {
+    marginBottom: spacing.md,
+  },
+  paperCodeInput: {
+    borderWidth: 1,
+    borderColor: "#DCE3ED",
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    marginBottom: spacing.sm,
+    backgroundColor: colors.white,
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  paperCodeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  paperCodeChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(37, 99, 235, 0.2)",
+    backgroundColor: colors.white,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  paperCodeChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  paperCodeChipText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  paperCodeChipTextSelected: {
+    color: colors.white,
   },
   documentPreviewImage: {
     width: 112,

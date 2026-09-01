@@ -62,15 +62,38 @@ export const uploadAssetToStorage = async (
  * Fetches available subjects from database
  */
 export const fetchSubjects = async (): Promise<
-  { id: string; name: string }[]
+  {
+    id: string;
+    name: string;
+    ordinary?: string;
+    advanced?: string;
+    ordinaryPapers?: number;
+    advancedPapers?: number;
+  }[]
 > => {
   try {
     const snapshot = await getDocs(collection(db, "subject"));
     return snapshot.docs
-      .map((doc) => ({
-        id: doc.id,
-        name: doc.data().name as string,
-      }))
+      .map((doc) => {
+        const data = doc.data();
+        const ordinaryPapers =
+          typeof data.ordinaryPapers === "number"
+            ? data.ordinaryPapers
+            : Number(data.ordinaryPapers) || 0;
+        const advancedPapers =
+          typeof data.advancedPapers === "number"
+            ? data.advancedPapers
+            : Number(data.advancedPapers) || 0;
+
+        return {
+          id: doc.id,
+          name: (data.name as string) || "",
+          ordinary: (data.ordinary as string) || "",
+          advanced: (data.advanced as string) || "",
+          ordinaryPapers,
+          advancedPapers,
+        };
+      })
       .filter((item) => item.name)
       .sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
@@ -205,6 +228,7 @@ export const addPastPaper = async (
   pageCount: number,
   coverUrl: string,
   documentUrl: string,
+  paperCode: string,
 ) => {
   const itemId = `${getTitleDocId(title)}-${Date.now()}_${Math.random()
     .toString(36)
@@ -220,6 +244,7 @@ export const addPastPaper = async (
     type: type || "UNEB",
     level: level || "Ordinary",
     year: year || String(new Date().getFullYear()),
+    paperCode: paperCode || "",
     updatedAt: serverTimestamp(),
   });
 
