@@ -83,7 +83,7 @@ function isValidYouTubeVideoUrl(url: string): boolean {
 async function fetchYoutubeVideoMeta(videoUrl: string) {
   const videoId = extractYoutubeId(videoUrl);
   if (!videoId) {
-    return { duration: "", thumbnail: "" };
+    return { title: "", duration: "", thumbnail: "" };
   }
 
   const apiKey =
@@ -94,11 +94,12 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
   try {
     if (apiKey) {
       const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${apiKey}`,
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${apiKey}`,
       );
       if (response.ok) {
         const data = await response.json();
         const item = data.items?.[0];
+        const title = item?.snippet?.title || "";
         const durationISO = item?.contentDetails?.duration;
 
         if (durationISO) {
@@ -112,10 +113,19 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
             const totalSeconds = hours * 3600 + minutes * 60 + seconds;
 
             return {
+              title,
               duration: formatDurationFromSeconds(totalSeconds),
               thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
             };
           }
+        }
+
+        if (title) {
+          return {
+            title,
+            duration: "",
+            thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+          };
         }
       }
     }
@@ -126,6 +136,7 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
 
     if (!infoResponse.ok) {
       return {
+        title: "",
         duration: "",
         thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
       };
@@ -138,6 +149,7 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
     if (playerResponse) {
       const parsed = JSON.parse(decodeURIComponent(playerResponse));
       const videoDetails = parsed.videoDetails || parsed;
+      const title = videoDetails.title || "";
       const lengthSeconds = Number(videoDetails.lengthSeconds || 0);
       const thumbnails = videoDetails.thumbnail?.thumbnails || [];
       const bestThumb =
@@ -145,18 +157,21 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
         `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 
       return {
+        title,
         duration: formatDurationFromSeconds(lengthSeconds),
         thumbnail: bestThumb,
       };
     }
 
     return {
+      title: "",
       duration: "",
       thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
     };
   } catch (error) {
     console.error("Failed to fetch YouTube metadata:", error);
     return {
+      title: "",
       duration: "",
       thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
     };
@@ -195,6 +210,7 @@ export default function AddTrendingLessonScreen() {
       setLinkError("");
       setDuration("");
       setThumbnail("");
+      setTitle("");
       return;
     }
 
@@ -202,6 +218,7 @@ export default function AddTrendingLessonScreen() {
       setLinkError("Only YouTube video links are allowed.");
       setDuration("");
       setThumbnail("");
+      setTitle("");
       setMetaLoading(false);
       return;
     }
@@ -212,9 +229,13 @@ export default function AddTrendingLessonScreen() {
       const meta = await fetchYoutubeVideoMeta(value.trim());
       setDuration(meta.duration || "");
       setThumbnail(meta.thumbnail || "");
+      if (meta.title && !title.trim()) {
+        setTitle(meta.title);
+      }
     } catch {
       setDuration("");
       setThumbnail("");
+      setTitle("");
     } finally {
       setMetaLoading(false);
     }
@@ -286,11 +307,51 @@ export default function AddTrendingLessonScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <Text style={styles.helperText}>
+            Paste a YouTube link to auto-fill the lesson details.
+          </Text>
+
+          <Text style={styles.label}>YouTube Link</Text>
+          <TextInput
+            value={link}
+            onChangeText={handleLinkChange}
+            placeholder="https://www.youtube.com/watch?v=..."
+            style={[styles.input, linkError ? styles.inputError : null]}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            textContentType="URL"
+          />
+          {linkError ? <Text style={styles.errorText}>{linkError}</Text> : null}
+
+          {(thumbnail || metaLoading) && (
+            <View style={styles.previewWrap}>
+              <Text style={styles.label}>Lesson Preview</Text>
+              <View style={styles.previewCard}>
+                {thumbnail ? (
+                  <Image
+                    source={{ uri: thumbnail }}
+                    style={styles.previewThumbnail}
+                  />
+                ) : (
+                  <View style={styles.previewThumbPlaceholder}>
+                    <ActivityIndicator color={colors.primary} />
+                  </View>
+                )}
+                {duration ? (
+                  <View style={styles.durationBadge}>
+                    <Text style={styles.durationText}>{duration}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          )}
+
           <Text style={styles.label}>Title</Text>
           <TextInput
             value={title}
             onChangeText={setTitle}
-            placeholder="e.g. Quadratic equations revision"
+            placeholder="Lesson title"
             style={styles.input}
           />
 
@@ -319,42 +380,6 @@ export default function AddTrendingLessonScreen() {
             )}
             <Text style={styles.teacherChipText}>{teacherName}</Text>
           </View>
-
-          <Text style={styles.label}>YouTube Link</Text>
-          <TextInput
-            value={link}
-            onChangeText={handleLinkChange}
-            placeholder="https://www.youtube.com/watch?v=..."
-            style={[styles.input, linkError ? styles.inputError : null]}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-            textContentType="URL"
-          />
-          {linkError ? <Text style={styles.errorText}>{linkError}</Text> : null}
-
-          {(thumbnail || metaLoading) && (
-            <View style={styles.previewWrap}>
-              <Text style={styles.label}>Video Preview</Text>
-              <View style={styles.previewCard}>
-                {thumbnail ? (
-                  <Image
-                    source={{ uri: thumbnail }}
-                    style={styles.previewThumbnail}
-                  />
-                ) : (
-                  <View style={styles.previewThumbPlaceholder}>
-                    <ActivityIndicator color={colors.primary} />
-                  </View>
-                )}
-                {duration ? (
-                  <View style={styles.durationBadge}>
-                    <Text style={styles.durationText}>{duration}</Text>
-                  </View>
-                ) : null}
-              </View>
-            </View>
-          )}
 
           <View style={styles.notifySection}>
             <View style={styles.notifySectionContent}>
@@ -396,7 +421,7 @@ export default function AddTrendingLessonScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitText}>Save lesson</Text>
+              <Text style={styles.submitText}>Publish lesson</Text>
             )}
           </Pressable>
         </ScrollView>
@@ -444,6 +469,13 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
   },
   content: { paddingBottom: spacing.xxl },
+  helperText: {
+    color: colors.subtitle,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+  },
   label: {
     color: colors.subtitle,
     fontSize: 14,

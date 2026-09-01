@@ -104,7 +104,7 @@ export function PaperFormSection({
       </Text>
 
       <FieldLabel>Subject</FieldLabel>
-      <View>
+      <View style={styles.dropdownWrap}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Select subject"
@@ -148,7 +148,7 @@ export function PaperFormSection({
       <View style={styles.twoColumnRow}>
         <View style={styles.twoColumnField}>
           <FieldLabel>Type</FieldLabel>
-          <View>
+          <View style={styles.dropdownWrap}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select paper type"
@@ -192,7 +192,7 @@ export function PaperFormSection({
 
         <View style={styles.twoColumnField}>
           <FieldLabel>Level</FieldLabel>
-          <View>
+          <View style={styles.dropdownWrap}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select paper level"

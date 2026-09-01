@@ -377,6 +377,7 @@ export function AddItemModal({
     { length: Math.max(subjectPaperCount, 0) },
     (_, index) => index + 1,
   );
+  const shouldShowPaperCodeButtons = subjectPaperCount > 1;
 
   useEffect(() => {
     if (!formData.subject || !formData.level) {
@@ -393,6 +394,11 @@ export function AddItemModal({
       return;
     }
 
+    if (subjectPaperCount === 1) {
+      updateField("paperCode", `${selectedPaperCodePrefix}/1`);
+      return;
+    }
+
     const isValidPaperCode =
       formData.paperCode === selectedPaperCodePrefix ||
       formData.paperCode.startsWith(`${selectedPaperCodePrefix}/`);
@@ -405,6 +411,7 @@ export function AddItemModal({
     formData.paperCode,
     formData.subject,
     selectedPaperCodePrefix,
+    subjectPaperCount,
     updateField,
   ]);
 
@@ -933,7 +940,7 @@ export function AddItemModal({
                   {formData.description.length}/{DESCRIPTION_MAX_LENGTH}
                 </Text>
                 <Text style={styles.fieldLabel}>Subject</Text>
-                <View>
+                <View style={styles.dropdownWrap}>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel="Select subject"
@@ -977,7 +984,7 @@ export function AddItemModal({
                 <View style={styles.twoColumnRow}>
                   <View style={styles.twoColumnField}>
                     <Text style={styles.fieldLabel}>Level</Text>
-                    <View>
+                    <View style={styles.dropdownWrap}>
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Select page level"
@@ -1025,7 +1032,7 @@ export function AddItemModal({
 
                   <View style={styles.twoColumnField}>
                     <Text style={styles.fieldLabel}>Class</Text>
-                    <View>
+                    <View style={styles.dropdownWrap}>
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Select class"
@@ -1173,7 +1180,7 @@ export function AddItemModal({
                   {formData.description.length}/{DESCRIPTION_MAX_LENGTH}
                 </Text>
                 <Text style={styles.fieldLabel}>Subject</Text>
-                <View>
+                <View style={styles.dropdownWrap}>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel="Select subject"
@@ -1217,7 +1224,7 @@ export function AddItemModal({
                 <View style={styles.twoColumnRow}>
                   <View style={styles.twoColumnField}>
                     <Text style={styles.fieldLabel}>Type</Text>
-                    <View>
+                    <View style={styles.dropdownWrap}>
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Select paper type"
@@ -1261,7 +1268,7 @@ export function AddItemModal({
 
                   <View style={styles.twoColumnField}>
                     <Text style={styles.fieldLabel}>Level</Text>
-                    <View>
+                    <View style={styles.dropdownWrap}>
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel="Select paper level"
@@ -1371,11 +1378,16 @@ export function AddItemModal({
                       <Text style={styles.fieldLabel}>Paper code</Text>
                       <TextInput
                         style={styles.paperCodeInput}
-                        value={formData.paperCode || selectedPaperCodePrefix}
+                        value={
+                          formData.paperCode ||
+                          (subjectPaperCount === 1
+                            ? `${selectedPaperCodePrefix}/1`
+                            : selectedPaperCodePrefix)
+                        }
                         editable={false}
                         placeholder="Paper code"
                       />
-                      {paperCodeOptions.length > 0 && (
+                      {shouldShowPaperCodeButtons && (
                         <View style={styles.paperCodeRow}>
                           {paperCodeOptions.map((paperNumber) => {
                             const paperCodeValue = `${selectedPaperCodePrefix}/${paperNumber}`;
@@ -1391,7 +1403,12 @@ export function AddItemModal({
                                   isSelected && styles.paperCodeChipSelected,
                                 ]}
                                 onPress={() =>
-                                  updateField("paperCode", paperCodeValue)
+                                  updateField(
+                                    "paperCode",
+                                    isSelected
+                                      ? selectedPaperCodePrefix
+                                      : paperCodeValue,
+                                  )
                                 }
                               >
                                 <Text
@@ -1926,6 +1943,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 8,
   },
+  dropdownWrap: {
+    position: "relative",
+    zIndex: 1,
+  },
   dropdownTrigger: {
     borderWidth: 1,
     borderColor: "#E5E7EB",
@@ -1945,12 +1966,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   dropdownMenu: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    zIndex: 30,
     borderWidth: 1,
     borderColor: "#E5E7EB",
     borderRadius: 12,
     backgroundColor: colors.white,
-    marginBottom: spacing.md,
+    marginTop: 6,
     overflow: "hidden",
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+    maxHeight: 220,
   },
   dropdownItem: {
     paddingHorizontal: spacing.md,

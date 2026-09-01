@@ -46,7 +46,7 @@ export function BookFormSection({
       />
 
       <Text style={styles.fieldLabel}>Subject</Text>
-      <View>
+      <View style={styles.dropdownWrap}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Select book subject"

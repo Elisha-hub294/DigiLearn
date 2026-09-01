@@ -55,7 +55,7 @@ export function BannerFormSection({
         {formData.subtitle.length}/500
       </Text>
       <Text style={styles.fieldLabel}>Subject</Text>
-      <View>
+      <View style={styles.dropdownWrap}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Select subject"

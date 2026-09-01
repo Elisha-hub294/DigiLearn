@@ -97,7 +97,7 @@ export function PageFormSection({
       </Text>
 
       <FieldLabel>Subject</FieldLabel>
-      <View>
+      <View style={styles.dropdownWrap}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Select subject"
@@ -141,7 +141,7 @@ export function PageFormSection({
       <View style={styles.twoColumnRow}>
         <View style={styles.twoColumnField}>
           <FieldLabel>Level</FieldLabel>
-          <View>
+          <View style={styles.dropdownWrap}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select page level"
@@ -183,7 +183,7 @@ export function PageFormSection({
 
         <View style={styles.twoColumnField}>
           <FieldLabel>Class</FieldLabel>
-          <View>
+          <View style={styles.dropdownWrap}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select class"
