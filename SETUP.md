@@ -1,42 +1,43 @@
 # DigiLearn - Setup Guide for Judges
 
-Thank you for evaluating DigiLearn! This guide walks you through setting up the project locally.
+Thank you for evaluating DigiLearn! I've put together this guide to help you get the project running smoothly on your machine.
 
-## Prerequisites
+## What You'll Need
 
-- Node.js 20.19.x or later
-- npm or yarn
-- Expo CLI: `npm install -g expo-cli`
-- A mobile device or emulator (Android/iOS) OR use Expo Go
+Before you start, make sure you have:
 
-## Installation Steps
+- **Node.js** 20.19.x or later ([download here](https://nodejs.org/))
+- **npm** or **yarn** (comes with Node.js)
+- **Expo CLI**: Install with `npm install -g expo-cli`
+- A mobile device with Expo Go app, OR an Android/iOS emulator, OR just use the web preview
 
-### 1. Clone the Repository
+## Getting Started
+
+### Step 1: Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd DigiLearn
 ```
 
-### 2. Install Dependencies
+### Step 2: Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure Environment Variables
+### Step 3: Set Up Your Environment Variables
 
-The app requires Firebase and Google OAuth credentials to run.
+DigiLearn needs Firebase and Google OAuth credentials to run fully. Here's what to do:
 
-1. Copy `.env.example` to `.env`:
-
+1. Copy the example environment file:
    ```bash
    cp .env.example .env
    ```
 
-2. **Contact the developer** for the actual Firebase and Google OAuth credentials and add them to `.env`
+2. **Email me** at **elishabagalw@gmail.com** to request the Firebase and Google OAuth credentials
 
-   The `.env` file should look like:
+3. Once you receive them, add them to your `.env` file. It should look like this:
 
    ```
    EXPO_PUBLIC_FIREBASE_API_KEY=<your-api-key>
@@ -48,88 +49,94 @@ The app requires Firebase and Google OAuth credentials to run.
    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<your-google-client-id>
    ```
 
-### 4. Start the Development Server
+### Step 4: Start the App
 
 ```bash
 npm start
 ```
 
-You will see a QR code. You can:
+You'll see a QR code. Here's how to run it:
 
-- **On Android/iOS device**: Open Expo Go app and scan the QR code
-- **On web**: Press `w` to open the web preview
-- **On emulator**: Press `a` (Android) or `i` (iOS)
+- **On your phone**: Open Expo Go (Android) or scan with your Camera app (iOS), then tap the notification
+- **On web**: Press `w` in the terminal to open the web preview
+- **On Android emulator**: Press `a`
+- **On iOS simulator**: Press `i`
 
-## Key Features
+## What You'll Find Inside
 
 ### Authentication
+- Sign up and log in with your email and password
+- Quick sign-in with Google (native on mobile, popup on web)
 
-- Sign up and log in with Email & Password
-- Google OAuth sign-in (native on mobile, popup on web)
-
-### Study Resources
-
-- Browse books, lessons, and pages
-- Save resources for later
-- AI-powered study assistant (powered by Gemini)
+### Learning Resources
+- Browse textbooks, past papers, and study notes
+- Save materials for later study
+- Chat with an AI study assistant powered by Google Gemini
 
 ### Teacher Features
+- Post and share study materials
+- Share announcements with students
+- Manage all your uploaded content
 
-- Post study materials and announcements
-- Manage uploaded content
-
-## Troubleshooting
+## If Something Goes Wrong
 
 ### "Firebase config is missing"
 
-This warning appears if `.env` values are empty. **Ensure you have configured `.env` with the correct credentials.**
+You'll see this warning if your `.env` file is empty or missing values. Just make sure you've filled in all the credentials from Step 3 above.
 
 ### "Google Sign-In not available in Expo Go"
 
-Google Sign-In on mobile requires a development build. You can:
+Google Sign-In on mobile requires a production build. No worries—you have options:
 
-- Use email/password authentication instead
-- Build the app locally using `eas build` (requires Expo account)
-- Test on web with `npm run web`
+- Use email/password login instead (all features work the same)
+- Test the Google sign-in on the web version with `npm run web`
+- If you really want to test native Google Sign-In, let me know and I can build it for you
 
-### Build fails with "Constants.expoConfig is undefined"
+### "Constants.expoConfig is undefined"
 
-Ensure you are running `npm start` from the project root directory.
+This usually means you're not in the right directory. Make sure you're running `npm start` from the DigiLearn root folder.
 
-## Architecture Notes
+## How I Built This
 
-### Security Practices
+### Security (You'll Probably Ask About This)
 
-- Firebase credentials are stored locally in `.env` and not committed to Git
-- OAuth secrets are never stored in the app
-- Firestore and Storage rules enforce authentication
+- Your Firebase credentials are stored **only in your local `.env` file**—they're never committed to Git
+- OAuth secrets are **never hardcoded** in the app source
+- Firestore and Storage have strict security rules that require authentication
+- No credentials are exposed in the public repository
 
-### Tech Stack
+### Tech Stack Overview
 
-- **Frontend**: React Native with Expo
-- **Backend**: Firebase (Authentication, Firestore, Storage)
-- **AI**: Google Gemini API
-- **Language**: TypeScript
+| Component | Technology |
+|-----------|------------|
+| **Mobile/Web** | React Native with Expo |
+| **Backend** | Firebase (Auth, Firestore, Storage) |
+| **AI Assistant** | Google Gemini API |
+| **Language** | TypeScript |
+| **Navigation** | Expo Router |
 
-## File Structure
+### Project Layout
 
 ```
 src/
-├── app/              # Expo Router screens
-├── components/       # Reusable React components
-├── services/         # Firebase, auth, and API services
-├── contexts/         # React Context providers
+├── app/              # All the screens and navigation
+├── components/       # Reusable UI components
+├── services/         # Firebase, auth, and API integrations
+├── contexts/         # React Context for state management
 ├── hooks/            # Custom React hooks
-├── utils/            # Utility functions
-└── types/            # TypeScript type definitions
+├── utils/            # Helper functions
+└── types/            # TypeScript definitions
 ```
 
-## Questions?
+## Need Help?
 
-For technical issues or clarifications, please contact the developer at **elishabagalw@gmail.com**.
+Reach out to me directly at **elishabagalw@gmail.com**. I'm happy to help with:
 
-To set up the app, you will need to request Firebase and Google OAuth credentials from the developer.
+- Sending you the Firebase credentials
+- Debugging any setup issues
+- Explaining any part of the codebase
+- Answering questions about the architecture
 
 ---
 
-**Good luck with your evaluation!**
+**Enjoy exploring DigiLearn! I'm excited for your feedback! 🚀**
