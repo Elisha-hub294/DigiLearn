@@ -3,20 +3,22 @@ import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../constants/theme";
 import {
-    formatRelativeNotificationTime,
-    NOTIFICATION_TYPE_META,
-    NotificationRecord,
-    resolveNotificationAvatarSource
+  formatRelativeNotificationTime,
+  NOTIFICATION_TYPE_META,
+  NotificationRecord,
+  resolveNotificationAvatarSource,
 } from "../../services/notifications";
 
 type NotificationCardProps = {
   notification: NotificationRecord;
   onPress: (notification: NotificationRecord) => void;
+  onMarkRead?: (notificationId: string) => void;
 };
 
 export function NotificationCard({
   notification,
   onPress,
+  onMarkRead,
 }: NotificationCardProps) {
   const meta = NOTIFICATION_TYPE_META[notification.type];
   const showIcon = notification.type !== "announcement";
@@ -53,18 +55,41 @@ export function NotificationCard({
         </Text>
       </View>
 
-      {showIcon ? (
-        <View
-          accessibilityLabel={`${meta.label} notification icon`}
-          style={[styles.typeIconWrap, { backgroundColor: meta.background }]}
-        >
-          <MaterialCommunityIcons
-            name={meta.icon as any}
-            size={22}
-            color={colors.white}
-          />
-        </View>
-      ) : null}
+      <View style={styles.actionsWrap}>
+        {showIcon ? (
+          <View
+            accessibilityLabel={`${meta.label} notification icon`}
+            style={[styles.typeIconWrap, { backgroundColor: meta.background }]}
+          >
+            <MaterialCommunityIcons
+              name={meta.icon as any}
+              size={22}
+              color={colors.white}
+            />
+          </View>
+        ) : null}
+
+        {!notification.read && onMarkRead ? (
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              onMarkRead(notification.id);
+            }}
+            style={({ pressed }) => [
+              styles.markReadButton,
+              pressed && styles.markReadPressed,
+            ]}
+            accessibilityLabel="Mark as read"
+            accessibilityRole="button"
+          >
+            <MaterialCommunityIcons
+              name="check"
+              size={20}
+              color={colors.dark}
+            />
+          </Pressable>
+        ) : null}
+      </View>
     </Pressable>
   );
 }
@@ -135,13 +160,28 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#4B5563",
   },
+  actionsWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   typeIconWrap: {
     width: 46,
     height: 46,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 8,
+  },
+  markReadButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
+  },
+  markReadPressed: {
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
   },
   sectionLabel: {
     fontSize: 13,

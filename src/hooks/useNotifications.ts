@@ -3,9 +3,10 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, db } from "../../firebaseConfig";
 import {
-    markNotificationAsRead,
-    normalizeNotification,
-    NotificationRecord,
+  deleteNotification,
+  markNotificationAsRead,
+  normalizeNotification,
+  NotificationRecord,
 } from "../services/notifications";
 
 export function useNotifications() {
@@ -71,6 +72,15 @@ export function useNotifications() {
     [user],
   );
 
+  const deleteNotif = useCallback(
+    async (notificationId: string) => {
+      if (!user) return false;
+      const updated = await deleteNotification(user.uid, notificationId);
+      return updated;
+    },
+    [user],
+  );
+
   return {
     user,
     notifications,
@@ -79,5 +89,6 @@ export function useNotifications() {
     unreadCount,
     hasUnread: unreadCount > 0,
     markRead,
+    deleteNotif,
   };
 }

@@ -310,6 +310,24 @@ export async function markNotificationAsRead(
   return true;
 }
 
+export async function deleteNotification(
+  userId: string,
+  notificationId: string,
+) {
+  if (!userId) return false;
+
+  const userRef = doc(db, "users", userId);
+  const snapshot = await getDoc(userRef);
+  const current = Array.isArray(snapshot.data()?.notifications)
+    ? (snapshot.data()?.notifications as NotificationRecord[])
+    : [];
+
+  const updated = current.filter((item) => item.id !== notificationId);
+
+  await setDoc(userRef, { notifications: updated }, { merge: true });
+  return true;
+}
+
 export const libraryNotificationMap: Record<
   "book" | "page" | "announcement" | "lesson" | "paper",
   { message: string; collection: string; navigation: string }

@@ -25,6 +25,7 @@ import { colors, spacing } from "../constants/theme";
 import { useNotifications } from "../hooks/useNotifications";
 import {
   NotificationRecord,
+  deleteNotification,
   getNotificationSections,
 } from "../services/notifications";
 
@@ -61,10 +62,34 @@ export default function NotificationsScreen() {
     }
   }, [router]);
 
+  const handleMarkRead = useCallback(
+    (notificationId: string) => {
+      markRead(notificationId);
+    },
+    [markRead],
+  );
+
+  const handleDeleteNotification = useCallback(
+    async (notificationId: string) => {
+      if (!user) return;
+      try {
+        await deleteNotification(user.uid, notificationId);
+      } catch (error) {
+        console.error("Failed to delete notification:", error);
+      }
+    },
+    [user],
+  );
+
   const openItem = useCallback(
     async (notification: NotificationRecord) => {
       if (!notification.itemId) {
-        Alert.alert("Unavailable", "This content is no longer available.");
+        Alert.alert("Unavailable", "This content is no longer available.", [
+          {
+            text: "Dismiss",
+            onPress: () => handleDeleteNotification(notification.id),
+          },
+        ]);
         return;
       }
 
@@ -103,7 +128,12 @@ export default function NotificationsScreen() {
         const snapshot = await getDoc(ref);
 
         if (!snapshot.exists()) {
-          Alert.alert("Unavailable", "This content is no longer available.");
+          Alert.alert("Unavailable", "This content is no longer available.", [
+            {
+              text: "Dismiss",
+              onPress: () => handleDeleteNotification(notification.id),
+            },
+          ]);
           return;
         }
 
@@ -191,10 +221,15 @@ export default function NotificationsScreen() {
           await markRead(notification.id);
         }
       } catch {
-        Alert.alert("Unavailable", "This content is no longer available.");
+        Alert.alert("Unavailable", "This content is no longer available.", [
+          {
+            text: "Dismiss",
+            onPress: () => handleDeleteNotification(notification.id),
+          },
+        ]);
       }
     },
-    [markRead, router, user],
+    [markRead, router, user, handleDeleteNotification],
   );
 
   if (!user && !loading) {
@@ -272,6 +307,7 @@ export default function NotificationsScreen() {
                       key={notification.id}
                       notification={notification}
                       onPress={openItem}
+                      onMarkRead={handleMarkRead}
                     />
                   ))}
                 </>
@@ -285,6 +321,7 @@ export default function NotificationsScreen() {
                       key={notification.id}
                       notification={notification}
                       onPress={openItem}
+                      onMarkRead={handleMarkRead}
                     />
                   ))}
                 </>
@@ -298,6 +335,7 @@ export default function NotificationsScreen() {
                       key={notification.id}
                       notification={notification}
                       onPress={openItem}
+                      onMarkRead={handleMarkRead}
                     />
                   ))}
                 </>
