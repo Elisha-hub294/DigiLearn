@@ -295,15 +295,6 @@ export function AddItemModal({
       setSelectedFile(result);
       setSelectedImage(null);
       setTitleFromSelectedFile(file.name || "");
-
-      if (formData.subject && formData.level && selectedPaperCodePrefix) {
-        updateField(
-          "paperCode",
-          subjectPaperCount === 1
-            ? `${selectedPaperCodePrefix}/1`
-            : selectedPaperCodePrefix,
-        );
-      }
     } catch (e) {
       console.error("Error picking document", e);
     }
@@ -389,57 +380,16 @@ export function AddItemModal({
   const shouldShowPaperCodeButtons = subjectPaperCount > 1;
 
   useEffect(() => {
-    if (!formData.subject || !formData.level) {
+    if (!formData.subject || !formData.level || !selectedPaperCodePrefix) {
       if (formData.paperCode) {
         updateField("paperCode", "");
       }
-      return;
-    }
-
-    if (!selectedPaperCodePrefix) {
-      if (formData.paperCode) {
-        updateField("paperCode", "");
-      }
-      return;
-    }
-
-    if (subjectPaperCount === 1) {
-      updateField("paperCode", `${selectedPaperCodePrefix}/1`);
-      return;
-    }
-
-    const isValidPaperCode =
-      formData.paperCode === selectedPaperCodePrefix ||
-      formData.paperCode.startsWith(`${selectedPaperCodePrefix}/`);
-
-    if (!formData.paperCode || !isValidPaperCode) {
-      updateField("paperCode", selectedPaperCodePrefix);
     }
   }, [
     formData.level,
     formData.paperCode,
     formData.subject,
     selectedPaperCodePrefix,
-    subjectPaperCount,
-    updateField,
-  ]);
-
-  useEffect(() => {
-    if (!selectedFile) return;
-    if (!formData.subject || !formData.level || !selectedPaperCodePrefix) return;
-
-    updateField(
-      "paperCode",
-      subjectPaperCount === 1
-        ? `${selectedPaperCodePrefix}/1`
-        : selectedPaperCodePrefix,
-    );
-  }, [
-    selectedFile,
-    formData.subject,
-    formData.level,
-    selectedPaperCodePrefix,
-    subjectPaperCount,
     updateField,
   ]);
 
@@ -1406,14 +1356,9 @@ export function AddItemModal({
                       <Text style={styles.fieldLabel}>Paper code</Text>
                       <TextInput
                         style={styles.paperCodeInput}
-                        value={
-                          formData.paperCode ||
-                          (subjectPaperCount === 1
-                            ? `${selectedPaperCodePrefix}/1`
-                            : selectedPaperCodePrefix)
-                        }
+                        value={formData.paperCode}
                         editable={false}
-                        placeholder="Paper code"
+                        placeholder="Select a paper code"
                       />
                       {shouldShowPaperCodeButtons && (
                         <View style={styles.paperCodeRow}>
@@ -1433,9 +1378,7 @@ export function AddItemModal({
                                 onPress={() =>
                                   updateField(
                                     "paperCode",
-                                    isSelected
-                                      ? selectedPaperCodePrefix
-                                      : paperCodeValue,
+                                    isSelected ? "" : paperCodeValue,
                                   )
                                 }
                               >
