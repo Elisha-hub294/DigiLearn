@@ -97,7 +97,7 @@ export function PageFormSection({
       </Text>
 
       <FieldLabel>Subject</FieldLabel>
-      <View style={styles.dropdownWrap}>
+      <View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Select subject"
@@ -117,10 +117,7 @@ export function PageFormSection({
               <Pressable
                 key={option.id}
                 accessibilityRole="button"
-                style={({ pressed, hovered }) => [
-                  styles.dropdownItem,
-                  (pressed || hovered) && styles.dropdownItemHover,
-                ]}
+                style={styles.dropdownItem}
                 onPress={() => {
                   updateField("subject", option.name);
                   setSubjectDropdownOpen(false);
@@ -144,7 +141,7 @@ export function PageFormSection({
       <View style={styles.twoColumnRow}>
         <View style={styles.twoColumnField}>
           <FieldLabel>Level</FieldLabel>
-          <View style={styles.dropdownWrap}>
+          <View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select page level"
@@ -165,10 +162,7 @@ export function PageFormSection({
                   <Pressable
                     key={option.value}
                     accessibilityRole="button"
-                    style={({ pressed, hovered }) => [
-                      styles.dropdownItem,
-                      (pressed || hovered) && styles.dropdownItemHover,
-                    ]}
+                    style={styles.dropdownItem}
                     onPress={() => handleLevelSelect(option.value)}
                   >
                     <Text
@@ -189,7 +183,7 @@ export function PageFormSection({
 
         <View style={styles.twoColumnField}>
           <FieldLabel>Class</FieldLabel>
-          <View style={styles.dropdownWrap}>
+          <View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select class"
@@ -209,10 +203,7 @@ export function PageFormSection({
                   <Pressable
                     key={option.value}
                     accessibilityRole="button"
-                    style={({ pressed, hovered }) => [
-                      styles.dropdownItem,
-                      (pressed || hovered) && styles.dropdownItemHover,
-                    ]}
+                    style={styles.dropdownItem}
                     onPress={() => {
                       updateField("schoolClass", option.value);
                       setClassDropdownOpen(false);

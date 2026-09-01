@@ -46,7 +46,7 @@ export function BookFormSection({
       />
 
       <Text style={styles.fieldLabel}>Subject</Text>
-      <View style={styles.dropdownWrap}>
+      <View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Select book subject"
@@ -63,10 +63,7 @@ export function BookFormSection({
               <Pressable
                 key={option.id}
                 accessibilityRole="button"
-                style={({ pressed, hovered }) => [
-                  styles.dropdownItem,
-                  (pressed || hovered) && styles.dropdownItemHover,
-                ]}
+                style={styles.dropdownItem}
                 onPress={() => {
                   updateField("subject", option.name);
                   setSubjectDropdownOpen(false);

@@ -104,7 +104,7 @@ export function PaperFormSection({
       </Text>
 
       <FieldLabel>Subject</FieldLabel>
-      <View style={styles.dropdownWrap}>
+      <View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Select subject"
@@ -124,10 +124,7 @@ export function PaperFormSection({
               <Pressable
                 key={option.id}
                 accessibilityRole="button"
-                style={({ pressed, hovered }) => [
-                  styles.dropdownItem,
-                  (pressed || hovered) && styles.dropdownItemHover,
-                ]}
+                style={styles.dropdownItem}
                 onPress={() => {
                   updateField("subject", option.name);
                   setSubjectDropdownOpen(false);
@@ -151,7 +148,7 @@ export function PaperFormSection({
       <View style={styles.twoColumnRow}>
         <View style={styles.twoColumnField}>
           <FieldLabel>Type</FieldLabel>
-          <View style={styles.dropdownWrap}>
+          <View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select paper type"
@@ -171,10 +168,7 @@ export function PaperFormSection({
                   <Pressable
                     key={option.id}
                     accessibilityRole="button"
-                    style={({ pressed, hovered }) => [
-                      styles.dropdownItem,
-                      (pressed || hovered) && styles.dropdownItemHover,
-                    ]}
+                    style={styles.dropdownItem}
                     onPress={() => {
                       updateField("author", option.name);
                       setTypeDropdownOpen(false);
@@ -198,7 +192,7 @@ export function PaperFormSection({
 
         <View style={styles.twoColumnField}>
           <FieldLabel>Level</FieldLabel>
-          <View style={styles.dropdownWrap}>
+          <View>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select paper level"
@@ -218,10 +212,7 @@ export function PaperFormSection({
                   <Pressable
                     key={option.value}
                     accessibilityRole="button"
-                    style={({ pressed, hovered }) => [
-                      styles.dropdownItem,
-                      (pressed || hovered) && styles.dropdownItemHover,
-                    ]}
+                    style={styles.dropdownItem}
                     onPress={() => {
                       updateField("level", option.value);
                       setLevelDropdownOpen(false);

@@ -252,7 +252,9 @@ export const addPastPaper = async (
     document: documentUrl || "",
     cover: coverUrl,
     pageNumber: pageCount,
-    paperNumber: savedPaperNumber,
+    ...(hasPaperSuffix && savedPaperCode
+      ? { paperNumber: savedPaperNumber }
+      : {}),
     type: type || "UNEB",
     level: level || "Ordinary",
     year: year || String(new Date().getFullYear()),

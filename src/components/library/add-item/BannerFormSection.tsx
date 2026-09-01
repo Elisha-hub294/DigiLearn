@@ -55,7 +55,7 @@ export function BannerFormSection({
         {formData.subtitle.length}/500
       </Text>
       <Text style={styles.fieldLabel}>Subject</Text>
-      <View style={styles.dropdownWrap}>
+      <View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Select subject"
@@ -74,10 +74,7 @@ export function BannerFormSection({
             {subjects.map((option) => (
               <Pressable
                 key={option.id}
-                style={({ pressed, hovered }) => [
-                  styles.dropdownItem,
-                  (pressed || hovered) && styles.dropdownItemHover,
-                ]}
+                style={styles.dropdownItem}
                 onPress={() => {
                   updateField("subject", option.name);
                   setSubjectDropdownOpen(false);

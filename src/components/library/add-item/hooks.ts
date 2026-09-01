@@ -67,13 +67,6 @@ export const useDropdowns = () => {
   const [subjectDropdownOpen, setSubjectDropdownOpen] = useState(false);
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
 
-  const closeAllDropdowns = useCallback(() => {
-    setLevelDropdownOpen(false);
-    setClassDropdownOpen(false);
-    setSubjectDropdownOpen(false);
-    setTypeDropdownOpen(false);
-  }, []);
-
   return {
     levelDropdownOpen,
     setLevelDropdownOpen,
@@ -83,7 +76,6 @@ export const useDropdowns = () => {
     setSubjectDropdownOpen,
     typeDropdownOpen,
     setTypeDropdownOpen,
-    closeAllDropdowns,
   };
 };
 
