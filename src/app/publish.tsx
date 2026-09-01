@@ -94,7 +94,7 @@ export default function PublishScreen() {
             <Icon name="arrow-left" size={21} color={colors.text} />
           </Pressable>
           <View>
-            <Text style={styles.title}>Post on OS Platform</Text>
+            <Text style={styles.title}>Post on DigiLearn</Text>
           </View>
         </View>
 

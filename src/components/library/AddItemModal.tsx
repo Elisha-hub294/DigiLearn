@@ -33,6 +33,14 @@ import {
 import PdfPreview from "../home/PdfPreview";
 import { ActionDialog } from "../ui/ActionDialog";
 import { AdminPublishHeader } from "./AdminPublishHeader";
+import { BannerFormSection } from "./add-item/BannerFormSection";
+import { BookFormSection } from "./add-item/BookFormSection";
+import {
+  CharacterCounter,
+  FieldLabel,
+  InfoMessage,
+  NotifyToggle,
+} from "./add-item/SharedFormControls";
 
 let WebView: any = null;
 let FileSystem: any = null;
@@ -48,7 +56,7 @@ if (Platform.OS !== "web") {
 
 export type FormType = "book" | "banner" | "paper" | "page";
 
-type FormState = {
+export type FormState = {
   title: string;
   subtitle: string;
   author: string;
@@ -81,7 +89,7 @@ const INITIAL_FORM_STATE: FormState = {
   description: "",
   document: "",
   book: "",
-  level: "Ordinary",
+  level: "",
   schoolClass: "",
   notifyUsers: true,
 };
@@ -90,15 +98,6 @@ const FALLBACK_ICON_URL = "icons/default-2d.png";
 const TITLE_MAX_LENGTH = 100;
 const DESCRIPTION_MAX_LENGTH = 500;
 const DEFAULT_USER_AVATAR = require("../../../assets/images/user-default.png");
-
-function InfoMessage({ children }: { children: string }) {
-  return (
-    <View style={styles.infoRow}>
-      <Icon name="info" size={14} color="#2563EB" />
-      <Text style={styles.infoText}>{children}</Text>
-    </View>
-  );
-}
 
 const normalizeText = (value: string) =>
   value
@@ -346,6 +345,9 @@ export function AddItemModal({
     useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [selectedImage, setSelectedImage] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [activeWebDropType, setActiveWebDropType] = useState<
+    "document" | "image" | null
+  >(null);
   const [infoMessage, setInfoMessage] = useState<string>("");
   const [statusDialog, setStatusDialog] = useState<{
     visible: boolean;
@@ -504,6 +506,18 @@ export function AddItemModal({
   const clearSelectedFile = () => {
     setSelectedFile(null);
     setSelectedImage(null);
+    updateField("title", "");
+  };
+
+  const setTitleFromSelectedFile = (fileName: string) => {
+    const cleanFileName = fileName
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!cleanFileName || formData.title.trim()) return;
+    updateField("title", cleanFileName);
   };
 
   const isAllowedDocument = (fileName: string, mimeType?: string | null) => {
@@ -530,6 +544,145 @@ export function AddItemModal({
       lowerMime === "image/jpeg" ||
       lowerMime === "image/png"
     );
+  };
+
+  const applyWebDroppedFile = (file: File, type: "document" | "image") => {
+    if (type === "image") {
+      const fileName = file.name || "";
+      const mimeType = file.type || "";
+
+      if (!isAllowedImage(fileName, mimeType)) {
+        Alert.alert(
+          "Unsupported image type",
+          "Please drop a JPG, JPEG, or PNG image only.",
+        );
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        Alert.alert(
+          "Image Too Large",
+          "Please drop an image smaller than 5 MB.",
+        );
+        return;
+      }
+
+      setSelectedImage({
+        uri: URL.createObjectURL(file),
+        fileName,
+        mimeType,
+        fileSize: file.size,
+        width: 0,
+        height: 0,
+      } as ImagePicker.ImagePickerAsset);
+      setSelectedFile(null);
+      return;
+    }
+
+    const fileName = file.name || "";
+    const mimeType = file.type || "";
+
+    if (!isAllowedDocument(fileName, mimeType)) {
+      Alert.alert(
+        "Unsupported file type",
+        "Please drop a PDF or DOCX file only.",
+      );
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      Alert.alert("File Too Large", "Please drop a file smaller than 5 MB.");
+      return;
+    }
+
+    setSelectedFile({
+      canceled: false,
+      assets: [
+        {
+          uri: URL.createObjectURL(file),
+          name: fileName,
+          mimeType,
+          size: file.size,
+        },
+      ],
+    } as DocumentPicker.DocumentPickerResult);
+    setSelectedImage(null);
+    setTitleFromSelectedFile(fileName);
+  };
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+
+    const preventDefault = (event: DragEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+    };
+
+    const handleGlobalDragDrop = (event: DragEvent) => {
+      const file = event.dataTransfer?.files?.[0];
+      if (file) {
+        event.preventDefault();
+        event.stopPropagation();
+        const targetType = activeWebDropType ?? "document";
+        applyWebDroppedFile(file, targetType);
+        setActiveWebDropType(null);
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+    };
+
+    window.addEventListener("dragover", preventDefault, false);
+    window.addEventListener("drop", handleGlobalDragDrop, false);
+
+    return () => {
+      window.removeEventListener("dragover", preventDefault, false);
+      window.removeEventListener("drop", handleGlobalDragDrop, false);
+    };
+  }, [activeWebDropType]);
+
+  const handleWebDragEnter = (event: any, type: "document" | "image") => {
+    if (Platform.OS !== "web") return;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    setActiveWebDropType(type);
+  };
+
+  const handleWebDragOver = (event: any, type: "document" | "image") => {
+    if (Platform.OS !== "web") return;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    setActiveWebDropType(type);
+    if (event?.dataTransfer) {
+      event.dataTransfer.dropEffect = "copy";
+    }
+  };
+
+  const handleWebDragLeave = (event: any) => {
+    if (Platform.OS !== "web") return;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+  };
+
+  const getWebDropHandlers = (type: "document" | "image") =>
+    ({
+      onDragEnter: (event: any) => handleWebDragEnter(event, type),
+      onDragOver: (event: any) => handleWebDragOver(event, type),
+      onDragLeave: handleWebDragLeave,
+      onDrop: (event: any) => handleWebDrop(event, type),
+    }) as any;
+
+  const handleWebDrop = (event: any, type: "document" | "image") => {
+    if (Platform.OS !== "web") return;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    const file =
+      event?.nativeEvent?.dataTransfer?.files?.[0] ??
+      event?.dataTransfer?.files?.[0];
+    if (!file) return;
+    applyWebDroppedFile(file, type);
+    setActiveWebDropType(null);
   };
 
   const pickDocument = async () => {
@@ -564,6 +717,7 @@ export function AddItemModal({
       }
       setSelectedFile(result);
       setSelectedImage(null);
+      setTitleFromSelectedFile(file.name || "");
     } catch (e) {
       console.error("Error picking document", e);
     }
@@ -1041,6 +1195,7 @@ export function AddItemModal({
           cover: coverUrl,
           pageNumber: pageCount,
           type: normalizeText(formData.author) || "UNEB",
+          level: normalizeText(formData.level) || "Ordinary",
           year:
             normalizeText(formData.extra) || String(new Date().getFullYear()),
           updatedAt: serverTimestamp(),
@@ -1137,7 +1292,7 @@ export function AddItemModal({
 
             {formType !== "paper" && (
               <>
-                <Text style={styles.fieldLabel}>Title</Text>
+                <FieldLabel>Title</FieldLabel>
                 <TextInput
                   style={styles.input}
                   placeholder={
@@ -1151,245 +1306,57 @@ export function AddItemModal({
                   onChangeText={(val) => updateField("title", val)}
                   maxLength={TITLE_MAX_LENGTH}
                 />
-                <Text style={styles.titleCharacterCount}>
-                  {formData.title.length}/{TITLE_MAX_LENGTH}
-                </Text>
+                <CharacterCounter
+                  current={formData.title.length}
+                  maxLength={TITLE_MAX_LENGTH}
+                />
               </>
             )}
 
             {formType === "book" && (
-              <>
-                <Text style={styles.fieldLabel}>Description</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Book description"
-                  value={formData.subtitle}
-                  onChangeText={(val) => updateField("subtitle", val)}
-                  multiline
-                  numberOfLines={4}
-                  maxLength={DESCRIPTION_MAX_LENGTH}
-                />
-
-                <Text style={styles.fieldLabel}>Subject</Text>
-                <View>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Select book subject"
-                    style={styles.dropdownTrigger}
-                    onPress={() => setSubjectDropdownOpen((prev) => !prev)}
-                  >
-                    <Text style={styles.dropdownText}>
-                      {formData.subject || "Select subject"}
-                    </Text>
-                  </Pressable>
-                  {subjectDropdownOpen && (
-                    <View style={styles.dropdownMenu}>
-                      {subjects.map((option) => (
-                        <Pressable
-                          key={option.id}
-                          accessibilityRole="button"
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            updateField("subject", option.name);
-                            setSubjectDropdownOpen(false);
-                          }}
-                        >
-                          <Text
-                            style={[
-                              styles.dropdownItemText,
-                              formData.subject === option.name &&
-                                styles.dropdownItemTextActive,
-                            ]}
-                          >
-                            {option.name}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
-                </View>
-
-                <Text style={styles.titleCharacterCount}>
-                  {formData.subtitle.length}/{DESCRIPTION_MAX_LENGTH}
-                </Text>
-                <Text style={styles.fieldLabel}>Author</Text>
-                <View style={styles.readOnlyField}>
-                  <Image
-                    source={
-                      profile?.photoURL && profile.photoURL.trim()
-                        ? { uri: profile.photoURL }
-                        : auth.currentUser?.photoURL &&
-                            auth.currentUser.photoURL.trim()
-                          ? { uri: auth.currentUser.photoURL }
-                          : DEFAULT_USER_AVATAR
-                    }
-                    style={styles.authorAvatar}
-                  />
-                  <Text style={styles.readOnlyFieldText}>
-                    {profile?.name ||
-                      auth.currentUser?.displayName ||
-                      "Your profile name"}
-                  </Text>
-                </View>
-                <Text style={styles.fieldLabel}>Cover</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Choose book cover image"
-                  style={styles.attachmentButton}
-                  onPress={pickImage}
-                >
-                  <Icon name="image" size={18} color={colors.primary} />
-                  <Text style={styles.attachmentButtonText} numberOfLines={1}>
-                    {selectedImage?.fileName || "Choose cover image"}
-                  </Text>
-                </Pressable>
-                {selectedImage && (
-                  <Image
-                    source={{ uri: selectedImage.uri }}
-                    style={styles.coverPreview}
-                  />
-                )}
-
-                {/* <Text style={styles.fieldLabel}>top</Text>
-              <View style={styles.toggleRow}>
-                <Pressable
-                  style={[
-                    styles.toggleChip,
-                    formData.isTop && styles.toggleChipActive,
-                  ]}
-                  onPress={() => updateField("isTop", true)}
-                >
-                  <Text
-                    style={[
-                      styles.toggleChipText,
-                      formData.isTop && styles.toggleChipTextActive,
-                    ]}
-                  >
-                    Yes
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={[
-                    styles.toggleChip,
-                    !formData.isTop && styles.toggleChipActive,
-                  ]}
-                  onPress={() => updateField("isTop", false)}
-                >
-                  <Text
-                    style={[
-                      styles.toggleChipText,
-                      !formData.isTop && styles.toggleChipTextActive,
-                    ]}
-                  >
-                    No
-                  </Text>
-                </Pressable>
-              </View> */}
-              </>
+              <BookFormSection
+                formData={formData}
+                updateField={updateField}
+                subjects={subjects}
+                subjectDropdownOpen={subjectDropdownOpen}
+                setSubjectDropdownOpen={setSubjectDropdownOpen}
+                selectedImage={selectedImage}
+                pickImage={pickImage}
+                authorName={
+                  profile?.name ||
+                  auth.currentUser?.displayName ||
+                  "Your profile name"
+                }
+                authorAvatarSource={
+                  profile?.photoURL && profile.photoURL.trim()
+                    ? { uri: profile.photoURL }
+                    : auth.currentUser?.photoURL &&
+                        auth.currentUser.photoURL.trim()
+                      ? { uri: auth.currentUser.photoURL }
+                      : DEFAULT_USER_AVATAR
+                }
+                getWebDropHandlers={getWebDropHandlers}
+                styles={styles}
+              />
             )}
 
             {formType === "banner" && (
-              <>
-                <Text style={styles.fieldLabel}>Description</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Short description"
-                  value={formData.subtitle}
-                  onChangeText={(val) => updateField("subtitle", val)}
-                  multiline
-                  numberOfLines={4}
-                  maxLength={DESCRIPTION_MAX_LENGTH}
-                />
-                <Text style={styles.titleCharacterCount}>
-                  {formData.subtitle.length}/{DESCRIPTION_MAX_LENGTH}
-                </Text>
-                <Text style={styles.fieldLabel}>Subject</Text>
-                <View>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Select subject"
-                    style={styles.dropdownTrigger}
-                    onPress={() => setSubjectDropdownOpen((prev) => !prev)}
-                  >
-                    <View style={styles.dropdownContent}>
-                      <Icon name="book-open" size={16} color={colors.primary} />
-                      <Text style={styles.dropdownText}>
-                        {formData.subject || "Select subject"}
-                      </Text>
-                    </View>
-                  </Pressable>
-                  {subjectDropdownOpen && (
-                    <View style={styles.dropdownMenu}>
-                      {subjects.map((option) => (
-                        <Pressable
-                          key={option.id}
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            updateField("subject", option.name);
-                            setSubjectDropdownOpen(false);
-                          }}
-                        >
-                          <Text style={styles.dropdownItemText}>
-                            {option.name}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.fieldLabel}>Attachment</Text>
-                <View style={styles.attachmentRow}>
-                  <Pressable
-                    style={styles.attachmentButton}
-                    onPress={pickDocument}
-                    disabled={isSubmitting}
-                  >
-                    <Icon name="file-text" size={18} color={colors.primary} />
-                    <Text style={styles.attachmentButtonText} numberOfLines={1}>
-                      {selectedFile?.assets?.[0]?.name || "Add document"}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.attachmentButton}
-                    onPress={pickImage}
-                    disabled={isSubmitting}
-                  >
-                    <Icon name="image" size={18} color={colors.primary} />
-                    <Text style={styles.attachmentButtonText} numberOfLines={1}>
-                      {selectedImage?.fileName || "Add image"}
-                    </Text>
-                  </Pressable>
-                </View>
-                {selectedPreviewAsset && (
-                  <View style={styles.previewContainer}>
-                    <View style={styles.coverPreviewFrame}>
-                      {selectedPreviewAsset.type === "image" ? (
-                        <Image
-                          source={{ uri: selectedPreviewAsset.uri }}
-                          style={styles.documentPreviewImage}
-                        />
-                      ) : (
-                        <PdfPreview
-                          uri={selectedPreviewAsset.uri}
-                          style={styles.documentPreviewPdf}
-                        />
-                      )}
-                      <View
-                        style={styles.previewOverlay}
-                        pointerEvents="none"
-                      />
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Remove selected file"
-                        style={styles.previewRemoveButton}
-                        onPress={clearSelectedFile}
-                      >
-                        <Icon name="x" size={14} color={colors.white} />
-                      </Pressable>
-                    </View>
-                  </View>
-                )}
-              </>
+              <BannerFormSection
+                formData={formData}
+                updateField={updateField}
+                subjects={subjects}
+                subjectDropdownOpen={subjectDropdownOpen}
+                setSubjectDropdownOpen={setSubjectDropdownOpen}
+                selectedFile={selectedFile}
+                selectedImage={selectedImage}
+                selectedPreviewAsset={selectedPreviewAsset}
+                pickDocument={pickDocument}
+                pickImage={pickImage}
+                clearSelectedFile={clearSelectedFile}
+                getWebDropHandlers={getWebDropHandlers}
+                isSubmitting={isSubmitting}
+                styles={styles}
+              />
             )}
 
             {formType === "page" && (
@@ -1544,20 +1511,22 @@ export function AddItemModal({
                 </View>
 
                 <Text style={styles.fieldLabel}>Document File</Text>
-                <Pressable
-                  style={styles.filePicker}
-                  onPress={pickDocument}
-                  disabled={isSubmitting}
-                >
-                  <View style={styles.filePickerContent}>
-                    <Icon name="file-text" size={16} color={colors.primary} />
-                    <Text style={styles.filePickerText}>
-                      {selectedFile?.assets?.[0]
-                        ? selectedFile.assets[0].name
-                        : "Tap to select a file (max 5 MB)"}
-                    </Text>
-                  </View>
-                </Pressable>
+                <View {...getWebDropHandlers("document")}>
+                  <Pressable
+                    style={styles.filePicker}
+                    onPress={pickDocument}
+                    disabled={isSubmitting}
+                  >
+                    <View style={styles.filePickerContent}>
+                      <Icon name="file-text" size={16} color={colors.primary} />
+                      <Text style={styles.filePickerText}>
+                        {selectedFile?.assets?.[0]
+                          ? selectedFile.assets[0].name
+                          : "Tap to select a file (max 5 MB)"}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </View>
                 {selectedPreviewAsset && (
                   <View style={styles.previewContainer}>
                     <View style={styles.coverPreviewFrame}>
@@ -1664,50 +1633,7 @@ export function AddItemModal({
                     </View>
                   )}
                 </View>
-                <Text style={styles.fieldLabel}>Document file</Text>
-                <Pressable
-                  style={styles.filePicker}
-                  onPress={pickDocument}
-                  disabled={isSubmitting}
-                >
-                  <View style={styles.filePickerContent}>
-                    <Icon name="file-text" size={16} color={colors.primary} />
-                    <Text style={styles.filePickerText}>
-                      {selectedFile?.assets?.[0]
-                        ? selectedFile.assets[0].name
-                        : "Tap to select a document (max 5 MB)"}
-                    </Text>
-                  </View>
-                </Pressable>
-                {selectedPreviewAsset && (
-                  <View style={styles.previewContainer}>
-                    <View style={styles.coverPreviewFrame}>
-                      {selectedPreviewAsset.type === "image" ? (
-                        <Image
-                          source={{ uri: selectedPreviewAsset.uri }}
-                          style={styles.documentPreviewImage}
-                        />
-                      ) : (
-                        <PdfPreview
-                          uri={selectedPreviewAsset.uri}
-                          style={styles.documentPreviewPdf}
-                        />
-                      )}
-                      <View
-                        style={styles.previewOverlay}
-                        pointerEvents="none"
-                      />
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Remove selected file"
-                        style={styles.previewRemoveButton}
-                        onPress={clearSelectedFile}
-                      >
-                        <Icon name="x" size={14} color={colors.white} />
-                      </Pressable>
-                    </View>
-                  </View>
-                )}
+
                 <View style={styles.twoColumnRow}>
                   <View style={styles.twoColumnField}>
                     <Text style={styles.fieldLabel}>Type</Text>
@@ -1745,6 +1671,57 @@ export function AddItemModal({
                                 ]}
                               >
                                 {option.name}
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  </View>
+
+                  <View style={styles.twoColumnField}>
+                    <Text style={styles.fieldLabel}>Level</Text>
+                    <View>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Select paper level"
+                        style={styles.dropdownTrigger}
+                        onPress={() => setLevelDropdownOpen((prev) => !prev)}
+                      >
+                        <View style={styles.dropdownContent}>
+                          <Icon
+                            name="layers"
+                            size={16}
+                            color={colors.primary}
+                          />
+                          <Text style={styles.dropdownText}>
+                            {formData.level || "Select level"}
+                          </Text>
+                        </View>
+                      </Pressable>
+                      {levelDropdownOpen && (
+                        <View style={styles.dropdownMenu}>
+                          {[
+                            { label: "Ordinary", value: "Ordinary" },
+                            { label: "Advanced", value: "Advanced" },
+                          ].map((option) => (
+                            <Pressable
+                              key={option.value}
+                              accessibilityRole="button"
+                              style={styles.dropdownItem}
+                              onPress={() => {
+                                updateField("level", option.value);
+                                setLevelDropdownOpen(false);
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.dropdownItemText,
+                                  formData.level === option.value &&
+                                    styles.dropdownItemTextActive,
+                                ]}
+                              >
+                                {option.label}
                               </Text>
                             </Pressable>
                           ))}
@@ -1806,6 +1783,53 @@ export function AddItemModal({
                     )}
                   </View>
                 </View>
+
+                <Text style={styles.fieldLabel}>Document file</Text>
+                <View {...getWebDropHandlers("document")}>
+                  <Pressable
+                    style={styles.filePicker}
+                    onPress={pickDocument}
+                    disabled={isSubmitting}
+                  >
+                    <View style={styles.filePickerContent}>
+                      <Icon name="file-text" size={16} color={colors.primary} />
+                      <Text style={styles.filePickerText}>
+                        {selectedFile?.assets?.[0]
+                          ? selectedFile.assets[0].name
+                          : "Tap to select a document (max 5 MB)"}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </View>
+                {selectedPreviewAsset && (
+                  <View style={styles.previewContainer}>
+                    <View style={styles.coverPreviewFrame}>
+                      {selectedPreviewAsset.type === "image" ? (
+                        <Image
+                          source={{ uri: selectedPreviewAsset.uri }}
+                          style={styles.documentPreviewImage}
+                        />
+                      ) : (
+                        <PdfPreview
+                          uri={selectedPreviewAsset.uri}
+                          style={styles.documentPreviewPdf}
+                        />
+                      )}
+                      <View
+                        style={styles.previewOverlay}
+                        pointerEvents="none"
+                      />
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Remove selected file"
+                        style={styles.previewRemoveButton}
+                        onPress={clearSelectedFile}
+                      >
+                        <Icon name="x" size={14} color={colors.white} />
+                      </Pressable>
+                    </View>
+                  </View>
+                )}
               </>
             )}
 
@@ -1817,25 +1841,12 @@ export function AddItemModal({
                     Send notifications to users about this post
                   </Text>
                 </View>
-                <Pressable
-                  style={[
-                    styles.toggleSwitch,
-                    formData.notifyUsers && styles.toggleSwitchActive,
-                  ]}
-                  onPress={() =>
+                <NotifyToggle
+                  checked={formData.notifyUsers}
+                  onToggle={() =>
                     updateField("notifyUsers", !formData.notifyUsers)
                   }
-                  accessibilityRole="switch"
-                  accessibilityLabel="Notify Community"
-                  accessibilityState={{ checked: formData.notifyUsers }}
-                >
-                  <View
-                    style={[
-                      styles.toggleCircle,
-                      formData.notifyUsers && styles.toggleCircleActive,
-                    ]}
-                  />
-                </Pressable>
+                />
               </View>
             </View>
 

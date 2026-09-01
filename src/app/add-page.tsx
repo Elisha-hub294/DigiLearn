@@ -1,8 +1,6 @@
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
 import { AddItemModal } from "../components/library/AddItemModal";
-import { ActionDialog } from "../components/ui/ActionDialog";
-import { colors } from "../constants/theme";
+import { PublishAccessGate } from "../components/library/PublishAccessGate";
 import { useProfile } from "../contexts/ProfileContext";
 
 export default function AddPageScreen() {
@@ -12,33 +10,19 @@ export default function AddPageScreen() {
     profile?.type === "teacher" || profile?.type === "admin";
 
   return (
-    <View style={styles.screen}>
-      {isAuthorizedPublisher ? (
-        <AddItemModal
-          visible
-          screen
-          formType="page"
-          onClose={() => router.back()}
-          onSuccess={() => router.replace("/")}
-        />
-      ) : (
-        <ActionDialog
-          visible
-          title="Publishing restricted"
-          message="Only teacher or admin accounts can publish pages. Please switch to an approved account type to continue."
-          primaryText="Go back"
-          onPrimary={() => router.back()}
-          onClose={() => router.back()}
-          icon={<Text style={styles.dialogIcon}>⚠️</Text>}
-        />
-      )}
-    </View>
+    <PublishAccessGate
+      isAuthorizedPublisher={isAuthorizedPublisher}
+      title="Add Page"
+      unauthorizedMessage="Only teacher or admin accounts can publish pages. Please switch to an approved account type to continue."
+      onBack={() => router.back()}
+    >
+      <AddItemModal
+        visible
+        screen
+        formType="page"
+        onClose={() => router.back()}
+        onSuccess={() => router.replace("/")}
+      />
+    </PublishAccessGate>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  dialogIcon: {
-    fontSize: 24,
-  },
-});
