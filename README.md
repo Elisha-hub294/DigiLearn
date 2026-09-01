@@ -400,7 +400,7 @@ Built with support from:
 
 ## Contact & Support
 
-- **Developer**: Elisha Bagalow
+- **Developer**: Elisha Bagalwa
 - **Email**: elishabagalw@gmail.com
 - **GitHub**: [@Elisha-hub294](https://github.com/Elisha-hub294)
 
