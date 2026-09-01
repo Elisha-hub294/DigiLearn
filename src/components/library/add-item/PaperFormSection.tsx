@@ -124,7 +124,10 @@ export function PaperFormSection({
               <Pressable
                 key={option.id}
                 accessibilityRole="button"
-                style={styles.dropdownItem}
+                style={({ pressed, hovered }) => [
+                  styles.dropdownItem,
+                  (pressed || hovered) && styles.dropdownItemHover,
+                ]}
                 onPress={() => {
                   updateField("subject", option.name);
                   setSubjectDropdownOpen(false);
@@ -168,7 +171,10 @@ export function PaperFormSection({
                   <Pressable
                     key={option.id}
                     accessibilityRole="button"
-                    style={styles.dropdownItem}
+                    style={({ pressed, hovered }) => [
+                      styles.dropdownItem,
+                      (pressed || hovered) && styles.dropdownItemHover,
+                    ]}
                     onPress={() => {
                       updateField("author", option.name);
                       setTypeDropdownOpen(false);
@@ -212,7 +218,10 @@ export function PaperFormSection({
                   <Pressable
                     key={option.value}
                     accessibilityRole="button"
-                    style={styles.dropdownItem}
+                    style={({ pressed, hovered }) => [
+                      styles.dropdownItem,
+                      (pressed || hovered) && styles.dropdownItemHover,
+                    ]}
                     onPress={() => {
                       updateField("level", option.value);
                       setLevelDropdownOpen(false);

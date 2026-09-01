@@ -1,4 +1,4 @@
-import { getDownloadURL, ref } from "firebase/storage";
+import { getDownloadURL, listAll, ref } from "firebase/storage";
 import { useEffect, useState } from "react";
 import { storage } from "../../firebaseConfig";
 
@@ -10,14 +10,151 @@ const urlPromises = new Map<string, Promise<string>>();
  * Resolves a Supabase storage URL or bare storage path to its equivalent Firebase Storage download URL.
  * If the URL is not a Supabase URL or relative storage path, it is returned as is.
  */
-export async function getFirebaseStorageUrl(url: string | undefined): Promise<string> {
+async function findStoragePathByFileName(
+  fileName: string,
+): Promise<string | null> {
+  const normalized = fileName.trim().replace(/^\/+/, "");
+  if (
+    !normalized ||
+    normalized.startsWith("http://") ||
+    normalized.startsWith("https://")
+  ) {
+    return null;
+  }
+
+  const candidates = new Set<string>([
+    normalized,
+    normalized.split("/").pop() || normalized,
+  ]);
+
+  const extensionless = (value: string) => {
+    const lastSegment = value.split("/").pop() || value;
+    const dotIndex = lastSegment.lastIndexOf(".");
+    return dotIndex > 0
+      ? value.substring(0, value.length - (lastSegment.length - dotIndex))
+      : value;
+  };
+
+  const rootCandidate = extensionless(normalized);
+  if (rootCandidate !== normalized) candidates.add(rootCandidate);
+
+  for (const candidate of Array.from(candidates)) {
+    try {
+      const resolved = await getDownloadURL(ref(storage, candidate));
+      if (resolved) return candidate;
+    } catch {
+      // continue searching other likely paths below
+    }
+  }
+
+  const folderCandidates = [
+    "icons",
+    "subject",
+    "subjects",
+    "images",
+    "avatars",
+    "assets",
+    "",
+  ];
+
+  const basename = normalized.split("/").pop() || normalized;
+  const basenameWithoutExt = basename.includes(".")
+    ? basename.slice(0, basename.lastIndexOf("."))
+    : basename;
+  const imageExtensions = [
+    "",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".svg",
+    ".webp",
+    ".gif",
+  ];
+
+  const namesToTry = Array.from(
+    new Set([
+      basename,
+      basenameWithoutExt,
+      normalized,
+      rootCandidate,
+      ...imageExtensions.map((ext) => `${basenameWithoutExt}${ext}`),
+    ]),
+  );
+
+  for (const folder of folderCandidates) {
+    for (const name of namesToTry) {
+      const path = folder ? `${folder}/${name}` : name;
+      if (path === normalized) continue;
+      try {
+        const resolved = await getDownloadURL(ref(storage, path));
+        if (resolved) return path;
+      } catch {
+        // continue searching
+      }
+    }
+  }
+
+  // The project stores subject avatars under the icons folder, so prefer that direct path
+  // for values like "math-3d" before doing a broader storage walk.
+  for (const name of namesToTry) {
+    for (const path of [
+      `icons/${name}`,
+      `icons/${basenameWithoutExt}`,
+      `icons/${basename}`,
+      `icons/${basenameWithoutExt}.png`,
+      `icons/${basename}.png`,
+    ]) {
+      if (path === normalized) continue;
+      try {
+        const resolved = await getDownloadURL(ref(storage, path));
+        if (resolved) return path;
+      } catch {
+        // continue searching
+      }
+    }
+  }
+
+  async function walk(prefix: string): Promise<string | null> {
+    const currentRef = ref(storage, prefix || "");
+    const listing = await listAll(currentRef);
+
+    for (const item of listing.items) {
+      const itemName = item.name;
+      const itemPath = item.fullPath;
+      if (
+        itemName === basename ||
+        itemName === basenameWithoutExt ||
+        itemPath === normalized ||
+        itemPath.endsWith(`/${basename}`) ||
+        itemPath.endsWith(`/${basenameWithoutExt}`)
+      ) {
+        return itemPath;
+      }
+    }
+
+    for (const folderRef of listing.prefixes) {
+      const match = await walk(folderRef.fullPath);
+      if (match) return match;
+    }
+
+    return null;
+  }
+
+  return walk("");
+}
+
+export async function getFirebaseStorageUrl(
+  url: string | undefined,
+): Promise<string> {
   if (!url || typeof url !== "string") return "";
 
   let storagePath: string | null = null;
 
   // 1. Resolve Supabase public URL → extract the storage path
   if (url.includes("supabase.co/storage/v1/object/public/")) {
-    const raw = url.split("supabase.co/storage/v1/object/public/")[1]?.split("?")[0];
+    const raw = url
+      .split("supabase.co/storage/v1/object/public/")[1]
+      ?.split("?")[0];
     if (raw) storagePath = decodeURIComponent(raw);
   }
   // 2. Resolve Firebase Storage URLs (e.g. https://firebasestorage.googleapis.com/.../o/path or https://...firebasestorage.app/...)
@@ -74,15 +211,27 @@ export async function getFirebaseStorageUrl(url: string | undefined): Promise<st
     return urlPromises.get(storagePath)!;
   }
 
-  const promise = getDownloadURL(ref(storage, storagePath))
-    .then((downloadUrl) => {
+  const promise = (async () => {
+    try {
+      const downloadUrl = await getDownloadURL(ref(storage, storagePath!));
       urlCache.set(storagePath!, downloadUrl);
       urlPromises.delete(storagePath!);
       return downloadUrl;
-    })
-    .catch((err) => {
-      console.warn("Failed to get Firebase Storage URL for path:", storagePath, err);
-      // If resolving failed, fallback to properly encoded URL if it was a Firebase Storage URL with bad /o/ encoding
+    } catch (err) {
+      const discoveredPath = await findStoragePathByFileName(storagePath!);
+      if (discoveredPath && discoveredPath !== storagePath) {
+        const resolvedUrl = await getDownloadURL(ref(storage, discoveredPath));
+        urlCache.set(storagePath!, resolvedUrl);
+        urlCache.set(discoveredPath, resolvedUrl);
+        urlPromises.delete(storagePath!);
+        return resolvedUrl;
+      }
+
+      console.warn(
+        "Failed to get Firebase Storage URL for path:",
+        storagePath,
+        err,
+      );
       let fallbackUrl = url;
       if (
         (url.includes("firebasestorage.googleapis.com") ||
@@ -90,13 +239,16 @@ export async function getFirebaseStorageUrl(url: string | undefined): Promise<st
           url.includes(".appspot.com")) &&
         storagePath
       ) {
-        const bucket = storage.app.options.storageBucket || "digilearn-af86d.firebasestorage.app";
+        const bucket =
+          storage.app.options.storageBucket ||
+          "digilearn-af86d.firebasestorage.app";
         fallbackUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(storagePath)}?alt=media`;
       }
       urlCache.set(storagePath!, fallbackUrl);
       urlPromises.delete(storagePath!);
       return fallbackUrl;
-    });
+    }
+  })();
 
   urlPromises.set(storagePath, promise);
   return promise;
@@ -105,7 +257,9 @@ export async function getFirebaseStorageUrl(url: string | undefined): Promise<st
 /**
  * React Hook to resolve a storage URL or bare path to a Firebase Storage download URL.
  */
-export function useFirebaseStorageUrl(url: string | undefined): string | undefined {
+export function useFirebaseStorageUrl(
+  url: string | undefined,
+): string | undefined {
   const [resolvedUrl, setResolvedUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {

@@ -74,7 +74,10 @@ export function BannerFormSection({
             {subjects.map((option) => (
               <Pressable
                 key={option.id}
-                style={styles.dropdownItem}
+                style={({ pressed, hovered }) => [
+                  styles.dropdownItem,
+                  (pressed || hovered) && styles.dropdownItemHover,
+                ]}
                 onPress={() => {
                   updateField("subject", option.name);
                   setSubjectDropdownOpen(false);

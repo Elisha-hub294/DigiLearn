@@ -106,12 +106,18 @@ export function AddItemModal({
     setSubjectDropdownOpen,
     typeDropdownOpen,
     setTypeDropdownOpen,
+    closeAllDropdowns,
   } = useDropdowns();
   const { statusDialog, setStatusDialog, showStatusDialog } = useStatusDialog();
   const { infoMessage, setInfoMessage } = useInfoMessage();
   const { showYearPicker, setShowYearPicker, currentYear, getYearPickerDate } =
     useYearPicker();
   const { pdfToProcess, setPdfToProcess } = usePdfProcessing();
+  const anyDropdownOpen =
+    levelDropdownOpen ||
+    classDropdownOpen ||
+    subjectDropdownOpen ||
+    typeDropdownOpen;
 
   const [selectedFile, setSelectedFile] =
     useState<DocumentPicker.DocumentPickerResult | null>(null);
@@ -831,6 +837,14 @@ export function AddItemModal({
               }
             />
           )}
+          {anyDropdownOpen && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close dropdown"
+              style={styles.dropdownBackdrop}
+              onPress={closeAllDropdowns}
+            />
+          )}
           <ScrollView
             contentContainerStyle={styles.modalContent}
             showsVerticalScrollIndicator={false}
@@ -960,7 +974,10 @@ export function AddItemModal({
                         <Pressable
                           key={option.id}
                           accessibilityRole="button"
-                          style={styles.dropdownItem}
+                          style={({ pressed, hovered }) => [
+                            styles.dropdownItem,
+                            (pressed || hovered) && styles.dropdownItemHover,
+                          ]}
                           onPress={() => {
                             updateField("subject", option.name);
                             setSubjectDropdownOpen(false);
@@ -1011,7 +1028,11 @@ export function AddItemModal({
                             <Pressable
                               key={option.value}
                               accessibilityRole="button"
-                              style={styles.dropdownItem}
+                              style={({ pressed, hovered }) => [
+                                styles.dropdownItem,
+                                (pressed || hovered) &&
+                                  styles.dropdownItemHover,
+                              ]}
                               onPress={() => handleLevelSelect(option.value)}
                             >
                               <Text
@@ -1052,7 +1073,11 @@ export function AddItemModal({
                             <Pressable
                               key={option.value}
                               accessibilityRole="button"
-                              style={styles.dropdownItem}
+                              style={({ pressed, hovered }) => [
+                                styles.dropdownItem,
+                                (pressed || hovered) &&
+                                  styles.dropdownItemHover,
+                              ]}
                               onPress={() => {
                                 updateField("schoolClass", option.value);
                                 setClassDropdownOpen(false);
@@ -1200,7 +1225,10 @@ export function AddItemModal({
                         <Pressable
                           key={option.id}
                           accessibilityRole="button"
-                          style={styles.dropdownItem}
+                          style={({ pressed, hovered }) => [
+                            styles.dropdownItem,
+                            (pressed || hovered) && styles.dropdownItemHover,
+                          ]}
                           onPress={() => {
                             updateField("subject", option.name);
                             setSubjectDropdownOpen(false);
@@ -1244,7 +1272,11 @@ export function AddItemModal({
                             <Pressable
                               key={option.id}
                               accessibilityRole="button"
-                              style={styles.dropdownItem}
+                              style={({ pressed, hovered }) => [
+                                styles.dropdownItem,
+                                (pressed || hovered) &&
+                                  styles.dropdownItemHover,
+                              ]}
                               onPress={() => {
                                 updateField("author", option.name);
                                 setTypeDropdownOpen(false);
@@ -1295,7 +1327,11 @@ export function AddItemModal({
                             <Pressable
                               key={option.value}
                               accessibilityRole="button"
-                              style={styles.dropdownItem}
+                              style={({ pressed, hovered }) => [
+                                styles.dropdownItem,
+                                (pressed || hovered) &&
+                                  styles.dropdownItemHover,
+                              ]}
                               onPress={() => {
                                 updateField("level", option.value);
                                 setLevelDropdownOpen(false);
@@ -1619,6 +1655,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(15, 23, 42, 0.45)",
   },
   modalCard: {
+    position: "relative",
     backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -1626,10 +1663,12 @@ const styles = StyleSheet.create({
     maxHeight: "85%",
   },
   screenContainer: {
+    position: "relative",
     flex: 1,
     backgroundColor: colors.background,
   },
   screenCard: {
+    position: "relative",
     flex: 1,
     width: "100%",
     maxWidth: 760,
@@ -1972,21 +2011,31 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 30,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    backgroundColor: colors.white,
+    borderColor: "#D9E2F0",
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
     marginTop: 6,
     overflow: "hidden",
     shadowColor: "#0F172A",
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 8,
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 12,
     maxHeight: 220,
+    paddingVertical: 6,
+  },
+  dropdownBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
+    zIndex: 10,
   },
   dropdownItem: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+    backgroundColor: "#FFFFFF",
+  },
+  dropdownItemHover: {
+    backgroundColor: "rgba(37, 99, 235, 0.08)",
   },
   dropdownItemText: {
     color: colors.text,

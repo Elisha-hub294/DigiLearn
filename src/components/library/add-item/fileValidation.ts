@@ -67,14 +67,14 @@ export const getFileValidationError = (
       return "Unsupported image type. Please select a JPG, JPEG, or PNG image only.";
     }
     if (!isValidFileSize(fileSize)) {
-      return "Image is too large. Please select an image smaller than 5 MB.";
+      return "Image is too large. Please select an image smaller than 10 MB.";
     }
   } else {
     if (!isAllowedDocument(fileName)) {
       return "Unsupported file type. Please select a PDF or DOCX file only.";
     }
     if (!isValidFileSize(fileSize)) {
-      return "File is too large. Please select a file smaller than 5 MB.";
+      return "File is too large. Please select a file smaller than 10 MB.";
     }
   }
 

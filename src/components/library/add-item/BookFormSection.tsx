@@ -63,7 +63,10 @@ export function BookFormSection({
               <Pressable
                 key={option.id}
                 accessibilityRole="button"
-                style={styles.dropdownItem}
+                style={({ pressed, hovered }) => [
+                  styles.dropdownItem,
+                  (pressed || hovered) && styles.dropdownItemHover,
+                ]}
                 onPress={() => {
                   updateField("subject", option.name);
                   setSubjectDropdownOpen(false);

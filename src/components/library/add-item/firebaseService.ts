@@ -234,6 +234,17 @@ export const addPastPaper = async (
     .toString(36)
     .slice(2, 9)}`;
 
+  const normalizedPaperCode = paperCode.trim();
+  const hasPaperSuffix = normalizedPaperCode.includes("/");
+  const [basePaperCode, rawPaperNumber] = normalizedPaperCode.split("/");
+  const parsedPaperNumber = Number(rawPaperNumber ?? "1");
+  const savedPaperNumber = Number.isFinite(parsedPaperNumber)
+    ? parsedPaperNumber
+    : 1;
+  const savedPaperCode = (hasPaperSuffix ? basePaperCode : normalizedPaperCode)
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .trim();
+
   await setDoc(doc(db, "pastPaper", itemId), {
     title,
     description: description || "",
@@ -241,10 +252,11 @@ export const addPastPaper = async (
     document: documentUrl || "",
     cover: coverUrl,
     pageNumber: pageCount,
+    paperNumber: savedPaperNumber,
     type: type || "UNEB",
     level: level || "Ordinary",
     year: year || String(new Date().getFullYear()),
-    paperCode: paperCode || "",
+    paperCode: savedPaperCode || "",
     updatedAt: serverTimestamp(),
   });
 

@@ -17,6 +17,7 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { getFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import {
   matchesUserInterests,
   shouldFilterByInterests,
@@ -45,7 +46,7 @@ export const TopicalNotesSlider = () => {
   const cardWidth = width >= 900 ? 128 : 110;
   const itemStep = cardWidth + CARD_GAP;
   const [subjects, setSubjects] = useState<
-    Array<{ id: string; title: string; image: string | any }>
+    { id: string; title: string; image: string | any }[]
   >([]);
   const [loadingSubjects, setLoadingSubjects] = useState(true);
 
@@ -188,23 +189,29 @@ export const TopicalNotesSlider = () => {
       try {
         const snaps = await getDocs(collection(db, "subject"));
         if (!active) return;
-        const list = snaps.docs
-          .map((d) => {
+
+        const list = await Promise.all(
+          snaps.docs.map(async (d) => {
             const data = d.data() as Record<string, unknown>;
             const name = typeof data.name === "string" ? data.name.trim() : "";
             const avatar =
               typeof data.avatar === "string" ? data.avatar.trim() : "";
+            const resolvedAvatar = avatar
+              ? await getFirebaseStorageUrl(avatar)
+              : "";
+
             return {
               id: normalizeKey(name) || d.id,
               title: name || d.id,
-              image: avatar || defaultSubjectAvatar,
+              image: resolvedAvatar || defaultSubjectAvatar,
             };
-          })
-          .filter(Boolean);
-        setSubjects(list);
+          }),
+        );
+
+        if (active) setSubjects(list);
       } catch (e) {
         console.error("Failed to load subjects:", e);
-        setSubjects([]);
+        if (active) setSubjects([]);
       } finally {
         if (active) setLoadingSubjects(false);
       }

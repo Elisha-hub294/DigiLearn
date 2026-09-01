@@ -117,7 +117,10 @@ export function PageFormSection({
               <Pressable
                 key={option.id}
                 accessibilityRole="button"
-                style={styles.dropdownItem}
+                style={({ pressed, hovered }) => [
+                  styles.dropdownItem,
+                  (pressed || hovered) && styles.dropdownItemHover,
+                ]}
                 onPress={() => {
                   updateField("subject", option.name);
                   setSubjectDropdownOpen(false);
@@ -162,7 +165,10 @@ export function PageFormSection({
                   <Pressable
                     key={option.value}
                     accessibilityRole="button"
-                    style={styles.dropdownItem}
+                    style={({ pressed, hovered }) => [
+                      styles.dropdownItem,
+                      (pressed || hovered) && styles.dropdownItemHover,
+                    ]}
                     onPress={() => handleLevelSelect(option.value)}
                   >
                     <Text
@@ -203,7 +209,10 @@ export function PageFormSection({
                   <Pressable
                     key={option.value}
                     accessibilityRole="button"
-                    style={styles.dropdownItem}
+                    style={({ pressed, hovered }) => [
+                      styles.dropdownItem,
+                      (pressed || hovered) && styles.dropdownItemHover,
+                    ]}
                     onPress={() => {
                       updateField("schoolClass", option.value);
                       setClassDropdownOpen(false);

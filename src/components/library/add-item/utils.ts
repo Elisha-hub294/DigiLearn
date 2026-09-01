@@ -70,6 +70,20 @@ export const sanitizeFileName = (fileName: string): string =>
     .replace(/^-|-$/g, "");
 
 /**
+ * Derives the Firebase Storage subfolder for a past paper by type.
+ * If no type is selected, keep the file in the generic folder.
+ */
+export const getPastPaperStorageFolder = (paperType: string): string => {
+  const normalized = normalizeText(paperType || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-+/g, "-");
+
+  return normalized || "past-paper";
+};
+
+/**
  * Generates a unique ID for uploads
  */
 export const generateUniqueId = (fileName?: string): string =>
