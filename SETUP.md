@@ -31,6 +31,7 @@ npm install
 DigiLearn needs Firebase and Google OAuth credentials to run fully. Here's what to do:
 
 1. Copy the example environment file:
+
    ```bash
    cp .env.example .env
    ```
@@ -65,15 +66,18 @@ You'll see a QR code. Here's how to run it:
 ## What You'll Find Inside
 
 ### Authentication
+
 - Sign up and log in with your email and password
 - Quick sign-in with Google (native on mobile, popup on web)
 
 ### Learning Resources
+
 - Browse textbooks, past papers, and study notes
 - Save materials for later study
 - Chat with an AI study assistant powered by Google Gemini
 
 ### Teacher Features
+
 - Post and share study materials
 - Share announcements with students
 - Manage all your uploaded content
@@ -107,13 +111,13 @@ This usually means you're not in the right directory. Make sure you're running `
 
 ### Tech Stack Overview
 
-| Component | Technology |
-|-----------|------------|
-| **Mobile/Web** | React Native with Expo |
-| **Backend** | Firebase (Auth, Firestore, Storage) |
-| **AI Assistant** | Google Gemini API |
-| **Language** | TypeScript |
-| **Navigation** | Expo Router |
+| Component        | Technology                          |
+| ---------------- | ----------------------------------- |
+| **Mobile/Web**   | React Native with Expo              |
+| **Backend**      | Firebase (Auth, Firestore, Storage) |
+| **AI Assistant** | Google Gemini API                   |
+| **Language**     | TypeScript                          |
+| **Navigation**   | Expo Router                         |
 
 ### Project Layout
 
