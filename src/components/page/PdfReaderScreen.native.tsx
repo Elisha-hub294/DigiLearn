@@ -43,8 +43,9 @@ function normalizeUriParam(raw: string | string[] | undefined | null): string | 
 }
 
 export function PdfReaderScreen() {
-  const { uri, title } = useLocalSearchParams<{
-    uri: string;
+  const { uri, document: pdfDocument, title } = useLocalSearchParams<{
+    uri?: string;
+    document?: string;
     title?: string;
   }>();
 
@@ -59,7 +60,7 @@ export function PdfReaderScreen() {
   const [downloadScale] = useState(() => new Animated.Value(1));
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const rawUri = normalizeUriParam(uri);
+  const rawUri = normalizeUriParam(uri ?? pdfDocument);
   const resolvedUri = useFirebaseStorageUrl(rawUri ?? undefined);
   // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
   const decodedUri = resolvedUri ?? null;

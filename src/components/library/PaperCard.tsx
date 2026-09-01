@@ -31,9 +31,7 @@ export function PaperCard({
 
   const normalizedPaperCode = paperCode?.trim();
   const normalizedPaperNumber =
-    typeof paperNumber === "number"
-      ? String(paperNumber)
-      : paperNumber?.trim();
+    typeof paperNumber === "number" ? String(paperNumber) : paperNumber?.trim();
   const paperReference = normalizedPaperCode
     ? normalizedPaperNumber
       ? `${normalizedPaperCode}/${normalizedPaperNumber}`
@@ -41,20 +39,14 @@ export function PaperCard({
     : "";
 
   const normalizedPageNumber =
-    typeof pageNumber === "number"
-      ? String(pageNumber)
-      : pageNumber?.trim();
+    typeof pageNumber === "number" ? String(pageNumber) : pageNumber?.trim();
   const pageCountText = normalizedPageNumber
-    ? `${normalizedPageNumber} ${Number(normalizedPageNumber) === 1 ? "page" : "pages"}`
+    ? `${normalizedPageNumber} ${Number(normalizedPageNumber) === 1 ? "Page" : "Pages"}`
     : "";
 
-  const details = [
-    subject?.trim() || "",
-    paperReference,
-    level?.trim() || "",
-    pageCountText,
-    description?.trim() || "",
-  ].filter(Boolean);
+  const metaParts = [paperReference, level?.trim() || "", pageCountText].filter(
+    Boolean,
+  );
 
   const openPdf = () => {
     if (!document) return;
@@ -86,17 +78,14 @@ export function PaperCard({
         <View style={styles.darkOverlay} />
       </View>
       <View style={styles.content}>
+        {subject?.trim() ? <Text style={styles.subject}>{subject.trim()}</Text> : null}
         <Text style={styles.title} numberOfLines={2}>
           {title}
         </Text>
-        {details.length > 0 && (
-          <View style={styles.details}>
-            {details.map((detail, index) => (
-              <Text key={`${detail}-${index}`} style={styles.detailText} numberOfLines={2}>
-                {detail}
-              </Text>
-            ))}
-          </View>
+        {metaParts.length > 0 && (
+          <Text style={styles.meta} numberOfLines={2}>
+            {metaParts.join(" • ")}
+          </Text>
         )}
       </View>
     </Pressable>
@@ -110,6 +99,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     overflow: "hidden",
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.06)",
   },
   cardPressed: {
     opacity: 0.9,
@@ -136,19 +127,22 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
   },
+  subject: {
+    color: colors.primary,
+    fontSize: 11,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
   title: {
     color: colors.text,
     fontSize: 14,
     fontWeight: "600",
     lineHeight: 20,
   },
-  details: {
-    marginTop: spacing.xs,
-    gap: 2,
-  },
-  detailText: {
-    color: colors.textMuted,
+  meta: {
+    color: colors.subtitle,
     fontSize: 11,
     lineHeight: 16,
+    marginTop: 6,
   },
 });

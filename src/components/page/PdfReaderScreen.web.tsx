@@ -29,8 +29,9 @@ function normalizeUriParam(raw: string | string[] | undefined | null): string | 
 }
 
 export function PdfReaderScreen() {
-  const { uri, title } = useLocalSearchParams<{
-    uri: string;
+  const { uri, document: pdfDocument, title } = useLocalSearchParams<{
+    uri?: string;
+    document?: string;
     title?: string;
   }>();
   const [iframeError, setIframeError] = useState(false);
@@ -42,7 +43,7 @@ export function PdfReaderScreen() {
     if (router.canGoBack()) router.back();
   };
 
-  const rawUri = normalizeUriParam(uri);
+  const rawUri = normalizeUriParam(uri ?? pdfDocument);
   const resolvedUri = useFirebaseStorageUrl(rawUri ?? undefined);
   // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
   const decodedUri = resolvedUri ?? null;
