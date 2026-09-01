@@ -295,6 +295,15 @@ export function AddItemModal({
       setSelectedFile(result);
       setSelectedImage(null);
       setTitleFromSelectedFile(file.name || "");
+
+      if (formData.subject && formData.level && selectedPaperCodePrefix) {
+        updateField(
+          "paperCode",
+          subjectPaperCount === 1
+            ? `${selectedPaperCodePrefix}/1`
+            : selectedPaperCodePrefix,
+        );
+      }
     } catch (e) {
       console.error("Error picking document", e);
     }
@@ -410,6 +419,25 @@ export function AddItemModal({
     formData.level,
     formData.paperCode,
     formData.subject,
+    selectedPaperCodePrefix,
+    subjectPaperCount,
+    updateField,
+  ]);
+
+  useEffect(() => {
+    if (!selectedFile) return;
+    if (!formData.subject || !formData.level || !selectedPaperCodePrefix) return;
+
+    updateField(
+      "paperCode",
+      subjectPaperCount === 1
+        ? `${selectedPaperCodePrefix}/1`
+        : selectedPaperCodePrefix,
+    );
+  }, [
+    selectedFile,
+    formData.subject,
+    formData.level,
     selectedPaperCodePrefix,
     subjectPaperCount,
     updateField,
@@ -675,7 +703,7 @@ export function AddItemModal({
           sanitizedTitle,
           sanitizedBookDescription,
           sanitizedSubject,
-          formData.level || "Ordinary",
+          formData.level || "",
           normalizeText(formData.schoolClass),
           coverUrl,
           documentUrl,
@@ -747,7 +775,7 @@ export function AddItemModal({
           sanitizedTitle,
           sanitizedBookDescription,
           sanitizedSubject,
-          normalizeText(formData.level) || "Ordinary",
+          normalizeText(formData.level) || "",
           normalizeText(formData.author) || "UNEB",
           normalizeText(formData.extra) || String(new Date().getFullYear()),
           pageCount,

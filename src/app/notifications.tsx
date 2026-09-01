@@ -189,7 +189,9 @@ export default function NotificationsScreen() {
         } else if (notification.type === "paper") {
           const paperData = snapshot.data() as Record<string, unknown>;
           const paperDocument =
-            typeof paperData.document === "string" ? paperData.document : undefined;
+            typeof paperData.document === "string"
+              ? paperData.document
+              : undefined;
 
           router.push({
             pathname: itemPath,
@@ -199,7 +201,9 @@ export default function NotificationsScreen() {
                 typeof paperData.title === "string"
                   ? paperData.title
                   : undefined,
-              uri: paperDocument ? encodeURIComponent(paperDocument) : undefined,
+              uri: paperDocument
+                ? encodeURIComponent(paperDocument)
+                : undefined,
               document: paperDocument,
               cover:
                 typeof paperData.cover === "string"

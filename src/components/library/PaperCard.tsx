@@ -78,7 +78,9 @@ export function PaperCard({
         <View style={styles.darkOverlay} />
       </View>
       <View style={styles.content}>
-        {subject?.trim() ? <Text style={styles.subject}>{subject.trim()}</Text> : null}
+        {subject?.trim() ? (
+          <Text style={styles.subject}>{subject.trim()}</Text>
+        ) : null}
         <Text style={styles.title} numberOfLines={2}>
           {title}
         </Text>

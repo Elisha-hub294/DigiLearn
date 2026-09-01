@@ -205,7 +205,7 @@ export const addPage = async (
     cover: coverUrl,
     description: description || "",
     document: documentUrl,
-    level: level || "Ordinary",
+    level: level || "",
     subject: subject || "General",
     title,
     updatedAt: serverTimestamp(),
@@ -256,7 +256,7 @@ export const addPastPaper = async (
       ? { paperNumber: savedPaperNumber }
       : {}),
     type: type || "UNEB",
-    level: level || "Ordinary",
+    level: level || "",
     year: year || String(new Date().getFullYear()),
     paperCode: savedPaperCode || "",
     updatedAt: serverTimestamp(),

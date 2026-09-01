@@ -4,11 +4,16 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
-import { getDownloadedFiles, saveDownloadedFile } from "../../services/downloadService";
+import {
+  getDownloadedFiles,
+  saveDownloadedFile,
+} from "../../services/downloadService";
 
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 
-function normalizeUriParam(raw: string | string[] | undefined | null): string | null {
+function normalizeUriParam(
+  raw: string | string[] | undefined | null,
+): string | null {
   if (!raw) return null;
   const str = Array.isArray(raw) ? raw[0] : raw;
   if (!str) return null;
@@ -29,7 +34,11 @@ function normalizeUriParam(raw: string | string[] | undefined | null): string | 
 }
 
 export function PdfReaderScreen() {
-  const { uri, document: pdfDocument, title } = useLocalSearchParams<{
+  const {
+    uri,
+    document: pdfDocument,
+    title,
+  } = useLocalSearchParams<{
     uri?: string;
     document?: string;
     title?: string;
@@ -60,7 +69,7 @@ export function PdfReaderScreen() {
           (decodedUri && f.localUri === decodedUri) ||
           (rawUri && f.uri === rawUri) ||
           (rawUri && f.localUri === rawUri) ||
-          (title && f.title === title)
+          (title && f.title === title),
       );
       if (isAlreadyDownloaded) {
         setDownloaded(true);
@@ -135,8 +144,9 @@ export function PdfReaderScreen() {
       ) {
         const separator = downloadUrl.includes("?") ? "&" : "?";
         const safeTitle =
-          (title ? title.trim().replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") ||
-          "document";
+          (title
+            ? title.trim().replace(/[^a-zA-Z0-9_\- ]/g, "")
+            : "document") || "document";
         downloadUrl = `${downloadUrl}${separator}response-content-disposition=attachment%3Bfilename%3D%22${encodeURIComponent(safeTitle)}.pdf%22`;
       }
 
