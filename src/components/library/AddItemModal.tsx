@@ -2,15 +2,7 @@ import { Feather as Icon } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-import {
-  collection,
-  doc,
-  getDocs,
-  serverTimestamp,
-  setDoc,
-} from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Image,
@@ -23,13 +15,10 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { auth, db, storage } from "../../../firebaseConfig";
+import WebView from "react-native-webview";
+import { auth } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
-import {
-  appendNotificationToAllUsers,
-  buildLibraryNotification,
-} from "../../services/notifications";
 import PdfPreview from "../home/PdfPreview";
 import { ActionDialog } from "../ui/ActionDialog";
 import { AdminPublishHeader } from "./AdminPublishHeader";
@@ -40,82 +29,50 @@ import {
   FieldLabel,
   InfoMessage,
   NotifyToggle,
+  UploadProgressCard,
 } from "./add-item/SharedFormControls";
+import type { FormState, FormType } from "./add-item/constants";
+import {
+  DESCRIPTION_MAX_LENGTH,
+  FALLBACK_ICON_URL,
+  INITIAL_FORM_STATE,
+  TITLE_MAX_LENGTH,
+} from "./add-item/constants";
+import { getFileValidationError } from "./add-item/fileValidation";
+import {
+  addBanner,
+  addBook,
+  addPage,
+  addPastPaper,
+  notifyUsersAboutNewItem,
+  uploadAssetToStorage,
+} from "./add-item/firebaseService";
+import {
+  useDropdowns,
+  useFormOptions,
+  useFormState,
+  useInfoMessage,
+  usePdfProcessing,
+  useStatusDialog,
+  useUploadProgress,
+  useYearPicker,
+} from "./add-item/hooks";
+import {
+  generatePdfFirstPageThumbnail,
+  getPdfPageCount,
+  getWebViewHtml,
+} from "./add-item/pdfService";
+import {
+  cleanFileNameForTitle,
+  getTitleDocId,
+  normalizeText,
+  resolveUploadError,
+  sanitizeFileName,
+  uriToBlob,
+} from "./add-item/utils";
+export type { FormState, FormType };
 
-let WebView: any = null;
-let FileSystem: any = null;
-
-if (Platform.OS !== "web") {
-  try {
-    WebView = require("react-native-webview").WebView;
-    FileSystem = require("expo-file-system");
-  } catch (error) {
-    console.error("Failed to load native dependencies in AddItemModal:", error);
-  }
-}
-
-export type FormType = "book" | "banner" | "paper" | "page";
-
-export type FormState = {
-  title: string;
-  subtitle: string;
-  author: string;
-  extra: string;
-  cover: string;
-  rating: string;
-  isTop: boolean;
-  pages: string;
-  doc: string;
-  subject: string;
-  description: string;
-  document: string;
-  book: string;
-  level: string;
-  schoolClass: string;
-  notifyUsers: boolean;
-};
-
-const INITIAL_FORM_STATE: FormState = {
-  title: "",
-  subtitle: "",
-  author: "",
-  extra: "",
-  cover: "",
-  rating: "",
-  isTop: false,
-  pages: "",
-  doc: "",
-  subject: "",
-  description: "",
-  document: "",
-  book: "",
-  level: "",
-  schoolClass: "",
-  notifyUsers: true,
-};
-
-const FALLBACK_ICON_URL = "icons/default-2d.png";
-const TITLE_MAX_LENGTH = 100;
-const DESCRIPTION_MAX_LENGTH = 500;
 const DEFAULT_USER_AVATAR = require("../../../assets/images/user-default.png");
-
-const normalizeText = (value: string) =>
-  value
-    .replace(/[\u0000-\u001F\u007F]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-const getTitleDocId = (title: string) => {
-  const sanitized = title
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  return sanitized || `untitled-${Date.now()}`;
-};
 
 type AddItemModalProps = {
   visible: boolean;
@@ -123,203 +80,6 @@ type AddItemModalProps = {
   onClose: () => void;
   onSuccess: () => void;
   screen?: boolean;
-};
-
-const uriToBlob = (uri: string): Promise<Blob> => {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.onload = function () {
-      resolve(xhr.response);
-    };
-    xhr.onerror = function (e) {
-      console.error("XHR failed", e);
-      reject(new TypeError("Network request failed"));
-    };
-    xhr.responseType = "blob";
-    xhr.open("GET", uri, true);
-    xhr.send(null);
-  });
-};
-
-const webviewHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-  <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-  </script>
-  <style>
-    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: white; }
-    canvas { display: none; }
-  </style>
-</head>
-<body>
-  <canvas id="pdf-canvas"></canvas>
-  <script>
-    // Signal to React Native that we are ready
-    setTimeout(() => {
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'ready' }));
-      }
-    }, 150);
-
-    window.addEventListener('message', async (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (!data.base64Data) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'error', error: 'No PDF data provided' }));
-          return;
-        }
-
-        const { base64Data, mode = 'cover' } = data;
-        const binaryString = window.atob(base64Data);
-        const len = binaryString.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-
-        const loadingTask = pdfjsLib.getDocument({ data: bytes.buffer });
-        const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(1);
-
-        const canvas = document.getElementById('pdf-canvas');
-        const context = canvas.getContext('2d');
-
-        const viewport = page.getViewport({ scale: 1.0 });
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        await page.render({
-          canvasContext: context,
-          viewport: viewport
-        }).promise;
-
-        if (mode === 'pageCount') {
-          window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'success', pageCount: pdf.numPages || 1 }));
-          return;
-        }
-
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'success', dataUrl }));
-      } catch (err) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'error', error: err.message || String(err) }));
-      }
-    });
-  </script>
-</body>
-</html>
-`;
-
-const generatePdfFirstPageThumbnail = async (
-  fileUri: string,
-  setPdfToProcess: (state: any) => void,
-  webViewRef: React.RefObject<any>,
-): Promise<string> => {
-  if (Platform.OS === "web") {
-    const pdfjsLib = await new Promise<any>((resolve, reject) => {
-      if ((window as any).pdfjsLib) {
-        resolve((window as any).pdfjsLib);
-        return;
-      }
-      const script = document.createElement("script");
-      script.src =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
-      script.onload = () => {
-        const lib = (window as any).pdfjsLib;
-        lib.GlobalWorkerOptions.workerSrc =
-          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
-        resolve(lib);
-      };
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-
-    const loadingTask = pdfjsLib.getDocument({
-      url: fileUri,
-      withCredentials: false,
-    });
-    const pdf = await loadingTask.promise;
-    const page = await pdf.getPage(1);
-
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("Could not get 2D context");
-
-    const viewport = page.getViewport({ scale: 1.0 });
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-
-    await page.render({ canvasContext: context, viewport }).promise;
-    return canvas.toDataURL("image/jpeg", 0.85);
-  } else {
-    if (!FileSystem) {
-      throw new Error("FileSystem native module is not loaded");
-    }
-    const base64Data = await FileSystem.readAsStringAsync(fileUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    return new Promise<string>((resolve, reject) => {
-      setPdfToProcess({
-        base64Data,
-        resolve,
-        reject,
-      });
-    });
-  }
-};
-
-const getPdfPageCount = async (
-  fileUri: string,
-  setPdfToProcess: (state: any) => void,
-  webViewRef: React.RefObject<any>,
-): Promise<number> => {
-  if (Platform.OS === "web") {
-    const pdfjsLib = await new Promise<any>((resolve, reject) => {
-      if ((window as any).pdfjsLib) {
-        resolve((window as any).pdfjsLib);
-        return;
-      }
-      const script = document.createElement("script");
-      script.src =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
-      script.onload = () => {
-        const lib = (window as any).pdfjsLib;
-        lib.GlobalWorkerOptions.workerSrc =
-          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
-        resolve(lib);
-      };
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-
-    const pdf = await pdfjsLib.getDocument({
-      url: fileUri,
-      withCredentials: false,
-    }).promise;
-
-    return pdf.numPages || 1;
-  }
-
-  if (!FileSystem) {
-    throw new Error("FileSystem native module is not loaded");
-  }
-
-  const base64Data = await FileSystem.readAsStringAsync(fileUri, {
-    encoding: FileSystem.EncodingType.Base64,
-  });
-
-  return new Promise<number>((resolve, reject) => {
-    setPdfToProcess({
-      base64Data,
-      resolve: (result: any) => resolve(Number(result) || 1),
-      reject,
-      mode: "pageCount",
-    });
-  });
 };
 
 export function AddItemModal({
@@ -330,17 +90,29 @@ export function AddItemModal({
   screen = false,
 }: AddItemModalProps) {
   const { profile } = useProfile();
-  const [formData, setFormData] = useState<FormState>(INITIAL_FORM_STATE);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [levelDropdownOpen, setLevelDropdownOpen] = useState(false);
-  const [classDropdownOpen, setClassDropdownOpen] = useState(false);
-  const [subjectDropdownOpen, setSubjectDropdownOpen] = useState(false);
-  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
-  const [showYearPicker, setShowYearPicker] = useState(false);
-  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
-  const [pastPaperTypes, setPastPaperTypes] = useState<
-    { id: string; name: string }[]
-  >([]);
+  const webViewRef = useRef<any>(null);
+
+  // Use custom hooks for state management
+  const { formData, updateField, setFormData } = useFormState();
+  const { uploadProgress, setUploadProgress, resetProgress } =
+    useUploadProgress();
+  const { subjects, pastPaperTypes } = useFormOptions(formType, visible);
+  const {
+    levelDropdownOpen,
+    setLevelDropdownOpen,
+    classDropdownOpen,
+    setClassDropdownOpen,
+    subjectDropdownOpen,
+    setSubjectDropdownOpen,
+    typeDropdownOpen,
+    setTypeDropdownOpen,
+  } = useDropdowns();
+  const { statusDialog, setStatusDialog, showStatusDialog } = useStatusDialog();
+  const { infoMessage, setInfoMessage } = useInfoMessage();
+  const { showYearPicker, setShowYearPicker, currentYear, getYearPickerDate } =
+    useYearPicker();
+  const { pdfToProcess, setPdfToProcess } = usePdfProcessing();
+
   const [selectedFile, setSelectedFile] =
     useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [selectedImage, setSelectedImage] =
@@ -348,159 +120,20 @@ export function AddItemModal({
   const [activeWebDropType, setActiveWebDropType] = useState<
     "document" | "image" | null
   >(null);
-  const [infoMessage, setInfoMessage] = useState<string>("");
-  const [statusDialog, setStatusDialog] = useState<{
-    visible: boolean;
-    title: string;
-    message: string;
-    primaryText: string;
-    secondaryText?: string;
-    onPrimary: () => void;
-    onSecondary?: () => void;
-  } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [pdfToProcess, setPdfToProcess] = useState<{
-    base64Data: string;
-    resolve: (value: any) => void;
-    reject: (err: any) => void;
-    mode?: "cover" | "pageCount";
-  } | null>(null);
-  const webViewRef = useRef<any>(null);
   const isAuthorizedPublisher =
     profile?.type === "teacher" || profile?.type === "admin";
 
   const handleClose = () => {
     setPdfToProcess(null);
+    resetProgress();
     setStatusDialog(null);
     onClose();
   };
 
-  const showStatusDialog = (
-    title: string,
-    message: string,
-    primaryText: string,
-    onPrimary: () => void,
-    secondaryText?: string,
-    onSecondary?: () => void,
-  ) => {
-    setStatusDialog({
-      visible: true,
-      title,
-      message,
-      primaryText,
-      secondaryText,
-      onPrimary,
-      onSecondary,
-    });
-  };
-
-  const resolveUploadError = (error: any) => {
-    const rawMessage = String(error?.message || error || "");
-    const code = String(error?.code || "");
-    const combined = `${code} ${rawMessage}`.toLowerCase();
-
-    if (typeof navigator !== "undefined" && navigator.onLine === false) {
-      return {
-        title: "No internet connection",
-        message:
-          "Your upload could not finish because the device is offline. Check your connection and try again.",
-        primaryText: "Try again",
-        inline:
-          "No internet connection detected. Please reconnect and try your upload again.",
-      };
-    }
-
-    if (
-      /network|offline|failed to fetch|load failed|interrupted|connection|socket|timeout|timed out|aborted/i.test(
-        combined,
-      ) ||
-      combined.includes("network request failed")
-    ) {
-      return {
-        title: "Upload interrupted",
-        message:
-          "The upload was interrupted or the connection dropped. Please check your internet connection and try again.",
-        primaryText: "Retry upload",
-        inline:
-          "Upload interrupted. Please check your internet connection and try again.",
-      };
-    }
-
-    if (
-      /permission|unauthorized|forbidden|access denied|storage/i.test(
-        combined,
-      ) ||
-      code === "storage/unauthorized"
-    ) {
-      return {
-        title: "Upload not allowed",
-        message:
-          "This file could not be uploaded because your account does not have permission or the connection is not valid.",
-        primaryText: "Dismiss",
-        inline:
-          "Upload permission issue detected. Please try again in a moment.",
-      };
-    }
-
-    return {
-      title: "Upload failed",
-      message:
-        "The upload did not complete. Please try again. If the problem continues, check your internet connection and file size.",
-      primaryText: "Try again",
-      inline: "Upload failed. Please review your connection and try again.",
-    };
-  };
-
-  useEffect(() => {
-    const fetchSubjects = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "subject"));
-        const subjectList = snapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            name: doc.data().name as string,
-          }))
-          .filter((item) => item.name)
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setSubjects(subjectList);
-      } catch (error) {
-        console.error("Error fetching subjects:", error);
-      }
-    };
-
-    const fetchPastPaperTypes = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "pastPaperType"));
-        const paperTypeList = snapshot.docs
-          .map((doc) => ({
-            id: doc.id,
-            name: doc.data().name as string,
-          }))
-          .filter((item) => item.name)
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setPastPaperTypes(paperTypeList);
-      } catch (error) {
-        console.error("Error fetching past paper types:", error);
-      }
-    };
-
-    if (
-      (formType === "book" ||
-        formType === "page" ||
-        formType === "paper" ||
-        formType === "banner") &&
-      visible
-    ) {
-      fetchSubjects();
-    }
-
-    if (formType === "paper" && visible) {
-      fetchPastPaperTypes();
-    }
-  }, [formType, visible]);
-
-  const updateField = (key: keyof FormState, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
+  const updateUploadProgress = (label: string, progress: number) => {
+    setUploadProgress({ active: true, label, progress });
   };
 
   const clearSelectedFile = () => {
@@ -510,105 +143,60 @@ export function AddItemModal({
   };
 
   const setTitleFromSelectedFile = (fileName: string) => {
-    const cleanFileName = fileName
-      .replace(/\.[^/.]+$/, "")
-      .replace(/[_-]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-
+    const cleanFileName = cleanFileNameForTitle(fileName);
     if (!cleanFileName || formData.title.trim()) return;
     updateField("title", cleanFileName);
   };
 
-  const isAllowedDocument = (fileName: string, mimeType?: string | null) => {
-    const lowerName = fileName.toLowerCase();
-    const lowerMime = (mimeType || "").toLowerCase();
+  const applyWebDroppedFile = useCallback(
+    (file: File, type: "document" | "image") => {
+      if (type === "image") {
+        const fileName = file.name || "";
+        const mimeType = file.type || "";
 
-    return (
-      lowerName.endsWith(".pdf") ||
-      lowerName.endsWith(".docx") ||
-      lowerMime === "application/pdf" ||
-      lowerMime ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    );
-  };
+        const error = getFileValidationError(fileName, file.size, true);
+        if (error) {
+          Alert.alert("Invalid Image", error);
+          return;
+        }
 
-  const isAllowedImage = (fileName: string, mimeType?: string | null) => {
-    const lowerName = fileName.toLowerCase();
-    const lowerMime = (mimeType || "").toLowerCase();
+        setSelectedImage({
+          uri: URL.createObjectURL(file),
+          fileName,
+          mimeType,
+          fileSize: file.size,
+          width: 0,
+          height: 0,
+        } as ImagePicker.ImagePickerAsset);
+        setSelectedFile(null);
+        return;
+      }
 
-    return (
-      lowerName.endsWith(".jpg") ||
-      lowerName.endsWith(".jpeg") ||
-      lowerName.endsWith(".png") ||
-      lowerMime === "image/jpeg" ||
-      lowerMime === "image/png"
-    );
-  };
-
-  const applyWebDroppedFile = (file: File, type: "document" | "image") => {
-    if (type === "image") {
       const fileName = file.name || "";
       const mimeType = file.type || "";
 
-      if (!isAllowedImage(fileName, mimeType)) {
-        Alert.alert(
-          "Unsupported image type",
-          "Please drop a JPG, JPEG, or PNG image only.",
-        );
+      const error = getFileValidationError(fileName, file.size, false);
+      if (error) {
+        Alert.alert("Invalid File", error);
         return;
       }
 
-      if (file.size > 5 * 1024 * 1024) {
-        Alert.alert(
-          "Image Too Large",
-          "Please drop an image smaller than 5 MB.",
-        );
-        return;
-      }
-
-      setSelectedImage({
-        uri: URL.createObjectURL(file),
-        fileName,
-        mimeType,
-        fileSize: file.size,
-        width: 0,
-        height: 0,
-      } as ImagePicker.ImagePickerAsset);
-      setSelectedFile(null);
-      return;
-    }
-
-    const fileName = file.name || "";
-    const mimeType = file.type || "";
-
-    if (!isAllowedDocument(fileName, mimeType)) {
-      Alert.alert(
-        "Unsupported file type",
-        "Please drop a PDF or DOCX file only.",
-      );
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      Alert.alert("File Too Large", "Please drop a file smaller than 5 MB.");
-      return;
-    }
-
-    setSelectedFile({
-      canceled: false,
-      assets: [
-        {
-          uri: URL.createObjectURL(file),
-          name: fileName,
-          mimeType,
-          size: file.size,
-        },
-      ],
-    } as DocumentPicker.DocumentPickerResult);
-    setSelectedImage(null);
-    setTitleFromSelectedFile(fileName);
-  };
+      setSelectedFile({
+        canceled: false,
+        assets: [
+          {
+            uri: URL.createObjectURL(file),
+            name: fileName,
+            mimeType,
+            size: file.size,
+          },
+        ],
+      } as DocumentPicker.DocumentPickerResult);
+      setSelectedImage(null);
+      setTitleFromSelectedFile(fileName);
+    },
+    [setTitleFromSelectedFile],
+  );
 
   useEffect(() => {
     if (Platform.OS !== "web") return;
@@ -640,7 +228,7 @@ export function AddItemModal({
       window.removeEventListener("dragover", preventDefault, false);
       window.removeEventListener("drop", handleGlobalDragDrop, false);
     };
-  }, [activeWebDropType]);
+  }, [activeWebDropType, applyWebDroppedFile]);
 
   const handleWebDragEnter = (event: any, type: "document" | "image") => {
     if (Platform.OS !== "web") return;
@@ -697,24 +285,13 @@ export function AddItemModal({
         return;
       }
       const file = result.assets[0];
-      const fileName = file.name || "";
-      const mimeType = file.mimeType || "";
 
-      if (!isAllowedDocument(fileName, mimeType)) {
-        Alert.alert(
-          "Unsupported file type",
-          "Please select a PDF or DOCX file only.",
-        );
+      const error = getFileValidationError(file.name || "", file.size, false);
+      if (error) {
+        Alert.alert("Invalid File", error);
         return;
       }
 
-      if (file.size && file.size > 5 * 1024 * 1024) {
-        Alert.alert(
-          "File Too Large",
-          "Please select a file smaller than 5 MB.",
-        );
-        return;
-      }
       setSelectedFile(result);
       setSelectedImage(null);
       setTitleFromSelectedFile(file.name || "");
@@ -731,24 +308,17 @@ export function AddItemModal({
       });
       if (result.canceled || !result.assets?.[0]) return;
       const image = result.assets[0];
-      const fileName = image.fileName || "";
-      const mimeType = image.mimeType || "";
 
-      if (!isAllowedImage(fileName, mimeType)) {
-        Alert.alert(
-          "Unsupported image type",
-          "Please select a JPG, JPEG, or PNG image only.",
-        );
+      const error = getFileValidationError(
+        image.fileName || "",
+        image.fileSize,
+        true,
+      );
+      if (error) {
+        Alert.alert("Invalid Image", error);
         return;
       }
 
-      if (image.fileSize && image.fileSize > 5 * 1024 * 1024) {
-        Alert.alert(
-          "Image Too Large",
-          "Please select an image smaller than 5 MB.",
-        );
-        return;
-      }
       setSelectedImage(image);
       setSelectedFile(null);
     } catch (error) {
@@ -787,12 +357,9 @@ export function AddItemModal({
     return null;
   })();
 
-  const currentYear = new Date().getFullYear();
-  const yearPickerDate = formData.extra
-    ? new Date(Number(formData.extra), 0, 1)
-    : new Date(currentYear, 0, 1);
+  const yearPickerDate = getYearPickerDate(formData.extra || currentYear);
 
-  const sanitizeYearInput = (value: string) => {
+  const sanitizeYearInputValue = (value: string) => {
     const numericValue = value.replace(/\D/g, "").slice(0, 4);
     if (!numericValue) return "";
 
@@ -859,6 +426,12 @@ export function AddItemModal({
       return;
     }
 
+    const userId = auth.currentUser?.uid;
+    if (!userId) {
+      Alert.alert("Sign in required", "You must be signed in to publish.");
+      return;
+    }
+
     const sanitizedTitle = normalizeText(formData.title);
     const sanitizedDescription = normalizeText(formData.subtitle);
     const sanitizedSubject = normalizeText(formData.subject);
@@ -890,13 +463,14 @@ export function AddItemModal({
 
     try {
       setIsSubmitting(true);
+      setUploadProgress({
+        active: true,
+        label: "Preparing upload",
+        progress: 8,
+      });
       setInfoMessage(
         "Uploading your item. Please keep this screen open until the upload finishes.",
       );
-
-      const payload = {
-        title: sanitizedTitle,
-      };
 
       let createdItemId = "";
       let notificationType:
@@ -907,63 +481,33 @@ export function AddItemModal({
         | "paper" = "book";
 
       if (formType === "book") {
-        const currentUserId = auth.currentUser?.uid;
-        if (!currentUserId) {
-          Alert.alert(
-            "Sign in required",
-            "You must be signed in to add a book.",
-          );
-          setIsSubmitting(false);
-          return;
-        }
-
-        const itemId = `${getTitleDocId(sanitizedTitle)}-${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2, 9)}`;
         let coverUrl = "";
 
         if (selectedImage) {
-          try {
-            const coverRef = ref(
-              storage,
-              `book-covers/${itemId}.${selectedImage.mimeType?.split("/")[1] || "jpg"}`,
-            );
-            await uploadBytes(coverRef, await uriToBlob(selectedImage.uri), {
-              contentType: selectedImage.mimeType || "image/jpeg",
-            });
-            coverUrl = await getDownloadURL(coverRef);
-          } catch (error: any) {
-            Alert.alert(
-              "Upload Failed",
-              `Unable to upload the cover: ${error?.message || error}`,
-            );
-            setIsSubmitting(false);
-            return;
-          }
-        }
-
-        createdItemId = itemId;
-        notificationType = "book";
-        await setDoc(doc(db, "books", itemId), {
-          ...payload,
-          author: sanitizedAuthor,
-          owner: currentUserId,
-          subject: sanitizedSubject || "General",
-          description: sanitizedDescription,
-          cover: coverUrl,
-          updatedAt: serverTimestamp(),
-        });
-      } else if (formType === "banner") {
-        const currentUserId = auth.currentUser?.uid;
-        if (!currentUserId) {
-          Alert.alert(
-            "Sign in required",
-            "You must be signed in to add a banner.",
+          const blob = await uriToBlob(selectedImage.uri);
+          const itemId = `${getTitleDocId(sanitizedTitle)}-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 9)}`;
+          const ext = selectedImage.mimeType?.split("/")[1] || "jpg";
+          coverUrl = await uploadAssetToStorage(
+            `book-covers/${itemId}.${ext}`,
+            blob,
+            "Uploading cover image",
+            updateUploadProgress,
+            { contentType: selectedImage.mimeType || "image/jpeg" },
           );
-          setIsSubmitting(false);
-          return;
         }
 
+        createdItemId = await addBook(
+          sanitizedTitle,
+          sanitizedDescription,
+          sanitizedSubject,
+          coverUrl,
+          sanitizedAuthor,
+          userId,
+        );
+        notificationType = "book";
+      } else if (formType === "banner") {
         let coverUrl = "";
         let documentUrl = "";
         const hasCover = Boolean(selectedImage || selectedFile?.assets?.[0]);
@@ -972,77 +516,61 @@ export function AddItemModal({
           : selectedFile?.assets?.[0]
             ? "doc"
             : "";
-        const bannerId = `${getTitleDocId(sanitizedTitle)}-${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2, 9)}`;
-        try {
-          if (selectedImage) {
-            const imageRef = ref(
-              storage,
-              `post-covers/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
-            );
-            await uploadBytes(imageRef, await uriToBlob(selectedImage.uri));
-            coverUrl = await getDownloadURL(imageRef);
-          } else if (selectedFile?.assets?.[0]) {
-            const file = selectedFile.assets[0];
-            const uniqueDocumentId = `${Date.now()}_${Math.random()
-              .toString(36)
-              .slice(2, 9)}`;
-            const documentRef = ref(
-              storage,
-              `post-documents/${uniqueDocumentId}.pdf`,
-            );
-            await uploadBytes(documentRef, await uriToBlob(file.uri));
-            documentUrl = await getDownloadURL(documentRef);
 
-            const coverDataUrl = await generatePdfFirstPageThumbnail(
-              file.uri,
-              setPdfToProcess,
-              webViewRef,
-            );
-            const coverRef = ref(
-              storage,
-              `post-covers/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
-            );
-            await uploadBytes(coverRef, await uriToBlob(coverDataUrl));
-            coverUrl = await getDownloadURL(coverRef);
-          }
-        } catch (error: any) {
-          Alert.alert(
-            "Upload Failed",
-            `Unable to upload the cover: ${error?.message || error}`,
+        if (selectedImage) {
+          const blob = await uriToBlob(selectedImage.uri);
+          coverUrl = await uploadAssetToStorage(
+            `post-covers/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
+            blob,
+            "Uploading announcement image",
+            updateUploadProgress,
+            { contentType: selectedImage.mimeType || "image/jpeg" },
           );
-          setIsSubmitting(false);
-          return;
+        } else if (selectedFile?.assets?.[0]) {
+          const file = selectedFile.assets[0];
+          const blob = await uriToBlob(file.uri);
+          documentUrl = await uploadAssetToStorage(
+            `post-documents/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.pdf`,
+            blob,
+            "Uploading announcement document",
+            updateUploadProgress,
+          );
+
+          const coverDataUrl = await generatePdfFirstPageThumbnail(
+            file.uri,
+            setPdfToProcess,
+            webViewRef,
+          );
+          const coverBlob = await uriToBlob(coverDataUrl);
+          coverUrl = await uploadAssetToStorage(
+            `post-covers/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
+            coverBlob,
+            "Uploading announcement preview",
+            updateUploadProgress,
+            { contentType: "image/jpeg" },
+          );
         }
 
-        createdItemId = bannerId;
-        notificationType = "announcement";
-        await setDoc(doc(db, "teacherPosts", bannerId), {
-          title: sanitizedTitle,
-          descriprion: sanitizedDescription,
+        createdItemId = await addBanner(
+          sanitizedTitle,
+          sanitizedDescription,
+          sanitizedSubject,
+          coverUrl,
+          documentUrl,
           hasCover,
-          cover: coverUrl,
-          document: documentUrl,
-          createdAt: serverTimestamp(),
-          subject: sanitizedSubject || "General",
-          owner: currentUserId,
-          ownerType: profile?.type || "",
           fileType,
-        });
+          userId,
+          profile?.type || "",
+        );
+        notificationType = "announcement";
       } else if (formType === "page") {
         const bookList = formData.book
           .split(",")
           .map((item) => item.trim())
           .filter(Boolean);
-        const itemId = getTitleDocId(formData.title);
-        createdItemId = itemId;
-        notificationType = "page";
-
         let documentUrl = formData.document.trim();
         let coverUrl = FALLBACK_ICON_URL;
 
-        // If a file was selected, upload it to Firebase Storage
         if (
           selectedFile &&
           !selectedFile.canceled &&
@@ -1050,70 +578,53 @@ export function AddItemModal({
           selectedFile.assets.length > 0
         ) {
           const file = selectedFile.assets[0];
+          const blob = await uriToBlob(file.uri);
+          const uniqueName = `${Date.now()}_${file.name || "document"}`;
+          documentUrl = await uploadAssetToStorage(
+            `docs/${uniqueName}`,
+            blob,
+            "Uploading page document",
+            updateUploadProgress,
+          );
+
           try {
-            const blob = await uriToBlob(file.uri);
-            const uniqueName = `${Date.now()}_${file.name || "document"}`;
-            const storageRef = ref(storage, `docs/${uniqueName}`);
-            await uploadBytes(storageRef, blob);
-            documentUrl = await getDownloadURL(storageRef);
-
-            // Auto generate the file's first page image and store it in Firebase Storage
-            try {
-              console.log("Generating first page cover thumbnail...");
-              const coverDataUrl = await generatePdfFirstPageThumbnail(
-                file.uri,
-                setPdfToProcess,
-                webViewRef,
-              );
-              console.log("Generated cover data URL successfully.");
-
-              const coverBlob = await uriToBlob(coverDataUrl);
-              const uniqueCoverId = `${Date.now()}_${Math.random()
-                .toString(36)
-                .substring(2, 9)}.jpg`;
-              const coverRef = ref(storage, `page-covers/${uniqueCoverId}`);
-              await uploadBytes(coverRef, coverBlob);
-              coverUrl = await getDownloadURL(coverRef);
-              console.log("Uploaded cover successfully: ", coverUrl);
-            } catch (coverError: any) {
-              console.error(
-                "Failed to generate or upload cover image",
-                coverError,
-              );
-              coverUrl = FALLBACK_ICON_URL;
-            }
-          } catch (e: any) {
-            console.error("File upload failed", e);
-            Alert.alert(
-              "Upload Failed",
-              `Unable to upload the selected file: ${e?.message || e}`,
+            const coverDataUrl = await generatePdfFirstPageThumbnail(
+              file.uri,
+              setPdfToProcess,
+              webViewRef,
             );
-            setIsSubmitting(false);
-            return;
+            const coverBlob = await uriToBlob(coverDataUrl);
+            const uniqueCoverId = `${Date.now()}_${Math.random()
+              .toString(36)
+              .substring(2, 9)}.jpg`;
+            coverUrl = await uploadAssetToStorage(
+              `page-covers/${uniqueCoverId}`,
+              coverBlob,
+              "Uploading page preview",
+              updateUploadProgress,
+              { contentType: "image/jpeg" },
+            );
+          } catch (coverError: any) {
+            console.error(
+              "Failed to generate or upload cover image",
+              coverError,
+            );
+            coverUrl = FALLBACK_ICON_URL;
           }
         }
 
-        await setDoc(doc(db, "pages", itemId), {
-          book: bookList,
-          cover: coverUrl,
-          description: sanitizedBookDescription || "",
-          document: documentUrl,
-          level: formData.level || "Ordinary",
-          subject: sanitizedSubject || "General",
-          title: sanitizedTitle,
-          updatedAt: serverTimestamp(),
-          ...(normalizeText(formData.schoolClass)
-            ? { schoolClass: normalizeText(formData.schoolClass) }
-            : {}),
-        });
+        createdItemId = await addPage(
+          sanitizedTitle,
+          sanitizedBookDescription,
+          sanitizedSubject,
+          formData.level || "Ordinary",
+          normalizeText(formData.schoolClass),
+          coverUrl,
+          documentUrl,
+          bookList,
+        );
+        notificationType = "page";
       } else if (formType === "paper") {
-        const paperTitle = formData.title.trim() || "untitled-paper";
-        const itemId = `${getTitleDocId(paperTitle)}-${Date.now()}_${Math.random()
-          .toString(36)
-          .slice(2, 9)}`;
-        createdItemId = itemId;
-        notificationType = "paper";
-
         let documentUrl = formData.document.trim();
         let coverUrl = FALLBACK_ICON_URL;
         let pageCount = 1;
@@ -1125,92 +636,81 @@ export function AddItemModal({
           selectedFile.assets.length > 0
         ) {
           const file = selectedFile.assets[0];
+          const blob = await uriToBlob(file.uri);
+          const uniqueName = `${Date.now()}_${file.name || "past-paper"}`;
+          documentUrl = await uploadAssetToStorage(
+            `past-papers/${uniqueName}`,
+            blob,
+            "Uploading past paper",
+            updateUploadProgress,
+          );
+
           try {
-            const blob = await uriToBlob(file.uri);
-            const uniqueName = `${Date.now()}_${file.name || "past-paper"}`;
-            const storageRef = ref(storage, `past-papers/${uniqueName}`);
-            await uploadBytes(storageRef, blob);
-            documentUrl = await getDownloadURL(storageRef);
-
-            try {
-              console.log("Generating past paper cover thumbnail...");
-              const coverDataUrl = await generatePdfFirstPageThumbnail(
-                file.uri,
-                setPdfToProcess,
-                webViewRef,
-              );
-              console.log("Generated past paper cover data URL successfully.");
-
-              const coverBlob = await uriToBlob(coverDataUrl);
-              const sanitizedFileName =
-                (file.name || "past-paper")
-                  .replace(/\.[^/.]+$/, "")
-                  .replace(/[^a-zA-Z0-9-_]+/g, "-")
-                  .replace(/-+/g, "-")
-                  .replace(/^-|-$/g, "") || "past-paper";
-              const uniqueCoverId = `${Date.now()}_${Math.random()
-                .toString(36)
-                .substring(2, 9)}_${sanitizedFileName}.jpg`;
-              const coverRef = ref(storage, `page-covers/${uniqueCoverId}`);
-              await uploadBytes(coverRef, coverBlob);
-              coverUrl = await getDownloadURL(coverRef);
-              console.log("Uploaded past paper cover successfully: ", coverUrl);
-            } catch (coverError: any) {
-              console.error(
-                "Failed to generate or upload past paper cover image",
-                coverError,
-              );
-              coverUrl = FALLBACK_ICON_URL;
-            }
-
-            try {
-              pageCount = await getPdfPageCount(
-                file.uri,
-                setPdfToProcess,
-                webViewRef,
-              );
-            } catch (pageCountError: any) {
-              console.error(
-                "Failed to read past paper page count",
-                pageCountError,
-              );
-              pageCount = 1;
-            }
-          } catch (e: any) {
-            console.error("Past paper file upload failed", e);
-            Alert.alert(
-              "Upload Failed",
-              `Unable to upload the selected document: ${e?.message || e}`,
+            const coverDataUrl = await generatePdfFirstPageThumbnail(
+              file.uri,
+              setPdfToProcess,
+              webViewRef,
             );
-            setIsSubmitting(false);
-            return;
+            const coverBlob = await uriToBlob(coverDataUrl);
+            const sanitizedFileName = sanitizeFileName(
+              file.name || "past-paper",
+            );
+            const uniqueCoverId = `${Date.now()}_${Math.random()
+              .toString(36)
+              .substring(2, 9)}_${sanitizedFileName}.jpg`;
+            coverUrl = await uploadAssetToStorage(
+              `page-covers/${uniqueCoverId}`,
+              coverBlob,
+              "Uploading paper preview",
+              updateUploadProgress,
+              { contentType: "image/jpeg" },
+            );
+          } catch (coverError: any) {
+            console.error(
+              "Failed to generate or upload cover image",
+              coverError,
+            );
+            coverUrl = FALLBACK_ICON_URL;
+          }
+
+          try {
+            pageCount = await getPdfPageCount(
+              file.uri,
+              setPdfToProcess,
+              webViewRef,
+            );
+          } catch (pageCountError: any) {
+            console.error("Failed to read page count", pageCountError);
+            pageCount = 1;
           }
         }
 
-        await setDoc(doc(db, "pastPaper", itemId), {
-          title: sanitizedTitle,
-          description: sanitizedBookDescription || "",
-          subject: sanitizedSubject || "General",
-          document: documentUrl || "",
-          cover: coverUrl,
-          pageNumber: pageCount,
-          type: normalizeText(formData.author) || "UNEB",
-          level: normalizeText(formData.level) || "Ordinary",
-          year:
-            normalizeText(formData.extra) || String(new Date().getFullYear()),
-          updatedAt: serverTimestamp(),
-        });
+        createdItemId = await addPastPaper(
+          sanitizedTitle,
+          sanitizedBookDescription,
+          sanitizedSubject,
+          normalizeText(formData.level) || "Ordinary",
+          normalizeText(formData.author) || "UNEB",
+          normalizeText(formData.extra) || String(new Date().getFullYear()),
+          pageCount,
+          coverUrl,
+          documentUrl,
+        );
+        notificationType = "paper";
       }
 
       if (createdItemId && formData.notifyUsers) {
-        await appendNotificationToAllUsers(
-          buildLibraryNotification(notificationType, createdItemId),
-        );
+        await notifyUsersAboutNewItem(notificationType, createdItemId);
       }
 
       setFormData(INITIAL_FORM_STATE);
       setSelectedFile(null);
       setSelectedImage(null);
+      setUploadProgress({
+        active: false,
+        label: "Upload complete",
+        progress: 100,
+      });
       setInfoMessage("Upload complete. Returning to the home screen.");
 
       showStatusDialog(
@@ -1289,6 +789,12 @@ export function AddItemModal({
             )}
 
             {infoMessage ? <InfoMessage>{infoMessage}</InfoMessage> : null}
+            {uploadProgress.active && (
+              <UploadProgressCard
+                label={uploadProgress.label}
+                progress={uploadProgress.progress}
+              />
+            )}
 
             {formType !== "paper" && (
               <>
@@ -1513,17 +1019,39 @@ export function AddItemModal({
                 <Text style={styles.fieldLabel}>Document File</Text>
                 <View {...getWebDropHandlers("document")}>
                   <Pressable
-                    style={styles.filePicker}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      selectedFile?.assets?.[0]
+                        ? "Change uploaded document"
+                        : "Upload a document"
+                    }
+                    style={({ pressed }) => [
+                      styles.filePicker,
+                      pressed && styles.filePickerPressed,
+                      selectedFile?.assets?.[0] && styles.filePickerSelected,
+                    ]}
                     onPress={pickDocument}
                     disabled={isSubmitting}
                   >
                     <View style={styles.filePickerContent}>
-                      <Icon name="file-text" size={16} color={colors.primary} />
-                      <Text style={styles.filePickerText}>
-                        {selectedFile?.assets?.[0]
-                          ? selectedFile.assets[0].name
-                          : "Tap to select a file (max 5 MB)"}
-                      </Text>
+                      <View style={styles.filePickerIcon}>
+                        <Icon
+                          name="file-text"
+                          size={18}
+                          color={colors.primary}
+                        />
+                      </View>
+                      <View style={styles.filePickerTextWrap}>
+                        <Text style={styles.filePickerText} numberOfLines={1}>
+                          {selectedFile?.assets?.[0]?.name ||
+                            "Drag a file here or tap to upload"}
+                        </Text>
+                        <Text style={styles.filePickerHint}>
+                          {selectedFile?.assets?.[0]
+                            ? "Document ready to publish"
+                            : "PDF or DOCX • max 5 MB"}
+                        </Text>
+                      </View>
                     </View>
                   </Pressable>
                 </View>
@@ -1738,7 +1266,7 @@ export function AddItemModal({
                         placeholder="2026"
                         value={formData.extra}
                         onChangeText={(val) =>
-                          updateField("extra", sanitizeYearInput(val))
+                          updateField("extra", sanitizeYearInputValue(val))
                         }
                         keyboardType="numeric"
                         maxLength={4}
@@ -1881,11 +1409,11 @@ export function AddItemModal({
           icon={<Icon name="alert-circle" size={24} color="#DC2626" />}
         />
       )}
-      {pdfToProcess && Platform.OS !== "web" && WebView && (
+      {pdfToProcess && Platform.OS !== "web" && (
         <View style={{ width: 0, height: 0, opacity: 0, position: "absolute" }}>
           <WebView
             ref={webViewRef}
-            source={{ html: webviewHtml }}
+            source={{ html: getWebViewHtml() }}
             onMessage={(event: any) => {
               try {
                 const res = JSON.parse(event.nativeEvent.data);
@@ -1996,24 +1524,55 @@ const styles = StyleSheet.create({
   },
   filePicker: {
     borderWidth: 1,
-    borderColor: "rgba(37, 99, 235, 0.28)",
-    borderRadius: 12,
+    borderColor: "rgba(37, 99, 235, 0.24)",
+    borderStyle: "dashed",
+    borderRadius: 16,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.md,
     marginBottom: spacing.md,
-    backgroundColor: "rgba(37, 99, 235, 0.06)",
+    backgroundColor: "rgba(37, 99, 235, 0.05)",
     justifyContent: "center",
+    shadowColor: "#2563EB",
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    cursor: "pointer",
+  },
+  filePickerPressed: {
+    backgroundColor: "rgba(37, 99, 235, 0.08)",
+    borderColor: "rgba(37, 99, 235, 0.45)",
+  },
+  filePickerSelected: {
+    backgroundColor: "rgba(16, 185, 129, 0.08)",
+    borderColor: "rgba(16, 185, 129, 0.38)",
   },
   filePickerContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
+  },
+  filePickerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(37, 99, 235, 0.09)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  filePickerTextWrap: {
+    flex: 1,
+    justifyContent: "center",
   },
   filePickerText: {
-    flex: 1,
     color: colors.primary,
     fontSize: 14,
+    fontWeight: "700",
+  },
+  filePickerHint: {
+    color: "#4B6AA6",
+    fontSize: 11,
     fontWeight: "600",
+    marginTop: 2,
   },
   attachmentRow: {
     flexDirection: "row",
@@ -2022,21 +1581,51 @@ const styles = StyleSheet.create({
   },
   attachmentButton: {
     flex: 1,
-    minHeight: 52,
+    minHeight: 70,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "rgba(16, 185, 129, 0.3)",
+    borderRadius: 16,
+    paddingHorizontal: spacing.md,
+    backgroundColor: "rgba(16, 185, 129, 0.05)",
+    justifyContent: "center",
+    cursor: "pointer",
+  },
+  attachmentButtonPressed: {
+    backgroundColor: "rgba(16, 185, 129, 0.08)",
+    borderColor: "rgba(16, 185, 129, 0.55)",
+  },
+  attachmentButtonSelected: {
+    backgroundColor: "rgba(37, 99, 235, 0.06)",
+    borderColor: "rgba(37, 99, 235, 0.35)",
+  },
+  attachmentButtonInner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.28)",
-    borderRadius: 14,
-    paddingHorizontal: spacing.md,
-    backgroundColor: "rgba(16, 185, 129, 0.06)",
+    gap: 10,
+  },
+  attachmentButtonIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "rgba(16, 185, 129, 0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  attachmentButtonTextWrap: {
+    flex: 1,
+    justifyContent: "center",
   },
   attachmentButtonText: {
-    flex: 1,
     color: "#0F766E",
     fontSize: 13,
     fontWeight: "700",
+  },
+  attachmentButtonHint: {
+    color: "#4B6AA6",
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 2,
   },
   modalContent: {
     paddingBottom: spacing.xl,

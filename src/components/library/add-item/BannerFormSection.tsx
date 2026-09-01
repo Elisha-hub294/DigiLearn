@@ -90,26 +90,70 @@ export function BannerFormSection({
       <View style={styles.attachmentRow}>
         <View {...getWebDropHandlers("document")}>
           <Pressable
-            style={styles.attachmentButton}
+            accessibilityRole="button"
+            accessibilityLabel={
+              selectedFile?.assets?.[0]?.name
+                ? "Change uploaded document"
+                : "Upload a document"
+            }
+            style={({ pressed }) => [
+              styles.attachmentButton,
+              pressed && styles.attachmentButtonPressed,
+              selectedFile?.assets?.[0] && styles.attachmentButtonSelected,
+            ]}
             onPress={pickDocument}
             disabled={isSubmitting}
           >
-            <Icon name="file-text" size={18} color={colors.primary} />
-            <Text style={styles.attachmentButtonText} numberOfLines={1}>
-              {selectedFile?.assets?.[0]?.name || "Add document"}
-            </Text>
+            <View style={styles.attachmentButtonInner}>
+              <View style={styles.attachmentButtonIcon}>
+                <Icon name="file-text" size={18} color={colors.primary} />
+              </View>
+              <View style={styles.attachmentButtonTextWrap}>
+                <Text style={styles.attachmentButtonText} numberOfLines={1}>
+                  {selectedFile?.assets?.[0]?.name ||
+                    "Drag file here or tap to upload"}
+                </Text>
+                <Text style={styles.attachmentButtonHint}>
+                  {selectedFile?.assets?.[0]
+                    ? "Document ready to publish"
+                    : "PDF or DOCX • max 5 MB"}
+                </Text>
+              </View>
+            </View>
           </Pressable>
         </View>
         <View {...getWebDropHandlers("image")}>
           <Pressable
-            style={styles.attachmentButton}
+            accessibilityRole="button"
+            accessibilityLabel={
+              selectedImage?.fileName
+                ? "Change uploaded image"
+                : "Upload an image"
+            }
+            style={({ pressed }) => [
+              styles.attachmentButton,
+              pressed && styles.attachmentButtonPressed,
+              selectedImage && styles.attachmentButtonSelected,
+            ]}
             onPress={pickImage}
             disabled={isSubmitting}
           >
-            <Icon name="image" size={18} color={colors.primary} />
-            <Text style={styles.attachmentButtonText} numberOfLines={1}>
-              {selectedImage?.fileName || "Add image"}
-            </Text>
+            <View style={styles.attachmentButtonInner}>
+              <View style={styles.attachmentButtonIcon}>
+                <Icon name="image" size={18} color={colors.primary} />
+              </View>
+              <View style={styles.attachmentButtonTextWrap}>
+                <Text style={styles.attachmentButtonText} numberOfLines={1}>
+                  {selectedImage?.fileName ||
+                    "Drag image here or tap to upload"}
+                </Text>
+                <Text style={styles.attachmentButtonHint}>
+                  {selectedImage
+                    ? "Image ready to publish"
+                    : "JPG, JPEG, or PNG • max 5 MB"}
+                </Text>
+              </View>
+            </View>
           </Pressable>
         </View>
       </View>

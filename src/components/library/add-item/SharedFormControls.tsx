@@ -1,5 +1,11 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { colors, spacing } from "../../../constants/theme";
 
 export function InfoMessage({ children }: { children: string }) {
@@ -7,6 +13,31 @@ export function InfoMessage({ children }: { children: string }) {
     <View style={styles.infoRow}>
       <Icon name="info" size={14} color="#2563EB" />
       <Text style={styles.infoText}>{children}</Text>
+    </View>
+  );
+}
+
+export function UploadProgressCard({
+  label,
+  progress,
+}: {
+  label: string;
+  progress: number;
+}) {
+  const safeProgress = Math.max(0, Math.min(progress, 100));
+
+  return (
+    <View style={styles.uploadCard}>
+      <View style={styles.uploadHeader}>
+        <View style={styles.uploadMeta}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text style={styles.uploadLabel}>{label}</Text>
+        </View>
+        <Text style={styles.uploadPercent}>{safeProgress}%</Text>
+      </View>
+      <View style={styles.progressTrack}>
+        <View style={[styles.progressFill, { width: `${safeProgress}%` }]} />
+      </View>
     </View>
   );
 }
@@ -101,6 +132,50 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: "600",
+  },
+  uploadCard: {
+    backgroundColor: "rgba(15, 118, 110, 0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(15, 118, 110, 0.16)",
+    borderRadius: 14,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  uploadHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 8,
+  },
+  uploadMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+  },
+  uploadLabel: {
+    color: "#0F766E",
+    fontSize: 13,
+    fontWeight: "700",
+    flexShrink: 1,
+  },
+  uploadPercent: {
+    color: "#0F766E",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(15, 118, 110, 0.12)",
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor: "#14B8A6",
   },
   fieldLabel: {
     color: colors.subtitle,

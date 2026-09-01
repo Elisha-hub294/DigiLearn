@@ -96,14 +96,33 @@ export function BookFormSection({
       <View {...getWebDropHandlers("image")}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Choose book cover image"
-          style={styles.attachmentButton}
+          accessibilityLabel={
+            selectedImage?.fileName
+              ? "Change book cover image"
+              : "Choose book cover image"
+          }
+          style={({ pressed }) => [
+            styles.attachmentButton,
+            pressed && styles.attachmentButtonPressed,
+            selectedImage && styles.attachmentButtonSelected,
+          ]}
           onPress={pickImage}
         >
-          <Icon name="image" size={18} color={colors.primary} />
-          <Text style={styles.attachmentButtonText} numberOfLines={1}>
-            {selectedImage?.fileName || "Choose cover image"}
-          </Text>
+          <View style={styles.attachmentButtonInner}>
+            <View style={styles.attachmentButtonIcon}>
+              <Icon name="image" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.attachmentButtonTextWrap}>
+              <Text style={styles.attachmentButtonText} numberOfLines={1}>
+                {selectedImage?.fileName || "Drag image here or tap to upload"}
+              </Text>
+              <Text style={styles.attachmentButtonHint}>
+                {selectedImage
+                  ? "Cover image ready to publish"
+                  : "JPG, JPEG, or PNG • max 5 MB"}
+              </Text>
+            </View>
+          </View>
         </Pressable>
       </View>
       {selectedImage && (

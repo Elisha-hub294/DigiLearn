@@ -108,9 +108,12 @@ export default function PublishScreen() {
             <Icon name="send" size={22} color="#FFFFFF" />
           </View>
           <View style={styles.introCopy}>
-            <Text style={styles.introTitle}>Upload files on the Platform</Text>
+            <Text style={styles.introTitle}>
+              Share with the learning community
+            </Text>
             <Text style={styles.introText}>
-              Choose a format to add resources.
+              Pick a format below to publish a page, paper, lesson,
+              announcement, or book.
             </Text>
           </View>
         </LinearGradient>
