@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     maxWidth: "86%",
     fontSize: 11,
     lineHeight: 16,
-    color: colors.text,
+    color: colors.primary,
     marginTop: 2,
     textTransform: "capitalize",
   },

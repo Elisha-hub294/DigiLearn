@@ -19,6 +19,7 @@ import { FALLBACK_COVER } from "../book/bookTypes";
 import { ActionDialog } from "../ui/ActionDialog";
 import { BottomActionBar } from "./BottomActionBar";
 import { OverviewSection } from "./OverviewSection";
+import { PageDetailsSection } from "./PageDetailsSection";
 import { PageHero } from "./PageHero";
 import { DEFAULT_SUBJECT_AVATAR, SourceBook, TopicalNote } from "./pageTypes";
 import { SimilarPages } from "./SimilarPages";
@@ -163,18 +164,23 @@ export function PagePreviewScreen() {
               typeof data.description === "string" ? data.description : "",
             preview:
               typeof data.preview === "string" ? data.preview : undefined,
-            cover:
-              typeof data.cover === "string" ? data.cover : undefined,
+            cover: typeof data.cover === "string" ? data.cover : undefined,
             document:
               [data.doc, data.document, data.pdf, data.url].find(
                 (v): v is string => typeof v === "string" && v.length > 0,
               ) ?? undefined,
             createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
             subject: normalizeArray(data.subject),
             book: normalizeArray(data.book),
             pages: (data.pages ?? data.pageCount ?? data.pagesCount) as
               | string
               | number,
+            level: typeof data.level === "string" ? data.level : undefined,
+            schoolClass:
+              typeof data.schoolClass === "string"
+                ? data.schoolClass
+                : undefined,
             isRecommended: Boolean(data.isRecommended || data.featured),
           };
           setNote(currentDoc);
@@ -191,8 +197,7 @@ export function PagePreviewScreen() {
               typeof data.description === "string" ? data.description : "",
             preview:
               typeof data.preview === "string" ? data.preview : undefined,
-            cover:
-              typeof data.cover === "string" ? data.cover : undefined,
+            cover: typeof data.cover === "string" ? data.cover : undefined,
             document:
               [data.doc, data.document, data.pdf, data.url].find(
                 (v): v is string => typeof v === "string" && v.length > 0,
@@ -334,8 +339,8 @@ export function PagePreviewScreen() {
   }, [allNotes, note]);
 
   const dateFormatted = useMemo(
-    () => formatDate(note?.createdAt),
-    [note?.createdAt],
+    () => formatDate(note?.updatedAt ?? note?.createdAt),
+    [note?.createdAt, note?.updatedAt],
   );
 
   const isRecentlyUpdated = useMemo(() => {
@@ -445,7 +450,10 @@ export function PagePreviewScreen() {
     }
     router.push({
       pathname: "/pdf-reader",
-      params: { uri: encodeURIComponent(note.document), title: note.title ?? "PDF" },
+      params: {
+        uri: encodeURIComponent(note.document),
+        title: note.title ?? "PDF",
+      },
     } as any);
   };
 
@@ -489,6 +497,9 @@ export function PagePreviewScreen() {
 
             {/* Overview Section */}
             <OverviewSection description={note.description} />
+
+            {/* All available page metadata */}
+            <PageDetailsSection note={note} dateText={dateFormatted} />
 
             {/* Source Section (Hidden if empty) */}
             <SourceBooks

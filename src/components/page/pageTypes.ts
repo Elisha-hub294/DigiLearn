@@ -8,9 +8,12 @@ export type TopicalNote = {
   cover?: string;
   document?: string;
   createdAt?: any;
+  updatedAt?: any;
   subject?: string | string[];
   book?: string | string[];
   pages?: string | number;
+  level?: string;
+  schoolClass?: string;
   userInterests?: string[];
   isRecommended?: boolean;
 };
