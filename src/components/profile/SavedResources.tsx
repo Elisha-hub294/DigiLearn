@@ -226,6 +226,7 @@ export function SavedResources({
                 displayed,
                 router,
                 (resultsWidth - spacing.lg * 2) * 0.8,
+                resultsWidth,
               )
             : null}
         </Animated.View>
@@ -250,7 +251,12 @@ function Empty({ filter }: { filter: Filter }) {
     </View>
   );
 }
-function renderItems(items: Entry[], router: any, itemWidth: number) {
+function renderItems(
+  items: Entry[],
+  router: any,
+  itemWidth: number,
+  resultsWidth: number,
+) {
   const pages = items.filter((x) => x.type === "Pages");
   return (
     <>
@@ -323,6 +329,7 @@ function renderItems(items: Entry[], router: any, itemWidth: number) {
             <PaperCard
               id={x.id}
               title={x.data.title ?? x.data.name ?? "Untitled past paper"}
+              width={(resultsWidth - spacing.lg * 2) * 0.6}
               subject={x.data.subject ?? x.data.topic}
               year={x.data.year ?? x.data.examYear}
               description={x.data.description ?? x.data.summary}

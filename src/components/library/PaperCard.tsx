@@ -6,6 +6,7 @@ import { colors, spacing } from "../../constants/theme";
 type PaperCardProps = {
   id?: string;
   title: string;
+  width?: number;
   subject?: string;
   year?: string;
   pages?: string;
@@ -21,6 +22,7 @@ type PaperCardProps = {
 export function PaperCard({
   id,
   title,
+  width,
   image,
   document,
   subject,
@@ -91,6 +93,7 @@ export function PaperCard({
       accessibilityRole="button"
       style={({ pressed, hovered }: any) => [
         styles.card,
+        width !== undefined && { width },
         (pressed || hovered) && styles.cardPressed,
       ]}
       onPress={openPreview}
