@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -80,8 +81,29 @@ export default function ProfileScreen() {
         ) : profile ? (
           <Animated.View entering={FadeIn.duration(220)} style={s.sections}>
             <ProfileHeader profile={profile} photoURL={user.photoURL} />
+            {profile.teacherApprovalStatus === "pending" && (
+              <View style={s.reviewBanner}>
+                <Text style={s.reviewEyebrow}>
+                  TEACHER ACCOUNT UNDER REVIEW
+                </Text>
+                <Text style={s.reviewText}>
+                  Your account is ready to use in student mode while an admin
+                  reviews your teacher application.
+                </Text>
+              </View>
+            )}
             {profile.type === "admin" && (
-              <PublishButton onPress={() => router.push("/publish")} />
+              <>
+                <PublishButton onPress={() => router.push("/publish")} />
+                <Pressable
+                  style={s.reviewLink}
+                  onPress={() => router.push("/teacher-applications" as never)}
+                >
+                  <Text style={s.reviewLinkText}>
+                    Review teacher applications
+                  </Text>
+                </Pressable>
+              </>
             )}
             <UserInfoCard profile={profile} />
             <DownloadedResources />
@@ -115,4 +137,25 @@ const s = StyleSheet.create({
   error: { padding: 28, alignItems: "center" },
   errorTitle: { color: colors.dark, fontWeight: "700", fontSize: 17 },
   errorCopy: { color: colors.subtitle, marginTop: 8, textAlign: "center" },
+  reviewBanner: {
+    marginHorizontal: 16,
+    padding: 16,
+    borderRadius: 14,
+    backgroundColor: "#FFF8E6",
+    borderWidth: 1,
+    borderColor: "#F2D48A",
+  },
+  reviewEyebrow: {
+    color: "#946200",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+  },
+  reviewText: { color: "#6B4B00", fontSize: 13, lineHeight: 19, marginTop: 6 },
+  reviewLink: {
+    marginHorizontal: 16,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  reviewLinkText: { color: colors.primary, fontWeight: "700" },
 });

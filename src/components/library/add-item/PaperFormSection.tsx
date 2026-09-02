@@ -12,7 +12,7 @@ import {
 import { colors } from "../../../constants/theme";
 import PdfPreview from "../../home/PdfPreview";
 import type { FormState } from "./constants";
-import { DESCRIPTION_MAX_LENGTH, LEVEL_OPTIONS } from "./constants";
+import { DESCRIPTION_MAX_LENGTH } from "./constants";
 import { FilePickerField } from "./FilePickerField";
 import { FieldLabel } from "./SharedFormControls";
 
@@ -105,134 +105,53 @@ export function PaperFormSection({
       </Text>
 
       <FieldLabel>Subject</FieldLabel>
-      <View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Select subject"
-          style={styles.dropdownTrigger}
-          onPress={() => setSubjectDropdownOpen(!subjectDropdownOpen)}
-        >
-          <View style={styles.dropdownContent}>
-            <Icon name="book-open" size={16} color={colors.primary} />
-            <Text style={styles.dropdownText}>
-              {formData.subject || "Select subject"}
-            </Text>
-          </View>
-        </Pressable>
-        {subjectDropdownOpen && (
-          <View style={styles.dropdownMenu}>
-            {subjects.map((option) => (
-              <Pressable
-                key={option.id}
-                accessibilityRole="button"
-                style={styles.dropdownItem}
-                onPress={() => {
-                  updateField("subject", option.name);
-                  setSubjectDropdownOpen(false);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.dropdownItemText,
-                    formData.subject === option.name &&
-                      styles.dropdownItemTextActive,
-                  ]}
-                >
-                  {option.name}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Select subject"
+        style={styles.dropdownTrigger}
+        onPress={() => setSubjectDropdownOpen(!subjectDropdownOpen)}
+      >
+        <View style={styles.dropdownContent}>
+          <Icon name="book-open" size={16} color={colors.primary} />
+          <Text style={styles.dropdownText}>
+            {formData.subject || "Select subject"}
+          </Text>
+        </View>
+      </Pressable>
 
       <View style={styles.twoColumnRow}>
         <View style={styles.twoColumnField}>
           <FieldLabel>Type</FieldLabel>
-          <View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Select paper type"
-              style={styles.dropdownTrigger}
-              onPress={() => setTypeDropdownOpen(!typeDropdownOpen)}
-            >
-              <View style={styles.dropdownContent}>
-                <Icon name="tag" size={16} color={colors.primary} />
-                <Text style={styles.dropdownText}>
-                  {formData.author || "Select type"}
-                </Text>
-              </View>
-            </Pressable>
-            {typeDropdownOpen && (
-              <View style={styles.dropdownMenu}>
-                {pastPaperTypes.map((option) => (
-                  <Pressable
-                    key={option.id}
-                    accessibilityRole="button"
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      updateField("author", option.name);
-                      setTypeDropdownOpen(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownItemText,
-                        formData.author === option.name &&
-                          styles.dropdownItemTextActive,
-                      ]}
-                    >
-                      {option.name}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Select paper type"
+            style={styles.dropdownTrigger}
+            onPress={() => setTypeDropdownOpen(!typeDropdownOpen)}
+          >
+            <View style={styles.dropdownContent}>
+              <Icon name="tag" size={16} color={colors.primary} />
+              <Text style={styles.dropdownText}>
+                {formData.author || "Select type"}
+              </Text>
+            </View>
+          </Pressable>
         </View>
 
         <View style={styles.twoColumnField}>
           <FieldLabel>Level</FieldLabel>
-          <View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Select paper level"
-              style={styles.dropdownTrigger}
-              onPress={() => setLevelDropdownOpen(!levelDropdownOpen)}
-            >
-              <View style={styles.dropdownContent}>
-                <Icon name="layers" size={16} color={colors.primary} />
-                <Text style={styles.dropdownText}>
-                  {formData.level || "Select level"}
-                </Text>
-              </View>
-            </Pressable>
-            {levelDropdownOpen && (
-              <View style={styles.dropdownMenu}>
-                {LEVEL_OPTIONS.map((option) => (
-                  <Pressable
-                    key={option.value}
-                    accessibilityRole="button"
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      updateField("level", option.value);
-                      setLevelDropdownOpen(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownItemText,
-                        formData.level === option.value &&
-                          styles.dropdownItemTextActive,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Select paper level"
+            style={styles.dropdownTrigger}
+            onPress={() => setLevelDropdownOpen(!levelDropdownOpen)}
+          >
+            <View style={styles.dropdownContent}>
+              <Icon name="layers" size={16} color={colors.primary} />
+              <Text style={styles.dropdownText}>
+                {formData.level || "Select level"}
+              </Text>
+            </View>
+          </Pressable>
         </View>
 
         <View style={styles.twoColumnField}>

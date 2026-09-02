@@ -78,6 +78,7 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     activeRoute?.name === "help" ||
     activeRoute?.name === "about" ||
     activeRoute?.name === "notifications" ||
+    activeRoute?.name === "teacher-applications" ||
     activeRoute?.name === "welcome" ||
     activeRoute?.name === "signup" ||
     activeRoute?.name === "login" ||
@@ -132,8 +133,8 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
                   styles.desktopItem,
                   isActive && styles.desktopItemActive,
                   (pressed || hovered) &&
-                  !isActive &&
-                  styles.desktopItemHovered,
+                    !isActive &&
+                    styles.desktopItemHovered,
                 ]}
               >
                 <MaterialCommunityIcons

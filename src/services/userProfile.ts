@@ -31,6 +31,8 @@ export type UserProfile = {
   joinedAt?: unknown;
   accountTypeCompleted?: boolean;
   type?: AccountType;
+  requestedAccountType?: "teacher";
+  teacherApprovalStatus?: "pending" | "approved" | "rejected";
   "marked-as-read": string[];
   "hidden-pages": HiddenPageRecord[];
   "saved-pages": string[];
@@ -247,7 +249,7 @@ export async function saveAccountTypeDecision(
   user: User,
   accountType: AccountType,
 ) {
-  const collectionName = accountType === "teacher" ? "teachers" : "users";
+  const collectionName = "users";
   const ref = doc(db, collectionName, user.uid);
   const snapshot = await getDoc(ref);
 
@@ -256,16 +258,49 @@ export async function saveAccountTypeDecision(
     {
       ...(snapshot.exists() ? {} : defaultUserProfile(user)),
       ...(snapshot.exists() ? {} : { joinedAt: serverTimestamp() }),
-      type: accountType,
+      type: accountType === "teacher" ? "student" : accountType,
       accountTypeCompleted: true,
+      ...(accountType === "teacher"
+        ? {
+            requestedAccountType: "teacher",
+            teacherApprovalStatus: "pending",
+          }
+        : {
+            requestedAccountType: deleteField(),
+            teacherApprovalStatus: deleteField(),
+          }),
     },
     { merge: true },
   );
 
+  if (accountType === "teacher") {
+    await setDoc(doc(db, "teacherApplications", user.uid), {
+      applicantId: user.uid,
+      name: user.displayName?.trim() || nameFromEmail(user.email),
+      email: user.email ?? "",
+      status: "pending",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    await setDoc(doc(db, "adminNotifications", user.uid), {
+      id: user.uid,
+      type: "announcement",
+      publisherName: "DigiLearn",
+      publisherAvatar: "@/assets/images/panda.png",
+      message: "A new teacher account is waiting for your review.",
+      resourceTitle: user.displayName?.trim() || nameFromEmail(user.email),
+      createdAt: serverTimestamp(),
+      read: false,
+      itemId: user.uid,
+      navigation: "/teacher-applications",
+    });
+  }
+
   onboardingStateCache[user.uid] = {
     exists: true,
     accountTypeCompleted: true,
-    type: accountType,
+    type: accountType === "teacher" ? "student" : accountType,
   };
 }
 

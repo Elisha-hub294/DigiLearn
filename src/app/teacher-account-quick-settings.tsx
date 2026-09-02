@@ -5,7 +5,6 @@ import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -93,7 +92,10 @@ function normalizeText(value: string) {
 function validateSocialValue(option: SocialOption, value: string) {
   if (!value) return "Please enter a value before saving.";
 
-  if (option.key === "socials-email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+  if (
+    option.key === "socials-email" &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+  ) {
     return "Please enter a valid email address.";
   }
 
@@ -105,7 +107,8 @@ function validateSocialValue(option: SocialOption, value: string) {
   }
 
   if (
-    (option.key === "socials-youtube" || option.key === "socials-whatsapp-channel") &&
+    (option.key === "socials-youtube" ||
+      option.key === "socials-whatsapp-channel") &&
     !/^(https?:\/\/)?[\w.-]+\.[a-z]{2,}(\/\S*)?$/i.test(value)
   ) {
     return "Please enter a valid link.";
@@ -134,7 +137,13 @@ function getSubjectNames(items: unknown): string[] {
   return result;
 }
 
-function InfoMessage({ children, color = "#3B82F6" }: { children: string; color?: string }) {
+function InfoMessage({
+  children,
+  color = "#3B82F6",
+}: {
+  children: string;
+  color?: string;
+}) {
   return (
     <View style={styles.infoRow}>
       <Feather name="info" size={12} color={color} />
@@ -153,7 +162,9 @@ export default function TeacherAccountQuickSettingsScreen() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [filterFeedByInterests, setFilterFeedByInterests] = useState(false);
-  const [socialValues, setSocialValues] = useState<Partial<Record<SocialKey, string>>>({});
+  const [socialValues, setSocialValues] = useState<
+    Partial<Record<SocialKey, string>>
+  >({});
   const [activeSocial, setActiveSocial] = useState<SocialOption | null>(null);
   const [socialInput, setSocialInput] = useState("");
   const [socialError, setSocialError] = useState("");
@@ -179,34 +190,42 @@ export default function TeacherAccountQuickSettingsScreen() {
 
       const profile = userSnapshot.data() ?? {};
 
-      const nextSubjects = subjectSnapshot.docs.reduce<Subject[]>((result, item) => {
-        const rawName = typeof item.data().name === "string" ? item.data().name : "";
-        const nameText = normalizeText(rawName);
-        const key = nameText.toLocaleLowerCase();
-        if (nameText && !result.some((subject) => subject.name.toLocaleLowerCase() === key)) {
-          result.push({ id: item.id, name: nameText });
-        }
-        return result;
-      }, []);
+      const nextSubjects = subjectSnapshot.docs.reduce<Subject[]>(
+        (result, item) => {
+          const rawName =
+            typeof item.data().name === "string" ? item.data().name : "";
+          const nameText = normalizeText(rawName);
+          const key = nameText.toLocaleLowerCase();
+          if (
+            nameText &&
+            !result.some((subject) => subject.name.toLocaleLowerCase() === key)
+          ) {
+            result.push({ id: item.id, name: nameText });
+          }
+          return result;
+        },
+        [],
+      );
 
       const initialName = normalizeText(
-        typeof profile.name === "string" ? profile.name : currentUser.displayName ?? "",
+        typeof profile.name === "string"
+          ? profile.name
+          : (currentUser.displayName ?? ""),
       );
       const initialSchool = normalizeText(
         typeof profile.school === "string" ? profile.school : "",
       );
       const initialSelectedSubjects = getSubjectNames(profile.subjects ?? []);
       const initialFilter = Boolean(profile.filterFeedByInterests);
-      const initialSocialValues = SOCIAL_OPTIONS.reduce<Partial<Record<SocialKey, string>>>(
-        (result, option) => {
-          const value = profile[option.key];
-          if (typeof value === "string" && normalizeText(value)) {
-            result[option.key] = normalizeText(value);
-          }
-          return result;
-        },
-        {},
-      );
+      const initialSocialValues = SOCIAL_OPTIONS.reduce<
+        Partial<Record<SocialKey, string>>
+      >((result, option) => {
+        const value = profile[option.key];
+        if (typeof value === "string" && normalizeText(value)) {
+          result[option.key] = normalizeText(value);
+        }
+        return result;
+      }, {});
 
       setName(initialName);
       setSchool(initialSchool);
@@ -215,7 +234,9 @@ export default function TeacherAccountQuickSettingsScreen() {
       setFilterFeedByInterests(initialFilter);
       setSocialValues(initialSocialValues);
     } catch {
-      setLoadError("We couldn't load your teacher profile details right now. Please try again.");
+      setLoadError(
+        "We couldn't load your teacher profile details right now. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -239,7 +260,9 @@ export default function TeacherAccountQuickSettingsScreen() {
   const handleToggleSubject = useCallback((subjectName: string) => {
     setSelectedSubjects((current) => {
       const matches = (item: string) =>
-        item.localeCompare(subjectName, undefined, { sensitivity: "accent" }) === 0;
+        item.localeCompare(subjectName, undefined, {
+          sensitivity: "accent",
+        }) === 0;
 
       return current.some(matches)
         ? current.filter((item) => !matches(item))
@@ -294,15 +317,37 @@ export default function TeacherAccountQuickSettingsScreen() {
         ...socialValues,
       };
 
-      const userRef = doc(db, "teachers", user.uid);
+      const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, payload, { merge: true });
+      await setDoc(
+        doc(db, "teacherApplications", user.uid),
+        {
+          applicantId: user.uid,
+          ...payload,
+          email: user.email ?? "",
+          status: "pending",
+          updatedAt: new Date(),
+        },
+        { merge: true },
+      );
       router.replace("/" as never);
     } catch {
-      setSaveError("Couldn't save your details. Please check your connection and try again.");
+      setSaveError(
+        "Couldn't save your details. Please check your connection and try again.",
+      );
     } finally {
       setIsSaving(false);
     }
-  }, [filterFeedByInterests, isSaving, name, router, school, selectedSubjects, socialValues, user]);
+  }, [
+    filterFeedByInterests,
+    isSaving,
+    name,
+    router,
+    school,
+    selectedSubjects,
+    socialValues,
+    user,
+  ]);
 
   const handleConfirm = useCallback(async () => {
     if (!user || isSaving) {
@@ -326,9 +371,10 @@ export default function TeacherAccountQuickSettingsScreen() {
         <View style={[styles.page, { paddingHorizontal: horizontalPadding }]}>
           <View style={[styles.authContainer, { maxWidth: contentMaxWidth }]}>
             <View style={styles.authState}>
-              <Text style={styles.authTitle}>You're not signed in</Text>
+              <Text style={styles.authTitle}>You&apos;re not signed in</Text>
               <Text style={styles.authText}>
-                Log in or create an account to finish setting up your DigiLearn teacher profile.
+                Log in or create an account to finish setting up your DigiLearn
+                teacher profile.
               </Text>
 
               <View style={styles.authActions}>
@@ -399,7 +445,8 @@ export default function TeacherAccountQuickSettingsScreen() {
               </View>
 
               <InfoMessage>
-                Help us personalize your teacher experience and connect your students with relevant learning resources.
+                Help us personalize your teacher experience and connect your
+                students with relevant learning resources.
               </InfoMessage>
 
               {isLoading ? (
@@ -411,7 +458,9 @@ export default function TeacherAccountQuickSettingsScreen() {
                 </View>
               ) : loadError ? (
                 <View style={styles.errorState}>
-                  <Text style={styles.errorTitle}>We couldn’t load your profile.</Text>
+                  <Text style={styles.errorTitle}>
+                    We couldn’t load your profile.
+                  </Text>
                   <Text style={styles.errorText}>{loadError}</Text>
                   <Pressable
                     accessibilityRole="button"
@@ -456,7 +505,9 @@ export default function TeacherAccountQuickSettingsScreen() {
                       textContentType="organizationName"
                     />
                     <InfoMessage>
-                      Adding your school helps you connect with your students and discover opportunities relevant to your teaching community.
+                      Adding your school helps you connect with your students
+                      and discover opportunities relevant to your teaching
+                      community.
                     </InfoMessage>
                   </View>
 
@@ -486,27 +537,37 @@ export default function TeacherAccountQuickSettingsScreen() {
                         })}
                       </View>
                     ) : (
-                      <Text style={styles.emptySubjects}>No subjects are available yet.</Text>
+                      <Text style={styles.emptySubjects}>
+                        No subjects are available yet.
+                      </Text>
                     )}
 
                     <InfoMessage>
-                      Your selected subjects can be changed anytime in Preferences. We'll use them to help personalize your teaching experience and connect you with relevant resources.
+                      Your selected subjects can be changed anytime in
+                      Preferences. We&apos;ll use them to help personalize your
+                      teaching experience and connect you with relevant
+                      resources.
                     </InfoMessage>
                   </View>
 
                   <View style={styles.toggleCard}>
-                     <View style={styles.toggleInfo}>
-                       <Text style={styles.toggleTitle}>Only show selected interests in feeds</Text>
-                       <Text style={styles.toggleSubtitle}>Filter your Home and Library feeds to only display resources matching your selected subjects.</Text>
-                     </View>
-                     <Switch
-                       value={filterFeedByInterests}
-                       onValueChange={setFilterFeedByInterests}
-                       trackColor={{ false: "#D1D5DB", true: "#3B82F6" }}
-                       thumbColor={colors.white}
-                       accessibilityLabel="Toggle filter feeds by interests"
-                     />
-                   </View>
+                    <View style={styles.toggleInfo}>
+                      <Text style={styles.toggleTitle}>
+                        Only show selected interests in feeds
+                      </Text>
+                      <Text style={styles.toggleSubtitle}>
+                        Filter your Home and Library feeds to only display
+                        resources matching your selected subjects.
+                      </Text>
+                    </View>
+                    <Switch
+                      value={filterFeedByInterests}
+                      onValueChange={setFilterFeedByInterests}
+                      trackColor={{ false: "#D1D5DB", true: "#3B82F6" }}
+                      thumbColor={colors.white}
+                      accessibilityLabel="Toggle filter feeds by interests"
+                    />
+                  </View>
 
                   <View style={styles.fieldGroup}>
                     <Text style={styles.fieldLabel}>Socials</Text>
@@ -519,23 +580,43 @@ export default function TeacherAccountQuickSettingsScreen() {
                             accessibilityRole="button"
                             accessibilityLabel={`Set ${option.title}`}
                             onPress={() => openSocialModal(option)}
-                            style={({ pressed }) => [styles.socialRow, pressed && styles.socialRowPressed]}
+                            style={({ pressed }) => [
+                              styles.socialRow,
+                              pressed && styles.socialRowPressed,
+                            ]}
                           >
-                            <Feather name={option.icon} size={21} color="#3B5B8F" />
+                            <Feather
+                              name={option.icon}
+                              size={21}
+                              color="#3B5B8F"
+                            />
                             <View style={styles.socialTextWrap}>
-                              <Text style={styles.socialTitle}>{option.title}</Text>
-                              {value ? <Text style={styles.socialValue} numberOfLines={1}>{value}</Text> : null}
+                              <Text style={styles.socialTitle}>
+                                {option.title}
+                              </Text>
+                              {value ? (
+                                <Text
+                                  style={styles.socialValue}
+                                  numberOfLines={1}
+                                >
+                                  {value}
+                                </Text>
+                              ) : null}
                             </View>
                           </Pressable>
                         );
                       })}
                     </View>
                     <InfoMessage>
-                      Socials help students connect with you outside DigiLearn. Add only the contact details or social links you want students to use.
+                      Socials help students connect with you outside DigiLearn.
+                      Add only the contact details or social links you want
+                      students to use.
                     </InfoMessage>
                   </View>
 
-                  {saveError ? <Text style={styles.errorBubble}>{saveError}</Text> : null}
+                  {saveError ? (
+                    <Text style={styles.errorBubble}>{saveError}</Text>
+                  ) : null}
 
                   <Pressable
                     accessibilityRole="button"
@@ -574,7 +655,10 @@ export default function TeacherAccountQuickSettingsScreen() {
         >
           <SafeAreaView style={styles.modalSafeArea}>
             <Pressable
-              style={[styles.modalBackdrop, { paddingHorizontal: horizontalPadding }]}
+              style={[
+                styles.modalBackdrop,
+                { paddingHorizontal: horizontalPadding },
+              ]}
               onPress={closeSocialModal}
             >
               <Pressable
@@ -598,12 +682,20 @@ export default function TeacherAccountQuickSettingsScreen() {
                   accessibilityLabel={activeSocial?.title}
                   autoFocus
                 />
-                {socialError ? <Text style={styles.socialError}>{socialError}</Text> : null}
+                {socialError ? (
+                  <Text style={styles.socialError}>{socialError}</Text>
+                ) : null}
                 <View style={styles.modalActions}>
-                  <Pressable onPress={closeSocialModal} style={styles.modalCancelButton}>
+                  <Pressable
+                    onPress={closeSocialModal}
+                    style={styles.modalCancelButton}
+                  >
                     <Text style={styles.modalCancelText}>Cancel</Text>
                   </Pressable>
-                  <Pressable onPress={saveSocial} style={styles.modalSaveButton}>
+                  <Pressable
+                    onPress={saveSocial}
+                    style={styles.modalSaveButton}
+                  >
                     <Text style={styles.modalSaveText}>Save</Text>
                   </Pressable>
                 </View>

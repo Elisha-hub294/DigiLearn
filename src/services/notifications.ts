@@ -28,6 +28,7 @@ export type NotificationRecord = {
   itemId?: string;
   collection?: string;
   navigation?: string;
+  storage?: "admin";
 };
 
 export const DIGILEARN_PUBLISHER_NAME = "DigiLearn";
@@ -129,6 +130,7 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
       typeof candidate.navigation === "string"
         ? candidate.navigation
         : undefined,
+    storage: candidate.storage === "admin" ? "admin" : undefined,
   };
 }
 
@@ -319,6 +321,13 @@ export async function markNotificationAsRead(
 ) {
   if (!userId) return false;
 
+  const adminRef = doc(db, "adminNotifications", notificationId);
+  const adminSnapshot = await getDoc(adminRef);
+  if (adminSnapshot.exists()) {
+    await setDoc(adminRef, { read: true }, { merge: true });
+    return true;
+  }
+
   const userRef = doc(db, "users", userId);
   const snapshot = await getDoc(userRef);
   const current = Array.isArray(snapshot.data()?.notifications)
@@ -338,6 +347,13 @@ export async function deleteNotification(
   notificationId: string,
 ) {
   if (!userId) return false;
+
+  const adminRef = doc(db, "adminNotifications", notificationId);
+  const adminSnapshot = await getDoc(adminRef);
+  if (adminSnapshot.exists()) {
+    await setDoc(adminRef, { dismissed: true }, { merge: true });
+    return true;
+  }
 
   const userRef = doc(db, "users", userId);
   const snapshot = await getDoc(userRef);

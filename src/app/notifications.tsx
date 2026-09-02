@@ -83,6 +83,12 @@ export default function NotificationsScreen() {
 
   const openItem = useCallback(
     async (notification: NotificationRecord) => {
+      if (notification.storage === "admin") {
+        router.push("/teacher-applications" as never);
+        if (user && !notification.read) await markRead(notification.id);
+        return;
+      }
+
       if (!notification.itemId) {
         Alert.alert("Unavailable", "This content is no longer available.", [
           {

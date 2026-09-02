@@ -48,51 +48,24 @@ export function BookFormSection({
       />
 
       <Text style={styles.fieldLabel}>Subject</Text>
-      <View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Select book subject"
-          style={styles.dropdownTrigger}
-          onPress={() => {
-            if (onSelectSubject) {
-              onSelectSubject();
-              return;
-            }
-            if (setSubjectDropdownOpen) {
-              setSubjectDropdownOpen((prev: boolean) => !prev);
-            }
-          }}
-        >
-          <Text style={styles.dropdownText}>
-            {formData.subject || "Select subject"}
-          </Text>
-        </Pressable>
-        {subjectDropdownOpen && (
-          <View style={styles.dropdownMenu}>
-            {subjects.map((option) => (
-              <Pressable
-                key={option.id}
-                accessibilityRole="button"
-                style={styles.dropdownItem}
-                onPress={() => {
-                  updateField("subject", option.name);
-                  setSubjectDropdownOpen?.(false);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.dropdownItemText,
-                    formData.subject === option.name &&
-                      styles.dropdownItemTextActive,
-                  ]}
-                >
-                  {option.name}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Select book subject"
+        style={styles.dropdownTrigger}
+        onPress={() => {
+          if (onSelectSubject) {
+            onSelectSubject();
+            return;
+          }
+          if (setSubjectDropdownOpen) {
+            setSubjectDropdownOpen((prev: boolean) => !prev);
+          }
+        }}
+      >
+        <Text style={styles.dropdownText}>
+          {formData.subject || "Select subject"}
+        </Text>
+      </Pressable>
 
       <Text style={styles.titleCharacterCount}>
         {formData.subtitle.length}/500

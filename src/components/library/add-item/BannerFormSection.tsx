@@ -57,45 +57,27 @@ export function BannerFormSection({
         {formData.subtitle.length}/500
       </Text>
       <Text style={styles.fieldLabel}>Subject</Text>
-      <View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Select subject"
-          style={styles.dropdownTrigger}
-          onPress={() => {
-            if (onSelectSubject) {
-              onSelectSubject();
-              return;
-            }
-            if (setSubjectDropdownOpen) {
-              setSubjectDropdownOpen((prev: boolean) => !prev);
-            }
-          }}
-        >
-          <View style={styles.dropdownContent}>
-            <Icon name="book-open" size={16} color={colors.primary} />
-            <Text style={styles.dropdownText}>
-              {formData.subject || "Select subject"}
-            </Text>
-          </View>
-        </Pressable>
-        {subjectDropdownOpen && (
-          <View style={styles.dropdownMenu}>
-            {subjects.map((option) => (
-              <Pressable
-                key={option.id}
-                style={styles.dropdownItem}
-                onPress={() => {
-                  updateField("subject", option.name);
-                  setSubjectDropdownOpen?.(false);
-                }}
-              >
-                <Text style={styles.dropdownItemText}>{option.name}</Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Select subject"
+        style={styles.dropdownTrigger}
+        onPress={() => {
+          if (onSelectSubject) {
+            onSelectSubject();
+            return;
+          }
+          if (setSubjectDropdownOpen) {
+            setSubjectDropdownOpen((prev: boolean) => !prev);
+          }
+        }}
+      >
+        <View style={styles.dropdownContent}>
+          <Icon name="book-open" size={16} color={colors.primary} />
+          <Text style={styles.dropdownText}>
+            {formData.subject || "Select subject"}
+          </Text>
+        </View>
+      </Pressable>
       <Text style={styles.fieldLabel}>Attachment</Text>
       <View style={styles.attachmentRow}>
         <View {...getWebDropHandlers("document")}>

@@ -5,15 +5,30 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId;
       allow read: if request.auth != null && request.auth.uid == userId;
       allow update: if request.auth != null
-        && request.auth.uid == userId
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        && (
+          request.auth.uid == userId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name',
+          'email',
+          'photoURL',
+          'bio',
+          'level',
+          'school',
+          'gender',
+          'subjects',
+          'filterFeedByInterests',
+          'phone',
+          'youtube',
           'marked-as-read',
           'hidden-pages',
           'saved-pages',
           'saved-books',
           'saved-lessons',
           'saved-posts'
-        ]);
+          ]
+        )
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin'
+        );
       allow delete: if false;
 
       match /assistant_conversations/{conversationId} {
@@ -22,9 +37,38 @@ service cloud.firestore {
     }
 
     match /teachers/{teacherId} {
-      allow create: if request.auth != null && request.auth.uid == teacherId;
+      allow create: if request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
       allow read: if request.auth != null && request.auth.uid == teacherId;
-      allow update: if request.auth != null && request.auth.uid == teacherId;
+      allow update: if request.auth != null && (
+        request.auth.uid == teacherId
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin'
+      ) && request.resource.data.type == 'teacher';
+      allow delete: if false;
+    }
+
+    match /teacherApplications/{applicationId} {
+      allow create: if request.auth != null && request.auth.uid == applicationId;
+      allow read: if request.auth != null && (
+        request.auth.uid == applicationId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin'
+      );
+      allow update: if request.auth != null && (
+        (
+          request.auth.uid == applicationId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'name', 'email', 'school', 'subjects', 'phone', 'youtube', 'updatedAt'
+          ])
+        ) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin'
+      );
+      allow delete: if false;
+    }
+
+    match /adminNotifications/{notificationId} {
+      allow read, update: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
+      allow create: if request.auth != null && request.auth.uid == notificationId;
       allow delete: if false;
     }
 

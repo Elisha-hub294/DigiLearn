@@ -1,7 +1,8 @@
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
+import { collection, doc, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, db } from "../../firebaseConfig";
+import { useProfile } from "../contexts/ProfileContext";
 import {
   deleteNotification,
   markNotificationAsRead,
@@ -14,6 +15,7 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { profile } = useProfile();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
@@ -33,7 +35,6 @@ export function useNotifications() {
       return;
     }
 
-    setLoading(true);
     const ref = doc(db, "users", user.uid);
     const unsubscribe = onSnapshot(
       ref,
@@ -57,6 +58,30 @@ export function useNotifications() {
 
     return () => unsubscribe();
   }, [user]);
+
+  useEffect(() => {
+    if (!user || profile?.type !== "admin") return;
+
+    const unsubscribe = onSnapshot(
+      collection(db, "adminNotifications"),
+      (snapshot) => {
+        const adminItems = snapshot.docs
+          .filter((item) => item.data().dismissed !== true)
+          .map((item) =>
+            normalizeNotification({ ...item.data(), storage: "admin" }),
+          )
+          .filter(Boolean) as NotificationRecord[];
+        setNotifications((current) => [
+          ...current.filter((item) => item.storage !== "admin"),
+          ...adminItems,
+        ]);
+      },
+      (reason) =>
+        setError(reason?.message ?? "Unable to load admin notifications."),
+    );
+
+    return () => unsubscribe();
+  }, [profile?.type, user]);
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.read).length,

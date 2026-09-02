@@ -99,46 +99,19 @@ export function PageFormSection({
       </Text>
 
       <FieldLabel>Subject</FieldLabel>
-      <View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Select subject"
-          style={styles.dropdownTrigger}
-          onPress={() => setSubjectDropdownOpen(!subjectDropdownOpen)}
-        >
-          <View style={styles.dropdownContent}>
-            <Icon name="book-open" size={16} color={colors.primary} />
-            <Text style={styles.dropdownText}>
-              {formData.subject || "Select subject"}
-            </Text>
-          </View>
-        </Pressable>
-        {subjectDropdownOpen && (
-          <View style={styles.dropdownMenu}>
-            {subjects.map((option) => (
-              <Pressable
-                key={option.id}
-                accessibilityRole="button"
-                style={styles.dropdownItem}
-                onPress={() => {
-                  updateField("subject", option.name);
-                  setSubjectDropdownOpen(false);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.dropdownItemText,
-                    formData.subject === option.name &&
-                      styles.dropdownItemTextActive,
-                  ]}
-                >
-                  {option.name}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Select subject"
+        style={styles.dropdownTrigger}
+        onPress={() => setSubjectDropdownOpen(!subjectDropdownOpen)}
+      >
+        <View style={styles.dropdownContent}>
+          <Icon name="book-open" size={16} color={colors.primary} />
+          <Text style={styles.dropdownText}>
+            {formData.subject || "Select subject"}
+          </Text>
+        </View>
+      </Pressable>
 
       <View style={styles.twoColumnRow}>
         <View style={styles.twoColumnField}>
@@ -155,31 +128,6 @@ export function PageFormSection({
                 <Text style={styles.dropdownText}>{formData.level}</Text>
               </View>
             </Pressable>
-            {levelDropdownOpen && (
-              <View style={styles.dropdownMenu}>
-                {[
-                  { label: "Ordinary", value: "Ordinary" },
-                  { label: "Advanced", value: "Advanced" },
-                ].map((option) => (
-                  <Pressable
-                    key={option.value}
-                    accessibilityRole="button"
-                    style={styles.dropdownItem}
-                    onPress={() => handleLevelSelect(option.value)}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownItemText,
-                        formData.level === option.value &&
-                          styles.dropdownItemTextActive,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
           </View>
         </View>
 
@@ -199,31 +147,6 @@ export function PageFormSection({
                 </Text>
               </View>
             </Pressable>
-            {classDropdownOpen && (
-              <View style={styles.dropdownMenu}>
-                {pageClassOptions.map((option) => (
-                  <Pressable
-                    key={option.value}
-                    accessibilityRole="button"
-                    style={styles.dropdownItem}
-                    onPress={() => {
-                      updateField("schoolClass", option.value);
-                      setClassDropdownOpen(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.dropdownItemText,
-                        formData.schoolClass === option.value &&
-                          styles.dropdownItemTextActive,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
           </View>
         </View>
       </View>

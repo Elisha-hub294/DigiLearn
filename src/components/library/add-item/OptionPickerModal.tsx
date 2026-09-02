@@ -1,5 +1,13 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { colors } from "../../../constants/theme";
 
 export type PickerOption = {
@@ -24,6 +32,8 @@ export function OptionPickerModal({
   onClose,
   onSelect,
 }: OptionPickerModalProps) {
+  const [hoveredOption, setHoveredOption] = useState<string | null>(null);
+
   return (
     <Modal
       animationType="fade"
@@ -40,13 +50,22 @@ export function OptionPickerModal({
           <View style={styles.optionPickerList}>
             {options.map((option) => {
               const isSelected = selectedValue === option.value;
+              const isHovered = hoveredOption === option.value;
+
               return (
                 <Pressable
                   key={option.value}
                   accessibilityRole="button"
+                  onHoverIn={() => setHoveredOption(option.value)}
+                  onHoverOut={() =>
+                    setHoveredOption((current) =>
+                      current === option.value ? null : current,
+                    )
+                  }
                   style={[
                     styles.optionPickerItem,
                     isSelected && styles.optionPickerItemSelected,
+                    isHovered && styles.optionPickerItemHovered,
                   ]}
                   onPress={() => {
                     onSelect(option.value);
@@ -57,6 +76,7 @@ export function OptionPickerModal({
                     style={[
                       styles.optionPickerItemText,
                       isSelected && styles.optionPickerItemTextSelected,
+                      isHovered && styles.optionPickerItemTextHovered,
                     ]}
                   >
                     {option.label}
@@ -115,6 +135,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
     paddingHorizontal: 14,
     paddingVertical: 12,
+    ...(Platform.OS === "web"
+      ? {
+          cursor: "pointer",
+        }
+      : {}),
+  },
+  optionPickerItemHovered: {
+    backgroundColor: "rgba(37, 99, 235, 0.08)",
+    borderColor: "rgba(37, 99, 235, 0.3)",
+    transform: [{ translateY: -1 }],
   },
   optionPickerItemSelected: {
     backgroundColor: "rgba(37, 99, 235, 0.08)",
@@ -128,5 +158,8 @@ const styles = StyleSheet.create({
   optionPickerItemTextSelected: {
     color: colors.primary,
     fontWeight: "700",
+  },
+  optionPickerItemTextHovered: {
+    color: colors.primary,
   },
 });
