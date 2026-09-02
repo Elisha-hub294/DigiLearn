@@ -337,7 +337,12 @@ export function AddItemModal({
         const fileName = file.name || "";
         const mimeType = file.type || "";
 
-        const error = getFileValidationError(fileName, file.size, true);
+        const error = getFileValidationError(
+          fileName,
+          file.size,
+          true,
+          mimeType,
+        );
         if (error) {
           showFileValidationError("Invalid Image", error);
           return;
@@ -394,7 +399,15 @@ export function AddItemModal({
       if (file) {
         event.preventDefault();
         event.stopPropagation();
-        const targetType = activeWebDropType ?? "document";
+        const isImageFile =
+          file.type.toLowerCase().startsWith("image/") ||
+          /\.(jpg|jpeg|png)$/i.test(file.name);
+        const targetType =
+          formType === "banner" &&
+          (activeWebDropType === "image" ||
+            (activeWebDropType !== "document" && isImageFile))
+            ? "image"
+            : (activeWebDropType ?? "document");
         applyWebDroppedFile(file, targetType);
         setActiveWebDropType(null);
         return;
@@ -411,7 +424,7 @@ export function AddItemModal({
       window.removeEventListener("dragover", preventDefault, false);
       window.removeEventListener("drop", handleGlobalDragDrop, false);
     };
-  }, [activeWebDropType, applyWebDroppedFile]);
+  }, [activeWebDropType, applyWebDroppedFile, formType]);
 
   const handleWebDragEnter = (event: any, type: "document" | "image") => {
     if (Platform.OS !== "web") return;
@@ -452,7 +465,14 @@ export function AddItemModal({
       event?.nativeEvent?.dataTransfer?.files?.[0] ??
       event?.dataTransfer?.files?.[0];
     if (!file) return;
-    applyWebDroppedFile(file, type);
+    const isImageFile =
+      file.type?.toLowerCase().startsWith("image/") ||
+      /\.(jpg|jpeg|png)$/i.test(file.name || "");
+    const dropType =
+      formType === "banner" && type === "document" && isImageFile
+        ? "image"
+        : type;
+    applyWebDroppedFile(file, dropType);
     setActiveWebDropType(null);
   };
 
@@ -498,6 +518,7 @@ export function AddItemModal({
         image.fileName || "",
         image.fileSize,
         true,
+        image.mimeType,
       );
       if (error) {
         showFileValidationError("Invalid Image", error);

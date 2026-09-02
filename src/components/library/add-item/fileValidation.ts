@@ -61,9 +61,10 @@ export const getFileValidationError = (
   fileName: string,
   fileSize: number | undefined,
   isImage: boolean,
+  mimeType?: string | null,
 ): string | null => {
   if (isImage) {
-    if (!isAllowedImage(fileName)) {
+    if (!isAllowedImage(fileName, mimeType)) {
       return "Unsupported image type. Please select a JPG, JPEG, or PNG image only.";
     }
     if (!isValidFileSize(fileSize)) {
