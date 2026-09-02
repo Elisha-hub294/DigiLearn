@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -35,8 +36,20 @@ type AuditEntry = {
   createdAt?: unknown;
 };
 
+const paddingFor = (width: number) =>
+  width >= 1200
+    ? 150
+    : width >= 900
+      ? 50
+      : width >= 600
+        ? 30
+        : width >= 400
+          ? 5
+          : 3;
+
 export default function TeacherApplicationsScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const { profile } = useProfile();
   const [applications, setApplications] = useState<Application[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -86,6 +99,8 @@ export default function TeacherApplicationsScreen() {
 
   if (profile?.type !== "admin") return null;
 
+  const padding = paddingFor(width);
+  const maxWidth = Math.min(1100, width - padding * 2);
   const visibleApplications = applications.filter(
     (item) => filter === "all" || item.status === filter,
   );
@@ -98,7 +113,7 @@ export default function TeacherApplicationsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingHorizontal: padding, maxWidth }]}>
         <Pressable
           onPress={() => router.back()}
           accessibilityRole="button"
@@ -111,7 +126,9 @@ export default function TeacherApplicationsScreen() {
           <Text style={styles.title}>Teacher applications</Text>
         </View>
       </View>
-      <View style={styles.dashboard}>
+      <View
+        style={[styles.dashboard, { paddingHorizontal: padding, maxWidth }]}
+      >
         {(Object.keys(counts) as Filter[]).map((item) => (
           <Pressable
             key={item}
@@ -140,7 +157,10 @@ export default function TeacherApplicationsScreen() {
       <FlatList
         data={visibleApplications}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[
+          styles.list,
+          { paddingHorizontal: padding, maxWidth },
+        ]}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Feather name="check-circle" size={34} color={colors.green} />
@@ -223,7 +243,9 @@ export default function TeacherApplicationsScreen() {
         )}
       />
       {filter !== "pending" && audit.length > 0 && (
-        <View style={styles.history}>
+        <View
+          style={[styles.history, { paddingHorizontal: padding, maxWidth }]}
+        >
           <Text style={styles.historyTitle}>Audit history</Text>
           {audit
             .slice(-5)
@@ -294,15 +316,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    padding: spacing.xl,
+    paddingVertical: spacing.xl,
     backgroundColor: colors.white,
+    width: "100%",
+    alignSelf: "center",
   },
   dashboard: {
     flexDirection: "row",
-    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     gap: 8,
     backgroundColor: colors.white,
+    width: "100%",
+    alignSelf: "center",
   },
   metric: {
     flex: 1,
@@ -323,7 +348,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1.8,
   },
   title: { color: colors.text, fontSize: 24, fontWeight: "800", marginTop: 3 },
-  list: { padding: spacing.xl, gap: spacing.md },
+  list: {
+    padding: spacing.xl,
+    gap: spacing.md,
+    width: "100%",
+    alignSelf: "center",
+  },
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.md,
@@ -395,10 +425,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   history: {
-    padding: spacing.xl,
+    paddingVertical: spacing.xl,
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderColor: "#E6EAF0",
+    width: "100%",
+    alignSelf: "center",
   },
   historyTitle: {
     color: colors.text,

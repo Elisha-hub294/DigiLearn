@@ -3,12 +3,13 @@ import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { db } from "../../firebaseConfig";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
@@ -29,8 +30,20 @@ type HiddenNote = {
   book?: string | string[];
 };
 
+const paddingFor = (width: number) =>
+  width >= 1200
+    ? 150
+    : width >= 900
+      ? 50
+      : width >= 600
+        ? 30
+        : width >= 400
+          ? 5
+          : 3;
+
 export default function HiddenItemsScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const { user, profile } = useProfile();
   const [hiddenNotes, setHiddenNotes] = useState<HiddenNote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,10 +105,17 @@ export default function HiddenItemsScreen() {
     };
   }, [sortedIds, user]);
 
+  const padding = paddingFor(width);
+  const maxWidth = Math.min(1100, width - padding * 2);
+  const containerStyle = [
+    styles.container,
+    { paddingHorizontal: padding, maxWidth },
+  ];
+
   if (!user) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
+        <View style={containerStyle}>
           <View style={styles.headerRow}>
             <Pressable
               onPress={() => router.replace("/settings" as never)}
@@ -137,7 +157,7 @@ export default function HiddenItemsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+      <View style={containerStyle}>
         <View style={styles.headerRow}>
           <Pressable
             onPress={() => router.replace("/settings" as never)}
@@ -181,7 +201,12 @@ export default function HiddenItemsScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.white },
-  container: { flex: 1, paddingHorizontal: 24, paddingTop: 18 },
+  container: {
+    flex: 1,
+    paddingTop: 18,
+    width: "100%",
+    alignSelf: "center",
+  },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",

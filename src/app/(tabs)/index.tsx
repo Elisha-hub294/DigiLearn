@@ -28,9 +28,14 @@ import { SearchBar } from "../../components/ui/SearchBar";
 import { SectionHeader } from "../../components/ui/SectionHeader";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
 import { PaperSection, useLibraryData } from "../../hooks/useLibraryData";
 import { clearGuestMode, isGuestMode } from "../../services/guestService";
 import { getUserOnboardingState } from "../../services/userProfile";
+import {
+  matchesUserInterests,
+  shouldFilterByInterests,
+} from "../../utils/interestFilter";
 import LoadingScreen from "../loading";
 
 // Deterministic Pseudo-Random Number Generator (Mulberry32)
@@ -96,6 +101,7 @@ function HomePastPapers({
 export default function HomeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { profile } = useProfile();
   const { paperCollections } = useLibraryData();
   const [refreshing, setRefreshing] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
@@ -110,7 +116,19 @@ export default function HomeScreen() {
 
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
-  const hasPastPapers = paperCollections.length > 0;
+  const filteredPaperCollections = useMemo(() => {
+    if (!shouldFilterByInterests(profile)) return paperCollections;
+
+    return paperCollections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((paper) =>
+          matchesUserInterests(paper.subject, profile?.subjects),
+        ),
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [paperCollections, profile]);
+  const hasPastPapers = filteredPaperCollections.length > 0;
 
   useEffect(() => {
     const timer = setTimeout(() => setShowLoading(false), 1100);
@@ -185,7 +203,7 @@ export default function HomeScreen() {
               type: "pastPapers",
               render: () => (
                 <HomePastPapers
-                  collections={paperCollections}
+                  collections={filteredPaperCollections}
                   onSeeAll={(paperType, paperYear) =>
                     router.push(
                       paperType
@@ -206,7 +224,7 @@ export default function HomeScreen() {
           ]
         : []),
     ],
-    [hasPastPapers, paperCollections, router],
+    [filteredPaperCollections, hasPastPapers, router],
   );
 
   // Modern Feed Randomization Engine:

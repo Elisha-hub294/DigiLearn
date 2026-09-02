@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { auth, db } from "../../../firebaseConfig";
@@ -38,6 +39,17 @@ const STATUS_COLORS: Record<PaperRevisionStatus, string> = {
   difficult: "#F59E0B",
 };
 
+const paddingFor = (width: number) =>
+  width >= 1200
+    ? 150
+    : width >= 900
+      ? 50
+      : width >= 600
+        ? 30
+        : width >= 400
+          ? 5
+          : 3;
+
 const pickText = (values: unknown[], fallback = ""): string => {
   for (const value of values) {
     if (typeof value === "string" && value.trim()) return value.trim();
@@ -49,6 +61,7 @@ const pickText = (values: unknown[], fallback = ""): string => {
 
 export function PaperRevisionDashboard() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const [papers, setPapers] = useState<PastPaperRecord[]>([]);
   const [revisionMap, setRevisionMap] = useState<
     Record<string, PaperRevisionStatus>
@@ -142,6 +155,8 @@ export function PaperRevisionDashboard() {
     attemptedCount > 0
       ? Math.round((completedCount / attemptedCount) * 100)
       : 0;
+  const padding = paddingFor(width);
+  const maxWidth = Math.min(1100, width - padding * 2);
 
   const subjectSummary = useMemo(() => {
     const totals: Record<string, number> = {};
@@ -190,7 +205,10 @@ export function PaperRevisionDashboard() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        { paddingHorizontal: padding, maxWidth },
+      ]}
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.headerRow}>
@@ -355,8 +373,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.lightBackground,
   },
   content: {
-    padding: spacing.lg,
+    paddingVertical: spacing.lg,
     paddingBottom: spacing.xxl,
+    width: "100%",
+    alignSelf: "center",
   },
   loadingContainer: {
     flex: 1,
