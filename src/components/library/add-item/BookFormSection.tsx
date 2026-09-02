@@ -46,6 +46,9 @@ export function BookFormSection({
         numberOfLines={4}
         maxLength={500}
       />
+      <Text style={styles.titleCharacterCount}>
+        {formData.subtitle.length}/500
+      </Text>
 
       <Text style={styles.fieldLabel}>Subject</Text>
       <Pressable
@@ -67,9 +70,6 @@ export function BookFormSection({
         </Text>
       </Pressable>
 
-      <Text style={styles.titleCharacterCount}>
-        {formData.subtitle.length}/500
-      </Text>
       <Text style={styles.fieldLabel}>Author</Text>
       <View style={styles.readOnlyField}>
         <Image source={authorAvatarSource} style={styles.authorAvatar} />

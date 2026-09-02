@@ -357,6 +357,7 @@ export function AddItemModal({
           height: 0,
         } as ImagePicker.ImagePickerAsset);
         setSelectedFile(null);
+        setTitleFromSelectedFile(fileName);
         return;
       }
 
@@ -403,7 +404,7 @@ export function AddItemModal({
           file.type.toLowerCase().startsWith("image/") ||
           /\.(jpg|jpeg|png)$/i.test(file.name);
         const targetType =
-          formType === "banner" &&
+          (formType === "banner" || formType === "book") &&
           (activeWebDropType === "image" ||
             (activeWebDropType !== "document" && isImageFile))
             ? "image"
@@ -469,7 +470,9 @@ export function AddItemModal({
       file.type?.toLowerCase().startsWith("image/") ||
       /\.(jpg|jpeg|png)$/i.test(file.name || "");
     const dropType =
-      formType === "banner" && type === "document" && isImageFile
+      (formType === "banner" || formType === "book") &&
+      type === "document" &&
+      isImageFile
         ? "image"
         : type;
     applyWebDroppedFile(file, dropType);
@@ -527,6 +530,7 @@ export function AddItemModal({
 
       setSelectedImage(image);
       setSelectedFile(null);
+      setTitleFromSelectedFile(image.fileName || "");
     } catch (error) {
       console.error("Error picking image", error);
     }
@@ -1093,7 +1097,9 @@ export function AddItemModal({
 
       showStatusDialog(
         "Upload successful",
-        "Your Post was published successfully.",
+        formType === "book"
+          ? "Your Book was published successfully."
+          : "Your Post was published successfully.",
         "Done",
         () => {
           setStatusDialog(null);
