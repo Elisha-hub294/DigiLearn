@@ -17,29 +17,39 @@ import {
   normalizeTeacherPost,
 } from "../../components/home/TeacherPostCard";
 import { BookCard } from "../../components/library/BookCard";
+import { PaperCard } from "../../components/library/PaperCard";
 import {
   TrendingVideoCard,
   VideoLesson,
 } from "../../components/ui/TrendingVideoCard";
 import { colors, radius, spacing } from "../../constants/theme";
 import type { UserProfile } from "../../services/userProfile";
-type Filter = "All" | "Pages" | "Books" | "Lessons" | "Posts";
+type Filter = "All" | "Pages" | "Books" | "Papers" | "Lessons" | "Posts";
 type Entry = {
   id: string;
   type: Exclude<Filter, "All">;
   data: Record<string, any>;
   savedAt?: unknown;
 };
-const filters: Filter[] = ["All", "Pages", "Books", "Lessons", "Posts"];
+const filters: Filter[] = [
+  "All",
+  "Pages",
+  "Books",
+  "Papers",
+  "Lessons",
+  "Posts",
+];
 const details: Record<Exclude<Filter, "All">, [string, string]> = {
   Pages: ["No saved notes yet.", "Save useful notes to find them here."],
   Books: ["No saved books yet.", "Save books you want to revisit."],
+  Papers: ["No saved papers yet.", "Save past papers to practise later."],
   Lessons: ["No saved lessons yet.", "Save lessons to watch later."],
   Posts: ["No saved posts yet.", "Save helpful teacher posts for later."],
 };
 const field: Record<Exclude<Filter, "All">, [keyof UserProfile, string]> = {
   Pages: ["saved-pages", "pages"],
   Books: ["saved-books", "books"],
+  Papers: ["saved-papers", "pastPaper"],
   Lessons: ["saved-lessons", "trendingLessons"],
   Posts: ["saved-posts", "teacherPosts"],
 };
@@ -73,6 +83,7 @@ export function SavedResources({
   const key =
     JSON.stringify(profile?.["saved-pages"] ?? []) +
     JSON.stringify(profile?.["saved-books"] ?? []) +
+    JSON.stringify(profile?.["saved-papers"] ?? []) +
     JSON.stringify(profile?.["saved-lessons"] ?? []) +
     JSON.stringify(profile?.["saved-posts"] ?? []);
   useEffect(() => {
@@ -305,6 +316,27 @@ function renderItems(items: Entry[], router: any, itemWidth: number) {
             .map((x) => normalizeTeacherPost({ id: x.id, data: () => x.data }))}
         />
       ) : null}
+      {items
+        .filter((x) => x.type === "Papers")
+        .map((x) => (
+          <View key={x.id} style={s.centeredItem}>
+            <PaperCard
+              id={x.id}
+              title={x.data.title ?? x.data.name ?? "Untitled past paper"}
+              subject={x.data.subject ?? x.data.topic}
+              year={x.data.year ?? x.data.examYear}
+              description={x.data.description ?? x.data.summary}
+              level={x.data.level ?? x.data.examLevel}
+              pageNumber={x.data.pageNumber ?? x.data.pages}
+              paperCode={x.data.paperCode ?? x.data.code}
+              paperNumber={x.data.paperNumber ?? x.data.number}
+              image={x.data.cover ?? x.data.image ?? x.data.thumbnail}
+              document={
+                x.data.doc ?? x.data.document ?? x.data.pdf ?? x.data.url
+              }
+            />
+          </View>
+        ))}
     </>
   );
 }

@@ -75,6 +75,28 @@ const NOTIFICATION_ASSET_MAP: Record<string, any> = {
   "@/assets/images/panda.png": require("../../assets/images/panda.png"),
 };
 
+function stripUndefinedFields<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => stripUndefinedFields(item))
+      .filter((item) => item !== undefined) as T;
+  }
+
+  if (value && typeof value === "object") {
+    const cleaned: Record<string, unknown> = {};
+
+    Object.entries(value as Record<string, unknown>).forEach(([key, item]) => {
+      if (item !== undefined) {
+        cleaned[key] = stripUndefinedFields(item as never);
+      }
+    });
+
+    return cleaned as T;
+  }
+
+  return value;
+}
+
 export function normalizeNotification(raw: unknown): NotificationRecord | null {
   if (!raw || typeof raw !== "object") {
     return null;
@@ -98,7 +120,7 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
       ? candidate.id
       : `${Date.now()}-${Math.random()}`;
 
-  return {
+  const normalized = {
     id,
     type,
     publisherName:
@@ -138,6 +160,8 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
         : undefined,
     storage: candidate.storage === "admin" ? "admin" : undefined,
   };
+
+  return stripUndefinedFields(normalized) as NotificationRecord;
 }
 
 export function resolveNotificationAvatarSource(avatar?: string) {
@@ -281,16 +305,15 @@ export async function appendNotificationForUser(
     ? (snapshot.data()?.notifications ?? [])
     : [];
 
+  const nextNotification = stripUndefinedFields({
+    ...notification,
+    createdAt: notification.createdAt ?? Timestamp.now(),
+  });
+
   await setDoc(
     userRef,
     {
-      notifications: [
-        ...current,
-        {
-          ...notification,
-          createdAt: notification.createdAt ?? Timestamp.now(),
-        },
-      ],
+      notifications: [...current, nextNotification],
     },
     { merge: true },
   );
@@ -308,14 +331,13 @@ export async function appendNotificationToAllUsers(
         ? data.notifications
         : [];
 
+      const nextNotification = stripUndefinedFields({
+        ...notification,
+        createdAt: notification.createdAt ?? Timestamp.now(),
+      });
+
       await updateDoc(userDoc.ref, {
-        notifications: [
-          ...current,
-          {
-            ...notification,
-            createdAt: notification.createdAt ?? Timestamp.now(),
-          },
-        ],
+        notifications: [...current, nextNotification],
       });
     }),
   );
@@ -337,7 +359,11 @@ export async function markNotificationAsRead(
     item.id === notificationId ? { ...item, read: true } : item,
   );
 
-  await setDoc(userRef, { notifications: updated }, { merge: true });
+  await setDoc(
+    userRef,
+    { notifications: stripUndefinedFields(updated) },
+    { merge: true },
+  );
   return true;
 }
 
@@ -399,7 +425,7 @@ export function buildLibraryNotification(
   previewImage?: string,
 ): NotificationRecord {
   const details = libraryNotificationMap[type];
-  return {
+  const notification = {
     id: `${type}-${itemId}-${Date.now()}`,
     type,
     publisherName,
@@ -413,4 +439,6 @@ export function buildLibraryNotification(
     collection: details.collection,
     navigation: details.navigation,
   };
+
+  return stripUndefinedFields(notification) as NotificationRecord;
 }

@@ -547,45 +547,6 @@ export function PaperPreviewScreen() {
             </View>
           </View>
 
-          <View style={styles.revisionCard}>
-            <Text style={styles.sectionTitle}>Revision status</Text>
-            <Text style={styles.revisionHint}>
-              Track how this paper went so you can revise smarter.
-            </Text>
-
-            <View style={styles.revisionRow}>
-              {(
-                [
-                  { key: "attempted", label: "Attempted" },
-                  { key: "completed", label: "Completed" },
-                  { key: "difficult", label: "Difficult" },
-                ] as const
-              ).map((option) => {
-                const active = revisionStatus === option.key;
-                return (
-                  <Pressable
-                    key={option.key}
-                    accessibilityRole="button"
-                    onPress={() => updateRevisionStatus(option.key)}
-                    style={[
-                      styles.revisionButton,
-                      active && styles.revisionButtonActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.revisionButtonText,
-                        active && styles.revisionButtonTextActive,
-                      ]}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
           {relatedPapers.length > 0 && (
             <View style={styles.relatedCard}>
               <Text style={styles.sectionTitle}>
@@ -973,50 +934,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
     flexShrink: 1,
   },
-  revisionCard: {
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: spacing.lg,
-    marginTop: spacing.lg,
-    borderWidth: 1,
-    borderColor: "rgba(15, 23, 42, 0.06)",
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  revisionHint: {
-    color: colors.subtitle,
-    fontSize: 12,
-    marginBottom: spacing.md,
-    lineHeight: 18,
-  },
-  revisionRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  revisionButton: {
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: "rgba(15, 23, 42, 0.08)",
-    backgroundColor: colors.lightBackground,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  revisionButtonActive: {
-    backgroundColor: "#EAF3FF",
-    borderColor: "rgba(0, 110, 255, 0.22)",
-  },
-  revisionButtonText: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  revisionButtonTextActive: {
-    color: colors.primary,
-  },
+
   footerCard: {
     marginTop: spacing.lg,
     backgroundColor: colors.white,

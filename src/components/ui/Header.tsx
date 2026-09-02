@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   publishButton: {
     width: 42,
     height: 42,
-    borderRadius: 12,
+    borderRadius: 999,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: colors.primary,
