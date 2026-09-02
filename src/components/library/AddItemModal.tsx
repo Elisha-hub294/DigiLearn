@@ -1033,7 +1033,11 @@ export function AddItemModal({
       }
 
       if (createdItemId && formData.notifyUsers) {
-        await notifyUsersAboutNewItem(notificationType, createdItemId);
+        await notifyUsersAboutNewItem(
+          notificationType,
+          createdItemId,
+          sanitizedTitle,
+        );
       }
 
       setFormData(INITIAL_FORM_STATE);
@@ -1044,7 +1048,6 @@ export function AddItemModal({
         label: "Upload complete",
         progress: 100,
       });
-      setInfoMessage("Upload complete.");
 
       showStatusDialog(
         "Upload successful",

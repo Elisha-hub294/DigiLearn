@@ -125,7 +125,7 @@ export default function NotificationsScreen() {
       } else if (notification.type === "page") {
         itemPath = "/page-preview";
       } else if (notification.type === "paper") {
-        itemPath = "/pdf-reader";
+        itemPath = "/paper-preview";
       }
 
       try {
@@ -210,18 +210,61 @@ export default function NotificationsScreen() {
                 typeof paperData.title === "string"
                   ? paperData.title
                   : undefined,
-              uri: paperDocument
-                ? encodeURIComponent(paperDocument)
-                : undefined,
-              document: paperDocument,
-              cover:
-                typeof paperData.cover === "string"
-                  ? paperData.cover
+              subject:
+                typeof paperData.subject === "string"
+                  ? paperData.subject
                   : undefined,
+              year:
+                typeof paperData.year === "string"
+                  ? paperData.year
+                  : typeof paperData.year === "number"
+                    ? String(paperData.year)
+                    : undefined,
               description:
                 typeof paperData.description === "string"
                   ? paperData.description
                   : undefined,
+              level:
+                typeof paperData.level === "string"
+                  ? paperData.level
+                  : undefined,
+              pageNumber:
+                typeof paperData.pageNumber === "string" ||
+                typeof paperData.pageNumber === "number"
+                  ? String(paperData.pageNumber)
+                  : typeof paperData.pages === "string" ||
+                      typeof paperData.pages === "number"
+                    ? String(paperData.pages)
+                    : undefined,
+              paperCode:
+                typeof paperData.paperCode === "string"
+                  ? paperData.paperCode
+                  : undefined,
+              paperNumber:
+                typeof paperData.paperNumber === "string" ||
+                typeof paperData.paperNumber === "number"
+                  ? String(paperData.paperNumber)
+                  : typeof paperData.number === "string" ||
+                      typeof paperData.number === "number"
+                    ? String(paperData.number)
+                    : undefined,
+              image:
+                typeof paperData.cover === "string"
+                  ? paperData.cover
+                  : typeof paperData.image === "string"
+                    ? paperData.image
+                    : typeof paperData.coverImage === "string"
+                      ? paperData.coverImage
+                      : undefined,
+              document: paperDocument,
+              type:
+                typeof paperData.type === "string"
+                  ? paperData.type
+                  : typeof paperData.examType === "string"
+                    ? paperData.examType
+                    : typeof paperData.paperType === "string"
+                      ? paperData.paperType
+                      : undefined,
             },
           } as never);
         } else {

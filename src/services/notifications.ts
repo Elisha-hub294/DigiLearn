@@ -97,7 +97,7 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
       ? candidate.id
       : `${Date.now()}-${Math.random()}`;
 
-  const notification: NotificationRecord = {
+  return {
     id,
     type,
     publisherName:
@@ -114,32 +114,24 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
       typeof candidate.message === "string" && candidate.message.trim()
         ? candidate.message
         : "New update available",
+    resourceTitle:
+      typeof candidate.resourceTitle === "string" &&
+      candidate.resourceTitle.trim()
+        ? candidate.resourceTitle
+        : undefined,
     createdAt: candidate.createdAt ?? Timestamp.now(),
     read: Boolean(candidate.read),
+    itemId: typeof candidate.itemId === "string" ? candidate.itemId : undefined,
+    collection:
+      typeof candidate.collection === "string"
+        ? candidate.collection
+        : undefined,
+    navigation:
+      typeof candidate.navigation === "string"
+        ? candidate.navigation
+        : undefined,
+    storage: candidate.storage === "admin" ? "admin" : undefined,
   };
-
-  if (candidate.storage === "admin") {
-    notification.storage = "admin";
-  }
-
-  const resourceTitle =
-    typeof candidate.resourceTitle === "string" &&
-    candidate.resourceTitle.trim()
-      ? candidate.resourceTitle
-      : undefined;
-  const itemId =
-    typeof candidate.itemId === "string" ? candidate.itemId : undefined;
-  const collection =
-    typeof candidate.collection === "string" ? candidate.collection : undefined;
-  const navigation =
-    typeof candidate.navigation === "string" ? candidate.navigation : undefined;
-
-  if (resourceTitle) notification.resourceTitle = resourceTitle;
-  if (itemId) notification.itemId = itemId;
-  if (collection) notification.collection = collection;
-  if (navigation) notification.navigation = navigation;
-
-  return stripUndefinedFields(notification) as NotificationRecord;
 }
 
 export function resolveNotificationAvatarSource(avatar?: string) {
@@ -271,41 +263,6 @@ export function getNotificationSections(notifications: NotificationRecord[]) {
   };
 }
 
-function stripUndefinedFields<T>(value: T): T {
-  if (value === null || value === undefined) {
-    return value;
-  }
-
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => stripUndefinedFields(item))
-      .filter((item) => item !== undefined) as T;
-  }
-
-  if (typeof value === "object") {
-    return Object.entries(value as Record<string, unknown>).reduce(
-      (cleaned, [key, nestedValue]) => {
-        if (nestedValue === undefined) {
-          return cleaned;
-        }
-
-        cleaned[key] = stripUndefinedFields(nestedValue);
-        return cleaned;
-      },
-      {} as Record<string, unknown>,
-    ) as T;
-  }
-
-  return value;
-}
-
-function sanitizeNotificationRecord(notification: NotificationRecord) {
-  return stripUndefinedFields({
-    ...notification,
-    createdAt: notification.createdAt ?? Timestamp.now(),
-  }) as NotificationRecord;
-}
-
 export async function appendNotificationForUser(
   userId: string,
   notification: NotificationRecord,
@@ -318,12 +275,16 @@ export async function appendNotificationForUser(
     ? (snapshot.data()?.notifications ?? [])
     : [];
 
-  const nextNotification = sanitizeNotificationRecord(notification);
-
   await setDoc(
     userRef,
     {
-      notifications: [...current, nextNotification],
+      notifications: [
+        ...current,
+        {
+          ...notification,
+          createdAt: notification.createdAt ?? Timestamp.now(),
+        },
+      ],
     },
     { merge: true },
   );
@@ -342,7 +303,13 @@ export async function appendNotificationToAllUsers(
         : [];
 
       await updateDoc(userDoc.ref, {
-        notifications: [...current, sanitizeNotificationRecord(notification)],
+        notifications: [
+          ...current,
+          {
+            ...notification,
+            createdAt: notification.createdAt ?? Timestamp.now(),
+          },
+        ],
       });
     }),
   );
@@ -364,11 +331,7 @@ export async function markNotificationAsRead(
     item.id === notificationId ? { ...item, read: true } : item,
   );
 
-  await setDoc(
-    userRef,
-    { notifications: updated.map((item) => sanitizeNotificationRecord(item)) },
-    { merge: true },
-  );
+  await setDoc(userRef, { notifications: updated }, { merge: true });
   return true;
 }
 
@@ -429,29 +392,17 @@ export function buildLibraryNotification(
   resourceTitle?: string,
 ): NotificationRecord {
   const details = libraryNotificationMap[type];
-  const notification: NotificationRecord = {
+  return {
     id: `${type}-${itemId}-${Date.now()}`,
     type,
     publisherName,
     publisherAvatar,
     message: details.message,
+    resourceTitle: resourceTitle?.trim() || undefined,
     createdAt: Timestamp.now(),
     read: false,
+    itemId,
+    collection: details.collection,
+    navigation: details.navigation,
   };
-
-  const trimmedTitle = resourceTitle?.trim();
-  if (trimmedTitle) {
-    notification.resourceTitle = trimmedTitle;
-  }
-  if (itemId) {
-    notification.itemId = itemId;
-  }
-  if (details.collection) {
-    notification.collection = details.collection;
-  }
-  if (details.navigation) {
-    notification.navigation = details.navigation;
-  }
-
-  return stripUndefinedFields(notification) as NotificationRecord;
 }
