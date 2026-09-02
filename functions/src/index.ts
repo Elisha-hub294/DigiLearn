@@ -184,6 +184,32 @@ export const getYoutubeVideoDuration = onCall(async (request) => {
   }
 
   try {
+    const playerResponse = await fetch(
+      "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          videoId,
+          context: {
+            client: {
+              clientName: "WEB",
+              clientVersion: "2.20250101.00.00",
+            },
+          },
+        }),
+      },
+    );
+    if (playerResponse.ok) {
+      const playerData = (await playerResponse.json()) as {
+        videoDetails?: { lengthSeconds?: string };
+      };
+      const playerSeconds = Number(playerData.videoDetails?.lengthSeconds ?? 0);
+      if (Number.isFinite(playerSeconds) && playerSeconds > 0) {
+        return { duration: playerSeconds };
+      }
+    }
+
     const response = await fetch(
       `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`,
       { headers: { "User-Agent": "Mozilla/5.0" } },
@@ -193,7 +219,9 @@ export const getYoutubeVideoDuration = onCall(async (request) => {
     }
 
     const html = await response.text();
-    const durationMatch = html.match(/"lengthSeconds":"(\d+)"/);
+    const durationMatch = html.match(
+      /(?:\\?"|&quot;)lengthSeconds(?:\\?"|&quot;)(?:\\?:)?(?:\\?"|&quot;)(\d+)/,
+    );
     const totalSeconds = Number(durationMatch?.[1] ?? 0);
 
     return {

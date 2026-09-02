@@ -27,7 +27,7 @@ import { colors, spacing } from "../../constants/theme";
 type FirestoreLesson = {
   id?: string;
   title?: string;
-  subject?: string;
+  subject?: string | string[];
   teacher?: string;
   uploadedAt?: unknown;
   duration?: string;
@@ -113,7 +113,9 @@ function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
   return {
     id: item.id ?? `${item.title ?? "lesson"}-${index}`,
     title: item.title ?? "Untitled lesson",
-    subject: item.subject ?? "General",
+    subject: Array.isArray(item.subject)
+      ? item.subject.join(", ") || "General"
+      : (item.subject ?? "General"),
     teacher: item.teacher ?? "Teacher",
     uploadedAt: formatUploadedAt(uploadedAtValue),
     duration: item.duration ?? "00:00",
@@ -190,8 +192,10 @@ export default function VideosScreen() {
     if (subject === "All") {
       return lessons;
     }
-    return lessons.filter(
-      (lesson) => lesson.subject.toLowerCase() === subject.toLowerCase(),
+    return lessons.filter((lesson) =>
+      lesson.subject
+        .split(", ")
+        .some((item) => item.toLowerCase() === subject.toLowerCase()),
     );
   }, [lessons, subject]);
 

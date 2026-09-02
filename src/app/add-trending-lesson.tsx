@@ -88,6 +88,19 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
     "";
 
   try {
+    let serverDuration = "";
+    try {
+      const getYoutubeVideoDuration = httpsCallable<
+        { videoId: string },
+        { duration?: number | null }
+      >(functions, "getYoutubeVideoDuration");
+      const durationResult = await getYoutubeVideoDuration({ videoId });
+      const totalSeconds = durationResult.data.duration;
+      if (typeof totalSeconds === "number") {
+        serverDuration = formatDurationFromSeconds(totalSeconds);
+      }
+    } catch {}
+
     if (apiKey) {
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${apiKey}`,
@@ -110,7 +123,8 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
 
             return {
               title,
-              duration: formatDurationFromSeconds(totalSeconds),
+              duration:
+                formatDurationFromSeconds(totalSeconds) || serverDuration,
               thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
             };
           }
@@ -119,7 +133,7 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
         if (title) {
           return {
             title,
-            duration: "",
+            duration: serverDuration,
             thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
           };
         }
@@ -132,23 +146,10 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
 
     if (oEmbedResponse.ok) {
       const data = await oEmbedResponse.json();
-      let duration = "";
-
-      try {
-        const getYoutubeVideoDuration = httpsCallable<
-          { videoId: string },
-          { duration?: number | null }
-        >(functions, "getYoutubeVideoDuration");
-        const durationResult = await getYoutubeVideoDuration({ videoId });
-        const totalSeconds = durationResult.data.duration;
-        if (typeof totalSeconds === "number") {
-          duration = formatDurationFromSeconds(totalSeconds);
-        }
-      } catch {}
 
       return {
         title: typeof data.title === "string" ? data.title : "",
-        duration,
+        duration: serverDuration,
         thumbnail:
           typeof data.thumbnail_url === "string"
             ? data.thumbnail_url
@@ -184,7 +185,12 @@ export default function AddTrendingLessonScreen() {
   const [linkError, setLinkError] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [hoveredSubject, setHoveredSubject] = useState<string | null>(null);
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [notifyUsers, setNotifyUsers] = useState(true);
+  const canAddSubject =
+    Boolean(subject) &&
+    selectedSubjects.length < 3 &&
+    !selectedSubjects.includes(subject);
 
   const teacherName =
     profile?.name || auth.currentUser?.displayName || "Teacher";
@@ -248,6 +254,14 @@ export default function AddTrendingLessonScreen() {
       const finalDuration = duration.trim() || "00:00";
       const teacherValue = teacherName.trim() || "Teacher";
       const avatarValue = teacherAvatar.trim();
+      const subjectsToSave = [
+        ...selectedSubjects,
+        ...(subject && subject !== "All" ? [subject] : []),
+      ];
+      const savedSubject =
+        subjectsToSave.length > 1
+          ? subjectsToSave
+          : subjectsToSave[0] || "General";
       const lessonId = `${getTitleDocId(title)}-${Date.now()}_${Math.random()
         .toString(36)
         .slice(2, 9)}`;
@@ -255,7 +269,7 @@ export default function AddTrendingLessonScreen() {
       await setDoc(doc(db, "trendingLessons", lessonId), {
         id: lessonId,
         title: title.trim(),
-        subject: subject === "All" ? "General" : subject,
+        subject: savedSubject,
         teacher: teacherValue,
         uploadedAt: serverTimestamp(),
         duration: finalDuration,
@@ -352,20 +366,65 @@ export default function AddTrendingLessonScreen() {
           />
 
           <Text style={styles.label}>Subject</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Select subject"
-            style={styles.dropdown}
-            onPress={() => setDropdownVisible(true)}
-          >
-            <View style={styles.dropdownContent}>
-              <Ionicons name="book-outline" size={16} color={colors.primary} />
-              <Text style={styles.dropdownText}>
-                {subject || "Select subject"}
+          <View style={styles.subjectRow}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Select subject"
+              style={styles.dropdown}
+              onPress={() => setDropdownVisible(true)}
+            >
+              <View style={styles.dropdownContent}>
+                <Ionicons
+                  name="book-outline"
+                  size={16}
+                  color={colors.primary}
+                />
+                <Text style={styles.dropdownText}>
+                  {subject || "Select subject"}
+                </Text>
+              </View>
+              <Ionicons name="chevron-down" size={18} color="#6B7280" />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Add Subject"
+              disabled={!canAddSubject}
+              style={[
+                styles.multipleSubjectsButton,
+                !canAddSubject && styles.multipleSubjectsButtonDisabled,
+              ]}
+              onPress={() => {
+                if (!canAddSubject) return;
+                setSelectedSubjects((current) => [...current, subject]);
+                setSubject("");
+              }}
+            >
+              <Ionicons name="add" size={16} color={colors.primary} />
+              <Text style={styles.multipleSubjectsButtonText}>
+                Covers multiple subjects
               </Text>
+            </Pressable>
+          </View>
+          {selectedSubjects.length > 0 && (
+            <View style={styles.subjectChips}>
+              {selectedSubjects.map((selectedSubject) => (
+                <Pressable
+                  key={selectedSubject}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove ${selectedSubject}`}
+                  style={styles.subjectChip}
+                  onPress={() =>
+                    setSelectedSubjects((current) =>
+                      current.filter((item) => item !== selectedSubject),
+                    )
+                  }
+                >
+                  <Text style={styles.subjectChipText}>{selectedSubject}</Text>
+                  <Ionicons name="close" size={14} color={colors.primary} />
+                </Pressable>
+              ))}
             </View>
-            <Ionicons name="chevron-down" size={18} color="#6B7280" />
-          </Pressable>
+          )}
 
           <Text style={styles.label}>Teacher</Text>
           <View style={styles.teacherChip}>
@@ -447,7 +506,9 @@ export default function AddTrendingLessonScreen() {
               bounces={false}
             >
               {subjects
-                .filter((item) => item !== "All")
+                .filter(
+                  (item) => item !== "All" && !selectedSubjects.includes(item),
+                )
                 .map((item) => {
                   const isSelected = subject === item;
                   const isHovered = hoveredSubject === item;
@@ -548,6 +609,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     flexDirection: "row",
+    flex: 1,
     justifyContent: "space-between",
     paddingHorizontal: 14,
     paddingVertical: 14,
@@ -557,7 +619,53 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
+  subjectRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  multipleSubjectsButton: {
+    alignItems: "center",
+    borderColor: "rgba(37, 99, 235, 0.3)",
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 4,
+    justifyContent: "center",
+    minHeight: 49,
+    paddingHorizontal: 10,
+  },
+  multipleSubjectsButtonDisabled: {
+    opacity: 0.45,
+  },
+  multipleSubjectsButtonText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "700",
+  },
   dropdownText: { color: colors.text, fontSize: 15 },
+  subjectChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: spacing.sm,
+  },
+  subjectChip: {
+    alignItems: "center",
+    backgroundColor: "rgba(37, 99, 235, 0.1)",
+    borderColor: "rgba(37, 99, 235, 0.25)",
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  subjectChipText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
   teacherChip: {
     alignSelf: "flex-start",
     alignItems: "center",

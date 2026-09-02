@@ -19,7 +19,7 @@ type FirestoreLesson = {
   teacher?: string;
   duration?: string;
   thumbnail?: string;
-  subject?: string;
+  subject?: string | string[];
   link?: string;
   uploadedAt?: unknown;
   avatar?: string;
@@ -28,7 +28,7 @@ type FirestoreLesson = {
 function toTrendingLesson(
   raw: FirestoreLesson,
   docId: string,
-  index: number
+  index: number,
 ): TrendingLesson {
   const link = raw.link ?? "";
   const thumbnail = getVideoThumbnailUrl(raw.thumbnail, link);
@@ -38,7 +38,9 @@ function toTrendingLesson(
     teacher: raw.teacher ?? "Teacher",
     duration: raw.duration ?? "00:00",
     thumbnail,
-    subject: raw.subject ?? "General",
+    subject: Array.isArray(raw.subject)
+      ? raw.subject.join(", ") || "General"
+      : (raw.subject ?? "General"),
     link,
   };
 }
@@ -53,7 +55,7 @@ export function useTrendingLessons() {
       collection(db, "trendingLessons"),
       (snapshot) => {
         const next = snapshot.docs.map((doc, index) =>
-          toTrendingLesson(doc.data() as FirestoreLesson, doc.id, index)
+          toTrendingLesson(doc.data() as FirestoreLesson, doc.id, index),
         );
         setLessons(next);
         setLoading(false);
@@ -63,7 +65,7 @@ export function useTrendingLessons() {
         console.error("useTrendingLessons error:", err);
         setError("Failed to load lessons");
         setLoading(false);
-      }
+      },
     );
 
     return () => unsubscribe();
