@@ -23,6 +23,7 @@ export type NotificationRecord = {
   publisherAvatar: string;
   message: string;
   resourceTitle?: string;
+  previewImage?: string;
   createdAt: unknown;
   read: boolean;
   itemId?: string;
@@ -118,6 +119,11 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
       typeof candidate.resourceTitle === "string" &&
       candidate.resourceTitle.trim()
         ? candidate.resourceTitle
+        : undefined,
+    previewImage:
+      typeof candidate.previewImage === "string" &&
+      candidate.previewImage.trim()
+        ? candidate.previewImage
         : undefined,
     createdAt: candidate.createdAt ?? Timestamp.now(),
     read: Boolean(candidate.read),
@@ -390,6 +396,7 @@ export function buildLibraryNotification(
   publisherName = DIGILEARN_PUBLISHER_NAME,
   publisherAvatar = DIGILEARN_PUBLISHER_AVATAR,
   resourceTitle?: string,
+  previewImage?: string,
 ): NotificationRecord {
   const details = libraryNotificationMap[type];
   return {
@@ -399,6 +406,7 @@ export function buildLibraryNotification(
     publisherAvatar,
     message: details.message,
     resourceTitle: resourceTitle?.trim() || undefined,
+    previewImage: previewImage?.trim() || undefined,
     createdAt: Timestamp.now(),
     read: false,
     itemId,

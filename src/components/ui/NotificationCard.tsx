@@ -1,5 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../constants/theme";
 import {
@@ -21,8 +22,15 @@ export function NotificationCard({
   onMarkRead,
 }: NotificationCardProps) {
   const meta = NOTIFICATION_TYPE_META[notification.type];
-  const showIcon = notification.type !== "announcement";
   const resourceTitle = notification.resourceTitle?.trim();
+  const previewImage = notification.previewImage?.trim();
+  const [previewFailed, setPreviewFailed] = useState(false);
+
+  useEffect(() => {
+    setPreviewFailed(false);
+  }, [previewImage]);
+
+  const shouldRenderPreviewImage = Boolean(previewImage) && !previewFailed;
 
   return (
     <Pressable
@@ -62,7 +70,16 @@ export function NotificationCard({
       </View>
 
       <View style={styles.actionsWrap}>
-        {showIcon ? (
+        {shouldRenderPreviewImage ? (
+          <View style={styles.typeIconWrap}>
+            <Image
+              source={{ uri: previewImage }}
+              style={styles.previewImage}
+              contentFit="cover"
+              onError={() => setPreviewFailed(true)}
+            />
+          </View>
+        ) : (
           <View
             accessibilityLabel={`${meta.label} notification icon`}
             style={[styles.typeIconWrap, { backgroundColor: meta.background }]}
@@ -73,7 +90,7 @@ export function NotificationCard({
               color={colors.white}
             />
           </View>
-        ) : null}
+        )}
 
         {!notification.read && onMarkRead ? (
           <Pressable
@@ -168,10 +185,9 @@ const styles = StyleSheet.create({
   },
   resourceTitle: {
     maxWidth: "86%",
-    fontSize: 12,
+    fontSize: 11,
     lineHeight: 16,
-    fontWeight: "700",
-    color: colors.primary,
+    color: colors.text,
     marginTop: 2,
   },
   actionsWrap: {
@@ -185,6 +201,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+    backgroundColor: "#E5E7EB",
+  },
+  previewImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 12,
   },
   markReadButton: {
     width: 40,

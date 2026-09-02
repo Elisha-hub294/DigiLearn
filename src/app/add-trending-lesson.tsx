@@ -288,6 +288,7 @@ export default function AddTrendingLessonScreen() {
             undefined,
             undefined,
             title.trim(),
+            finalThumbnail,
           ),
         );
       }

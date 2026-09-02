@@ -280,6 +280,7 @@ export const notifyUsersAboutNewItem = async (
   itemType: "book" | "page" | "lesson" | "announcement" | "paper",
   itemId: string,
   resourceTitle?: string,
+  previewImage?: string,
 ) => {
   try {
     await appendNotificationToAllUsers(
@@ -289,6 +290,7 @@ export const notifyUsersAboutNewItem = async (
         undefined,
         undefined,
         resourceTitle,
+        previewImage,
       ),
     );
   } catch (error) {
