@@ -573,28 +573,38 @@ export function AddItemModal({
       : formData.level?.toLowerCase() === "advanced"
         ? (selectedSubject?.advancedPapers ?? 0)
         : 0;
-  const activePaperCodePrefix =
-    formData.paperCode.startsWith(`${selectedSubsidiaryCode}/`) ||
-    formData.paperCode === selectedSubsidiaryCode
-      ? selectedSubsidiaryCode
-      : selectedPaperCodePrefix;
-
-  const paperCodeOptions = Array.from(
-    { length: Math.max(subjectPaperCount, 0) },
-    (_, index) => index + 1,
-  );
-  const shouldShowPaperCodeButtons =
-    subjectPaperCount > 1 || isSubjectSubsidiary || isSubCodeAvailable;
-  const isOrdinaryLevel = formData.level?.toLowerCase() === "ordinary";
-  const shouldShowSubsidiaryButton =
-    !isOrdinaryLevel && (isSubCodeAvailable || isSubjectSubsidiary);
+  const subsidiaryPaperCount =
+    formData.level?.toLowerCase() === "advanced"
+      ? (selectedSubject?.subsidiaryPapers ?? 0)
+      : 0;
   const isSubsidiaryPaperSelected =
     Boolean(selectedSubsidiaryCode) &&
     (formData.paperCode === selectedSubsidiaryCode ||
       formData.paperCode.startsWith(`${selectedSubsidiaryCode}/`));
+  const activePaperCount = isSubsidiaryPaperSelected
+    ? subsidiaryPaperCount
+    : subjectPaperCount;
+  const activePaperCodePrefix = isSubsidiaryPaperSelected
+    ? selectedSubsidiaryCode
+    : selectedPaperCodePrefix;
+
+  const paperCodeOptions = Array.from(
+    { length: Math.max(activePaperCount, 0) },
+    (_, index) => index + 1,
+  );
+  const shouldShowPaperCodeButtons =
+    activePaperCount > 0 || isSubjectSubsidiary || isSubCodeAvailable;
+  const isOrdinaryLevel = formData.level?.toLowerCase() === "ordinary";
+  const shouldShowSubsidiaryButton =
+    !isOrdinaryLevel &&
+    (isSubCodeAvailable || isSubjectSubsidiary) &&
+    !isSubsidiaryPaperSelected;
 
   useEffect(() => {
-    if (!formData.subject || !formData.level || !selectedPaperCodePrefix) {
+    const normalizedPaperCode = formData.paperCode.trim();
+    const normalizedPrefix = selectedPaperCodePrefix.trim();
+
+    if (!formData.subject || !formData.level || !normalizedPrefix) {
       if (formData.paperCode) {
         updateField("paperCode", "");
       }
@@ -602,26 +612,37 @@ export function AddItemModal({
     }
 
     if (isSubjectSubsidiary) {
-      if (formData.paperCode !== selectedSubsidiaryPaperCode) {
-        updateField("paperCode", selectedSubsidiaryPaperCode);
+      const nextPaperCode = selectedSubsidiaryPaperCode.trim();
+      if (nextPaperCode && formData.paperCode !== nextPaperCode) {
+        updateField("paperCode", nextPaperCode);
       }
       return;
     }
 
-    const isValidPaperCode =
-      formData.paperCode === selectedPaperCodePrefix ||
-      formData.paperCode.startsWith(`${selectedPaperCodePrefix}/`) ||
-      (isSubCodeAvailable &&
-        (formData.paperCode === selectedSubsidiaryCode ||
-          formData.paperCode.startsWith(`${selectedSubsidiaryCode}/`) ||
-          formData.paperCode === selectedSubsidiaryPaperCode));
+    if (
+      isSubCodeAvailable &&
+      isSubsidiaryPaperSelected &&
+      subsidiaryPaperCount === 1 &&
+      normalizedPaperCode !== `${selectedSubsidiaryCode}/1`
+    ) {
+      updateField("paperCode", `${selectedSubsidiaryCode}/1`);
+      return;
+    }
 
-    if (!formData.paperCode || !isValidPaperCode) {
-      // If there's only one paper code option, autofill with the complete code
-      if (subjectPaperCount === 1) {
-        updateField("paperCode", `${selectedPaperCodePrefix}/1`);
-      } else {
-        updateField("paperCode", selectedPaperCodePrefix);
+    const isValidPaperCode =
+      normalizedPaperCode === normalizedPrefix ||
+      normalizedPaperCode.startsWith(`${normalizedPrefix}/`) ||
+      (isSubCodeAvailable &&
+        (normalizedPaperCode === selectedSubsidiaryCode ||
+          normalizedPaperCode.startsWith(`${selectedSubsidiaryCode}/`) ||
+          normalizedPaperCode === selectedSubsidiaryPaperCode));
+
+    if (!normalizedPaperCode || !isValidPaperCode) {
+      const nextPaperCode =
+        subjectPaperCount === 1 ? `${normalizedPrefix}/1` : normalizedPrefix;
+
+      if (formData.paperCode !== nextPaperCode) {
+        updateField("paperCode", nextPaperCode);
       }
     }
   }, [
@@ -630,10 +651,12 @@ export function AddItemModal({
     formData.subject,
     isSubjectSubsidiary,
     isSubCodeAvailable,
+    isSubsidiaryPaperSelected,
     selectedPaperCodePrefix,
     selectedSubsidiaryCode,
     selectedSubsidiaryPaperCode,
     subjectPaperCount,
+    subsidiaryPaperCount,
     updateField,
   ]);
 
@@ -1578,12 +1601,16 @@ export function AddItemModal({
                               ]}
                               onPress={() => {
                                 if (isSubjectSubsidiary) return;
+                                const nextSubsidiaryPaperCode =
+                                  subsidiaryPaperCount === 1
+                                    ? `${selectedSubsidiaryCode || selectedPaperCodePrefix}/1`
+                                    : selectedSubsidiaryCode ||
+                                      selectedPaperCodePrefix;
                                 updateField(
                                   "paperCode",
                                   isSubsidiaryPaperSelected
                                     ? ""
-                                    : selectedSubsidiaryCode ||
-                                        selectedPaperCodePrefix,
+                                    : nextSubsidiaryPaperCode,
                                 );
                               }}
                             >

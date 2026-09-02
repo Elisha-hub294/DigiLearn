@@ -33,6 +33,7 @@ export function PaperCarousel({ items }: PaperCarouselProps) {
       renderItem={({ item }) => (
         <PaperCard
           key={item.id}
+          id={item.id}
           title={item.title}
           subject={item.subject}
           year={item.year}

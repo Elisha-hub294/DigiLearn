@@ -57,7 +57,20 @@ export default function SeeAllScreen() {
   } = useTrendingLessons();
   const [books, setBooks] = useState<Book[]>([]);
   const [booksLoading, setBooksLoading] = useState(mode === "books");
+  const [selectedPaperType, setSelectedPaperType] = useState(
+    params.paperType?.trim() || "All",
+  );
+  const [selectedPaperYear, setSelectedPaperYear] = useState(
+    params.paperYear?.trim() || "All",
+  );
 
+  useEffect(() => {
+    setSelectedPaperType(params.paperType?.trim() || "All");
+  }, [params.paperType]);
+
+  useEffect(() => {
+    setSelectedPaperYear(params.paperYear?.trim() || "All");
+  }, [params.paperYear]);
   useEffect(() => {
     if (mode !== "books") return;
     let mounted = true;
@@ -94,9 +107,32 @@ export default function SeeAllScreen() {
     };
   }, [mode]);
 
+  const paperTypeOptions = useMemo(() => {
+    const types = paperCollections
+      .map((section) => section.type.trim())
+      .filter(Boolean);
+    return [
+      "All",
+      ...Array.from(new Set(types.map((item) => item.toUpperCase()))),
+    ];
+  }, [paperCollections]);
+
+  const paperYearOptions = useMemo(() => {
+    const years = paperCollections
+      .map((section) => section.year.trim())
+      .filter(Boolean);
+    return ["All", ...Array.from(new Set(years))];
+  }, [paperCollections]);
+
   const papers = useMemo(() => {
-    const requestedType = params.paperType?.trim().toLowerCase();
-    const requestedYear = params.paperYear?.trim();
+    const requestedType =
+      selectedPaperType && selectedPaperType !== "All"
+        ? selectedPaperType.trim().toLowerCase()
+        : "";
+    const requestedYear =
+      selectedPaperYear && selectedPaperYear !== "All"
+        ? selectedPaperYear.trim()
+        : "";
 
     return paperCollections
       .filter((section) => {
@@ -107,21 +143,24 @@ export default function SeeAllScreen() {
         return matchesType && matchesYear;
       })
       .flatMap((section) => section.items);
-  }, [paperCollections, params.paperType, params.paperYear]);
+  }, [paperCollections, selectedPaperType, selectedPaperYear]);
 
   const title =
     mode === "courses"
       ? "Trending Lessons"
       : mode === "papers"
         ? (() => {
-            const typePart = params.paperType?.trim()
-              ? `${params.paperType.trim().toUpperCase()} `
-              : "";
-            const yearPart = params.paperYear?.trim()
-              ? params.paperYear.trim()
-              : "";
-            return yearPart
-              ? `${typePart}${yearPart}`
+            const activeType =
+              selectedPaperType && selectedPaperType !== "All"
+                ? selectedPaperType.trim().toUpperCase()
+                : "";
+            const activeYear =
+              selectedPaperYear && selectedPaperYear !== "All"
+                ? selectedPaperYear.trim()
+                : "";
+            const typePart = activeType ? `${activeType} ` : "";
+            return activeYear
+              ? `${typePart}${activeYear}`
               : `${typePart}Past Papers`;
           })()
         : "Books";
@@ -149,6 +188,72 @@ export default function SeeAllScreen() {
             <Text style={styles.heading}>{title}</Text>
           </View>
         </View>
+        {mode === "papers" && (
+          <View style={styles.filterBar}>
+            <View style={styles.filterGroup}>
+              <Text style={styles.filterLabel}>Type</Text>
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={paperTypeOptions}
+                keyExtractor={(item) => item}
+                contentContainerStyle={styles.filterList}
+                renderItem={({ item }) => (
+                  <Pressable
+                    accessibilityRole="button"
+                    style={[
+                      styles.filterChip,
+                      selectedPaperType === item && styles.filterChipActive,
+                    ]}
+                    onPress={() => setSelectedPaperType(item)}
+                  >
+                    <Text
+                      style={[
+                        styles.filterChipText,
+                        selectedPaperType === item &&
+                          styles.filterChipTextActive,
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                  </Pressable>
+                )}
+              />
+            </View>
+
+            <View style={styles.filterGroup}>
+              <Text style={styles.filterLabel}>Year</Text>
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={paperYearOptions}
+                keyExtractor={(item) => item}
+                contentContainerStyle={styles.filterList}
+                renderItem={({ item }) => (
+                  <Pressable
+                    accessibilityRole="button"
+                    style={[
+                      styles.filterChip,
+                      selectedPaperYear === item && styles.filterChipActive,
+                    ]}
+                    onPress={() => setSelectedPaperYear(item)}
+                  >
+                    <Text
+                      style={[
+                        styles.filterChipText,
+                        selectedPaperYear === item &&
+                          styles.filterChipTextActive,
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                  </Pressable>
+                )}
+              />
+            </View>
+          </View>
+        )}
+
         {loading ? (
           <View style={styles.state}>
             <ActivityIndicator color={colors.primary} />
@@ -218,12 +323,21 @@ export default function SeeAllScreen() {
                   <PaperTile
                     item={item}
                     onPress={() =>
-                      item.document &&
                       router.push({
-                        pathname: "/pdf-reader",
+                        pathname: "/paper-preview",
                         params: {
-                          uri: encodeURIComponent(item.document),
+                          id: item.id,
                           title: item.title,
+                          subject: item.subject,
+                          year: item.year,
+                          description: item.description,
+                          level: item.level,
+                          pageNumber: item.pageNumber,
+                          paperCode: item.paperCode,
+                          paperNumber: item.paperNumber,
+                          image: item.image,
+                          document: item.document,
+                          type: "Past Paper",
                         },
                       } as any)
                     }
@@ -329,6 +443,50 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     paddingBottom: spacing.lg,
     backgroundColor: colors.white,
+  },
+  filterBar: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(15, 23, 42, 0.06)",
+  },
+  filterGroup: {
+    marginBottom: spacing.sm,
+  },
+  filterLabel: {
+    color: colors.subtitle,
+    fontSize: 11,
+    fontWeight: "700",
+    marginBottom: spacing.xs,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  filterList: {
+    paddingRight: spacing.md,
+    gap: spacing.xs,
+  },
+  filterChip: {
+    backgroundColor: colors.lightBackground,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    marginRight: spacing.sm,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  filterChipActive: {
+    backgroundColor: colors.primaryLight,
+    borderColor: "rgba(0, 110, 255, 0.2)",
+  },
+  filterChipText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  filterChipTextActive: {
+    color: colors.primary,
   },
   eyebrow: {
     color: colors.primary,

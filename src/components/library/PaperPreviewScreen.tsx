@@ -1,0 +1,706 @@
+import { router, useLocalSearchParams } from "expo-router";
+import { doc, getDoc } from "firebase/firestore";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
+import { auth, db } from "../../../firebaseConfig";
+import { getHorizontalPadding } from "../../constants/layout";
+import { colors, radius, spacing } from "../../constants/theme";
+import { recordUserActivity } from "../../services/activityService";
+import { toggleSavedItem } from "../../services/userProfile";
+import { BottomActionBar } from "../page/BottomActionBar";
+import { ActionDialog } from "../ui/ActionDialog";
+
+type PaperPreviewData = {
+  id: string;
+  title: string;
+  subject?: string;
+  year?: string;
+  description?: string;
+  level?: string;
+  pageNumber?: string | number;
+  paperCode?: string;
+  paperNumber?: string | number;
+  image?: string;
+  document?: string;
+  type?: string;
+};
+
+const pickString = (values: unknown[], fallback = ""): string => {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number" && Number.isFinite(value))
+      return String(value);
+  }
+  return fallback;
+};
+
+const normalizePaperNumber = (value?: string | number): string => {
+  if (typeof value === "number") return String(value);
+  if (typeof value === "string") return value.trim();
+  return "";
+};
+
+const formatPageCount = (value?: string | number): string => {
+  const normalized = normalizePaperNumber(value);
+  if (!normalized) return "N/A";
+  const numeric = Number(normalized);
+  if (!Number.isNaN(numeric)) {
+    return `${numeric} ${numeric === 1 ? "Page" : "Pages"}`;
+  }
+  return normalized;
+};
+
+const formatPaperReference = (
+  paperCode?: string,
+  paperNumber?: string | number,
+): string => {
+  const code = paperCode?.trim();
+  const number = normalizePaperNumber(paperNumber);
+
+  if (!code && !number) return "Paper details unavailable";
+  if (code && number) return `${code}/${number}`;
+  if (code) return code;
+  return `Paper ${number}`;
+};
+
+const formatLevelLabel = (level?: string): string => {
+  const normalized = level?.trim();
+  if (!normalized) return "General";
+  const lower = normalized.toLowerCase();
+  if (lower === "ordinary") return "O-level";
+  if (lower === "advanced") return "A-level";
+  if (lower === "primary") return "Primary level";
+  return normalized;
+};
+
+const mapPaperData = (
+  id: string,
+  data: Record<string, unknown>,
+): PaperPreviewData => ({
+  id,
+  title: pickString(
+    [data.title, data.name, data.paperTitle],
+    "Untitled past paper",
+  ),
+  subject: pickString([data.subject, data.topic, data.course], "General"),
+  year: pickString(
+    [data.year, data.examYear, data.session, data.publishedYear],
+    "",
+  ),
+  description: pickString(
+    [data.description, data.summary, data.caption, data.notes],
+    "No description added yet.",
+  ),
+  level: pickString(
+    [data.level, data.examLevel, data.classLevel, data.educationLevel],
+    "",
+  ),
+  pageNumber: pickString(
+    [data.pageNumber, data.pages, data.pageCount, data.totalPages],
+    "",
+  ),
+  paperCode: pickString([data.paperCode, data.code], ""),
+  paperNumber: pickString([data.paperNumber, data.number], ""),
+  image: pickString(
+    [data.cover, data.image, data.coverImage, data.thumbnail],
+    "",
+  ),
+  document: pickString([data.doc, data.document, data.pdf, data.url], ""),
+  type: pickString(
+    [data.type, data.examType, data.category, data.paperType],
+    "Other",
+  ),
+});
+
+export function PaperPreviewScreen() {
+  const params = useLocalSearchParams<{
+    id?: string;
+    title?: string;
+    subject?: string;
+    year?: string;
+    description?: string;
+    level?: string;
+    pageNumber?: string;
+    paperCode?: string;
+    paperNumber?: string;
+    image?: string;
+    document?: string;
+    type?: string;
+  }>();
+
+  const [paper, setPaper] = useState<PaperPreviewData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
+  const { width } = useWindowDimensions();
+  const horizontalPadding = width < 600 ? 0 : getHorizontalPadding(width);
+
+  useEffect(() => {
+    let active = true;
+
+    const run = async () => {
+      setLoading(true);
+
+      try {
+        if (params.id) {
+          if (auth.currentUser?.uid) {
+            recordUserActivity(auth.currentUser.uid, "paper", params.id);
+          }
+
+          const snap = await getDoc(doc(db, "pastPaper", params.id));
+          if (!active) return;
+
+          if (snap.exists()) {
+            setPaper(
+              mapPaperData(snap.id, snap.data() as Record<string, unknown>),
+            );
+            return;
+          }
+        }
+
+        const fallback: PaperPreviewData = {
+          id: params.id ?? "paper-preview",
+          title: params.title ?? "Past paper",
+          subject: params.subject ?? "General",
+          year: params.year ?? "",
+          description: params.description ?? "No description added yet.",
+          level: params.level ?? "",
+          pageNumber: params.pageNumber ?? "",
+          paperCode: params.paperCode ?? "",
+          paperNumber: params.paperNumber ?? "",
+          image: params.image ?? "",
+          document: params.document ?? "",
+          type: params.type ?? "Other",
+        };
+
+        if (active) setPaper(fallback);
+      } catch (error) {
+        console.error("Failed to load past paper preview", error);
+        if (active) {
+          setPaper({
+            id: params.id ?? "paper-preview",
+            title: params.title ?? "Past paper",
+            subject: params.subject ?? "General",
+            year: params.year ?? "",
+            description: params.description ?? "No description added yet.",
+            level: params.level ?? "",
+            pageNumber: params.pageNumber ?? "",
+            paperCode: params.paperCode ?? "",
+            paperNumber: params.paperNumber ?? "",
+            image: params.image ?? "",
+            document: params.document ?? "",
+            type: params.type ?? "Other",
+          });
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void run();
+
+    return () => {
+      active = false;
+    };
+  }, [
+    params.id,
+    params.title,
+    params.subject,
+    params.year,
+    params.description,
+    params.level,
+    params.pageNumber,
+    params.paperCode,
+    params.paperNumber,
+    params.image,
+    params.document,
+    params.type,
+  ]);
+
+  useEffect(() => {
+    const userId = auth.currentUser?.uid;
+    if (!paper?.id || !userId) {
+      setBookmarked(false);
+      return;
+    }
+
+    let active = true;
+
+    const loadBookmarkState = async () => {
+      try {
+        const userSnap = await getDoc(doc(db, "users", userId));
+        const savedPapers = Array.isArray(userSnap.data()?.["saved-papers"])
+          ? userSnap.data()?.["saved-papers"]
+          : [];
+
+        if (active) {
+          setBookmarked(savedPapers.includes(paper.id));
+        }
+      } catch (error) {
+        console.error("Failed to check paper bookmark status", error);
+      }
+    };
+
+    void loadBookmarkState();
+
+    return () => {
+      active = false;
+    };
+  }, [paper?.id]);
+
+  const paperRef = useMemo(
+    () => formatPaperReference(paper?.paperCode, paper?.paperNumber),
+    [paper?.paperCode, paper?.paperNumber],
+  );
+
+  const paperPreviewRoute = `/paper-preview?id=${encodeURIComponent(
+    paper?.id ?? params.id ?? "",
+  )}`;
+
+  const stats = [
+    { label: "Year", value: paper?.year || "Recent" },
+    { label: "Level", value: formatLevelLabel(paper?.level) },
+    {
+      label: "Pages",
+      value: paper ? formatPageCount(paper.pageNumber) : "N/A",
+    },
+    { label: "Reference", value: paperRef },
+  ];
+
+  const openDocument = () => {
+    if (!paper?.document) return;
+    router.push({
+      pathname: "/pdf-reader",
+      params: { uri: encodeURIComponent(paper.document), title: paper.title },
+    } as any);
+  };
+
+  const sharePaper = async () => {
+    if (!paper) return;
+    const shareText = [paper.title, paper.subject, paperRef, paper.document]
+      .filter(Boolean)
+      .join(" • ");
+
+    try {
+      await Share.share({
+        message: shareText,
+        title: paper.title,
+      });
+    } catch (error) {
+      console.warn("Share cancelled", error);
+    }
+  };
+
+  const toggleBookmark = async () => {
+    if (!paper) return;
+
+    const userId = auth.currentUser?.uid;
+    if (!userId) {
+      setShowGuestSaveAlert(true);
+      return;
+    }
+
+    try {
+      await toggleSavedItem(userId, "saved-papers", paper.id, bookmarked);
+      setBookmarked((value) => !value);
+    } catch (error) {
+      console.error("Failed to toggle paper bookmark", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator color={colors.primary} size="large" />
+        <Text style={styles.loadingText}>Loading paper details...</Text>
+      </View>
+    );
+  }
+
+  if (!paper) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.title}>Paper unavailable</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={[
+        styles.content,
+        { paddingHorizontal: horizontalPadding },
+      ]}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.headerRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Text style={styles.backButtonText}>←</Text>
+        </Pressable>
+        <View style={styles.headerMeta}>
+          <Text style={styles.eyebrow}>
+            {paper.type?.toUpperCase() || "PAST PAPER"}
+          </Text>
+          <Text style={styles.headerTitle}>Paper preview</Text>
+        </View>
+      </View>
+
+      <View style={styles.heroCard}>
+        <View style={styles.heroImageWrap}>
+          {paper.image ? (
+            <Image
+              source={{ uri: paper.image }}
+              style={styles.heroImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.placeholderCover}>
+              <Text style={styles.placeholderText}>
+                {paper.title.slice(0, 2).toUpperCase()}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.heroContent}>
+          <Text style={styles.subjectBadge}>{paper.subject || "General"}</Text>
+          <Text style={styles.title}>{paper.title}</Text>
+          <Text style={styles.metaLine}>
+            {paper.year || "Recent paper"} • {paperRef}
+          </Text>
+
+          <View style={styles.actionRow}>
+            <Pressable
+              accessibilityRole="button"
+              style={[
+                styles.primaryButton,
+                !paper.document && styles.disabledButton,
+              ]}
+              onPress={openDocument}
+              disabled={!paper.document}
+            >
+              <Text style={styles.primaryButtonText}>
+                {paper.document ? "Open paper" : "No document"}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              style={styles.secondaryButton}
+              onPress={sharePaper}
+            >
+              <Text style={styles.secondaryButtonText}>Share</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.statsWrap}>
+        {stats.map((stat) => (
+          <View key={stat.label} style={styles.statCard}>
+            <Text style={styles.statLabel}>{stat.label}</Text>
+            <Text style={styles.statValue}>{stat.value}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.detailsCard}>
+        <Text style={styles.sectionTitle}>Overview</Text>
+        <Text style={styles.description}>
+          {paper.description || "No description provided for this paper."}
+        </Text>
+      </View>
+
+      <View style={styles.detailsCard}>
+        <Text style={styles.sectionTitle}>Paper details</Text>
+        <View style={styles.detailList}>
+          <DetailRow label="Subject" value={paper.subject || "General"} />
+          <DetailRow label="Level" value={formatLevelLabel(paper.level)} />
+          <DetailRow label="Pages" value={formatPageCount(paper.pageNumber)} />
+          <DetailRow label="Reference" value={paperRef} />
+          <DetailRow label="Year" value={paper.year || "Recent"} />
+        </View>
+      </View>
+
+      <View style={styles.footerCard}>
+        <BottomActionBar
+          bookmarked={bookmarked}
+          onBookmark={toggleBookmark}
+          onOpen={openDocument}
+          onShare={sharePaper}
+          accentColor={colors.primary}
+        />
+      </View>
+
+      <ActionDialog
+        visible={showGuestSaveAlert}
+        title="Save this resource"
+        message="Log in or sign up to save past papers and resources for later."
+        primaryText="Log in"
+        secondaryText="Sign up"
+        onPrimary={() =>
+          router.push({
+            pathname: "/login",
+            params: { from: paperPreviewRoute },
+          } as any)
+        }
+        onSecondary={() =>
+          router.push({
+            pathname: "/signup",
+            params: { from: paperPreviewRoute },
+          } as any)
+        }
+        onClose={() => setShowGuestSaveAlert(false)}
+      />
+    </ScrollView>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detailRow}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue}>{value}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.lightBackground,
+  },
+  content: {
+    paddingBottom: spacing.xxl,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.lightBackground,
+    padding: spacing.xl,
+  },
+  loadingText: {
+    color: colors.subtitle,
+    fontSize: 14,
+    marginTop: spacing.md,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
+  },
+  backButton: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.pill,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.06)",
+  },
+  backButtonText: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: "700",
+    lineHeight: 22,
+  },
+  headerMeta: {
+    flex: 1,
+  },
+  eyebrow: {
+    color: colors.primary,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  headerTitle: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: "700",
+    marginTop: 2,
+  },
+  heroCard: {
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.06)",
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4,
+  },
+  heroImageWrap: {
+    width: "100%",
+    height: 220,
+    backgroundColor: "#E5E7EB",
+  },
+  heroImage: {
+    width: "100%",
+    height: "100%",
+  },
+  placeholderCover: {
+    flex: 1,
+    backgroundColor: "#006eff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  placeholderText: {
+    color: colors.white,
+    fontSize: 28,
+    fontWeight: "800",
+  },
+  heroContent: {
+    padding: spacing.lg,
+  },
+  subjectBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#E0EEFF",
+    color: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  title: {
+    color: colors.text,
+    fontSize: 28,
+    fontWeight: "800",
+    marginTop: spacing.md,
+  },
+  metaLine: {
+    color: colors.subtitle,
+    fontSize: 13,
+    marginTop: spacing.sm,
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  primaryButton: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  primaryButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  secondaryButton: {
+    minWidth: 100,
+    backgroundColor: colors.lightBackground,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  secondaryButtonText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  statsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: spacing.lg,
+    gap: spacing.sm,
+  },
+  statCard: {
+    flexBasis: "48%",
+    backgroundColor: colors.white,
+    padding: spacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.06)",
+  },
+  statLabel: {
+    color: colors.subtitle,
+    fontSize: 11,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  statValue: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 6,
+  },
+  detailsCard: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: spacing.lg,
+    marginTop: spacing.lg,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.06)",
+  },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: spacing.sm,
+  },
+  description: {
+    color: colors.text,
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  detailList: {
+    gap: spacing.sm,
+  },
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.md,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(15, 23, 42, 0.06)",
+  },
+  detailLabel: {
+    color: colors.subtitle,
+    fontSize: 13,
+  },
+  detailValue: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "right",
+    flexShrink: 1,
+  },
+  footerCard: {
+    marginTop: spacing.lg,
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.06)",
+  },
+});

@@ -1,13 +1,13 @@
 import { User } from "firebase/auth";
 import {
-    arrayRemove,
-    arrayUnion,
-    deleteField,
-    doc,
-    getDoc,
-    serverTimestamp,
-    setDoc,
-    Timestamp,
+  arrayRemove,
+  arrayUnion,
+  deleteField,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
@@ -39,6 +39,7 @@ export type UserProfile = {
   "saved-pages": string[];
   "saved-books": string[];
   "saved-lessons": string[];
+  "saved-papers": string[];
   "saved-posts": string[];
   savedAt?: Record<string, unknown>;
 };
@@ -47,6 +48,7 @@ export type SavedItemType =
   | "saved-pages"
   | "saved-books"
   | "saved-lessons"
+  | "saved-papers"
   | "saved-posts";
 
 const onboardingStateCache: Record<
@@ -153,6 +155,7 @@ export const defaultUserProfile = (user: User): UserProfile => ({
   "saved-pages": [],
   "saved-books": [],
   "saved-lessons": [],
+  "saved-papers": [],
   "saved-posts": [],
   savedAt: {},
 });

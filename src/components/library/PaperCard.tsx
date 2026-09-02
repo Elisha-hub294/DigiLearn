@@ -3,6 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
 
 type PaperCardProps = {
+  id?: string;
   title: string;
   subject?: string;
   year?: string;
@@ -17,10 +18,12 @@ type PaperCardProps = {
 };
 
 export function PaperCard({
+  id,
   title,
   image,
   document,
   subject,
+  year,
   description,
   level,
   pageNumber,
@@ -61,12 +64,25 @@ export function PaperCard({
     Boolean,
   );
 
-  const openPdf = () => {
-    if (!document) return;
+  const openPreview = () => {
+    const params = {
+      id: id ?? title,
+      title,
+      subject,
+      year,
+      description,
+      level,
+      pageNumber,
+      paperCode,
+      paperNumber,
+      image,
+      document,
+    } as any;
+
     router.push({
-      pathname: "/pdf-reader",
-      params: { uri: encodeURIComponent(document), title },
-    } as any);
+      pathname: "/paper-preview",
+      params,
+    });
   };
 
   return (
@@ -76,7 +92,7 @@ export function PaperCard({
         styles.card,
         (pressed || hovered) && styles.cardPressed,
       ]}
-      onPress={openPdf}
+      onPress={openPreview}
     >
       <View style={styles.previewContainer}>
         {image ? (

@@ -92,7 +92,15 @@ export default function LibraryScreen() {
   }, []);
 
   const categories = useMemo(
-    () => [...baseCategories, ...pastPaperCategories],
+    () => [
+      ...baseCategories.filter(
+        (category) => category.key === "all" || category.key === "pages",
+      ),
+      ...pastPaperCategories,
+      ...baseCategories.filter(
+        (category) => category.key === "books" || category.key === "other",
+      ),
+    ],
     [pastPaperCategories],
   );
 
@@ -102,14 +110,21 @@ export default function LibraryScreen() {
     const category = categories.find((item) => item.key === selectedCategory);
     if (!category) return [];
 
-    let collections =
-      selectedCategory === "all"
-        ? [...paperCollections]
-        : paperCollections.filter(
-            (section) =>
-              section.type.trim().toLowerCase() ===
-              category.paperType?.toLowerCase(),
-          );
+    let collections: PaperSection[];
+
+    if (selectedCategory === "all") {
+      collections = [...paperCollections];
+    } else if (selectedCategory === "other") {
+      collections = paperCollections.filter(
+        (section) => !(section.type ?? "").trim(),
+      );
+    } else {
+      collections = paperCollections.filter(
+        (section) =>
+          (section.type ?? "").trim().toLowerCase() ===
+          (category.paperType ?? "").toLowerCase(),
+      );
+    }
 
     if (shouldFilterByInterests(profile)) {
       collections = collections

@@ -71,6 +71,7 @@ export const fetchSubjects = async (): Promise<
     isSubsidiary?: boolean;
     ordinaryPapers?: number;
     advancedPapers?: number;
+    subsidiaryPapers?: number;
   }[]
 > => {
   try {
@@ -86,6 +87,10 @@ export const fetchSubjects = async (): Promise<
           typeof data.advancedPapers === "number"
             ? data.advancedPapers
             : Number(data.advancedPapers) || 0;
+        const subsidiaryPapers =
+          typeof data.subsidiaryPapers === "number"
+            ? data.subsidiaryPapers
+            : Number(data.subsidiaryPapers) || 0;
 
         return {
           id: doc.id,
@@ -96,6 +101,7 @@ export const fetchSubjects = async (): Promise<
           isSubsidiary: Boolean(data.isSubsidiary),
           ordinaryPapers,
           advancedPapers,
+          subsidiaryPapers,
         };
       })
       .filter((item) => item.name)

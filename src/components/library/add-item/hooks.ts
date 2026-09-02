@@ -10,7 +10,10 @@ export const useFormState = (initialState = INITIAL_FORM_STATE) => {
 
   const updateField = useCallback(
     (key: keyof FormState, value: string | boolean) => {
-      setFormData((prev) => ({ ...prev, [key]: value }));
+      setFormData((prev) => {
+        if (prev[key] === value) return prev;
+        return { ...prev, [key]: value };
+      });
     },
     [],
   );
@@ -96,6 +99,7 @@ export const useFormOptions = (
       isSubsidiary?: boolean;
       ordinaryPapers?: number;
       advancedPapers?: number;
+      subsidiaryPapers?: number;
     }[]
   >([]);
   const [pastPaperTypes, setPastPaperTypes] = useState<

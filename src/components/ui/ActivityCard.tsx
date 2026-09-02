@@ -25,19 +25,23 @@ const PANEL_CONFIG: Record<
     bg: "#FF646A",
     icon: "book-open",
   },
+  paper: {
+    bg: "#10B981",
+    icon: "file-text",
+  },
 };
 
-export const ActivityCard: React.FC<ActivityCardProps> = ({ item, onPress }) => {
+export const ActivityCard: React.FC<ActivityCardProps> = ({
+  item,
+  onPress,
+}) => {
   const config = PANEL_CONFIG[item.type] || PANEL_CONFIG.page;
   const formattedDate = formatActivityDate(item.openedAt);
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.cardContainer,
-        pressed && styles.pressed,
-      ]}
+      style={({ pressed }) => [styles.cardContainer, pressed && styles.pressed]}
       accessibilityRole="button"
       accessibilityLabel={`${item.title}, ${item.type} activity, opened ${formattedDate}`}
     >

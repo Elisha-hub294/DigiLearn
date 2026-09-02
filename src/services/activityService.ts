@@ -8,6 +8,7 @@ const ACTIVITY_FIELD_MAP: Record<ActivityType, string> = {
   lesson: "activity-lessons",
   page: "activity-pages",
   book: "activity-books",
+  paper: "activity-pages",
 };
 
 /**
@@ -40,7 +41,11 @@ export function formatActivityDate(dateInput: any): string {
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const targetDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const targetDay = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
 
   const diffMs = today.getTime() - targetDay.getTime();
   const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
@@ -49,8 +54,18 @@ export function formatActivityDate(dateInput: any): string {
   if (diffDays === 1) return "Yesterday";
 
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const day = date.getDate();
@@ -70,7 +85,7 @@ export function formatActivityDate(dateInput: any): string {
 export async function recordUserActivity(
   userId: string | undefined,
   type: ActivityType,
-  docId: string
+  docId: string,
 ): Promise<void> {
   if (!userId || !docId || !type) return;
 
@@ -86,21 +101,25 @@ export async function recordUserActivity(
       const data = userSnap.data();
       const rawList = data[fieldName];
       if (Array.isArray(rawList)) {
-        currentList = rawList.map((item) => {
-          if (typeof item === "string") {
-            return { id: item, openedAt: new Date().toISOString() };
-          }
-          return {
-            id: String(item.id || ""),
-            openedAt: item.openedAt
-              ? typeof item.openedAt === "string"
-                ? item.openedAt
-                : new Date(
-                    item.openedAt.seconds ? item.openedAt.seconds * 1000 : Date.now()
-                  ).toISOString()
-              : new Date().toISOString(),
-          };
-        }).filter((item) => Boolean(item.id));
+        currentList = rawList
+          .map((item) => {
+            if (typeof item === "string") {
+              return { id: item, openedAt: new Date().toISOString() };
+            }
+            return {
+              id: String(item.id || ""),
+              openedAt: item.openedAt
+                ? typeof item.openedAt === "string"
+                  ? item.openedAt
+                  : new Date(
+                      item.openedAt.seconds
+                        ? item.openedAt.seconds * 1000
+                        : Date.now(),
+                    ).toISOString()
+                : new Date().toISOString(),
+            };
+          })
+          .filter((item) => Boolean(item.id));
       }
     }
 
@@ -115,14 +134,19 @@ export async function recordUserActivity(
 
     await setDoc(userRef, { [fieldName]: updatedList }, { merge: true });
   } catch (error) {
-    console.warn(`Failed to record ${type} activity for user ${userId}:`, error);
+    console.warn(
+      `Failed to record ${type} activity for user ${userId}:`,
+      error,
+    );
   }
 }
 
 /**
  * Fetches all user activity records and referenced database documents.
  */
-export async function fetchUserActivity(userId: string): Promise<ActivityItem[]> {
+export async function fetchUserActivity(
+  userId: string,
+): Promise<ActivityItem[]> {
   if (!userId) return [];
 
   try {
@@ -132,9 +156,15 @@ export async function fetchUserActivity(userId: string): Promise<ActivityItem[]>
     if (!userSnap.exists()) return [];
 
     const userData = userSnap.data();
-    const lessonsRaw: any[] = Array.isArray(userData["activity-lessons"]) ? userData["activity-lessons"] : [];
-    const pagesRaw: any[] = Array.isArray(userData["activity-pages"]) ? userData["activity-pages"] : [];
-    const booksRaw: any[] = Array.isArray(userData["activity-books"]) ? userData["activity-books"] : [];
+    const lessonsRaw: any[] = Array.isArray(userData["activity-lessons"])
+      ? userData["activity-lessons"]
+      : [];
+    const pagesRaw: any[] = Array.isArray(userData["activity-pages"])
+      ? userData["activity-pages"]
+      : [];
+    const booksRaw: any[] = Array.isArray(userData["activity-books"])
+      ? userData["activity-books"]
+      : [];
 
     const normalizeRecords = (rawList: any[]): ActivityRecord[] => {
       return rawList
@@ -146,8 +176,13 @@ export async function fetchUserActivity(userId: string): Promise<ActivityItem[]>
             let openedAtStr = new Date().toISOString();
             if (typeof item.openedAt === "string") {
               openedAtStr = item.openedAt;
-            } else if (item.openedAt && typeof item.openedAt.seconds === "number") {
-              openedAtStr = new Date(item.openedAt.seconds * 1000).toISOString();
+            } else if (
+              item.openedAt &&
+              typeof item.openedAt.seconds === "number"
+            ) {
+              openedAtStr = new Date(
+                item.openedAt.seconds * 1000,
+              ).toISOString();
             }
             return { id: String(item.id), openedAt: openedAtStr };
           }
@@ -171,7 +206,8 @@ export async function fetchUserActivity(userId: string): Promise<ActivityItem[]>
           const title = data.title || data.name || "Untitled lesson";
           const teacher = data.teacher ? `Teacher: ${data.teacher}` : "";
           const subject = data.subject || "General";
-          const description = data.description || (teacher ? `${teacher} • ${subject}` : subject);
+          const description =
+            data.description || (teacher ? `${teacher} • ${subject}` : subject);
 
           activityItems.push({
             id: `lesson-${record.id}-${record.openedAt}`,
@@ -208,7 +244,10 @@ export async function fetchUserActivity(userId: string): Promise<ActivityItem[]>
           const title = data.title || data.name || "Untitled note";
           const subject = data.subject ? `Subject: ${data.subject}` : "";
           const typeLabel = data.type || data.examType || "Study Note";
-          const description = data.description || data.subtitle || (subject ? `${typeLabel} • ${subject}` : typeLabel);
+          const description =
+            data.description ||
+            data.subtitle ||
+            (subject ? `${typeLabel} • ${subject}` : typeLabel);
 
           activityItems.push({
             id: `page-${record.id}-${record.openedAt}`,
@@ -231,9 +270,18 @@ export async function fetchUserActivity(userId: string): Promise<ActivityItem[]>
         const bookSnap = await getDoc(doc(db, "books", record.id));
         if (bookSnap.exists()) {
           const data = bookSnap.data();
-          const title = data.title || data.name || data.bookTitle || "Untitled book";
-          const author = data.author || data.writer ? `By ${data.author || data.writer}` : "";
-          const description = data.description || data.subtitle || data.summary || (author || "Academic Book");
+          const title =
+            data.title || data.name || data.bookTitle || "Untitled book";
+          const author =
+            data.author || data.writer
+              ? `By ${data.author || data.writer}`
+              : "";
+          const description =
+            data.description ||
+            data.subtitle ||
+            data.summary ||
+            author ||
+            "Academic Book";
 
           activityItems.push({
             id: `book-${record.id}-${record.openedAt}`,
