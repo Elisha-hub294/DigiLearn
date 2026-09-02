@@ -1,13 +1,6 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useState } from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { colors } from "../../../constants/theme";
 
 const IS_WEB = typeof window !== "undefined" && typeof document !== "undefined";

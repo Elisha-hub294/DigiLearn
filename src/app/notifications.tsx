@@ -84,7 +84,10 @@ export default function NotificationsScreen() {
   const openItem = useCallback(
     async (notification: NotificationRecord) => {
       if (notification.storage === "admin") {
-        router.push("/teacher-applications" as never);
+        router.push({
+          pathname: "/teacher-application-review",
+          params: { applicationId: notification.itemId },
+        } as never);
         if (user && !notification.read) await markRead(notification.id);
         return;
       }

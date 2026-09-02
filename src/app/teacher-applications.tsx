@@ -3,14 +3,14 @@ import { useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
@@ -160,6 +160,22 @@ export default function TeacherApplicationsScreen() {
                   {(item.name || "T").slice(0, 1).toUpperCase()}
                 </Text>
               </View>
+              <Pressable
+                style={styles.viewButton}
+                onPress={() =>
+                  router.push({
+                    pathname: "/teacher-application-review",
+                    params: { applicationId: item.id },
+                  } as never)
+                }
+              >
+                <Feather
+                  name="arrow-up-right"
+                  size={16}
+                  color={colors.primary}
+                />
+                <Text style={styles.viewButtonText}>Review details</Text>
+              </Pressable>
               <View style={styles.identity}>
                 <Text style={styles.name}>
                   {item.name || "Unnamed applicant"}
@@ -336,6 +352,14 @@ const styles = StyleSheet.create({
   },
   pendingText: { color: "#9A6700", fontSize: 10, fontWeight: "800" },
   detail: { color: colors.subtitle, fontSize: 13, marginTop: spacing.md },
+  viewButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    alignSelf: "flex-start",
+    marginTop: spacing.md,
+  },
+  viewButtonText: { color: colors.primary, fontSize: 13, fontWeight: "700" },
   actions: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.lg },
   reject: {
     flex: 1,

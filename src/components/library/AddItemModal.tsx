@@ -114,7 +114,12 @@ function OptionPickerModal({
           onPress={(event) => event.stopPropagation()}
         >
           <Text style={styles.optionPickerTitle}>{title}</Text>
-          <View style={styles.optionPickerList}>
+          <ScrollView
+            style={styles.optionPickerScrollView}
+            contentContainerStyle={styles.optionPickerList}
+            showsVerticalScrollIndicator
+            bounces={false}
+          >
             {options.map((option) => {
               const isSelected = selectedValue === option.value;
               return (
@@ -144,7 +149,7 @@ function OptionPickerModal({
                 </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>
@@ -479,6 +484,15 @@ export function AddItemModal({
       if (formData.paperCode) {
         updateField("paperCode", "");
       }
+      return;
+    }
+
+    const isValidPaperCode =
+      formData.paperCode === selectedPaperCodePrefix ||
+      formData.paperCode.startsWith(`${selectedPaperCodePrefix}/`);
+
+    if (!formData.paperCode || !isValidPaperCode) {
+      updateField("paperCode", selectedPaperCodePrefix);
     }
   }, [
     formData.level,
@@ -1961,6 +1975,7 @@ const styles = StyleSheet.create({
   optionPickerCard: {
     width: "100%",
     maxWidth: 420,
+    maxHeight: "80%",
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 20,
@@ -1971,6 +1986,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 18,
     elevation: 8,
+    overflow: "hidden",
   },
   optionPickerTitle: {
     color: colors.text,
@@ -1978,8 +1994,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 12,
   },
+  optionPickerScrollView: {
+    maxHeight: "100%",
+  },
   optionPickerList: {
     gap: 8,
+    paddingBottom: 4,
   },
   optionPickerItem: {
     flexDirection: "row",
