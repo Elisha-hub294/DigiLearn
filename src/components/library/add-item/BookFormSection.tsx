@@ -7,10 +7,11 @@ type BookFormSectionProps = {
   formData: FormState;
   updateField: (key: keyof FormState, value: string | boolean) => void;
   subjects: { id: string; name: string }[];
-  subjectDropdownOpen: boolean;
-  setSubjectDropdownOpen: (
+  subjectDropdownOpen?: boolean;
+  setSubjectDropdownOpen?: (
     value: boolean | ((prev: boolean) => boolean),
   ) => void;
+  onSelectSubject?: () => void;
   selectedImage: any;
   pickImage: () => void;
   authorName: string;
@@ -25,6 +26,7 @@ export function BookFormSection({
   subjects,
   subjectDropdownOpen,
   setSubjectDropdownOpen,
+  onSelectSubject,
   selectedImage,
   pickImage,
   authorName,
@@ -51,7 +53,15 @@ export function BookFormSection({
           accessibilityRole="button"
           accessibilityLabel="Select book subject"
           style={styles.dropdownTrigger}
-          onPress={() => setSubjectDropdownOpen((prev: boolean) => !prev)}
+          onPress={() => {
+            if (onSelectSubject) {
+              onSelectSubject();
+              return;
+            }
+            if (setSubjectDropdownOpen) {
+              setSubjectDropdownOpen((prev: boolean) => !prev);
+            }
+          }}
         >
           <Text style={styles.dropdownText}>
             {formData.subject || "Select subject"}
@@ -66,7 +76,7 @@ export function BookFormSection({
                 style={styles.dropdownItem}
                 onPress={() => {
                   updateField("subject", option.name);
-                  setSubjectDropdownOpen(false);
+                  setSubjectDropdownOpen?.(false);
                 }}
               >
                 <Text

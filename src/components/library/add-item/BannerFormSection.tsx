@@ -8,10 +8,11 @@ type BannerFormSectionProps = {
   formData: FormState;
   updateField: (key: keyof FormState, value: string | boolean) => void;
   subjects: { id: string; name: string }[];
-  subjectDropdownOpen: boolean;
-  setSubjectDropdownOpen: (
+  subjectDropdownOpen?: boolean;
+  setSubjectDropdownOpen?: (
     value: boolean | ((prev: boolean) => boolean),
   ) => void;
+  onSelectSubject?: () => void;
   selectedFile: any;
   selectedImage: any;
   selectedPreviewAsset: any;
@@ -29,6 +30,7 @@ export function BannerFormSection({
   subjects,
   subjectDropdownOpen,
   setSubjectDropdownOpen,
+  onSelectSubject,
   selectedFile,
   selectedImage,
   selectedPreviewAsset,
@@ -60,7 +62,15 @@ export function BannerFormSection({
           accessibilityRole="button"
           accessibilityLabel="Select subject"
           style={styles.dropdownTrigger}
-          onPress={() => setSubjectDropdownOpen((prev: boolean) => !prev)}
+          onPress={() => {
+            if (onSelectSubject) {
+              onSelectSubject();
+              return;
+            }
+            if (setSubjectDropdownOpen) {
+              setSubjectDropdownOpen((prev: boolean) => !prev);
+            }
+          }}
         >
           <View style={styles.dropdownContent}>
             <Icon name="book-open" size={16} color={colors.primary} />
@@ -77,7 +87,7 @@ export function BannerFormSection({
                 style={styles.dropdownItem}
                 onPress={() => {
                   updateField("subject", option.name);
-                  setSubjectDropdownOpen(false);
+                  setSubjectDropdownOpen?.(false);
                 }}
               >
                 <Text style={styles.dropdownItemText}>{option.name}</Text>
