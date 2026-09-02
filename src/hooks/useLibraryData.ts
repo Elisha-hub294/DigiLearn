@@ -121,7 +121,9 @@ const formatPaperSectionTitle = (type: string, year: string): string => {
     return cleanedYear ? `Other ${cleanedYear}` : "Other";
   }
 
-  return `${normalizedType.toUpperCase()} ${cleanedYear || "Unknown year"}`;
+  return cleanedYear
+    ? `${normalizedType.toUpperCase()} ${cleanedYear}`
+    : normalizedType.toUpperCase();
 };
 
 const normalizeKey = (key: string): string => key.trim().toLowerCase();

@@ -208,6 +208,7 @@ export default function LibraryScreen() {
             { paddingHorizontal: horizontalPadding },
           ]}
           showsVerticalScrollIndicator={false}
+          stickyHeaderIndices={[3]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -233,7 +234,7 @@ export default function LibraryScreen() {
           </Animated.View>
           <Animated.View
             entering={FadeInUp.duration(440)}
-            style={styles.filterSection}
+            style={[styles.filterSection, styles.stickyFilter]}
           >
             <ScrollView
               horizontal
@@ -386,6 +387,7 @@ const styles = StyleSheet.create({
   headerWrap: { marginBottom: spacing.lg },
   section: { marginBottom: spacing.xl },
   filterSection: { marginTop: spacing.md, marginBottom: spacing.lg },
+  stickyFilter: { backgroundColor: colors.background },
   filterContent: { gap: spacing.sm, paddingRight: spacing.lg },
   categoryChip: {
     minHeight: 36,

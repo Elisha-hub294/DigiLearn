@@ -265,7 +265,7 @@ export const addPastPaper = async (
     ...(savedPaperCode ? { paperNumber: savedPaperNumber } : {}),
     type: type || "UNEB",
     level: level || "",
-    year: year || String(new Date().getFullYear()),
+    year,
     paperCode: savedPaperCode || "",
     updatedAt: serverTimestamp(),
   });
