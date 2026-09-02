@@ -27,7 +27,6 @@ import { BookFormSection } from "./add-item/BookFormSection";
 import {
   CharacterCounter,
   FieldLabel,
-  InfoMessage,
   NotifyToggle,
   UploadStatusModal,
 } from "./add-item/SharedFormControls";
@@ -1023,7 +1022,7 @@ export function AddItemModal({
           sanitizedSubject,
           normalizeText(formData.level) || "",
           normalizeText(formData.author) || "UNEB",
-          normalizeText(formData.extra) || String(new Date().getFullYear()),
+          normalizeText(formData.extra),
           pageCount,
           coverUrl,
           documentUrl,
@@ -1051,7 +1050,7 @@ export function AddItemModal({
 
       showStatusDialog(
         "Upload successful",
-        "Your item was published successfully.",
+        "Your Post was published successfully.",
         "Done",
         () => {
           setStatusDialog(null);
@@ -1117,8 +1116,6 @@ export function AddItemModal({
                       : "Add Past Paper"}
               </Text>
             )}
-
-            {infoMessage ? <InfoMessage>{infoMessage}</InfoMessage> : null}
 
             {formType !== "paper" && (
               <>
