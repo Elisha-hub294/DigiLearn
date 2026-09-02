@@ -1,6 +1,6 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -14,6 +14,7 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BookCarousel } from "../../components/home/BookCarousel";
 import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
+import { fetchPastPaperTypes } from "../../components/library/add-item/firebaseService";
 import { HeroBookCarousel } from "../../components/library/HeroBookCarousel";
 import { PaperCarousel } from "../../components/library/PaperCarousel";
 import { Header } from "../../components/ui/Header";
@@ -28,22 +29,20 @@ import {
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
 
-type Category = "all" | "pages" | "uneb" | "mock" | "umta" | "books" | "other";
-
-const categories: {
-  key: Category;
+type LibraryCategory = {
+  key: string;
   label: string;
   paperType?: string;
   icon?: keyof typeof Icon.glyphMap;
-}[] = [
+};
+
+const baseCategories: LibraryCategory[] = [
   { key: "all", label: "All", icon: "list" },
   { key: "pages", label: "Pages", icon: "file-text" },
-  { key: "uneb", label: "UNEB", paperType: "uneb", icon: "file-text" },
-  { key: "mock", label: "MOCK", paperType: "mock", icon: "file-text" },
-  { key: "umta", label: "UMTA", paperType: "umta", icon: "file-text" },
   { key: "books", label: "Books", paperType: "books", icon: "book" },
   { key: "other", label: "Other", paperType: "", icon: "more-horizontal" },
 ];
+
 const yearNumber = (year: string) => {
   const value = Number.parseInt(year, 10);
   return Number.isFinite(value) ? value : Number.NEGATIVE_INFINITY;
@@ -54,7 +53,49 @@ export default function LibraryScreen() {
   const { profile } = useProfile();
   const { loading, refreshing, heroSlides, paperCollections, onRefresh } =
     useLibraryData();
-  const [selectedCategory, setSelectedCategory] = useState<Category>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [pastPaperCategories, setPastPaperCategories] = useState<
+    LibraryCategory[]
+  >([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPastPaperCategories = async () => {
+      const paperTypes = await fetchPastPaperTypes();
+      if (!isMounted) return;
+
+      const firestoreCategories = paperTypes
+        .map((paperType) => {
+          const label = paperType.name.trim();
+          const key = label
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+
+          return {
+            key: key || "other",
+            label,
+            paperType: label,
+            icon: "file-text" as const,
+          };
+        })
+        .filter((item) => item.label);
+
+      setPastPaperCategories(firestoreCategories);
+    };
+
+    loadPastPaperCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const categories = useMemo(
+    () => [...baseCategories, ...pastPaperCategories],
+    [pastPaperCategories],
+  );
+
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
   const filteredPaperCollections = useMemo<PaperSection[]>(() => {
@@ -90,7 +131,8 @@ export default function LibraryScreen() {
         (category) =>
           category.key !== "all" &&
           category.key !== "pages" &&
-          category.key !== "books",
+          category.key !== "books" &&
+          Boolean((category.paperType ?? "").trim()),
       )
       .map((category) => {
         const collections = paperCollections

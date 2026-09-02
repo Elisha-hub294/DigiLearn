@@ -32,11 +32,10 @@ export function PaperCard({
   const normalizedPaperCode = paperCode?.trim();
   const normalizedPaperNumber =
     typeof paperNumber === "number" ? String(paperNumber) : paperNumber?.trim();
-  const paperReference = normalizedPaperCode
-    ? normalizedPaperNumber
+  const paperReference =
+    normalizedPaperCode && normalizedPaperNumber
       ? `${normalizedPaperCode}/${normalizedPaperNumber}`
-      : normalizedPaperCode
-    : "";
+      : "";
 
   const normalizedPageNumber =
     typeof pageNumber === "number" ? String(pageNumber) : pageNumber?.trim();

@@ -5,9 +5,11 @@ import { colors } from "../../constants/theme";
 export function AdminPublishHeader({
   title,
   onBack,
+  disabled = false,
 }: {
   title: string;
   onBack: () => void;
+  disabled?: boolean;
 }) {
   return (
     <View style={styles.header}>
@@ -16,9 +18,18 @@ export function AdminPublishHeader({
         accessibilityLabel="Go back"
         hitSlop={8}
         onPress={onBack}
-        style={styles.backButton}
+        disabled={disabled}
+        style={({ pressed }) => [
+          styles.backButton,
+          disabled && styles.backButtonDisabled,
+          pressed && styles.backButtonPressed,
+        ]}
       >
-        <Feather name="arrow-left" size={21} color={colors.text} />
+        <Feather
+          name="arrow-left"
+          size={21}
+          color={disabled ? "#9CA3AF" : colors.text}
+        />
       </Pressable>
       <View style={styles.copy}>
         <Text style={styles.title}>{title}</Text>
@@ -43,6 +54,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "#E0E7F0",
+  },
+  backButtonDisabled: {
+    backgroundColor: "#F3F4F6",
+    borderColor: "#E5E7EB",
+    opacity: 0.5,
+  },
+  backButtonPressed: {
+    backgroundColor: "rgba(37, 99, 235, 0.08)",
+    borderColor: "rgba(37, 99, 235, 0.3)",
   },
   copy: { flex: 1 },
   eyebrow: {

@@ -29,7 +29,7 @@ import {
   FieldLabel,
   InfoMessage,
   NotifyToggle,
-  UploadProgressCard,
+  UploadStatusModal,
 } from "./add-item/SharedFormControls";
 import type { FormState, FormType } from "./add-item/constants";
 import {
@@ -204,6 +204,8 @@ export function AddItemModal({
   >(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pickerConfig, setPickerConfig] = useState<PickerConfig | null>(null);
+  const [mainUploadProgress, setMainUploadProgress] = useState(0);
+  const [previewUploadProgress, setPreviewUploadProgress] = useState(0);
 
   const isAuthorizedPublisher =
     profile?.type === "teacher" || profile?.type === "admin";
@@ -225,15 +227,69 @@ export function AddItemModal({
   };
 
   const handleClose = () => {
+    // Prevent closing while upload is in progress
+    if (isSubmitting) {
+      showStatusDialog(
+        "Upload in progress",
+        "Your upload is still in progress. Please wait for it to complete before closing, or tap 'Cancel Upload' to discard the file.",
+        "Cancel Upload",
+        () => {
+          // User confirmed cancellation
+          setIsSubmitting(false);
+          setSelectedFile(null);
+          setSelectedImage(null);
+          setFormData(INITIAL_FORM_STATE);
+          setStatusDialog(null);
+          setInfoMessage("");
+          setPdfToProcess(null);
+          resetProgress();
+          setMainUploadProgress(0);
+          setPreviewUploadProgress(0);
+          setPickerConfig(null);
+          onClose();
+        },
+        "Keep uploading",
+        () => {
+          setStatusDialog(null);
+        },
+      );
+      return;
+    }
+
+    // Clean up files and reset state on successful close
+    setSelectedFile(null);
+    setSelectedImage(null);
+    setFormData(INITIAL_FORM_STATE);
     setPdfToProcess(null);
     resetProgress();
+    setMainUploadProgress(0);
+    setPreviewUploadProgress(0);
     setStatusDialog(null);
+    setInfoMessage("");
     setPickerConfig(null);
     onClose();
   };
 
   const updateUploadProgress = (label: string, progress: number) => {
-    setUploadProgress({ active: true, label, progress });
+    setMainUploadProgress(progress);
+    // Main upload contributes 0-70%, preview contributes 70-100%
+    const combinedProgress = Math.round(
+      progress * 0.7 + previewUploadProgress * 0.3,
+    );
+    setUploadProgress({ active: true, label, progress: combinedProgress });
+  };
+
+  const updatePreviewProgress = (_label: string, progress: number) => {
+    setPreviewUploadProgress(progress);
+    // Main upload contributes 0-70%, preview contributes 70-100%
+    const combinedProgress = Math.round(
+      mainUploadProgress * 0.7 + progress * 0.3,
+    );
+    setUploadProgress({
+      active: true,
+      label: uploadProgress.label,
+      progress: combinedProgress,
+    });
   };
 
   const clearSelectedFile = () => {
@@ -492,13 +548,19 @@ export function AddItemModal({
       formData.paperCode.startsWith(`${selectedPaperCodePrefix}/`);
 
     if (!formData.paperCode || !isValidPaperCode) {
-      updateField("paperCode", selectedPaperCodePrefix);
+      // If there's only one paper code option, autofill with the complete code
+      if (subjectPaperCount === 1) {
+        updateField("paperCode", `${selectedPaperCodePrefix}/1`);
+      } else {
+        updateField("paperCode", selectedPaperCodePrefix);
+      }
     }
   }, [
     formData.level,
     formData.paperCode,
     formData.subject,
     selectedPaperCodePrefix,
+    subjectPaperCount,
     updateField,
   ]);
 
@@ -637,8 +699,8 @@ export function AddItemModal({
           coverUrl = await uploadAssetToStorage(
             `book-covers/${itemId}.${ext}`,
             blob,
-            "Uploading cover image",
-            updateUploadProgress,
+            "",
+            updatePreviewProgress,
             { contentType: selectedImage.mimeType || "image/jpeg" },
           );
         }
@@ -667,8 +729,8 @@ export function AddItemModal({
           coverUrl = await uploadAssetToStorage(
             `post-covers/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
             blob,
-            "Uploading announcement image",
-            updateUploadProgress,
+            "",
+            updatePreviewProgress,
             { contentType: selectedImage.mimeType || "image/jpeg" },
           );
         } else if (selectedFile?.assets?.[0]) {
@@ -690,8 +752,8 @@ export function AddItemModal({
           coverUrl = await uploadAssetToStorage(
             `post-covers/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
             coverBlob,
-            "Uploading announcement preview",
-            updateUploadProgress,
+            "",
+            updatePreviewProgress,
             { contentType: "image/jpeg" },
           );
         }
@@ -745,8 +807,8 @@ export function AddItemModal({
             coverUrl = await uploadAssetToStorage(
               `page-covers/${uniqueCoverId}`,
               coverBlob,
-              "Uploading page preview",
-              updateUploadProgress,
+              "",
+              updatePreviewProgress,
               { contentType: "image/jpeg" },
             );
           } catch (coverError: any) {
@@ -806,8 +868,8 @@ export function AddItemModal({
             coverUrl = await uploadAssetToStorage(
               `page-covers/${uniqueCoverId}`,
               coverBlob,
-              "Uploading paper preview",
-              updateUploadProgress,
+              "",
+              updatePreviewProgress,
               { contentType: "image/jpeg" },
             );
           } catch (coverError: any) {
@@ -857,24 +919,17 @@ export function AddItemModal({
         label: "Upload complete",
         progress: 100,
       });
-      setInfoMessage("Upload complete. Returning to the home screen.");
+      setInfoMessage("Upload complete.");
 
       showStatusDialog(
         "Upload successful",
-        "Your item was published successfully and you are being taken back to the home screen.",
-        "Go home",
+        "Your item was published successfully.",
+        "Done",
         () => {
           setStatusDialog(null);
           onSuccess();
         },
       );
-
-      setTimeout(() => {
-        if (statusDialog) {
-          setStatusDialog(null);
-        }
-        onSuccess();
-      }, 1200);
     } catch (error: any) {
       console.error("Failed to add library item", error);
       const errorDetails = resolveUploadError(error);
@@ -906,7 +961,7 @@ export function AddItemModal({
         <View style={screen ? styles.screenCard : styles.modalCard}>
           {screen && (
             <AdminPublishHeader
-              onBack={onClose}
+              onBack={handleClose}
               title={
                 formType === "book"
                   ? "Add Book"
@@ -916,6 +971,7 @@ export function AddItemModal({
                       ? "Add Page"
                       : "Add Past Paper"
               }
+              disabled={isSubmitting}
             />
           )}
           <ScrollView
@@ -935,12 +991,6 @@ export function AddItemModal({
             )}
 
             {infoMessage ? <InfoMessage>{infoMessage}</InfoMessage> : null}
-            {uploadProgress.active && (
-              <UploadProgressCard
-                label={uploadProgress.label}
-                progress={uploadProgress.progress}
-              />
-            )}
 
             {formType !== "paper" && (
               <>
@@ -1559,6 +1609,12 @@ export function AddItemModal({
           />
         </View>
       )}
+      <UploadStatusModal
+        visible={uploadProgress.active}
+        title={uploadProgress.label}
+        message={infoMessage}
+        progress={uploadProgress.progress}
+      />
       {statusDialog && (
         <ActionDialog
           visible={statusDialog.visible}
