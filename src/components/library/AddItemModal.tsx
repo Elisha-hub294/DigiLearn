@@ -64,6 +64,7 @@ import {
 } from "./add-item/pdfService";
 import {
   cleanFileNameForTitle,
+  getPastPaperStorageFolder,
   getTitleDocId,
   normalizeText,
   resolveUploadError,
@@ -610,9 +611,8 @@ export function AddItemModal({
   );
   const shouldShowPaperCodeButtons =
     activePaperCount > 0 || isSubjectSubsidiary || isSubCodeAvailable;
-  const isOrdinaryLevel = formData.level?.toLowerCase() === "ordinary";
   const shouldShowSubsidiaryButton =
-    !isOrdinaryLevel &&
+    formData.level?.toLowerCase() === "advanced" &&
     (isSubCodeAvailable || isSubjectSubsidiary) &&
     !isSubsidiaryPaperSelected;
 
@@ -718,7 +718,7 @@ export function AddItemModal({
           ];
 
     updateField("level", level);
-    if (formType === "paper" && formData.subject) {
+    if ((formType === "paper" || formType === "page") && formData.subject) {
       const nextSubject = subjects.find(
         (subject) => subject.name === formData.subject,
       );
@@ -991,7 +991,7 @@ export function AddItemModal({
           const blob = await uriToBlob(file.uri);
           const uniqueName = `${Date.now()}_${file.name || "past-paper"}`;
           documentUrl = await uploadAssetToStorage(
-            `past-papers/${uniqueName}`,
+            `${getPastPaperStorageFolder(formData.author)}/${uniqueName}`,
             blob,
             "Uploading past paper",
             updateUploadProgress,
@@ -1318,6 +1318,100 @@ export function AddItemModal({
                     </Pressable>
                   </View>
                 </View>
+
+                {formData.subject &&
+                  formData.level &&
+                  selectedPaperCodePrefix && (
+                    <View style={styles.paperCodeSection}>
+                      <Text style={styles.fieldLabel}>Paper code</Text>
+                      <TextInput
+                        style={styles.paperCodeInput}
+                        value={formData.paperCode}
+                        editable={false}
+                        placeholder="Select a paper code"
+                      />
+                      {shouldShowPaperCodeButtons && (
+                        <View style={styles.paperCodeRow}>
+                          {!isSubjectSubsidiary &&
+                            paperCodeOptions.map((paperNumber) => {
+                              const effectivePrefix =
+                                isSubsidiaryPaperSelected &&
+                                selectedSubsidiaryCode
+                                  ? selectedSubsidiaryCode
+                                  : selectedPaperCodePrefix;
+                              const paperCodeValue = `${effectivePrefix}/${paperNumber}`;
+                              const isSelected =
+                                formData.paperCode === paperCodeValue;
+
+                              return (
+                                <Pressable
+                                  key={paperNumber}
+                                  accessibilityRole="button"
+                                  accessibilityState={{ selected: isSelected }}
+                                  disabled={isSubjectSubsidiary}
+                                  style={[
+                                    styles.paperCodeChip,
+                                    isSelected && styles.paperCodeChipSelected,
+                                  ]}
+                                  onPress={() =>
+                                    updateField(
+                                      "paperCode",
+                                      isSelected ? "" : paperCodeValue,
+                                    )
+                                  }
+                                >
+                                  <Text
+                                    style={[
+                                      styles.paperCodeChipText,
+                                      isSelected &&
+                                        styles.paperCodeChipTextSelected,
+                                    ]}
+                                  >
+                                    {`Paper ${paperNumber}`}
+                                  </Text>
+                                </Pressable>
+                              );
+                            })}
+                          {shouldShowSubsidiaryButton && (
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityState={{
+                                selected: isSubsidiaryPaperSelected,
+                              }}
+                              style={[
+                                styles.paperCodeChip,
+                                isSubsidiaryPaperSelected &&
+                                  styles.paperCodeChipSelected,
+                              ]}
+                              onPress={() => {
+                                const nextSubsidiaryPaperCode =
+                                  subsidiaryPaperCount === 1
+                                    ? `${selectedSubsidiaryCode || selectedPaperCodePrefix}/1`
+                                    : selectedSubsidiaryCode ||
+                                      selectedPaperCodePrefix;
+                                updateField(
+                                  "paperCode",
+                                  isSubsidiaryPaperSelected
+                                    ? ""
+                                    : nextSubsidiaryPaperCode,
+                                );
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.paperCodeChipText,
+                                  isSubsidiaryPaperSelected &&
+                                    styles.paperCodeChipTextSelected,
+                                ]}
+                              >
+                                Subsidiary
+                              </Text>
+                            </Pressable>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  )}
 
                 <Text style={styles.fieldLabel}>Document File</Text>
                 <View {...getWebDropHandlers("document")}>

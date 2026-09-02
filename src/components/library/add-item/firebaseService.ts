@@ -210,7 +210,9 @@ export const addPage = async (
   documentUrl: string,
   books: string[],
 ) => {
-  const itemId = getTitleDocId(title);
+  const itemId = `${getTitleDocId(title)}-${Date.now()}_${Math.random()
+    .toString(36)
+    .slice(2, 9)}`;
 
   await setDoc(doc(db, "pages", itemId), {
     book: books,

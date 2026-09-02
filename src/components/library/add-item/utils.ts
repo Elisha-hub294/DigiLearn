@@ -80,7 +80,7 @@ export const getPastPaperStorageFolder = (paperType: string): string => {
     .replace(/^-+|-+$/g, "")
     .replace(/-+/g, "-");
 
-  return normalized || "past-paper";
+  return normalized ? `past-papers/${normalized}` : "past-papers";
 };
 
 /**
