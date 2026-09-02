@@ -104,7 +104,7 @@ This usually means you're not in the right directory. Make sure you're running `
 
 ### Security (You'll Probably Ask About This)
 
-- Your Firebase credentials are stored **only in your local `.env` file**—they're never committed to Git
+- Firebase credentials are stored **only in local `.env` file**, they're never committed to Git
 - OAuth secrets are **never hardcoded** in the app source
 - Firestore and Storage have strict security rules that require authentication
 - No credentials are exposed in the public repository
