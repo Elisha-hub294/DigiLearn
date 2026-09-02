@@ -74,6 +74,83 @@ export type { FormState, FormType };
 
 const DEFAULT_USER_AVATAR = require("../../../assets/images/user-default.png");
 
+type PickerOption = {
+  label: string;
+  value: string;
+};
+
+type PickerConfig = {
+  title: string;
+  options: PickerOption[];
+  selectedValue?: string;
+  onSelect: (value: string) => void;
+};
+
+function OptionPickerModal({
+  visible,
+  title,
+  options,
+  selectedValue,
+  onClose,
+  onSelect,
+}: {
+  visible: boolean;
+  title: string;
+  options: PickerOption[];
+  selectedValue?: string;
+  onClose: () => void;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <Modal
+      animationType="fade"
+      transparent
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <Pressable style={styles.optionPickerBackdrop} onPress={onClose}>
+        <Pressable
+          style={styles.optionPickerCard}
+          onPress={(event) => event.stopPropagation()}
+        >
+          <Text style={styles.optionPickerTitle}>{title}</Text>
+          <View style={styles.optionPickerList}>
+            {options.map((option) => {
+              const isSelected = selectedValue === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  accessibilityRole="button"
+                  style={[
+                    styles.optionPickerItem,
+                    isSelected && styles.optionPickerItemSelected,
+                  ]}
+                  onPress={() => {
+                    onSelect(option.value);
+                    onClose();
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.optionPickerItemText,
+                      isSelected && styles.optionPickerItemTextSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                  {isSelected && (
+                    <Icon name="check" size={16} color={colors.primary} />
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
 type AddItemModalProps = {
   visible: boolean;
   formType: FormType;
@@ -121,14 +198,32 @@ export function AddItemModal({
     "document" | "image" | null
   >(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pickerConfig, setPickerConfig] = useState<PickerConfig | null>(null);
 
   const isAuthorizedPublisher =
     profile?.type === "teacher" || profile?.type === "admin";
+
+  const closeOptionPicker = () => setPickerConfig(null);
+
+  const openOptionPicker = (
+    title: string,
+    options: PickerOption[],
+    selectedValue: string | undefined,
+    onSelect: (value: string) => void,
+  ) => {
+    setSubjectDropdownOpen(false);
+    setLevelDropdownOpen(false);
+    setClassDropdownOpen(false);
+    setTypeDropdownOpen(false);
+    setShowYearPicker(false);
+    setPickerConfig({ title, options, selectedValue, onSelect });
+  };
 
   const handleClose = () => {
     setPdfToProcess(null);
     resetProgress();
     setStatusDialog(null);
+    setPickerConfig(null);
     onClose();
   };
 
@@ -861,8 +956,17 @@ export function AddItemModal({
                 formData={formData}
                 updateField={updateField}
                 subjects={subjects}
-                subjectDropdownOpen={subjectDropdownOpen}
-                setSubjectDropdownOpen={setSubjectDropdownOpen}
+                onSelectSubject={() =>
+                  openOptionPicker(
+                    "Select subject",
+                    subjects.map((subject) => ({
+                      label: subject.name,
+                      value: subject.name,
+                    })),
+                    formData.subject,
+                    (value) => updateField("subject", value),
+                  )
+                }
                 selectedImage={selectedImage}
                 pickImage={pickImage}
                 authorName={
@@ -888,8 +992,17 @@ export function AddItemModal({
                 formData={formData}
                 updateField={updateField}
                 subjects={subjects}
-                subjectDropdownOpen={subjectDropdownOpen}
-                setSubjectDropdownOpen={setSubjectDropdownOpen}
+                onSelectSubject={() =>
+                  openOptionPicker(
+                    "Select subject",
+                    subjects.map((subject) => ({
+                      label: subject.name,
+                      value: subject.name,
+                    })),
+                    formData.subject,
+                    (value) => updateField("subject", value),
+                  )
+                }
                 selectedFile={selectedFile}
                 selectedImage={selectedImage}
                 selectedPreviewAsset={selectedPreviewAsset}
@@ -918,138 +1031,83 @@ export function AddItemModal({
                   {formData.description.length}/{DESCRIPTION_MAX_LENGTH}
                 </Text>
                 <Text style={styles.fieldLabel}>Subject</Text>
-                <View>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Select subject"
-                    style={styles.dropdownTrigger}
-                    onPress={() => setSubjectDropdownOpen((prev) => !prev)}
-                  >
-                    <View style={styles.dropdownContent}>
-                      <Icon name="book-open" size={16} color={colors.primary} />
-                      <Text style={styles.dropdownText}>
-                        {formData.subject || "Select subject"}
-                      </Text>
-                    </View>
-                  </Pressable>
-                  {subjectDropdownOpen && (
-                    <View style={styles.dropdownMenu}>
-                      {subjects.map((option) => (
-                        <Pressable
-                          key={option.id}
-                          accessibilityRole="button"
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            updateField("subject", option.name);
-                            setSubjectDropdownOpen(false);
-                          }}
-                        >
-                          <Text
-                            style={[
-                              styles.dropdownItemText,
-                              formData.subject === option.name &&
-                                styles.dropdownItemTextActive,
-                            ]}
-                          >
-                            {option.name}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
-                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Select subject"
+                  style={styles.dropdownTrigger}
+                  onPress={() =>
+                    openOptionPicker(
+                      "Select subject",
+                      subjects.map((option) => ({
+                        label: option.name,
+                        value: option.name,
+                      })),
+                      formData.subject,
+                      (value) => updateField("subject", value),
+                    )
+                  }
+                >
+                  <View style={styles.dropdownContent}>
+                    <Icon name="book-open" size={16} color={colors.primary} />
+                    <Text style={styles.dropdownText}>
+                      {formData.subject || "Select subject"}
+                    </Text>
+                  </View>
+                </Pressable>
 
                 <View style={styles.twoColumnRow}>
                   <View style={styles.twoColumnField}>
                     <Text style={styles.fieldLabel}>Level</Text>
-                    <View>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Select page level"
-                        style={styles.dropdownTrigger}
-                        onPress={() => setLevelDropdownOpen((prev) => !prev)}
-                      >
-                        <View style={styles.dropdownContent}>
-                          <Icon
-                            name="layers"
-                            size={16}
-                            color={colors.primary}
-                          />
-                          <Text style={styles.dropdownText}>
-                            {formData.level}
-                          </Text>
-                        </View>
-                      </Pressable>
-                      {levelDropdownOpen && (
-                        <View style={styles.dropdownMenu}>
-                          {[
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Select page level"
+                      style={styles.dropdownTrigger}
+                      onPress={() =>
+                        openOptionPicker(
+                          "Select level",
+                          [
                             { label: "Ordinary", value: "Ordinary" },
                             { label: "Advanced", value: "Advanced" },
-                          ].map((option) => (
-                            <Pressable
-                              key={option.value}
-                              accessibilityRole="button"
-                              style={styles.dropdownItem}
-                              onPress={() => handleLevelSelect(option.value)}
-                            >
-                              <Text
-                                style={[
-                                  styles.dropdownItemText,
-                                  formData.level === option.value &&
-                                    styles.dropdownItemTextActive,
-                                ]}
-                              >
-                                {option.label}
-                              </Text>
-                            </Pressable>
-                          ))}
-                        </View>
-                      )}
-                    </View>
+                          ],
+                          formData.level,
+                          (value) => handleLevelSelect(value),
+                        )
+                      }
+                    >
+                      <View style={styles.dropdownContent}>
+                        <Icon name="layers" size={16} color={colors.primary} />
+                        <Text style={styles.dropdownText}>
+                          {formData.level}
+                        </Text>
+                      </View>
+                    </Pressable>
                   </View>
 
                   <View style={styles.twoColumnField}>
                     <Text style={styles.fieldLabel}>Class</Text>
-                    <View>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Select class"
-                        style={styles.dropdownTrigger}
-                        onPress={() => setClassDropdownOpen((prev) => !prev)}
-                      >
-                        <View style={styles.dropdownContent}>
-                          <Icon name="users" size={16} color={colors.primary} />
-                          <Text style={styles.dropdownText}>
-                            {formData.schoolClass || "Select class"}
-                          </Text>
-                        </View>
-                      </Pressable>
-                      {classDropdownOpen && (
-                        <View style={styles.dropdownMenu}>
-                          {pageClassOptions.map((option) => (
-                            <Pressable
-                              key={option.value}
-                              accessibilityRole="button"
-                              style={styles.dropdownItem}
-                              onPress={() => {
-                                updateField("schoolClass", option.value);
-                                setClassDropdownOpen(false);
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.dropdownItemText,
-                                  formData.schoolClass === option.value &&
-                                    styles.dropdownItemTextActive,
-                                ]}
-                              >
-                                {option.label}
-                              </Text>
-                            </Pressable>
-                          ))}
-                        </View>
-                      )}
-                    </View>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Select class"
+                      style={styles.dropdownTrigger}
+                      onPress={() =>
+                        openOptionPicker(
+                          "Select class",
+                          pageClassOptions.map((option) => ({
+                            label: option.label,
+                            value: option.value,
+                          })),
+                          formData.schoolClass,
+                          (value) => updateField("schoolClass", value),
+                        )
+                      }
+                    >
+                      <View style={styles.dropdownContent}>
+                        <Icon name="users" size={16} color={colors.primary} />
+                        <Text style={styles.dropdownText}>
+                          {formData.schoolClass || "Select class"}
+                        </Text>
+                      </View>
+                    </Pressable>
                   </View>
                 </View>
 
@@ -1158,141 +1216,83 @@ export function AddItemModal({
                   {formData.description.length}/{DESCRIPTION_MAX_LENGTH}
                 </Text>
                 <Text style={styles.fieldLabel}>Subject</Text>
-                <View>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Select subject"
-                    style={styles.dropdownTrigger}
-                    onPress={() => setSubjectDropdownOpen((prev) => !prev)}
-                  >
-                    <View style={styles.dropdownContent}>
-                      <Icon name="book-open" size={16} color={colors.primary} />
-                      <Text style={styles.dropdownText}>
-                        {formData.subject || "Select subject"}
-                      </Text>
-                    </View>
-                  </Pressable>
-                  {subjectDropdownOpen && (
-                    <View style={styles.dropdownMenu}>
-                      {subjects.map((option) => (
-                        <Pressable
-                          key={option.id}
-                          accessibilityRole="button"
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            updateField("subject", option.name);
-                            setSubjectDropdownOpen(false);
-                          }}
-                        >
-                          <Text
-                            style={[
-                              styles.dropdownItemText,
-                              formData.subject === option.name &&
-                                styles.dropdownItemTextActive,
-                            ]}
-                          >
-                            {option.name}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
-                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Select subject"
+                  style={styles.dropdownTrigger}
+                  onPress={() =>
+                    openOptionPicker(
+                      "Select subject",
+                      subjects.map((option) => ({
+                        label: option.name,
+                        value: option.name,
+                      })),
+                      formData.subject,
+                      (value) => updateField("subject", value),
+                    )
+                  }
+                >
+                  <View style={styles.dropdownContent}>
+                    <Icon name="book-open" size={16} color={colors.primary} />
+                    <Text style={styles.dropdownText}>
+                      {formData.subject || "Select subject"}
+                    </Text>
+                  </View>
+                </Pressable>
 
                 <View style={styles.twoColumnRow}>
                   <View style={styles.twoColumnField}>
                     <Text style={styles.fieldLabel}>Type</Text>
-                    <View>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Select paper type"
-                        style={styles.dropdownTrigger}
-                        onPress={() => setTypeDropdownOpen((prev) => !prev)}
-                      >
-                        <View style={styles.dropdownContent}>
-                          <Icon name="tag" size={16} color={colors.primary} />
-                          <Text style={styles.dropdownText}>
-                            {formData.author || "Select type"}
-                          </Text>
-                        </View>
-                      </Pressable>
-                      {typeDropdownOpen && (
-                        <View style={styles.dropdownMenu}>
-                          {pastPaperTypes.map((option) => (
-                            <Pressable
-                              key={option.id}
-                              accessibilityRole="button"
-                              style={styles.dropdownItem}
-                              onPress={() => {
-                                updateField("author", option.name);
-                                setTypeDropdownOpen(false);
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.dropdownItemText,
-                                  formData.author === option.name &&
-                                    styles.dropdownItemTextActive,
-                                ]}
-                              >
-                                {option.name}
-                              </Text>
-                            </Pressable>
-                          ))}
-                        </View>
-                      )}
-                    </View>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Select paper type"
+                      style={styles.dropdownTrigger}
+                      onPress={() =>
+                        openOptionPicker(
+                          "Select type",
+                          pastPaperTypes.map((option) => ({
+                            label: option.name,
+                            value: option.name,
+                          })),
+                          formData.author,
+                          (value) => updateField("author", value),
+                        )
+                      }
+                    >
+                      <View style={styles.dropdownContent}>
+                        <Icon name="tag" size={16} color={colors.primary} />
+                        <Text style={styles.dropdownText}>
+                          {formData.author || "Select type"}
+                        </Text>
+                      </View>
+                    </Pressable>
                   </View>
 
                   <View style={styles.twoColumnField}>
                     <Text style={styles.fieldLabel}>Level</Text>
-                    <View>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Select paper level"
-                        style={styles.dropdownTrigger}
-                        onPress={() => setLevelDropdownOpen((prev) => !prev)}
-                      >
-                        <View style={styles.dropdownContent}>
-                          <Icon
-                            name="layers"
-                            size={16}
-                            color={colors.primary}
-                          />
-                          <Text style={styles.dropdownText}>
-                            {formData.level || "Select level"}
-                          </Text>
-                        </View>
-                      </Pressable>
-                      {levelDropdownOpen && (
-                        <View style={styles.dropdownMenu}>
-                          {[
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Select paper level"
+                      style={styles.dropdownTrigger}
+                      onPress={() =>
+                        openOptionPicker(
+                          "Select level",
+                          [
                             { label: "Ordinary", value: "Ordinary" },
                             { label: "Advanced", value: "Advanced" },
-                          ].map((option) => (
-                            <Pressable
-                              key={option.value}
-                              accessibilityRole="button"
-                              style={styles.dropdownItem}
-                              onPress={() => {
-                                updateField("level", option.value);
-                                setLevelDropdownOpen(false);
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.dropdownItemText,
-                                  formData.level === option.value &&
-                                    styles.dropdownItemTextActive,
-                                ]}
-                              >
-                                {option.label}
-                              </Text>
-                            </Pressable>
-                          ))}
-                        </View>
-                      )}
-                    </View>
+                          ],
+                          formData.level,
+                          (value) => updateField("level", value),
+                        )
+                      }
+                    >
+                      <View style={styles.dropdownContent}>
+                        <Icon name="layers" size={16} color={colors.primary} />
+                        <Text style={styles.dropdownText}>
+                          {formData.level || "Select level"}
+                        </Text>
+                      </View>
+                    </Pressable>
                   </View>
 
                   <View style={styles.twoColumnField}>
@@ -1496,6 +1496,17 @@ export function AddItemModal({
           icon={<Icon name="alert-circle" size={24} color="#DC2626" />}
         />
       )}
+      <OptionPickerModal
+        visible={Boolean(pickerConfig)}
+        title={pickerConfig?.title ?? "Select an option"}
+        options={pickerConfig?.options ?? []}
+        selectedValue={pickerConfig?.selectedValue}
+        onClose={closeOptionPicker}
+        onSelect={(value) => {
+          pickerConfig?.onSelect(value);
+          closeOptionPicker();
+        }}
+      />
       {pdfToProcess && Platform.OS !== "web" && (
         <View style={{ width: 0, height: 0, opacity: 0, position: "absolute" }}>
           <WebView
@@ -1939,6 +1950,60 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     marginBottom: spacing.md,
     overflow: "hidden",
+  },
+  optionPickerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  optionPickerCard: {
+    width: "100%",
+    maxWidth: 420,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  optionPickerTitle: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  optionPickerList: {
+    gap: 8,
+  },
+  optionPickerItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  optionPickerItemSelected: {
+    backgroundColor: "rgba(37, 99, 235, 0.08)",
+    borderColor: "rgba(37, 99, 235, 0.3)",
+  },
+  optionPickerItemText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  optionPickerItemTextSelected: {
+    color: colors.primary,
+    fontWeight: "700",
   },
   dropdownItem: {
     paddingHorizontal: spacing.md,
