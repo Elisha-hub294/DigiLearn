@@ -1,13 +1,8 @@
 import { extractYoutubeId, getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import {
-  addDoc,
-  collection,
-  doc,
-  serverTimestamp,
-  setDoc,
-} from "firebase/firestore";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -21,7 +16,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { auth, db } from "../../firebaseConfig";
+import { auth, db, functions } from "../../firebaseConfig";
+import { getTitleDocId } from "../components/library/add-item/utils";
 import { AdminPublishHeader } from "../components/library/AdminPublishHeader";
 import { useSubjects } from "../components/ui/SubjectFilter";
 import { colors, spacing } from "../constants/theme";
@@ -130,36 +126,33 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
       }
     }
 
-    const infoResponse = await fetch(
-      `https://www.youtube.com/get_video_info?video_id=${videoId}&el=detailpage&hl=en`,
+    const oEmbedResponse = await fetch(
+      `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`,
     );
 
-    if (!infoResponse.ok) {
-      return {
-        title: "",
-        duration: "",
-        thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-      };
-    }
+    if (oEmbedResponse.ok) {
+      const data = await oEmbedResponse.json();
+      let duration = "";
 
-    const infoText = await infoResponse.text();
-    const params = new URLSearchParams(infoText);
-    const playerResponse = params.get("player_response");
-
-    if (playerResponse) {
-      const parsed = JSON.parse(decodeURIComponent(playerResponse));
-      const videoDetails = parsed.videoDetails || parsed;
-      const title = videoDetails.title || "";
-      const lengthSeconds = Number(videoDetails.lengthSeconds || 0);
-      const thumbnails = videoDetails.thumbnail?.thumbnails || [];
-      const bestThumb =
-        thumbnails[thumbnails.length - 1]?.url ||
-        `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      try {
+        const getYoutubeVideoDuration = httpsCallable<
+          { videoId: string },
+          { duration?: number | null }
+        >(functions, "getYoutubeVideoDuration");
+        const durationResult = await getYoutubeVideoDuration({ videoId });
+        const totalSeconds = durationResult.data.duration;
+        if (typeof totalSeconds === "number") {
+          duration = formatDurationFromSeconds(totalSeconds);
+        }
+      } catch {}
 
       return {
-        title,
-        duration: formatDurationFromSeconds(lengthSeconds),
-        thumbnail: bestThumb,
+        title: typeof data.title === "string" ? data.title : "",
+        duration,
+        thumbnail:
+          typeof data.thumbnail_url === "string"
+            ? data.thumbnail_url
+            : `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
       };
     }
 
@@ -168,8 +161,7 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
       duration: "",
       thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
     };
-  } catch (error) {
-    console.error("Failed to fetch YouTube metadata:", error);
+  } catch {
     return {
       title: "",
       duration: "",
@@ -191,6 +183,7 @@ export default function AddTrendingLessonScreen() {
   const [metaLoading, setMetaLoading] = useState(false);
   const [linkError, setLinkError] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
+  const [hoveredSubject, setHoveredSubject] = useState<string | null>(null);
   const [notifyUsers, setNotifyUsers] = useState(true);
 
   const teacherName =
@@ -255,21 +248,12 @@ export default function AddTrendingLessonScreen() {
       const finalDuration = duration.trim() || "00:00";
       const teacherValue = teacherName.trim() || "Teacher";
       const avatarValue = teacherAvatar.trim();
+      const lessonId = `${getTitleDocId(title)}-${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2, 9)}`;
 
-      const lessonRef = await addDoc(collection(db, "trendingLessons"), {
-        id: "",
-        title: title.trim(),
-        subject: subject === "All" ? "General" : subject,
-        teacher: teacherValue,
-        uploadedAt: serverTimestamp(),
-        duration: finalDuration,
-        thumbnail: finalThumbnail,
-        link: link.trim(),
-        avatar: avatarValue,
-      });
-
-      await setDoc(doc(db, "trendingLessons", lessonRef.id), {
-        id: lessonRef.id,
+      await setDoc(doc(db, "trendingLessons", lessonId), {
+        id: lessonId,
         title: title.trim(),
         subject: subject === "All" ? "General" : subject,
         teacher: teacherValue,
@@ -284,7 +268,7 @@ export default function AddTrendingLessonScreen() {
         await appendNotificationToAllUsers(
           buildLibraryNotification(
             "lesson",
-            lessonRef.id,
+            lessonId,
             undefined,
             undefined,
             title.trim(),
@@ -336,10 +320,15 @@ export default function AddTrendingLessonScreen() {
               <Text style={styles.label}>Lesson Preview</Text>
               <View style={styles.previewCard}>
                 {thumbnail ? (
-                  <Image
-                    source={{ uri: thumbnail }}
-                    style={styles.previewThumbnail}
-                  />
+                  <View style={styles.previewImageWrap}>
+                    <Image
+                      source={{ uri: thumbnail }}
+                      style={styles.previewThumbnail}
+                    />
+                    <View style={styles.playIcon}>
+                      <Ionicons name="play" size={26} color={colors.white} />
+                    </View>
+                  </View>
                 ) : (
                   <View style={styles.previewThumbPlaceholder}>
                     <ActivityIndicator color={colors.primary} />
@@ -364,10 +353,17 @@ export default function AddTrendingLessonScreen() {
 
           <Text style={styles.label}>Subject</Text>
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Select subject"
             style={styles.dropdown}
             onPress={() => setDropdownVisible(true)}
           >
-            <Text style={styles.dropdownText}>{subject}</Text>
+            <View style={styles.dropdownContent}>
+              <Ionicons name="book-outline" size={16} color={colors.primary} />
+              <Text style={styles.dropdownText}>
+                {subject || "Select subject"}
+              </Text>
+            </View>
             <Ionicons name="chevron-down" size={18} color="#6B7280" />
           </Pressable>
 
@@ -439,26 +435,63 @@ export default function AddTrendingLessonScreen() {
           style={styles.modalOverlay}
           onPress={() => setDropdownVisible(false)}
         >
-          <ScrollView style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Choose subject</Text>
-            {subjects
-              .filter((item) => item !== "All")
-              .map((item) => (
-                <Pressable
-                  key={item}
-                  style={styles.optionRow}
-                  onPress={() => {
-                    setSubject(item);
-                    setDropdownVisible(false);
-                  }}
-                >
-                  <Text style={styles.optionText}>{item}</Text>
-                  {subject === item ? (
-                    <Ionicons name="checkmark" size={18} color="#2563EB" />
-                  ) : null}
-                </Pressable>
-              ))}
-          </ScrollView>
+          <Pressable
+            style={styles.modalCard}
+            onPress={(event) => event.stopPropagation()}
+          >
+            <Text style={styles.modalTitle}>Select subject</Text>
+            <ScrollView
+              style={styles.modalScrollView}
+              contentContainerStyle={styles.optionList}
+              showsVerticalScrollIndicator
+              bounces={false}
+            >
+              {subjects
+                .filter((item) => item !== "All")
+                .map((item) => {
+                  const isSelected = subject === item;
+                  const isHovered = hoveredSubject === item;
+
+                  return (
+                    <Pressable
+                      key={item}
+                      accessibilityRole="button"
+                      onHoverIn={() => setHoveredSubject(item)}
+                      onHoverOut={() =>
+                        setHoveredSubject((current) =>
+                          current === item ? null : current,
+                        )
+                      }
+                      style={[
+                        styles.optionRow,
+                        isSelected && styles.optionRowSelected,
+                        isHovered && styles.optionRowHovered,
+                      ]}
+                      onPress={() => {
+                        setSubject(isSelected ? "" : item);
+                        setDropdownVisible(false);
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.optionText,
+                          isSelected && styles.optionTextSelected,
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                      {isSelected ? (
+                        <Ionicons
+                          name="checkmark"
+                          size={18}
+                          color={colors.primary}
+                        />
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+            </ScrollView>
+          </Pressable>
         </Pressable>
       </Modal>
     </SafeAreaView>
@@ -519,6 +552,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 14,
   },
+  dropdownContent: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
   dropdownText: { color: colors.text, fontSize: 15 },
   teacherChip: {
     alignSelf: "flex-start",
@@ -572,6 +610,22 @@ const styles = StyleSheet.create({
     height: 200,
     resizeMode: "cover",
     backgroundColor: "#E5E7EB",
+  },
+  previewImageWrap: {
+    position: "relative",
+  },
+  playIcon: {
+    alignItems: "center",
+    backgroundColor: "rgba(37, 99, 235, 0.92)",
+    borderRadius: 28,
+    height: 56,
+    justifyContent: "center",
+    left: "50%",
+    marginLeft: -28,
+    marginTop: -28,
+    position: "absolute",
+    top: "50%",
+    width: 56,
   },
   previewThumbPlaceholder: {
     alignItems: "center",
@@ -657,22 +711,60 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: colors.white,
+    borderColor: "#E2E8F0",
+    borderRadius: 20,
+    borderWidth: 1,
+    elevation: 8,
+    maxHeight: "80%",
+    maxWidth: 420,
+    overflow: "hidden",
+    padding: 20,
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
     width: "100%",
   },
   modalTitle: {
-    color: "#111",
-    fontSize: 16,
+    color: colors.text,
+    fontSize: 22,
     fontWeight: "700",
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  modalScrollView: {
+    maxHeight: "100%",
+  },
+  optionList: {
+    gap: 8,
+    paddingBottom: 4,
   },
   optionRow: {
     alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    borderWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  optionText: { color: "#111", fontSize: 15 },
+  optionRowHovered: {
+    backgroundColor: "rgba(37, 99, 235, 0.08)",
+    borderColor: "rgba(37, 99, 235, 0.3)",
+  },
+  optionRowSelected: {
+    backgroundColor: "rgba(37, 99, 235, 0.08)",
+    borderColor: "rgba(37, 99, 235, 0.3)",
+  },
+  optionText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  optionTextSelected: {
+    color: colors.primary,
+    fontWeight: "700",
+  },
 });

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.resubmitTeacherApplication = exports.reviewTeacherApplication = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.reviewTeacherApplication = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const firestore_2 = require("firebase-functions/v2/firestore");
@@ -131,6 +131,35 @@ exports.resubmitTeacherApplication = (0, https_1.onCall)(async (request) => {
         });
     });
     return { status: "pending" };
+});
+exports.getYoutubeVideoDuration = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
+    }
+    const videoId = typeof request.data?.videoId === "string"
+        ? request.data.videoId.trim()
+        : "";
+    if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+        throw new https_1.HttpsError("invalid-argument", "A valid YouTube video is required.");
+    }
+    try {
+        const response = await fetch(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, { headers: { "User-Agent": "Mozilla/5.0" } });
+        if (!response.ok) {
+            throw new Error(`YouTube returned ${response.status}`);
+        }
+        const html = await response.text();
+        const durationMatch = html.match(/"lengthSeconds":"(\d+)"/);
+        const totalSeconds = Number(durationMatch?.[1] ?? 0);
+        return {
+            duration: Number.isFinite(totalSeconds) && totalSeconds > 0
+                ? totalSeconds
+                : null,
+        };
+    }
+    catch (error) {
+        console.error("Failed to fetch YouTube duration:", error);
+        throw new https_1.HttpsError("unavailable", "Unable to fetch video duration.");
+    }
 });
 exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentCreated)("teacherApplications/{applicationId}", async (event) => {
     const application = event.data?.data();

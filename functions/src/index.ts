@@ -167,6 +167,45 @@ export const resubmitTeacherApplication = onCall(async (request) => {
   return { status: "pending" };
 });
 
+export const getYoutubeVideoDuration = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+
+  const videoId =
+    typeof request.data?.videoId === "string"
+      ? request.data.videoId.trim()
+      : "";
+  if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "A valid YouTube video is required.",
+    );
+  }
+
+  try {
+    const response = await fetch(
+      `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`,
+      { headers: { "User-Agent": "Mozilla/5.0" } },
+    );
+    if (!response.ok) {
+      throw new Error(`YouTube returned ${response.status}`);
+    }
+
+    const html = await response.text();
+    const durationMatch = html.match(/"lengthSeconds":"(\d+)"/);
+    const totalSeconds = Number(durationMatch?.[1] ?? 0);
+
+    return {
+      duration:
+        Number.isFinite(totalSeconds) && totalSeconds > 0 ? totalSeconds : null,
+    };
+  } catch (error) {
+    console.error("Failed to fetch YouTube duration:", error);
+    throw new HttpsError("unavailable", "Unable to fetch video duration.");
+  }
+});
+
 export const notifyAdminsOfTeacherApplication = onDocumentCreated(
   "teacherApplications/{applicationId}",
   async (event) => {
