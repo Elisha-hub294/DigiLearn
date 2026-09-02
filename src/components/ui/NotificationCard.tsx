@@ -22,6 +22,7 @@ export function NotificationCard({
 }: NotificationCardProps) {
   const meta = NOTIFICATION_TYPE_META[notification.type];
   const showIcon = notification.type !== "announcement";
+  const resourceTitle = notification.resourceTitle?.trim();
 
   return (
     <Pressable
@@ -50,9 +51,14 @@ export function NotificationCard({
             {formatRelativeNotificationTime(notification.createdAt)}
           </Text>
         </Text>
-        <Text style={styles.message} numberOfLines={2}>
+        <Text style={styles.message} numberOfLines={1}>
           {notification.message}
         </Text>
+        {resourceTitle ? (
+          <Text style={styles.resourceTitle} numberOfLines={1}>
+            {resourceTitle}
+          </Text>
+        ) : null}
       </View>
 
       <View style={styles.actionsWrap}>
@@ -157,8 +163,16 @@ const styles = StyleSheet.create({
   message: {
     fontSize: 13,
     lineHeight: 17,
-    fontWeight: "500",
-    color: "#4B5563",
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  resourceTitle: {
+    maxWidth: "86%",
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: "700",
+    color: colors.primary,
+    marginTop: 2,
   },
   actionsWrap: {
     flexDirection: "row",

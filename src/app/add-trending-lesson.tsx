@@ -282,7 +282,13 @@ export default function AddTrendingLessonScreen() {
 
       if (notifyUsers) {
         await appendNotificationToAllUsers(
-          buildLibraryNotification("lesson", lessonRef.id),
+          buildLibraryNotification(
+            "lesson",
+            lessonRef.id,
+            undefined,
+            undefined,
+            title.trim(),
+          ),
         );
       }
 

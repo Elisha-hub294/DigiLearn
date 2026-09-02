@@ -44,7 +44,21 @@ export function PaperCard({
     ? `${normalizedPageNumber} ${Number(normalizedPageNumber) === 1 ? "Page" : "Pages"}`
     : "";
 
-  const metaParts = [paperReference, level?.trim() || "", pageCountText].filter(
+  const displayLevel = (() => {
+    const normalizedLevel = level?.trim();
+
+    if (!normalizedLevel) return "";
+
+    const lowerLevel = normalizedLevel.toLowerCase();
+
+    if (lowerLevel === "ordinary") return "O-level";
+    if (lowerLevel === "advanced") return "A-level";
+    if (lowerLevel === "primary") return "Primary level";
+
+    return normalizedLevel;
+  })();
+
+  const metaParts = [paperReference, displayLevel, pageCountText].filter(
     Boolean,
   );
 

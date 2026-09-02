@@ -794,7 +794,11 @@ export function AddItemModal({
       }
 
       if (createdItemId && formData.notifyUsers) {
-        await notifyUsersAboutNewItem(notificationType, createdItemId);
+        await notifyUsersAboutNewItem(
+          notificationType,
+          createdItemId,
+          sanitizedTitle,
+        );
       }
 
       setFormData(INITIAL_FORM_STATE);

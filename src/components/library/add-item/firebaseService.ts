@@ -271,10 +271,17 @@ export const addPastPaper = async (
 export const notifyUsersAboutNewItem = async (
   itemType: "book" | "page" | "lesson" | "announcement" | "paper",
   itemId: string,
+  resourceTitle?: string,
 ) => {
   try {
     await appendNotificationToAllUsers(
-      buildLibraryNotification(itemType, itemId),
+      buildLibraryNotification(
+        itemType,
+        itemId,
+        undefined,
+        undefined,
+        resourceTitle,
+      ),
     );
   } catch (error) {
     console.error("Failed to send notifications:", error);

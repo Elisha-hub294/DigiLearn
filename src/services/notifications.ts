@@ -22,6 +22,7 @@ export type NotificationRecord = {
   publisherName: string;
   publisherAvatar: string;
   message: string;
+  resourceTitle?: string;
   createdAt: unknown;
   read: boolean;
   itemId?: string;
@@ -57,7 +58,7 @@ export const NOTIFICATION_TYPE_META: Record<
   paper: {
     label: "Past Papers",
     color: "#F59E0B",
-    icon: "award",
+    icon: "file-document-outline",
     background: "#F59E0B",
   },
   announcement: {
@@ -112,6 +113,11 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
       typeof candidate.message === "string" && candidate.message.trim()
         ? candidate.message
         : "New update available",
+    resourceTitle:
+      typeof candidate.resourceTitle === "string" &&
+      candidate.resourceTitle.trim()
+        ? candidate.resourceTitle
+        : undefined,
     createdAt: candidate.createdAt ?? Timestamp.now(),
     read: Boolean(candidate.read),
     itemId: typeof candidate.itemId === "string" ? candidate.itemId : undefined,
@@ -210,6 +216,19 @@ export function formatRelativeNotificationTime(createdAt: unknown): string {
   });
 }
 
+function sortNotificationsNewestFirst(notifications: NotificationRecord[]) {
+  return [...notifications].sort((a, b) => {
+    const aMs = getNotificationAgeInMs(a.createdAt);
+    const bMs = getNotificationAgeInMs(b.createdAt);
+
+    if (aMs === null && bMs === null) return 0;
+    if (aMs === null) return 1;
+    if (bMs === null) return -1;
+
+    return bMs - aMs;
+  });
+}
+
 export function getNotificationSections(notifications: NotificationRecord[]) {
   const now = Date.now();
   const unread: NotificationRecord[] = [];
@@ -235,7 +254,11 @@ export function getNotificationSections(notifications: NotificationRecord[]) {
     }
   });
 
-  return { unread, read, earlier };
+  return {
+    unread: sortNotificationsNewestFirst(unread),
+    read: sortNotificationsNewestFirst(read),
+    earlier: sortNotificationsNewestFirst(earlier),
+  };
 }
 
 export async function appendNotificationForUser(
@@ -364,6 +387,7 @@ export function buildLibraryNotification(
   itemId: string,
   publisherName = DIGILEARN_PUBLISHER_NAME,
   publisherAvatar = DIGILEARN_PUBLISHER_AVATAR,
+  resourceTitle?: string,
 ): NotificationRecord {
   const details = libraryNotificationMap[type];
   return {
@@ -372,6 +396,7 @@ export function buildLibraryNotification(
     publisherName,
     publisherAvatar,
     message: details.message,
+    resourceTitle: resourceTitle?.trim() || undefined,
     createdAt: Timestamp.now(),
     read: false,
     itemId,
