@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { colors } from "../../../constants/theme";
 import PdfPreview from "../../home/PdfPreview";
+import type { FormState } from "./constants";
 import { DESCRIPTION_MAX_LENGTH, LEVEL_OPTIONS } from "./constants";
 import { FilePickerField } from "./FilePickerField";
 import { FieldLabel } from "./SharedFormControls";
@@ -24,7 +25,7 @@ interface PaperFormSectionProps {
     level: string;
     extra: string;
   };
-  updateField: (key: string, value: string | boolean) => void;
+  updateField: (key: keyof FormState, value: string | boolean) => void;
   subjects: { id: string; name: string }[];
   pastPaperTypes: { id: string; name: string }[];
   subjectDropdownOpen: boolean;

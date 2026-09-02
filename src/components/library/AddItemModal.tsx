@@ -1,14 +1,11 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
-  Image,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,7 +16,6 @@ import WebView from "react-native-webview";
 import { auth } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
-import PdfPreview from "../home/PdfPreview";
 import { ActionDialog } from "../ui/ActionDialog";
 import { AdminPublishHeader } from "./AdminPublishHeader";
 import { BannerFormSection } from "./add-item/BannerFormSection";
@@ -28,16 +24,18 @@ import {
   OptionPickerModal,
   type PickerOption,
 } from "./add-item/OptionPickerModal";
+import { PageFormSection } from "./add-item/PageFormSection";
+import { PaperFormSection } from "./add-item/PaperFormSection";
 import {
   CharacterCounter,
   FieldLabel,
   InfoMessage,
+  ModalActionBar,
   NotifyToggle,
   UploadProgressCard,
 } from "./add-item/SharedFormControls";
 import type { FormState, FormType } from "./add-item/constants";
 import {
-  DESCRIPTION_MAX_LENGTH,
   FALLBACK_ICON_URL,
   INITIAL_FORM_STATE,
   TITLE_MAX_LENGTH,
@@ -950,436 +948,51 @@ export function AddItemModal({
             )}
 
             {formType === "page" && (
-              <>
-                <Text style={styles.fieldLabel}>Description</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Page description"
-                  value={formData.description}
-                  onChangeText={(val) => updateField("description", val)}
-                  multiline
-                  numberOfLines={4}
-                  maxLength={DESCRIPTION_MAX_LENGTH}
-                />
-                <Text style={styles.titleCharacterCount}>
-                  {formData.description.length}/{DESCRIPTION_MAX_LENGTH}
-                </Text>
-                <Text style={styles.fieldLabel}>Subject</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Select subject"
-                  style={styles.dropdownTrigger}
-                  onPress={() =>
-                    openOptionPicker(
-                      "Select subject",
-                      subjects.map((option) => ({
-                        label: option.name,
-                        value: option.name,
-                      })),
-                      formData.subject,
-                      (value) => updateField("subject", value),
-                    )
-                  }
-                >
-                  <View style={styles.dropdownContent}>
-                    <Icon name="book-open" size={16} color={colors.primary} />
-                    <Text style={styles.dropdownText}>
-                      {formData.subject || "Select subject"}
-                    </Text>
-                  </View>
-                </Pressable>
-
-                <View style={styles.twoColumnRow}>
-                  <View style={styles.twoColumnField}>
-                    <Text style={styles.fieldLabel}>Level</Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Select page level"
-                      style={styles.dropdownTrigger}
-                      onPress={() =>
-                        openOptionPicker(
-                          "Select level",
-                          [
-                            { label: "Ordinary", value: "Ordinary" },
-                            { label: "Advanced", value: "Advanced" },
-                          ],
-                          formData.level,
-                          (value) => handleLevelSelect(value),
-                        )
-                      }
-                    >
-                      <View style={styles.dropdownContent}>
-                        <Icon name="layers" size={16} color={colors.primary} />
-                        <Text style={styles.dropdownText}>
-                          {formData.level}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  </View>
-
-                  <View style={styles.twoColumnField}>
-                    <Text style={styles.fieldLabel}>Class</Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Select class"
-                      style={styles.dropdownTrigger}
-                      onPress={() =>
-                        openOptionPicker(
-                          "Select class",
-                          pageClassOptions.map((option) => ({
-                            label: option.label,
-                            value: option.value,
-                          })),
-                          formData.schoolClass,
-                          (value) => updateField("schoolClass", value),
-                        )
-                      }
-                    >
-                      <View style={styles.dropdownContent}>
-                        <Icon name="users" size={16} color={colors.primary} />
-                        <Text style={styles.dropdownText}>
-                          {formData.schoolClass || "Select class"}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  </View>
-                </View>
-
-                <Text style={styles.fieldLabel}>Document File</Text>
-                <View {...getWebDropHandlers("document")}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      selectedFile?.assets?.[0]
-                        ? "Change uploaded document"
-                        : "Upload a document"
-                    }
-                    style={({ pressed }) => [
-                      styles.filePicker,
-                      pressed && styles.filePickerPressed,
-                      selectedFile?.assets?.[0] && styles.filePickerSelected,
-                    ]}
-                    onPress={pickDocument}
-                    disabled={isSubmitting}
-                  >
-                    <View style={styles.filePickerContent}>
-                      <View style={styles.filePickerIcon}>
-                        <Icon
-                          name="file-text"
-                          size={18}
-                          color={colors.primary}
-                        />
-                      </View>
-                      <View style={styles.filePickerTextWrap}>
-                        <Text style={styles.filePickerText} numberOfLines={1}>
-                          {selectedFile?.assets?.[0]?.name ||
-                            "Drag a file here or tap to upload"}
-                        </Text>
-                        <Text style={styles.filePickerHint}>
-                          {selectedFile?.assets?.[0]
-                            ? "Document ready to publish"
-                            : "PDF or DOCX • max 5 MB"}
-                        </Text>
-                      </View>
-                    </View>
-                  </Pressable>
-                </View>
-                {selectedPreviewAsset && (
-                  <View style={styles.previewContainer}>
-                    <View style={styles.coverPreviewFrame}>
-                      {selectedPreviewAsset.type === "image" ? (
-                        <Image
-                          source={{ uri: selectedPreviewAsset.uri }}
-                          style={styles.documentPreviewImage}
-                        />
-                      ) : (
-                        <PdfPreview
-                          uri={selectedPreviewAsset.uri}
-                          style={styles.documentPreviewPdf}
-                        />
-                      )}
-                      <View
-                        style={styles.previewOverlay}
-                        pointerEvents="none"
-                      />
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Remove selected file"
-                        style={styles.previewRemoveButton}
-                        onPress={clearSelectedFile}
-                      >
-                        <Icon name="x" size={14} color={colors.white} />
-                      </Pressable>
-                    </View>
-                  </View>
-                )}
-                {/* <Text style={styles.fieldLabel}>Book</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Book A, Book B, Book C"
-                value={formData.book}
-                onChangeText={(val) => updateField("book", val)}
-              /> */}
-              </>
+              <PageFormSection
+                formData={formData}
+                updateField={updateField}
+                subjects={subjects}
+                subjectDropdownOpen={subjectDropdownOpen}
+                setSubjectDropdownOpen={setSubjectDropdownOpen}
+                levelDropdownOpen={levelDropdownOpen}
+                setLevelDropdownOpen={setLevelDropdownOpen}
+                classDropdownOpen={classDropdownOpen}
+                setClassDropdownOpen={setClassDropdownOpen}
+                selectedFile={selectedFile}
+                selectedPreviewAsset={selectedPreviewAsset}
+                pickDocument={pickDocument}
+                clearSelectedFile={clearSelectedFile}
+                getWebDropHandlers={getWebDropHandlers}
+                isSubmitting={isSubmitting}
+                styles={styles}
+              />
             )}
 
             {formType === "paper" && (
-              <>
-                <Text style={styles.fieldLabel}>Title</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Paper title"
-                  value={formData.title}
-                  onChangeText={(val) => updateField("title", val)}
-                  maxLength={TITLE_MAX_LENGTH}
-                />
-                <Text style={styles.titleCharacterCount}>
-                  {formData.title.length}/{TITLE_MAX_LENGTH}
-                </Text>
-                <Text style={styles.fieldLabel}>Description</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Brief description of this paper"
-                  value={formData.description}
-                  onChangeText={(val) => updateField("description", val)}
-                  multiline
-                  numberOfLines={4}
-                  maxLength={DESCRIPTION_MAX_LENGTH}
-                />
-                <Text style={styles.titleCharacterCount}>
-                  {formData.description.length}/{DESCRIPTION_MAX_LENGTH}
-                </Text>
-                <Text style={styles.fieldLabel}>Subject</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Select subject"
-                  style={styles.dropdownTrigger}
-                  onPress={() =>
-                    openOptionPicker(
-                      "Select subject",
-                      subjects.map((option) => ({
-                        label: option.name,
-                        value: option.name,
-                      })),
-                      formData.subject,
-                      (value) => updateField("subject", value),
-                    )
-                  }
-                >
-                  <View style={styles.dropdownContent}>
-                    <Icon name="book-open" size={16} color={colors.primary} />
-                    <Text style={styles.dropdownText}>
-                      {formData.subject || "Select subject"}
-                    </Text>
-                  </View>
-                </Pressable>
-
-                <View style={styles.twoColumnRow}>
-                  <View style={styles.twoColumnField}>
-                    <Text style={styles.fieldLabel}>Type</Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Select paper type"
-                      style={styles.dropdownTrigger}
-                      onPress={() =>
-                        openOptionPicker(
-                          "Select type",
-                          pastPaperTypes.map((option) => ({
-                            label: option.name,
-                            value: option.name,
-                          })),
-                          formData.author,
-                          (value) => updateField("author", value),
-                        )
-                      }
-                    >
-                      <View style={styles.dropdownContent}>
-                        <Icon name="tag" size={16} color={colors.primary} />
-                        <Text style={styles.dropdownText}>
-                          {formData.author || "Select type"}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  </View>
-
-                  <View style={styles.twoColumnField}>
-                    <Text style={styles.fieldLabel}>Level</Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel="Select paper level"
-                      style={styles.dropdownTrigger}
-                      onPress={() =>
-                        openOptionPicker(
-                          "Select level",
-                          [
-                            { label: "Ordinary", value: "Ordinary" },
-                            { label: "Advanced", value: "Advanced" },
-                          ],
-                          formData.level,
-                          (value) => updateField("level", value),
-                        )
-                      }
-                    >
-                      <View style={styles.dropdownContent}>
-                        <Icon name="layers" size={16} color={colors.primary} />
-                        <Text style={styles.dropdownText}>
-                          {formData.level || "Select level"}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  </View>
-
-                  <View style={styles.twoColumnField}>
-                    <Text style={styles.fieldLabel}>Year</Text>
-                    {Platform.OS === "web" ? (
-                      <TextInput
-                        style={styles.input}
-                        placeholder="2026"
-                        value={formData.extra}
-                        onChangeText={(val) =>
-                          updateField("extra", sanitizeYearInputValue(val))
-                        }
-                        keyboardType="numeric"
-                        maxLength={4}
-                      />
-                    ) : (
-                      <>
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel="Select paper year"
-                          style={styles.dropdownTrigger}
-                          onPress={() => setShowYearPicker(true)}
-                        >
-                          <View style={styles.dropdownContent}>
-                            <Icon
-                              name="calendar"
-                              size={16}
-                              color={colors.primary}
-                            />
-                            <Text style={styles.dropdownText}>
-                              {formData.extra || "Select year"}
-                            </Text>
-                          </View>
-                        </Pressable>
-                        {showYearPicker && (
-                          <DateTimePicker
-                            value={yearPickerDate}
-                            mode="date"
-                            display="spinner"
-                            maximumDate={new Date()}
-                            onChange={(_, selectedDate) => {
-                              setShowYearPicker(false);
-                              if (selectedDate) {
-                                updateField(
-                                  "extra",
-                                  String(selectedDate.getFullYear()),
-                                );
-                              }
-                            }}
-                          />
-                        )}
-                      </>
-                    )}
-                  </View>
-                </View>
-
-                {formData.subject &&
-                  formData.level &&
-                  selectedPaperCodePrefix && (
-                    <View style={styles.paperCodeSection}>
-                      <Text style={styles.fieldLabel}>Paper code</Text>
-                      <TextInput
-                        style={styles.paperCodeInput}
-                        value={formData.paperCode}
-                        editable={false}
-                        placeholder="Select a paper code"
-                      />
-                      {shouldShowPaperCodeButtons && (
-                        <View style={styles.paperCodeRow}>
-                          {paperCodeOptions.map((paperNumber) => {
-                            const paperCodeValue = `${selectedPaperCodePrefix}/${paperNumber}`;
-                            const isSelected =
-                              formData.paperCode === paperCodeValue;
-                            return (
-                              <Pressable
-                                key={paperNumber}
-                                accessibilityRole="button"
-                                accessibilityState={{ selected: isSelected }}
-                                style={[
-                                  styles.paperCodeChip,
-                                  isSelected && styles.paperCodeChipSelected,
-                                ]}
-                                onPress={() =>
-                                  updateField(
-                                    "paperCode",
-                                    isSelected ? "" : paperCodeValue,
-                                  )
-                                }
-                              >
-                                <Text
-                                  style={[
-                                    styles.paperCodeChipText,
-                                    isSelected &&
-                                      styles.paperCodeChipTextSelected,
-                                  ]}
-                                >
-                                  {`Paper ${paperNumber}`}
-                                </Text>
-                              </Pressable>
-                            );
-                          })}
-                        </View>
-                      )}
-                    </View>
-                  )}
-
-                <Text style={styles.fieldLabel}>Document file</Text>
-                <View {...getWebDropHandlers("document")}>
-                  <Pressable
-                    style={styles.filePicker}
-                    onPress={pickDocument}
-                    disabled={isSubmitting}
-                  >
-                    <View style={styles.filePickerContent}>
-                      <Icon name="file-text" size={16} color={colors.primary} />
-                      <Text style={styles.filePickerText}>
-                        {selectedFile?.assets?.[0]
-                          ? selectedFile.assets[0].name
-                          : "Tap to select a document (max 5 MB)"}
-                      </Text>
-                    </View>
-                  </Pressable>
-                </View>
-                {selectedPreviewAsset && (
-                  <View style={styles.previewContainer}>
-                    <View style={styles.coverPreviewFrame}>
-                      {selectedPreviewAsset.type === "image" ? (
-                        <Image
-                          source={{ uri: selectedPreviewAsset.uri }}
-                          style={styles.documentPreviewImage}
-                        />
-                      ) : (
-                        <PdfPreview
-                          uri={selectedPreviewAsset.uri}
-                          style={styles.documentPreviewPdf}
-                        />
-                      )}
-                      <View
-                        style={styles.previewOverlay}
-                        pointerEvents="none"
-                      />
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Remove selected file"
-                        style={styles.previewRemoveButton}
-                        onPress={clearSelectedFile}
-                      >
-                        <Icon name="x" size={14} color={colors.white} />
-                      </Pressable>
-                    </View>
-                  </View>
-                )}
-              </>
+              <PaperFormSection
+                formData={formData}
+                updateField={updateField}
+                subjects={subjects}
+                pastPaperTypes={pastPaperTypes}
+                subjectDropdownOpen={subjectDropdownOpen}
+                setSubjectDropdownOpen={setSubjectDropdownOpen}
+                typeDropdownOpen={typeDropdownOpen}
+                setTypeDropdownOpen={setTypeDropdownOpen}
+                levelDropdownOpen={levelDropdownOpen}
+                setLevelDropdownOpen={setLevelDropdownOpen}
+                showYearPicker={showYearPicker}
+                setShowYearPicker={setShowYearPicker}
+                currentYear={currentYear}
+                yearPickerDate={yearPickerDate}
+                selectedFile={selectedFile}
+                selectedPreviewAsset={selectedPreviewAsset}
+                pickDocument={pickDocument}
+                clearSelectedFile={clearSelectedFile}
+                getWebDropHandlers={getWebDropHandlers}
+                sanitizeYearInput={sanitizeYearInputValue}
+                isSubmitting={isSubmitting}
+                styles={styles}
+              />
             )}
 
             <View style={styles.notifySection}>
@@ -1399,24 +1012,12 @@ export function AddItemModal({
               </View>
             </View>
 
-            <View style={styles.modalActions}>
-              <Pressable
-                style={styles.secondaryButton}
-                onPress={handleClose}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.secondaryButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={styles.primaryButton}
-                onPress={handleAddItem}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.primaryButtonText}>
-                  {isSubmitting ? "Saving..." : "Save"}
-                </Text>
-              </Pressable>
-            </View>
+            <ModalActionBar
+              onCancel={handleClose}
+              onSubmit={handleAddItem}
+              isSubmitting={isSubmitting}
+              submitLabel={isSubmitting ? "Saving..." : "Save"}
+            />
           </ScrollView>
         </View>
       ) : (

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { colors, spacing } from "../../../constants/theme";
 import PdfPreview from "../../home/PdfPreview";
+import type { FormState } from "./constants";
 import { CLASS_OPTIONS, DESCRIPTION_MAX_LENGTH } from "./constants";
 import { FilePickerField } from "./FilePickerField";
 import { FieldLabel } from "./SharedFormControls";
@@ -23,7 +24,7 @@ interface PageFormSectionProps {
     level: string;
     schoolClass: string;
   };
-  updateField: (key: string, value: string | boolean) => void;
+  updateField: (key: keyof FormState, value: string | boolean) => void;
   subjects: { id: string; name: string }[];
   subjectDropdownOpen: boolean;
   setSubjectDropdownOpen: (open: boolean) => void;
