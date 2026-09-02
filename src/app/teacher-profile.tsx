@@ -112,10 +112,9 @@ type TeacherTab = (typeof teacherTabOptions)[number];
 
 export default function TeacherProfileScreen() {
   const router = useRouter();
-  const { user } = useProfile();
+  const { user, profile } = useProfile();
   const params = useLocalSearchParams<{
     name?: string;
-    returnTo?: string;
     openedFromAccount?: string;
   }>();
   const { width } = useWindowDimensions();
@@ -124,10 +123,6 @@ export default function TeacherProfileScreen() {
   const compactActionRow = width < 390;
   const actionRowGap = compactActionRow ? 10 : 16;
   const actionIconSize = compactActionRow ? 46 : 54;
-  const returnTo =
-    typeof params.returnTo === "string" && params.returnTo.trim()
-      ? params.returnTo.trim()
-      : undefined;
   const openedFromAccount = params.openedFromAccount === "true";
 
   const [teacher, setTeacher] = useState<TeacherRecord | null>(null);
@@ -375,7 +370,12 @@ export default function TeacherProfileScreen() {
   }, [fetchTeacherProfile, fetchTeacherResources]);
 
   useEffect(() => {
-    void loadData();
+    const runLoad = async () => {
+      await Promise.resolve();
+      await loadData();
+    };
+
+    void runLoad();
   }, [loadData]);
 
   useEffect(() => {
@@ -557,6 +557,16 @@ export default function TeacherProfileScreen() {
             {teacher?.bio || "Teacher at DigiLearn."}
           </Text>
 
+          {isOwnProfile && profile?.teacherApprovalStatus === "pending" && (
+            <View style={styles.reviewNotice}>
+              <Icon name="clock" size={16} color="#946200" />
+              <Text style={styles.reviewNoticeText}>
+                Teacher account under review. You are currently using student
+                mode while an admin reviews your application.
+              </Text>
+            </View>
+          )}
+
           <View style={styles.statsRow}>
             <View style={styles.statChip}>
               <Text style={styles.statValue}>
@@ -687,7 +697,6 @@ export default function TeacherProfileScreen() {
       openEmailPrompt,
       openYoutubePrompt,
       openedFromAccount,
-      returnTo,
       router,
       search,
       stats.announcements,
@@ -699,6 +708,7 @@ export default function TeacherProfileScreen() {
       actionIconSize,
       actionRowGap,
       isOwnProfile,
+      profile?.teacherApprovalStatus,
       openCommunityDialog,
     ],
   );
@@ -1054,6 +1064,24 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
     paddingHorizontal: spacing.xl,
+  },
+  reviewNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: spacing.md,
+    marginHorizontal: spacing.md,
+    padding: spacing.md,
+    borderRadius: 12,
+    backgroundColor: "#FFF8E6",
+    borderWidth: 1,
+    borderColor: "#F2D48A",
+  },
+  reviewNoticeText: {
+    flex: 1,
+    color: "#6B4B00",
+    fontSize: 12,
+    lineHeight: 18,
   },
   statsRow: {
     marginTop: spacing.lg,

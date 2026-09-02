@@ -1,28 +1,22 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import {
-  collection,
-  doc,
-  getDoc,
-  onSnapshot,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-} from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Modal,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { reviewTeacherApplication } from "../services/teacherApplications";
 
 type Application = {
   id: string;
@@ -32,62 +26,75 @@ type Application = {
   subjects?: string[];
   status?: string;
 };
+type Filter = "all" | "pending" | "approved" | "rejected";
+type AuditEntry = {
+  id: string;
+  applicationId?: string;
+  action?: string;
+  reason?: string;
+  createdAt?: unknown;
+};
 
 export default function TeacherApplicationsScreen() {
   const router = useRouter();
   const { profile } = useProfile();
   const [applications, setApplications] = useState<Application[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Filter>("pending");
+  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [rejecting, setRejecting] = useState<Application | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   useEffect(() => {
     if (profile?.type !== "admin") return;
     return onSnapshot(collection(db, "teacherApplications"), (snapshot) => {
       setApplications(
-        snapshot.docs
-          .map((item) => ({ id: item.id, ...item.data() }) as Application)
-          .filter((item) => item.status === "pending"),
+        snapshot.docs.map(
+          (item) => ({ id: item.id, ...item.data() }) as Application,
+        ),
       );
     });
   }, [profile?.type]);
 
-  const review = async (application: Application, approved: boolean) => {
+  useEffect(() => {
+    if (profile?.type !== "admin") return;
+    return onSnapshot(collection(db, "teacherApplicationAudit"), (snapshot) => {
+      setAudit(
+        snapshot.docs.map(
+          (item) => ({ id: item.id, ...item.data() }) as AuditEntry,
+        ),
+      );
+    });
+  }, [profile?.type]);
+
+  const review = async (
+    application: Application,
+    decision: "approve" | "reject",
+    reason = "",
+  ) => {
     setBusyId(application.id);
     try {
-      const applicationRef = doc(db, "teacherApplications", application.id);
-      const userRef = doc(db, "users", application.id);
-      if (approved) {
-        const userSnapshot = await getDoc(userRef);
-        await setDoc(
-          doc(db, "teachers", application.id),
-          {
-            ...userSnapshot.data(),
-            type: "teacher",
-            teacherApprovalStatus: "approved",
-            approvedAt: serverTimestamp(),
-          },
-          { merge: true },
-        );
-        await updateDoc(userRef, {
-          type: "teacher",
-          teacherApprovalStatus: "approved",
-        });
-      } else {
-        await updateDoc(userRef, { teacherApprovalStatus: "rejected" });
-      }
-      await updateDoc(applicationRef, {
-        status: approved ? "approved" : "rejected",
-        reviewedAt: serverTimestamp(),
-      });
-      Alert.alert(approved ? "Teacher approved" : "Application declined");
+      await reviewTeacherApplication(application.id, decision, reason);
+      setRejecting(null);
+      setRejectionReason("");
     } catch (error) {
       console.error("Failed to review teacher application:", error);
-      Alert.alert("Review failed", "Please try again.");
     } finally {
       setBusyId(null);
     }
   };
 
   if (profile?.type !== "admin") return null;
+
+  const visibleApplications = applications.filter(
+    (item) => filter === "all" || item.status === filter,
+  );
+  const counts = {
+    all: applications.length,
+    pending: applications.filter((item) => item.status === "pending").length,
+    approved: applications.filter((item) => item.status === "approved").length,
+    rejected: applications.filter((item) => item.status === "rejected").length,
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -104,14 +111,42 @@ export default function TeacherApplicationsScreen() {
           <Text style={styles.title}>Teacher applications</Text>
         </View>
       </View>
+      <View style={styles.dashboard}>
+        {(Object.keys(counts) as Filter[]).map((item) => (
+          <Pressable
+            key={item}
+            onPress={() => setFilter(item)}
+            style={[styles.metric, filter === item && styles.metricActive]}
+          >
+            <Text
+              style={[
+                styles.metricValue,
+                filter === item && styles.metricValueActive,
+              ]}
+            >
+              {counts[item]}
+            </Text>
+            <Text
+              style={[
+                styles.metricLabel,
+                filter === item && styles.metricLabelActive,
+              ]}
+            >
+              {item[0].toUpperCase() + item.slice(1)}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
       <FlatList
-        data={applications}
+        data={visibleApplications}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Feather name="check-circle" size={34} color={colors.green} />
-            <Text style={styles.emptyTitle}>All caught up</Text>
+            <Text style={styles.emptyTitle}>
+              {filter === "pending" ? "All caught up" : "No applications found"}
+            </Text>
             <Text style={styles.emptyText}>
               There are no teacher applications waiting for review.
             </Text>
@@ -142,28 +177,97 @@ export default function TeacherApplicationsScreen() {
               <Text style={styles.detail}>{item.subjects.join("  ·  ")}</Text>
             )}
             <View style={styles.actions}>
-              <Pressable
-                disabled={busyId === item.id}
-                style={[styles.reject, busyId === item.id && styles.disabled]}
-                onPress={() => review(item, false)}
-              >
-                <Text style={styles.rejectText}>Decline</Text>
-              </Pressable>
-              <Pressable
-                disabled={busyId === item.id}
-                style={[styles.approve, busyId === item.id && styles.disabled]}
-                onPress={() => review(item, true)}
-              >
-                {busyId === item.id ? (
-                  <ActivityIndicator color={colors.white} />
-                ) : (
-                  <Text style={styles.approveText}>Approve teacher</Text>
-                )}
-              </Pressable>
+              {item.status === "pending" && (
+                <Pressable
+                  disabled={busyId === item.id}
+                  style={[styles.reject, busyId === item.id && styles.disabled]}
+                  onPress={() => setRejecting(item)}
+                >
+                  <Text style={styles.rejectText}>Decline</Text>
+                </Pressable>
+              )}
+              {item.status === "pending" && (
+                <Pressable
+                  disabled={busyId === item.id}
+                  style={[
+                    styles.approve,
+                    busyId === item.id && styles.disabled,
+                  ]}
+                  onPress={() => review(item, "approve")}
+                >
+                  {busyId === item.id ? (
+                    <ActivityIndicator color={colors.white} />
+                  ) : (
+                    <Text style={styles.approveText}>Approve teacher</Text>
+                  )}
+                </Pressable>
+              )}
             </View>
           </View>
         )}
       />
+      {filter !== "pending" && audit.length > 0 && (
+        <View style={styles.history}>
+          <Text style={styles.historyTitle}>Audit history</Text>
+          {audit
+            .slice(-5)
+            .reverse()
+            .map((entry) => (
+              <Text key={entry.id} style={styles.historyItem}>
+                {entry.action || "reviewed"} ·{" "}
+                {entry.applicationId || "application"}
+                {entry.reason ? ` · ${entry.reason}` : ""}
+              </Text>
+            ))}
+        </View>
+      )}
+      <Modal
+        visible={Boolean(rejecting)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRejecting(null)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Reason for decline</Text>
+            <Text style={styles.modalText}>
+              Share what the applicant should update before resubmitting.
+            </Text>
+            <TextInput
+              value={rejectionReason}
+              onChangeText={setRejectionReason}
+              multiline
+              placeholder="Add a clear, helpful reason"
+              placeholderTextColor="#98A2B3"
+              style={styles.reasonInput}
+            />
+            <View style={styles.actions}>
+              <Pressable
+                style={styles.reject}
+                onPress={() => setRejecting(null)}
+              >
+                <Text style={styles.rejectText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                disabled={
+                  rejectionReason.trim().length < 5 || busyId === rejecting?.id
+                }
+                style={[
+                  styles.approve,
+                  (rejectionReason.trim().length < 5 ||
+                    busyId === rejecting?.id) &&
+                    styles.disabled,
+                ]}
+                onPress={() =>
+                  rejecting && review(rejecting, "reject", rejectionReason)
+                }
+              >
+                <Text style={styles.approveText}>Send feedback</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -177,6 +281,25 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     backgroundColor: colors.white,
   },
+  dashboard: {
+    flexDirection: "row",
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    gap: 8,
+    backgroundColor: colors.white,
+  },
+  metric: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 10,
+    backgroundColor: "#F4F6F8",
+  },
+  metricActive: { backgroundColor: colors.primary },
+  metricValue: { color: colors.text, fontSize: 18, fontWeight: "800" },
+  metricValueActive: { color: colors.white },
+  metricLabel: { color: colors.subtitle, fontSize: 11, marginTop: 2 },
+  metricLabelActive: { color: colors.white },
   eyebrow: {
     color: colors.primary,
     fontSize: 11,
@@ -246,5 +369,41 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: spacing.sm,
     lineHeight: 20,
+  },
+  history: {
+    padding: spacing.xl,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderColor: "#E6EAF0",
+  },
+  historyTitle: {
+    color: colors.text,
+    fontWeight: "800",
+    fontSize: 16,
+    marginBottom: spacing.sm,
+  },
+  historyItem: { color: colors.subtitle, fontSize: 12, marginTop: 5 },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: "center",
+    padding: spacing.xl,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+  },
+  modalCard: {
+    backgroundColor: colors.white,
+    borderRadius: radius.md,
+    padding: spacing.xl,
+  },
+  modalTitle: { color: colors.text, fontSize: 20, fontWeight: "800" },
+  modalText: { color: colors.subtitle, lineHeight: 19, marginTop: 6 },
+  reasonInput: {
+    minHeight: 100,
+    borderWidth: 1,
+    borderColor: "#D7DCE4",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: spacing.lg,
+    textAlignVertical: "top",
+    color: colors.text,
   },
 });

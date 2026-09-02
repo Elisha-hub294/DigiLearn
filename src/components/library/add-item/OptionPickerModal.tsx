@@ -2,13 +2,15 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { useState } from "react";
 import {
   Modal,
-  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { colors } from "../../../constants/theme";
+
+const IS_WEB = typeof window !== "undefined" && typeof document !== "undefined";
 
 export type PickerOption = {
   label: string;
@@ -47,7 +49,12 @@ export function OptionPickerModal({
           onPress={(event) => event.stopPropagation()}
         >
           <Text style={styles.optionPickerTitle}>{title}</Text>
-          <View style={styles.optionPickerList}>
+          <ScrollView
+            style={styles.optionPickerScrollView}
+            contentContainerStyle={styles.optionPickerList}
+            showsVerticalScrollIndicator
+            bounces={false}
+          >
             {options.map((option) => {
               const isSelected = selectedValue === option.value;
               const isHovered = hoveredOption === option.value;
@@ -68,7 +75,7 @@ export function OptionPickerModal({
                     isHovered && styles.optionPickerItemHovered,
                   ]}
                   onPress={() => {
-                    onSelect(option.value);
+                    onSelect(isSelected ? "" : option.value);
                     onClose();
                   }}
                 >
@@ -87,7 +94,7 @@ export function OptionPickerModal({
                 </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
         </Pressable>
       </Pressable>
     </Modal>
@@ -105,6 +112,7 @@ const styles = StyleSheet.create({
   optionPickerCard: {
     width: "100%",
     maxWidth: 420,
+    maxHeight: "80%",
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 20,
@@ -122,8 +130,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 12,
   },
+  optionPickerScrollView: {
+    maxHeight: "100%",
+  },
   optionPickerList: {
     gap: 8,
+    paddingBottom: 4,
   },
   optionPickerItem: {
     flexDirection: "row",
@@ -135,7 +147,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
     paddingHorizontal: 14,
     paddingVertical: 12,
-    ...(Platform.OS === "web"
+    ...(IS_WEB
       ? {
           cursor: "pointer",
         }

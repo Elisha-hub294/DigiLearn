@@ -126,7 +126,7 @@ function OptionPickerModal({
                     isSelected && styles.optionPickerItemSelected,
                   ]}
                   onPress={() => {
-                    onSelect(option.value);
+                    onSelect(isSelected ? "" : option.value);
                     onClose();
                   }}
                 >

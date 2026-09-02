@@ -1,13 +1,13 @@
 import { User } from "firebase/auth";
 import {
-  arrayRemove,
-  arrayUnion,
-  deleteField,
-  doc,
-  getDoc,
-  serverTimestamp,
-  setDoc,
-  Timestamp,
+    arrayRemove,
+    arrayUnion,
+    deleteField,
+    doc,
+    getDoc,
+    serverTimestamp,
+    setDoc,
+    Timestamp,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
@@ -33,6 +33,7 @@ export type UserProfile = {
   type?: AccountType;
   requestedAccountType?: "teacher";
   teacherApprovalStatus?: "pending" | "approved" | "rejected";
+  teacherReviewReason?: string;
   "marked-as-read": string[];
   "hidden-pages": HiddenPageRecord[];
   "saved-pages": string[];
@@ -281,19 +282,6 @@ export async function saveAccountTypeDecision(
       status: "pending",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
-
-    await setDoc(doc(db, "adminNotifications", user.uid), {
-      id: user.uid,
-      type: "announcement",
-      publisherName: "DigiLearn",
-      publisherAvatar: "@/assets/images/panda.png",
-      message: "A new teacher account is waiting for your review.",
-      resourceTitle: user.displayName?.trim() || nameFromEmail(user.email),
-      createdAt: serverTimestamp(),
-      read: false,
-      itemId: user.uid,
-      navigation: "/teacher-applications",
     });
   }
 

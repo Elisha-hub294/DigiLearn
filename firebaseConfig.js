@@ -2,11 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import {
-  getAuth,
-  getReactNativePersistence,
-  initializeAuth,
+    getAuth,
+    getReactNativePersistence,
+    initializeAuth,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getFunctions } from "firebase/functions";
 import { getStorage } from "firebase/storage";
 import { Platform } from "react-native";
 
@@ -66,6 +67,7 @@ if (
 export const app =
   getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const functions = getFunctions(app);
 export const storage = getStorage(app);
 
 let firebaseAuth;

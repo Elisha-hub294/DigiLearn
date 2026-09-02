@@ -4,26 +4,27 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Keyboard,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Keyboard,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from "react-native";
 
 import { auth, db } from "../../firebaseConfig";
 import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { resubmitTeacherApplication } from "../services/teacherApplications";
 
 type Subject = { id: string; name: string };
 type SocialKey =
@@ -325,11 +326,11 @@ export default function TeacherAccountQuickSettingsScreen() {
           applicantId: user.uid,
           ...payload,
           email: user.email ?? "",
-          status: "pending",
           updatedAt: new Date(),
         },
         { merge: true },
       );
+      await resubmitTeacherApplication();
       router.replace("/" as never);
     } catch {
       setSaveError(

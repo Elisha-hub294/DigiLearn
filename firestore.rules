@@ -19,6 +19,11 @@ service cloud.firestore {
           'filterFeedByInterests',
           'phone',
           'youtube',
+          'socials-youtube',
+          'socials-phone',
+          'socials-email',
+          'socials-whatsapp',
+          'socials-whatsapp-channel',
           'marked-as-read',
           'hidden-pages',
           'saved-pages',
@@ -57,7 +62,10 @@ service cloud.firestore {
         (
           request.auth.uid == applicationId
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'name', 'email', 'school', 'subjects', 'phone', 'youtube', 'updatedAt'
+            'applicantId', 'name', 'email', 'school', 'subjects',
+            'filterFeedByInterests', 'phone', 'youtube', 'socials-youtube',
+            'socials-phone', 'socials-email', 'socials-whatsapp',
+            'socials-whatsapp-channel', 'updatedAt'
           ])
         ) ||
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin'
@@ -68,8 +76,14 @@ service cloud.firestore {
     match /adminNotifications/{notificationId} {
       allow read, update: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
-      allow create: if request.auth != null && request.auth.uid == notificationId;
+      allow create: if false;
       allow delete: if false;
+    }
+
+    match /teacherApplicationAudit/{auditId} {
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
+      allow write: if false;
     }
 
     match /books/{bookId} {

@@ -1,13 +1,13 @@
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -92,6 +92,25 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             )}
+            {profile.teacherApprovalStatus === "rejected" && (
+              <View style={[s.reviewBanner, s.rejectedBanner]}>
+                <Text style={s.rejectedEyebrow}>
+                  TEACHER APPLICATION NEEDS UPDATES
+                </Text>
+                <Text style={s.reviewText}>
+                  {profile.teacherReviewReason ||
+                    "An admin requested changes before approval."}
+                </Text>
+                <Pressable
+                  style={s.resubmitButton}
+                  onPress={() =>
+                    router.push("/teacher-account-quick-settings" as never)
+                  }
+                >
+                  <Text style={s.resubmitText}>Update and resubmit</Text>
+                </Pressable>
+              </View>
+            )}
             {profile.type === "admin" && (
               <>
                 <PublishButton onPress={() => router.push("/publish")} />
@@ -129,6 +148,22 @@ const s = StyleSheet.create({
     alignSelf: "center",
     paddingBottom: spacing.xxl,
   },
+  rejectedBanner: { backgroundColor: "#FFF1F0", borderColor: "#F2B8B5" },
+  rejectedEyebrow: {
+    color: "#B42318",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+  },
+  resubmitButton: {
+    alignSelf: "flex-start",
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: "#B42318",
+  },
+  resubmitText: { color: colors.white, fontWeight: "700", fontSize: 13 },
   guestContent: { flexGrow: 1, justifyContent: "center" },
   sections: { gap: 20 },
   skeleton: { gap: 20 },
