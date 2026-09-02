@@ -5,14 +5,14 @@ import {
   Image,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
-import { colors, spacing } from "../../../constants/theme";
+import { colors } from "../../../constants/theme";
 import PdfPreview from "../../home/PdfPreview";
 import { DESCRIPTION_MAX_LENGTH, LEVEL_OPTIONS } from "./constants";
+import { FilePickerField } from "./FilePickerField";
 import { FieldLabel } from "./SharedFormControls";
 
 interface PaperFormSectionProps {
@@ -282,22 +282,23 @@ export function PaperFormSection({
       </View>
 
       <FieldLabel>Document file</FieldLabel>
-      <View {...getWebDropHandlers("document")}>
-        <Pressable
-          style={styles.filePicker}
-          onPress={pickDocument}
-          disabled={isSubmitting}
-        >
-          <View style={styles.filePickerContent}>
-            <Icon name="file-text" size={16} color={colors.primary} />
-            <Text style={styles.filePickerText}>
-              {selectedFile?.assets?.[0]
-                ? selectedFile.assets[0].name
-                : "Tap to select a document (max 5 MB)"}
-            </Text>
-          </View>
-        </Pressable>
-      </View>
+      <FilePickerField
+        label={
+          selectedFile?.assets?.[0]
+            ? "Change uploaded document"
+            : "Upload a document"
+        }
+        value={selectedFile?.assets?.[0]?.name}
+        hint={
+          selectedFile?.assets?.[0]
+            ? "Document ready to publish"
+            : "Tap to select a document (max 5 MB)"
+        }
+        selected={Boolean(selectedFile?.assets?.[0])}
+        onPress={pickDocument}
+        disabled={isSubmitting}
+        onDragHandlers={getWebDropHandlers("document")}
+      />
 
       {selectedPreviewAsset && (
         <View style={styles.previewContainer}>
@@ -328,9 +329,3 @@ export function PaperFormSection({
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  previewContainer: {
-    marginBottom: spacing.md,
-  },
-});

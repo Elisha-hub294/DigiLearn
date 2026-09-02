@@ -12,6 +12,7 @@ import {
 import { colors, spacing } from "../../../constants/theme";
 import PdfPreview from "../../home/PdfPreview";
 import { CLASS_OPTIONS, DESCRIPTION_MAX_LENGTH } from "./constants";
+import { FilePickerField } from "./FilePickerField";
 import { FieldLabel } from "./SharedFormControls";
 
 interface PageFormSectionProps {
@@ -227,40 +228,23 @@ export function PageFormSection({
       </View>
 
       <FieldLabel>Document File</FieldLabel>
-      <View {...getWebDropHandlers("document")}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={
-            selectedFile?.assets?.[0]
-              ? "Change uploaded document"
-              : "Upload a document"
-          }
-          style={({ pressed }) => [
-            styles.filePicker,
-            pressed && styles.filePickerPressed,
-            selectedFile?.assets?.[0] && styles.filePickerSelected,
-          ]}
-          onPress={pickDocument}
-          disabled={isSubmitting}
-        >
-          <View style={styles.filePickerContent}>
-            <View style={styles.filePickerIcon}>
-              <Icon name="file-text" size={18} color={colors.primary} />
-            </View>
-            <View style={styles.filePickerTextWrap}>
-              <Text style={styles.filePickerText} numberOfLines={1}>
-                {selectedFile?.assets?.[0]?.name ||
-                  "Drag a file here or tap to upload"}
-              </Text>
-              <Text style={styles.filePickerHint}>
-                {selectedFile?.assets?.[0]
-                  ? "Document ready to publish"
-                  : "PDF or DOCX • max 5 MB"}
-              </Text>
-            </View>
-          </View>
-        </Pressable>
-      </View>
+      <FilePickerField
+        label={
+          selectedFile?.assets?.[0]
+            ? "Change uploaded document"
+            : "Upload a document"
+        }
+        value={selectedFile?.assets?.[0]?.name}
+        hint={
+          selectedFile?.assets?.[0]
+            ? "Document ready to publish"
+            : "PDF or DOCX • max 5 MB"
+        }
+        selected={Boolean(selectedFile?.assets?.[0])}
+        onPress={pickDocument}
+        disabled={isSubmitting}
+        onDragHandlers={getWebDropHandlers("document")}
+      />
 
       {selectedPreviewAsset && (
         <View style={styles.previewContainer}>
