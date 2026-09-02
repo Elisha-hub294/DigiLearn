@@ -125,9 +125,10 @@ export default function PublishScreen() {
               accessibilityRole="button"
               accessibilityLabel={option.title}
               onPress={() => openComposer(option.route)}
-              style={({ pressed }) => [
+              style={({ pressed, hovered }) => [
                 styles.option,
                 pressed && styles.optionPressed,
+                hovered && styles.optionHovered,
               ]}
             >
               <View
@@ -171,6 +172,7 @@ type PublishStyles = {
   list: ViewStyle;
   option: ViewStyle;
   optionPressed: ViewStyle;
+  optionHovered: ViewStyle;
   optionIcon: ViewStyle;
   optionCopy: ViewStyle;
   optionTitle: TextStyle;
@@ -243,8 +245,15 @@ const styles = StyleSheet.create<PublishStyles>({
     flexDirection: "row",
     alignItems: "center",
     position: "relative",
+    borderLeftWidth: 3,
+    borderLeftColor: "#ffffff",
   },
   optionPressed: { backgroundColor: "#F4F7FB" },
+  optionHovered: {
+    backgroundColor: "#EEF4FF",
+    borderLeftWidth: 3,
+    borderLeftColor: "#3F7BEB",
+  },
   optionIcon: {
     width: 48,
     height: 48,

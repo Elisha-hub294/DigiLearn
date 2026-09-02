@@ -92,6 +92,8 @@ export const useFormOptions = (
       name: string;
       ordinary?: string;
       advanced?: string;
+      subsidiary?: string;
+      isSubsidiary?: boolean;
       ordinaryPapers?: number;
       advancedPapers?: number;
     }[]

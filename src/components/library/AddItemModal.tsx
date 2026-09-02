@@ -36,6 +36,7 @@ import {
   DESCRIPTION_MAX_LENGTH,
   FALLBACK_ICON_URL,
   INITIAL_FORM_STATE,
+  LEVEL_OPTIONS,
   TITLE_MAX_LENGTH,
 } from "./add-item/constants";
 import { getFileValidationError } from "./add-item/fileValidation";
@@ -101,6 +102,8 @@ function OptionPickerModal({
   onClose: () => void;
   onSelect: (value: string) => void;
 }) {
+  const [hoveredOption, setHoveredOption] = useState<string | null>(null);
+
   return (
     <Modal
       animationType="fade"
@@ -122,13 +125,22 @@ function OptionPickerModal({
           >
             {options.map((option) => {
               const isSelected = selectedValue === option.value;
+              const isHovered = hoveredOption === option.value;
+
               return (
                 <Pressable
                   key={option.value}
                   accessibilityRole="button"
+                  onHoverIn={() => setHoveredOption(option.value)}
+                  onHoverOut={() =>
+                    setHoveredOption((current) =>
+                      current === option.value ? null : current,
+                    )
+                  }
                   style={[
                     styles.optionPickerItem,
                     isSelected && styles.optionPickerItemSelected,
+                    isHovered && styles.optionPickerItemHovered,
                   ]}
                   onPress={() => {
                     onSelect(isSelected ? "" : option.value);
@@ -516,24 +528,70 @@ export function AddItemModal({
   const selectedSubject = subjects.find(
     (subject) => subject.name === formData.subject,
   );
+  const hasOrdinaryLevel = Boolean((selectedSubject?.ordinary ?? "").trim());
+  const hasAdvancedLevel = Boolean((selectedSubject?.advanced ?? "").trim());
+  const levelOptions = selectedSubject
+    ? LEVEL_OPTIONS.filter((option) =>
+        option.value === "Ordinary" ? hasOrdinaryLevel : hasAdvancedLevel,
+      )
+    : LEVEL_OPTIONS;
+
+  useEffect(() => {
+    if (!selectedSubject || levelOptions.length === 0) return;
+
+    if (levelOptions.length === 1) {
+      const onlyLevel = levelOptions[0].value;
+      if (formData.level !== onlyLevel) {
+        updateField("level", onlyLevel);
+      }
+      return;
+    }
+
+    if (!levelOptions.some((option) => option.value === formData.level)) {
+      updateField("level", "");
+    }
+  }, [formData.level, levelOptions, selectedSubject, updateField]);
+
+  const isSubjectSubsidiary = Boolean(selectedSubject?.isSubsidiary);
+  const selectedAdvancedCode = (selectedSubject?.advanced ?? "").trim();
+  const selectedSubsidiaryCode = (selectedSubject?.subsidiary ?? "").trim();
+  const hasSubsidiaryCode = Boolean(selectedSubsidiaryCode);
+  const isSubCodeAvailable = hasSubsidiaryCode;
+  const subsidiaryPaperBase = selectedSubsidiaryCode || "";
   const selectedPaperCodePrefix =
     formData.level?.toLowerCase() === "ordinary"
       ? (selectedSubject?.ordinary ?? "")
       : formData.level?.toLowerCase() === "advanced"
-        ? (selectedSubject?.advanced ?? "")
+        ? selectedAdvancedCode || selectedSubsidiaryCode || ""
         : "";
+  const selectedSubsidiaryPaperCode = subsidiaryPaperBase
+    ? `${subsidiaryPaperBase}/1`
+    : "";
   const subjectPaperCount =
     formData.level?.toLowerCase() === "ordinary"
       ? (selectedSubject?.ordinaryPapers ?? 0)
       : formData.level?.toLowerCase() === "advanced"
         ? (selectedSubject?.advancedPapers ?? 0)
         : 0;
+  const activePaperCodePrefix =
+    formData.paperCode.startsWith(`${selectedSubsidiaryCode}/`) ||
+    formData.paperCode === selectedSubsidiaryCode
+      ? selectedSubsidiaryCode
+      : selectedPaperCodePrefix;
 
   const paperCodeOptions = Array.from(
     { length: Math.max(subjectPaperCount, 0) },
     (_, index) => index + 1,
   );
-  const shouldShowPaperCodeButtons = subjectPaperCount > 1;
+  const shouldShowPaperCodeButtons =
+    subjectPaperCount > 1 || isSubjectSubsidiary || isSubCodeAvailable;
+  const isOrdinaryLevel = formData.level?.toLowerCase() === "ordinary";
+  const shouldShowSubsidiaryButton =
+    !isOrdinaryLevel && (isSubCodeAvailable || isSubjectSubsidiary);
+  const isSubsidiaryPaperSelected =
+    Boolean(selectedSubsidiaryCode) &&
+    (formData.paperCode === selectedSubsidiaryCode ||
+      formData.paperCode.startsWith(`${selectedSubsidiaryCode}/`));
 
   useEffect(() => {
     if (!formData.subject || !formData.level || !selectedPaperCodePrefix) {
@@ -543,9 +601,20 @@ export function AddItemModal({
       return;
     }
 
+    if (isSubjectSubsidiary) {
+      if (formData.paperCode !== selectedSubsidiaryPaperCode) {
+        updateField("paperCode", selectedSubsidiaryPaperCode);
+      }
+      return;
+    }
+
     const isValidPaperCode =
       formData.paperCode === selectedPaperCodePrefix ||
-      formData.paperCode.startsWith(`${selectedPaperCodePrefix}/`);
+      formData.paperCode.startsWith(`${selectedPaperCodePrefix}/`) ||
+      (isSubCodeAvailable &&
+        (formData.paperCode === selectedSubsidiaryCode ||
+          formData.paperCode.startsWith(`${selectedSubsidiaryCode}/`) ||
+          formData.paperCode === selectedSubsidiaryPaperCode));
 
     if (!formData.paperCode || !isValidPaperCode) {
       // If there's only one paper code option, autofill with the complete code
@@ -559,7 +628,11 @@ export function AddItemModal({
     formData.level,
     formData.paperCode,
     formData.subject,
+    isSubjectSubsidiary,
+    isSubCodeAvailable,
     selectedPaperCodePrefix,
+    selectedSubsidiaryCode,
+    selectedSubsidiaryPaperCode,
     subjectPaperCount,
     updateField,
   ]);
@@ -606,6 +679,35 @@ export function AddItemModal({
           ];
 
     updateField("level", level);
+    if (formType === "paper" && formData.subject) {
+      const nextSubject = subjects.find(
+        (subject) => subject.name === formData.subject,
+      );
+      const nextOrdinary = (nextSubject?.ordinary ?? "").trim();
+      const nextAdvanced = (nextSubject?.advanced ?? "").trim();
+      const nextSubsidiary = (nextSubject?.subsidiary ?? "").trim();
+      const nextSelectedPaperCodePrefix =
+        level.toLowerCase() === "ordinary"
+          ? nextOrdinary
+          : level.toLowerCase() === "advanced"
+            ? nextAdvanced || nextSubsidiary || ""
+            : "";
+
+      if (!nextSelectedPaperCodePrefix) {
+        updateField("paperCode", "");
+      } else if (Boolean(nextSubject?.isSubsidiary)) {
+        updateField("paperCode", `${nextSubsidiary || nextAdvanced}/1`);
+      } else if (
+        (level.toLowerCase() === "ordinary" &&
+          (nextSubject?.ordinaryPapers ?? 0) <= 1) ||
+        (level.toLowerCase() === "advanced" &&
+          (nextSubject?.advancedPapers ?? 0) <= 1)
+      ) {
+        updateField("paperCode", `${nextSelectedPaperCodePrefix}/1`);
+      } else {
+        updateField("paperCode", nextSelectedPaperCodePrefix);
+      }
+    }
     if (
       !nextClassOptions.some((option) => option.value === formData.schoolClass)
     ) {
@@ -1129,10 +1231,7 @@ export function AddItemModal({
                       onPress={() =>
                         openOptionPicker(
                           "Select level",
-                          [
-                            { label: "Ordinary", value: "Ordinary" },
-                            { label: "Advanced", value: "Advanced" },
-                          ],
+                          levelOptions,
                           formData.level,
                           (value) => handleLevelSelect(value),
                         )
@@ -1341,12 +1440,9 @@ export function AddItemModal({
                       onPress={() =>
                         openOptionPicker(
                           "Select level",
-                          [
-                            { label: "Ordinary", value: "Ordinary" },
-                            { label: "Advanced", value: "Advanced" },
-                          ],
+                          levelOptions,
                           formData.level,
-                          (value) => updateField("level", value),
+                          (value) => handleLevelSelect(value),
                         )
                       }
                     >
@@ -1426,38 +1522,83 @@ export function AddItemModal({
                       />
                       {shouldShowPaperCodeButtons && (
                         <View style={styles.paperCodeRow}>
-                          {paperCodeOptions.map((paperNumber) => {
-                            const paperCodeValue = `${selectedPaperCodePrefix}/${paperNumber}`;
-                            const isSelected =
-                              formData.paperCode === paperCodeValue;
-                            return (
-                              <Pressable
-                                key={paperNumber}
-                                accessibilityRole="button"
-                                accessibilityState={{ selected: isSelected }}
-                                style={[
-                                  styles.paperCodeChip,
-                                  isSelected && styles.paperCodeChipSelected,
-                                ]}
-                                onPress={() =>
-                                  updateField(
-                                    "paperCode",
-                                    isSelected ? "" : paperCodeValue,
-                                  )
-                                }
-                              >
-                                <Text
+                          {!isSubjectSubsidiary &&
+                            paperCodeOptions.map((paperNumber) => {
+                              const effectivePrefix =
+                                isSubsidiaryPaperSelected &&
+                                selectedSubsidiaryCode
+                                  ? selectedSubsidiaryCode
+                                  : selectedPaperCodePrefix;
+                              const paperCodeValue = `${effectivePrefix}/${paperNumber}`;
+                              const isSelected =
+                                formData.paperCode === paperCodeValue;
+                              return (
+                                <Pressable
+                                  key={paperNumber}
+                                  accessibilityRole="button"
+                                  accessibilityState={{ selected: isSelected }}
+                                  disabled={isSubjectSubsidiary}
                                   style={[
-                                    styles.paperCodeChipText,
-                                    isSelected &&
-                                      styles.paperCodeChipTextSelected,
+                                    styles.paperCodeChip,
+                                    isSelected && styles.paperCodeChipSelected,
                                   ]}
+                                  onPress={() =>
+                                    updateField(
+                                      "paperCode",
+                                      isSelected ? "" : paperCodeValue,
+                                    )
+                                  }
                                 >
-                                  {`Paper ${paperNumber}`}
-                                </Text>
-                              </Pressable>
-                            );
-                          })}
+                                  <Text
+                                    style={[
+                                      styles.paperCodeChipText,
+                                      isSelected &&
+                                        styles.paperCodeChipTextSelected,
+                                    ]}
+                                  >
+                                    {`Paper ${paperNumber}`}
+                                  </Text>
+                                </Pressable>
+                              );
+                            })}
+                          {shouldShowSubsidiaryButton && (
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityState={{
+                                selected:
+                                  isSubjectSubsidiary ||
+                                  isSubsidiaryPaperSelected,
+                              }}
+                              disabled={isSubjectSubsidiary}
+                              style={[
+                                styles.paperCodeChip,
+                                (isSubjectSubsidiary ||
+                                  isSubsidiaryPaperSelected) &&
+                                  styles.paperCodeChipSelected,
+                              ]}
+                              onPress={() => {
+                                if (isSubjectSubsidiary) return;
+                                updateField(
+                                  "paperCode",
+                                  isSubsidiaryPaperSelected
+                                    ? ""
+                                    : selectedSubsidiaryCode ||
+                                        selectedPaperCodePrefix,
+                                );
+                              }}
+                            >
+                              <Text
+                                style={[
+                                  styles.paperCodeChipText,
+                                  (isSubjectSubsidiary ||
+                                    isSubsidiaryPaperSelected) &&
+                                    styles.paperCodeChipTextSelected,
+                                ]}
+                              >
+                                Subsidiary
+                              </Text>
+                            </Pressable>
+                          )}
                         </View>
                       )}
                     </View>
@@ -2067,6 +2208,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
     paddingHorizontal: 14,
     paddingVertical: 12,
+    ...(Platform.OS === "web"
+      ? {
+          cursor: "pointer",
+        }
+      : {}),
+  },
+  optionPickerItemHovered: {
+    backgroundColor: "rgba(37, 99, 235, 0.08)",
+    borderColor: "rgba(37, 99, 235, 0.3)",
   },
   optionPickerItemSelected: {
     backgroundColor: "rgba(37, 99, 235, 0.08)",

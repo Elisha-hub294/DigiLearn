@@ -67,6 +67,8 @@ export const fetchSubjects = async (): Promise<
     name: string;
     ordinary?: string;
     advanced?: string;
+    subsidiary?: string;
+    isSubsidiary?: boolean;
     ordinaryPapers?: number;
     advancedPapers?: number;
   }[]
@@ -90,6 +92,8 @@ export const fetchSubjects = async (): Promise<
           name: (data.name as string) || "",
           ordinary: (data.ordinary as string) || "",
           advanced: (data.advanced as string) || "",
+          subsidiary: (data.subsidiary as string) || "",
+          isSubsidiary: Boolean(data.isSubsidiary),
           ordinaryPapers,
           advancedPapers,
         };
