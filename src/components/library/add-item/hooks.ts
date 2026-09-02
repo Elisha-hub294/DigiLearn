@@ -207,10 +207,11 @@ export const useYearPicker = () => {
  */
 export const usePdfProcessing = () => {
   const [pdfToProcess, setPdfToProcess] = useState<{
-    base64Data: string;
+    base64Data?: string;
+    docxText?: string;
     resolve: (value: any) => void;
     reject: (err: any) => void;
-    mode?: "cover" | "pageCount";
+    mode?: "cover" | "pageCount" | "docxCover";
   } | null>(null);
 
   const clearPdfProcess = useCallback(() => {

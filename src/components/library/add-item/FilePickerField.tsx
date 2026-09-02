@@ -46,7 +46,7 @@ export function FilePickerField({
             {value || "Drag a file here or tap to upload"}
           </Text>
           <Text style={styles.filePickerHint}>
-            {hint || "PDF or DOCX • max 10 MB"}
+            {hint || "PDF, DOCX, PPT, or PPTX • max 10 MB"}
           </Text>
         </View>
       </View>

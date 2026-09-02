@@ -7,7 +7,7 @@ import {
 } from "./constants";
 
 /**
- * Checks if a file is an allowed document type (PDF or DOCX)
+ * Checks if a file is an allowed document or presentation type.
  */
 export const isAllowedDocument = (
   fileName: string,
@@ -71,7 +71,7 @@ export const getFileValidationError = (
     }
   } else {
     if (!isAllowedDocument(fileName)) {
-      return "Unsupported file type. Please select a PDF or DOCX file only.";
+      return "Unsupported file type. Please select a PDF, DOCX, PPT, or PPTX file only.";
     }
     if (!isValidFileSize(fileSize)) {
       return "File is too large. Please select a file smaller than 10 MB.";

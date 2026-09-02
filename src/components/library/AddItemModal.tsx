@@ -461,6 +461,8 @@ export function AddItemModal({
         type: [
           "application/pdf",
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/vnd.ms-powerpoint",
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
         ],
       });
       if (result.canceled || !result.assets || result.assets.length === 0) {
@@ -875,17 +877,20 @@ export function AddItemModal({
         } else if (selectedFile?.assets?.[0]) {
           const file = selectedFile.assets[0];
           const blob = await uriToBlob(file.uri);
+          const documentName = sanitizeFileName(file.name || "document");
           documentUrl = await uploadAssetToStorage(
-            `post-documents/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.pdf`,
+            `post-documents/${Date.now()}_${Math.random().toString(36).slice(2, 9)}_${documentName}`,
             blob,
             "Uploading announcement document",
             updateUploadProgress,
+            { contentType: file.mimeType || undefined },
           );
 
           const coverDataUrl = await generatePdfFirstPageThumbnail(
             file.uri,
             setPdfToProcess,
             webViewRef,
+            file.name,
           );
           const coverBlob = await uriToBlob(coverDataUrl);
           coverUrl = await uploadAssetToStorage(
@@ -938,6 +943,7 @@ export function AddItemModal({
               file.uri,
               setPdfToProcess,
               webViewRef,
+              file.name,
             );
             const coverBlob = await uriToBlob(coverDataUrl);
             const uniqueCoverId = `${Date.now()}_${Math.random()
@@ -996,6 +1002,7 @@ export function AddItemModal({
               file.uri,
               setPdfToProcess,
               webViewRef,
+              file.name,
             );
             const coverBlob = await uriToBlob(coverDataUrl);
             const sanitizedFileName = sanitizeFileName(
@@ -1345,7 +1352,7 @@ export function AddItemModal({
                         <Text style={styles.filePickerHint}>
                           {selectedFile?.assets?.[0]
                             ? "Document ready to publish"
-                            : "PDF or DOCX • max 10 MB"}
+                            : "PDF, DOCX, PPT, or PPTX • max 10 MB"}
                         </Text>
                       </View>
                     </View>
@@ -1658,7 +1665,7 @@ export function AddItemModal({
                       <Text style={styles.filePickerText}>
                         {selectedFile?.assets?.[0]
                           ? selectedFile.assets[0].name
-                          : "Tap to select a document (max 10 MB)"}
+                          : "Tap to select a document or presentation (max 10 MB)"}
                       </Text>
                     </View>
                   </Pressable>
@@ -1767,6 +1774,7 @@ export function AddItemModal({
                     JSON.stringify({
                       base64Data: pdfToProcess.base64Data,
                       mode: pdfToProcess.mode ?? "cover",
+                      docxText: pdfToProcess.docxText,
                     }),
                   );
                 } else if (res.status === "success") {

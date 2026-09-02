@@ -108,7 +108,7 @@ export function BannerFormSection({
                 <Text style={styles.attachmentButtonHint}>
                   {selectedFile?.assets?.[0]
                     ? "Document ready to publish"
-                    : "PDF or DOCX • max 10 MB"}
+                    : "PDF, DOCX, PPT, or PPTX • max 10 MB"}
                 </Text>
               </View>
             </View>

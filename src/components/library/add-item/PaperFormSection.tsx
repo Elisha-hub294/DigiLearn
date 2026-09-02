@@ -212,7 +212,7 @@ export function PaperFormSection({
         hint={
           selectedFile?.assets?.[0]
             ? "Document ready to publish"
-            : "Tap to select a document (max 10 MB)"
+            : "Tap to select a document or presentation (max 10 MB)"
         }
         selected={Boolean(selectedFile?.assets?.[0])}
         onPress={pickDocument}

@@ -66,14 +66,18 @@ export const LEVEL_OPTIONS = [
 export const ALLOWED_DOCUMENT_TYPES = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ];
 
-export const DOCUMENT_EXTENSIONS = [".pdf", ".docx"];
+export const DOCUMENT_EXTENSIONS = [".pdf", ".docx", ".ppt", ".pptx"];
 export const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
 export const IMAGE_MIME_TYPES = ["image/jpeg", "image/png"];
 export const DOCUMENT_MIME_TYPES = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 ];
 
 export const PDF_JS_CDN =
