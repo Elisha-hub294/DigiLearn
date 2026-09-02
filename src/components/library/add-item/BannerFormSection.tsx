@@ -108,7 +108,7 @@ export function BannerFormSection({
                 <Text style={styles.attachmentButtonHint}>
                   {selectedFile?.assets?.[0]
                     ? "Document ready to publish"
-                    : "PDF or DOCX • max 5 MB"}
+                    : "PDF or DOCX • max 10 MB"}
                 </Text>
               </View>
             </View>
@@ -142,7 +142,7 @@ export function BannerFormSection({
                 <Text style={styles.attachmentButtonHint}>
                   {selectedImage
                     ? "Image ready to publish"
-                    : "JPG, JPEG, or PNG • max 5 MB"}
+                    : "JPG, JPEG, or PNG • max 10 MB"}
                 </Text>
               </View>
             </View>

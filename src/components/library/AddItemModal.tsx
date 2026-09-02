@@ -309,11 +309,26 @@ export function AddItemModal({
     updateField("title", "");
   };
 
-  const setTitleFromSelectedFile = (fileName: string) => {
-    const cleanFileName = cleanFileNameForTitle(fileName);
-    if (!cleanFileName || formData.title.trim()) return;
-    updateField("title", cleanFileName);
-  };
+  const showFileValidationError = useCallback(
+    (title: string, error: string) => {
+      if (error.includes("too large")) {
+        showStatusDialog(title, error, "Close", () => setStatusDialog(null));
+        return;
+      }
+
+      Alert.alert(title, error);
+    },
+    [setStatusDialog, showStatusDialog],
+  );
+
+  const setTitleFromSelectedFile = useCallback(
+    (fileName: string) => {
+      const cleanFileName = cleanFileNameForTitle(fileName);
+      if (!cleanFileName || formData.title.trim()) return;
+      updateField("title", cleanFileName);
+    },
+    [formData.title, updateField],
+  );
 
   const applyWebDroppedFile = useCallback(
     (file: File, type: "document" | "image") => {
@@ -323,7 +338,7 @@ export function AddItemModal({
 
         const error = getFileValidationError(fileName, file.size, true);
         if (error) {
-          Alert.alert("Invalid Image", error);
+          showFileValidationError("Invalid Image", error);
           return;
         }
 
@@ -344,7 +359,7 @@ export function AddItemModal({
 
       const error = getFileValidationError(fileName, file.size, false);
       if (error) {
-        Alert.alert("Invalid File", error);
+        showFileValidationError("Invalid File", error);
         return;
       }
 
@@ -362,7 +377,7 @@ export function AddItemModal({
       setSelectedImage(null);
       setTitleFromSelectedFile(fileName);
     },
-    [setTitleFromSelectedFile],
+    [setTitleFromSelectedFile, showFileValidationError],
   );
 
   useEffect(() => {
@@ -455,7 +470,7 @@ export function AddItemModal({
 
       const error = getFileValidationError(file.name || "", file.size, false);
       if (error) {
-        Alert.alert("Invalid File", error);
+        showFileValidationError("Invalid File", error);
         return;
       }
 
@@ -482,7 +497,7 @@ export function AddItemModal({
         true,
       );
       if (error) {
-        Alert.alert("Invalid Image", error);
+        showFileValidationError("Invalid Image", error);
         return;
       }
 
@@ -1330,7 +1345,7 @@ export function AddItemModal({
                         <Text style={styles.filePickerHint}>
                           {selectedFile?.assets?.[0]
                             ? "Document ready to publish"
-                            : "PDF or DOCX • max 5 MB"}
+                            : "PDF or DOCX • max 10 MB"}
                         </Text>
                       </View>
                     </View>
@@ -1643,7 +1658,7 @@ export function AddItemModal({
                       <Text style={styles.filePickerText}>
                         {selectedFile?.assets?.[0]
                           ? selectedFile.assets[0].name
-                          : "Tap to select a document (max 5 MB)"}
+                          : "Tap to select a document (max 10 MB)"}
                       </Text>
                     </View>
                   </Pressable>

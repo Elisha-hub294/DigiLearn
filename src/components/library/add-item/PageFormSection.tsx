@@ -162,7 +162,7 @@ export function PageFormSection({
         hint={
           selectedFile?.assets?.[0]
             ? "Document ready to publish"
-            : "PDF or DOCX • max 5 MB"
+            : "PDF or DOCX • max 10 MB"
         }
         selected={Boolean(selectedFile?.assets?.[0])}
         onPress={pickDocument}

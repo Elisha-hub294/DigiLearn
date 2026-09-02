@@ -102,7 +102,7 @@ export function BookFormSection({
               <Text style={styles.attachmentButtonHint}>
                 {selectedImage
                   ? "Cover image ready to publish"
-                  : "JPG, JPEG, or PNG • max 5 MB"}
+                  : "JPG, JPEG, or PNG • max 10 MB"}
               </Text>
             </View>
           </View>
