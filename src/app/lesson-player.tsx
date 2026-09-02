@@ -1,6 +1,6 @@
+import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
@@ -611,6 +611,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: -0.4,
     lineHeight: 28,
+    textTransform: "capitalize",
   },
   instructorRow: {
     alignItems: "center",

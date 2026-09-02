@@ -76,6 +76,10 @@ function isValidYouTubeVideoUrl(url: string): boolean {
   }
 }
 
+function formatLessonTitle(value: string): string {
+  return value.replace(/[^\p{L}\p{N}\s\/]/gu, "").replace(/\s+/g, " ");
+}
+
 async function fetchYoutubeVideoMeta(videoUrl: string) {
   const videoId = extractYoutubeId(videoUrl);
   if (!videoId) {
@@ -202,6 +206,10 @@ export default function AddTrendingLessonScreen() {
         ? auth.currentUser.photoURL
         : "";
 
+  const handleTitleChange = (value: string) => {
+    setTitle(formatLessonTitle(value));
+  };
+
   const handleLinkChange = async (value: string) => {
     setLink(value);
 
@@ -229,7 +237,7 @@ export default function AddTrendingLessonScreen() {
       setDuration(meta.duration || "");
       setThumbnail(meta.thumbnail || "");
       if (meta.title && !title.trim()) {
-        setTitle(meta.title);
+        setTitle(formatLessonTitle(meta.title));
       }
     } catch {
       setDuration("");
@@ -241,7 +249,9 @@ export default function AddTrendingLessonScreen() {
   };
 
   async function handleSubmit() {
-    if (!title.trim() || !isValidYouTubeVideoUrl(link)) {
+    const formattedTitle = formatLessonTitle(title).trim();
+
+    if (!formattedTitle || !isValidYouTubeVideoUrl(link)) {
       return;
     }
 
@@ -262,13 +272,13 @@ export default function AddTrendingLessonScreen() {
         subjectsToSave.length > 1
           ? subjectsToSave
           : subjectsToSave[0] || "General";
-      const lessonId = `${getTitleDocId(title)}-${Date.now()}_${Math.random()
+      const lessonId = `${getTitleDocId(formattedTitle)}-${Date.now()}_${Math.random()
         .toString(36)
         .slice(2, 9)}`;
 
       await setDoc(doc(db, "trendingLessons", lessonId), {
         id: lessonId,
-        title: title.trim(),
+        title: formattedTitle,
         subject: savedSubject,
         teacher: teacherValue,
         uploadedAt: serverTimestamp(),
@@ -285,7 +295,7 @@ export default function AddTrendingLessonScreen() {
             lessonId,
             undefined,
             undefined,
-            title.trim(),
+            formattedTitle,
             finalThumbnail,
           ),
         );
@@ -302,10 +312,7 @@ export default function AddTrendingLessonScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.page}>
-        <AdminPublishHeader
-          title="Add Trending Lesson"
-          onBack={() => router.back()}
-        />
+        <AdminPublishHeader title="Add Lesson" onBack={() => router.back()} />
 
         <ScrollView
           contentContainerStyle={styles.content}
@@ -360,7 +367,7 @@ export default function AddTrendingLessonScreen() {
           <Text style={styles.label}>Title</Text>
           <TextInput
             value={title}
-            onChangeText={setTitle}
+            onChangeText={handleTitleChange}
             placeholder="Lesson title"
             style={styles.input}
           />
@@ -400,9 +407,7 @@ export default function AddTrendingLessonScreen() {
               }}
             >
               <Ionicons name="add" size={16} color={colors.primary} />
-              <Text style={styles.multipleSubjectsButtonText}>
-                Covers multiple subjects
-              </Text>
+              <Text style={styles.multipleSubjectsButtonText}>Add Subject</Text>
             </Pressable>
           </View>
           {selectedSubjects.length > 0 && (
