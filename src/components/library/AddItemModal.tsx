@@ -32,7 +32,7 @@ import {
   InfoMessage,
   ModalActionBar,
   NotifyToggle,
-  UploadProgressCard,
+  UploadStatusModal,
 } from "./add-item/SharedFormControls";
 import type { FormState, FormType } from "./add-item/constants";
 import {
@@ -159,8 +159,37 @@ export function AddItemModal({
     onClose();
   };
 
+  const uploadProgressRef = useRef({ document: 0, preview: 0 });
+
   const updateUploadProgress = (label: string, progress: number) => {
-    setUploadProgress({ active: true, label, progress });
+    updateCombinedUploadProgress("document", progress, label);
+  };
+
+  const updateCombinedUploadProgress = (
+    stage: "document" | "preview",
+    progress: number,
+    label: string,
+  ) => {
+    const nextState = {
+      ...uploadProgressRef.current,
+      [stage]: Math.max(0, Math.min(progress, 100)),
+    };
+
+    uploadProgressRef.current = nextState;
+
+    const combinedProgress = Math.round(
+      nextState.document * 0.8 + nextState.preview * 0.2,
+    );
+
+    setUploadProgress({
+      active: true,
+      label,
+      progress: combinedProgress,
+    });
+  };
+
+  const silentUploadProgress = (label: string, progress: number) => {
+    updateCombinedUploadProgress("preview", progress, label);
   };
 
   const clearSelectedFile = () => {
@@ -526,6 +555,7 @@ export function AddItemModal({
 
     try {
       setIsSubmitting(true);
+      uploadProgressRef.current = { document: 0, preview: 0 };
       setUploadProgress({
         active: true,
         label: "Preparing upload",
@@ -608,8 +638,8 @@ export function AddItemModal({
           coverUrl = await uploadAssetToStorage(
             `post-covers/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
             coverBlob,
-            "Uploading announcement preview",
-            updateUploadProgress,
+            "Uploading document",
+            silentUploadProgress,
             { contentType: "image/jpeg" },
           );
         }
@@ -663,8 +693,8 @@ export function AddItemModal({
             coverUrl = await uploadAssetToStorage(
               `page-covers/${uniqueCoverId}`,
               coverBlob,
-              "Uploading page preview",
-              updateUploadProgress,
+              "Uploading document",
+              silentUploadProgress,
               { contentType: "image/jpeg" },
             );
           } catch (coverError: any) {
@@ -724,8 +754,8 @@ export function AddItemModal({
             coverUrl = await uploadAssetToStorage(
               `page-covers/${uniqueCoverId}`,
               coverBlob,
-              "Uploading paper preview",
-              updateUploadProgress,
+              "Uploading document",
+              silentUploadProgress,
               { contentType: "image/jpeg" },
             );
           } catch (coverError: any) {
@@ -775,24 +805,18 @@ export function AddItemModal({
         label: "Upload complete",
         progress: 100,
       });
-      setInfoMessage("Upload complete. Returning to the home screen.");
-
+      setInfoMessage(
+        "Upload complete. You can close this screen or continue editing.",
+      );
       showStatusDialog(
         "Upload successful",
-        "Your item was published successfully and you are being taken back to the home screen.",
-        "Go home",
+        "Your item was published successfully. You can stay here and continue publishing, or close this form whenever you're ready.",
+        "Done",
         () => {
           setStatusDialog(null);
-          onSuccess();
+          setInfoMessage("");
         },
       );
-
-      setTimeout(() => {
-        if (statusDialog) {
-          setStatusDialog(null);
-        }
-        onSuccess();
-      }, 1200);
     } catch (error: any) {
       console.error("Failed to add library item", error);
       const errorDetails = resolveUploadError(error);
@@ -852,13 +876,9 @@ export function AddItemModal({
               </Text>
             )}
 
-            {infoMessage ? <InfoMessage>{infoMessage}</InfoMessage> : null}
-            {uploadProgress.active && (
-              <UploadProgressCard
-                label={uploadProgress.label}
-                progress={uploadProgress.progress}
-              />
-            )}
+            {infoMessage && !uploadProgress.active ? (
+              <InfoMessage>{infoMessage}</InfoMessage>
+            ) : null}
 
             {formType !== "paper" && (
               <>
@@ -1031,6 +1051,15 @@ export function AddItemModal({
           icon={<Icon name="alert-circle" size={24} color="#DC2626" />}
         />
       )}
+      <UploadStatusModal
+        visible={uploadProgress.active}
+        title={uploadProgress.label || "Uploading"}
+        message={
+          infoMessage ||
+          "Uploading your item. Please keep this screen open until the upload finishes."
+        }
+        progress={uploadProgress.progress}
+      />
       <OptionPickerModal
         visible={Boolean(pickerConfig)}
         title={pickerConfig?.title ?? "Select an option"}

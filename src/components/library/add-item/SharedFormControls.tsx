@@ -1,6 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import {
   ActivityIndicator,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -39,6 +40,43 @@ export function UploadProgressCard({
         <View style={[styles.progressFill, { width: `${safeProgress}%` }]} />
       </View>
     </View>
+  );
+}
+
+export function UploadStatusModal({
+  visible,
+  title,
+  message,
+  progress,
+}: {
+  visible: boolean;
+  title: string;
+  message: string;
+  progress: number;
+}) {
+  const safeProgress = Math.max(0, Math.min(progress, 100));
+
+  return (
+    <Modal animationType="fade" transparent visible={visible}>
+      <View style={styles.uploadDialogBackdrop}>
+        <View style={styles.uploadDialogCard}>
+          <View style={styles.uploadDialogIconWrap}>
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
+          <Text style={styles.uploadDialogTitle}>{title}</Text>
+          <Text style={styles.uploadDialogMessage}>{message}</Text>
+
+          <View style={styles.uploadDialogBarWrap}>
+            <View style={styles.progressTrack}>
+              <View
+                style={[styles.progressFill, { width: `${safeProgress}%` }]}
+              />
+            </View>
+            <Text style={styles.uploadDialogPercent}>{safeProgress}%</Text>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -141,6 +179,60 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     marginBottom: spacing.md,
+  },
+  uploadDialogBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  uploadDialogCard: {
+    width: "100%",
+    maxWidth: 420,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  uploadDialogIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(37, 99, 235, 0.08)",
+    marginBottom: 14,
+  },
+  uploadDialogTitle: {
+    color: "#0F172A",
+    fontSize: 22,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  uploadDialogMessage: {
+    color: "#475569",
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 16,
+  },
+  uploadDialogBarWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  uploadDialogPercent: {
+    color: "#0F766E",
+    fontSize: 12,
+    fontWeight: "800",
+    minWidth: 40,
+    textAlign: "right",
   },
   uploadHeader: {
     flexDirection: "row",
