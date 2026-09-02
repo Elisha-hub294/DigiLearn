@@ -1,17 +1,19 @@
 import { User } from "firebase/auth";
 import {
-  arrayRemove,
-  arrayUnion,
-  deleteField,
-  doc,
-  getDoc,
-  serverTimestamp,
-  setDoc,
-  Timestamp,
+    arrayRemove,
+    arrayUnion,
+    deleteField,
+    doc,
+    getDoc,
+    serverTimestamp,
+    setDoc,
+    Timestamp,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 
 export type AccountType = "student" | "teacher" | "admin" | "";
+
+export type PaperRevisionStatus = "attempted" | "completed" | "difficult";
 
 export type HiddenPageRecord = {
   id: string;
@@ -41,6 +43,7 @@ export type UserProfile = {
   "saved-lessons": string[];
   "saved-papers": string[];
   "saved-posts": string[];
+  "paper-revision-status": Record<string, PaperRevisionStatus>;
   savedAt?: Record<string, unknown>;
 };
 
@@ -71,6 +74,34 @@ export async function toggleSavedItem(
         [`${itemType}:${itemId}`]: isCurrentlySaved
           ? deleteField()
           : serverTimestamp(),
+      },
+    },
+    { merge: true },
+  );
+}
+
+export async function setPaperRevisionStatus(
+  userId: string,
+  itemId: string,
+  status: PaperRevisionStatus,
+) {
+  const userRef = doc(db, "users", userId);
+  const snapshot = await getDoc(userRef);
+  const currentStatus =
+    snapshot.data()?.["paper-revision-status"] &&
+    typeof snapshot.data()?.["paper-revision-status"] === "object"
+      ? (snapshot.data()?.["paper-revision-status"] as Record<
+          string,
+          PaperRevisionStatus
+        >)
+      : {};
+
+  await setDoc(
+    userRef,
+    {
+      "paper-revision-status": {
+        ...currentStatus,
+        [itemId]: status,
       },
     },
     { merge: true },
@@ -157,6 +188,7 @@ export const defaultUserProfile = (user: User): UserProfile => ({
   "saved-lessons": [],
   "saved-papers": [],
   "saved-posts": [],
+  "paper-revision-status": {},
   savedAt: {},
 });
 

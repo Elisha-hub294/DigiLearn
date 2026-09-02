@@ -2,21 +2,25 @@ import { router, useLocalSearchParams } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
+    ActivityIndicator,
+    Image,
+    Pressable,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    View,
+    useWindowDimensions,
 } from "react-native";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { recordUserActivity } from "../../services/activityService";
-import { toggleSavedItem } from "../../services/userProfile";
+import {
+    PaperRevisionStatus,
+    setPaperRevisionStatus,
+    toggleSavedItem,
+} from "../../services/userProfile";
 import { BottomActionBar } from "../page/BottomActionBar";
 import { ActionDialog } from "../ui/ActionDialog";
 
@@ -141,6 +145,8 @@ export function PaperPreviewScreen() {
   const [paper, setPaper] = useState<PaperPreviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookmarked, setBookmarked] = useState(false);
+  const [revisionStatus, setRevisionStatus] =
+    useState<PaperRevisionStatus | null>(null);
   const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
   const { width } = useWindowDimensions();
   const horizontalPadding = width < 600 ? 0 : getHorizontalPadding(width);
@@ -231,27 +237,37 @@ export function PaperPreviewScreen() {
     const userId = auth.currentUser?.uid;
     if (!paper?.id || !userId) {
       setBookmarked(false);
+      setRevisionStatus(null);
       return;
     }
 
     let active = true;
 
-    const loadBookmarkState = async () => {
+    const loadUserPaperState = async () => {
       try {
         const userSnap = await getDoc(doc(db, "users", userId));
         const savedPapers = Array.isArray(userSnap.data()?.["saved-papers"])
           ? userSnap.data()?.["saved-papers"]
           : [];
+        const revisionMap =
+          userSnap.data()?.["paper-revision-status"] &&
+          typeof userSnap.data()?.["paper-revision-status"] === "object"
+            ? (userSnap.data()?.["paper-revision-status"] as Record<
+                string,
+                PaperRevisionStatus
+              >)
+            : {};
 
         if (active) {
           setBookmarked(savedPapers.includes(paper.id));
+          setRevisionStatus(revisionMap[paper.id] ?? null);
         }
       } catch (error) {
         console.error("Failed to check paper bookmark status", error);
       }
     };
 
-    void loadBookmarkState();
+    void loadUserPaperState();
 
     return () => {
       active = false;
@@ -315,6 +331,23 @@ export function PaperPreviewScreen() {
       setBookmarked((value) => !value);
     } catch (error) {
       console.error("Failed to toggle paper bookmark", error);
+    }
+  };
+
+  const updateRevisionStatus = async (nextStatus: PaperRevisionStatus) => {
+    if (!paper) return;
+
+    const userId = auth.currentUser?.uid;
+    if (!userId) {
+      setShowGuestSaveAlert(true);
+      return;
+    }
+
+    try {
+      await setPaperRevisionStatus(userId, paper.id, nextStatus);
+      setRevisionStatus(nextStatus);
+    } catch (error) {
+      console.error("Failed to update revision status", error);
     }
   };
 
@@ -434,6 +467,45 @@ export function PaperPreviewScreen() {
           <DetailRow label="Pages" value={formatPageCount(paper.pageNumber)} />
           <DetailRow label="Reference" value={paperRef} />
           <DetailRow label="Year" value={paper.year || "Recent"} />
+        </View>
+      </View>
+
+      <View style={styles.revisionCard}>
+        <Text style={styles.sectionTitle}>Revision status</Text>
+        <Text style={styles.revisionHint}>
+          Track how this paper went so you can revise smarter.
+        </Text>
+
+        <View style={styles.revisionRow}>
+          {(
+            [
+              { key: "attempted", label: "Attempted" },
+              { key: "completed", label: "Completed" },
+              { key: "difficult", label: "Difficult" },
+            ] as const
+          ).map((option) => {
+            const active = revisionStatus === option.key;
+            return (
+              <Pressable
+                key={option.key}
+                accessibilityRole="button"
+                onPress={() => updateRevisionStatus(option.key)}
+                style={[
+                  styles.revisionButton,
+                  active && styles.revisionButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.revisionButtonText,
+                    active && styles.revisionButtonTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
 
@@ -694,6 +766,44 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     textAlign: "right",
     flexShrink: 1,
+  },
+  revisionCard: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: spacing.lg,
+    marginTop: spacing.lg,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.06)",
+  },
+  revisionHint: {
+    color: colors.subtitle,
+    fontSize: 12,
+    marginBottom: spacing.md,
+  },
+  revisionRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  revisionButton: {
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.08)",
+    backgroundColor: colors.lightBackground,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  revisionButtonActive: {
+    backgroundColor: colors.primaryLight,
+    borderColor: "rgba(0, 110, 255, 0.22)",
+  },
+  revisionButtonText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  revisionButtonTextActive: {
+    color: colors.primary,
   },
   footerCard: {
     marginTop: spacing.lg,

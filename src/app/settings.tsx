@@ -20,8 +20,11 @@ import SettingsSection from "../components/ui/SettingsSection";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import {
+  isAssistantEnabled,
+  setAssistantEnabled,
+} from "../services/aiAssistantService";
 import { clearGuestMode } from "../services/guestService";
-import { isAssistantEnabled, setAssistantEnabled } from "../services/aiAssistantService";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -150,6 +153,13 @@ export default function SettingsScreen() {
                 onPress={() => router.push("/activity" as never)}
               />
               <SettingsRow
+                icon="bar-chart-2"
+                title="Paper revision dashboard"
+                onPress={() =>
+                  router.push("/paper-revision-dashboard" as never)
+                }
+              />
+              <SettingsRow
                 icon="eye-off"
                 title="Hidden items"
                 onPress={() => router.push("/hidden-items" as never)}
@@ -217,7 +227,7 @@ export default function SettingsScreen() {
               <SettingsRow
                 icon="file-text"
                 title="Terms and Policies"
-                onPress={() => { }}
+                onPress={() => {}}
               />
               <SettingsRow
                 icon="info"
