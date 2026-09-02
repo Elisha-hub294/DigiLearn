@@ -797,6 +797,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginTop: spacing.md,
     lineHeight: 34,
+    textTransform: "capitalize",
   },
   metaLine: {
     color: colors.subtitle,

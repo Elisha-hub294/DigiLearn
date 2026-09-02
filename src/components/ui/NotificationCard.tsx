@@ -190,6 +190,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     color: colors.text,
     marginTop: 2,
+    textTransform: "capitalize",
   },
   actionsWrap: {
     flexDirection: "row",

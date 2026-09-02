@@ -800,6 +800,7 @@ export function AddItemModal({
         label: "Preparing upload",
         progress: 8,
       });
+      setInfoMessage("Uploading your item...");
 
       let createdItemId = "";
       let notificationType:
