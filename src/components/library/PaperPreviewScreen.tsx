@@ -23,7 +23,6 @@ import {
   setPaperRevisionStatus,
   toggleSavedItem,
 } from "../../services/userProfile";
-import { BottomActionBar } from "../page/BottomActionBar";
 import { ActionDialog } from "../ui/ActionDialog";
 
 type PaperPreviewData = {
@@ -500,6 +499,28 @@ export function PaperPreviewScreen() {
                     <Text style={styles.secondaryButtonText}>Share</Text>
                   </View>
                 </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    bookmarked ? "Remove saved paper" : "Save paper"
+                  }
+                  style={[
+                    styles.secondaryButton,
+                    bookmarked && styles.savedButton,
+                  ]}
+                  onPress={toggleBookmark}
+                >
+                  <View style={styles.buttonContent}>
+                    <Feather
+                      name="bookmark"
+                      size={15}
+                      color={bookmarked ? colors.primary : colors.text}
+                    />
+                    <Text style={styles.secondaryButtonText}>
+                      {bookmarked ? "Saved" : "Save"}
+                    </Text>
+                  </View>
+                </Pressable>
               </View>
             </View>
           </View>
@@ -613,16 +634,6 @@ export function PaperPreviewScreen() {
               />
             </View>
           )}
-
-          <View style={styles.footerCard}>
-            <BottomActionBar
-              bookmarked={bookmarked}
-              onBookmark={toggleBookmark}
-              onOpen={openDocument}
-              onShare={sharePaper}
-              accentColor={colors.primary}
-            />
-          </View>
 
           <ActionDialog
             visible={showGuestSaveAlert}
@@ -740,11 +751,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "rgba(15, 23, 42, 0.06)",
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.12,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 6,
   },
   heroImageWrap: {
     width: "100%",
@@ -936,18 +942,9 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
 
-  footerCard: {
-    marginTop: spacing.lg,
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(15, 23, 42, 0.06)",
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
+  savedButton: {
+    backgroundColor: "#EAF3FF",
+    borderColor: "rgba(15, 111, 255, 0.18)",
   },
   relatedCard: {
     backgroundColor: colors.white,

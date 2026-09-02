@@ -30,91 +30,95 @@ export function NotificationCard({
     Boolean(previewImage) && failedPreviewUrl !== previewImage;
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`Open notification: ${notification.message}`}
-      onPress={() => onPress(notification)}
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.card,
         notification.read ? styles.readCard : styles.unreadCard,
-        pressed && styles.pressed,
       ]}
     >
-      <View style={styles.avatarWrap}>
-        <Image
-          source={resolveNotificationAvatarSource(notification.publisherAvatar)}
-          style={styles.avatar}
-          contentFit="cover"
-        />
-      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Open notification: ${notification.message}`}
+        onPress={() => onPress(notification)}
+        style={({ pressed }) => [
+          styles.mainPressable,
+          pressed && styles.pressed,
+        ]}
+      >
+        <View style={styles.avatarWrap}>
+          <Image
+            source={resolveNotificationAvatarSource(
+              notification.publisherAvatar,
+            )}
+            style={styles.avatar}
+            contentFit="cover"
+          />
+        </View>
 
-      <View style={styles.content}>
-        <Text style={styles.heading} numberOfLines={1}>
-          <Text style={styles.publisher}>{notification.publisherName}</Text>
-          <Text style={styles.separator}> · </Text>
-          <Text style={styles.time}>
-            {formatRelativeNotificationTime(notification.createdAt)}
+        <View style={styles.content}>
+          <Text style={styles.heading} numberOfLines={1}>
+            <Text style={styles.publisher}>{notification.publisherName}</Text>
+            <Text style={styles.separator}> · </Text>
+            <Text style={styles.time}>
+              {formatRelativeNotificationTime(notification.createdAt)}
+            </Text>
           </Text>
-        </Text>
-        <Text style={styles.message} numberOfLines={1}>
-          {notification.message}
-        </Text>
-        {resourceTitle ? (
-          <Text style={styles.resourceTitle} numberOfLines={1}>
-            {resourceTitle}
+          <Text style={styles.message} numberOfLines={1}>
+            {notification.message}
           </Text>
-        ) : null}
-      </View>
+          {resourceTitle ? (
+            <Text style={styles.resourceTitle} numberOfLines={1}>
+              {resourceTitle}
+            </Text>
+          ) : null}
+        </View>
 
-      <View style={styles.actionsWrap}>
-        {shouldRenderPreviewImage ? (
-          <View style={styles.typeIconWrap}>
-            <Image
-              source={{ uri: previewImage }}
-              style={styles.previewImage}
-              contentFit="cover"
-              onError={() => {
-                if (previewImage) {
-                  setFailedPreviewUrl(previewImage);
-                }
-              }}
-            />
-          </View>
-        ) : (
-          <View
-            accessibilityLabel={`${meta.label} notification icon`}
-            style={[styles.typeIconWrap, { backgroundColor: meta.background }]}
-          >
-            <MaterialCommunityIcons
-              name={meta.icon as any}
-              size={22}
-              color={colors.white}
-            />
-          </View>
-        )}
+        <View style={styles.actionsWrap}>
+          {shouldRenderPreviewImage ? (
+            <View style={styles.typeIconWrap}>
+              <Image
+                source={{ uri: previewImage }}
+                style={styles.previewImage}
+                contentFit="cover"
+                onError={() => {
+                  if (previewImage) {
+                    setFailedPreviewUrl(previewImage);
+                  }
+                }}
+              />
+            </View>
+          ) : (
+            <View
+              accessibilityLabel={`${meta.label} notification icon`}
+              style={[
+                styles.typeIconWrap,
+                { backgroundColor: meta.background },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={meta.icon as any}
+                size={22}
+                color={colors.white}
+              />
+            </View>
+          )}
+        </View>
+      </Pressable>
 
-        {!notification.read && onMarkRead ? (
-          <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              onMarkRead(notification.id);
-            }}
-            style={({ pressed }) => [
-              styles.markReadButton,
-              pressed && styles.markReadPressed,
-            ]}
-            accessibilityLabel="Mark as read"
-            accessibilityRole="button"
-          >
-            <MaterialCommunityIcons
-              name="check"
-              size={20}
-              color={colors.dark}
-            />
-          </Pressable>
-        ) : null}
-      </View>
-    </Pressable>
+      {!notification.read && onMarkRead ? (
+        <Pressable
+          onPress={() => onMarkRead(notification.id)}
+          style={({ pressed }) => [
+            styles.markReadButton,
+            pressed && styles.markReadPressed,
+          ]}
+          accessibilityLabel="Mark as read"
+          accessibilityRole="button"
+        >
+          <MaterialCommunityIcons name="check" size={20} color={colors.dark} />
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -144,6 +148,11 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.96,
+  },
+  mainPressable: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatarWrap: {
     width: 42,

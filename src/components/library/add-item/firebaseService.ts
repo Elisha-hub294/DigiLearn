@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   serverTimestamp,
   setDoc,
@@ -11,6 +12,7 @@ import {
   appendNotificationToAllUsers,
   buildLibraryNotification,
 } from "../../../services/notifications";
+import { getVideoThumbnailUrl } from "../../../utils/videoUtils";
 import { getTitleDocId } from "./utils";
 
 export interface UploadProgressCallback {
@@ -282,6 +284,28 @@ export const notifyUsersAboutNewItem = async (
   resourceTitle?: string,
 ) => {
   try {
+    const collectionName =
+      itemType === "book"
+        ? "books"
+        : itemType === "page"
+          ? "pages"
+          : itemType === "paper"
+            ? "pastPaper"
+            : itemType === "announcement"
+              ? "teacherPosts"
+              : "trendingLessons";
+    const itemSnapshot = await getDoc(doc(db, collectionName, itemId));
+    const item = itemSnapshot.data();
+    const previewImage =
+      itemType === "lesson"
+        ? getVideoThumbnailUrl(
+            typeof item?.thumbnail === "string" ? item.thumbnail : undefined,
+            typeof item?.link === "string" ? item.link : undefined,
+          )
+        : typeof item?.cover === "string"
+          ? item.cover.trim()
+          : undefined;
+
     await appendNotificationToAllUsers(
       buildLibraryNotification(
         itemType,
@@ -289,6 +313,7 @@ export const notifyUsersAboutNewItem = async (
         undefined,
         undefined,
         resourceTitle,
+        previewImage,
       ),
     );
   } catch (error) {
