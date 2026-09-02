@@ -1,25 +1,26 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    Pressable,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    View,
-    useWindowDimensions,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { recordUserActivity } from "../../services/activityService";
 import {
-    PaperRevisionStatus,
-    setPaperRevisionStatus,
-    toggleSavedItem,
+  PaperRevisionStatus,
+  setPaperRevisionStatus,
+  toggleSavedItem,
 } from "../../services/userProfile";
 import { BottomActionBar } from "../page/BottomActionBar";
 import { ActionDialog } from "../ui/ActionDialog";
@@ -148,6 +149,8 @@ export function PaperPreviewScreen() {
   const [revisionStatus, setRevisionStatus] =
     useState<PaperRevisionStatus | null>(null);
   const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
+  const [relatedPapers, setRelatedPapers] = useState<PaperPreviewData[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
   const { width } = useWindowDimensions();
   const horizontalPadding = width < 600 ? 0 : getHorizontalPadding(width);
 
@@ -273,6 +276,58 @@ export function PaperPreviewScreen() {
       active = false;
     };
   }, [paper?.id]);
+
+  useEffect(() => {
+    if (!paper?.id || !paper?.subject) {
+      setRelatedPapers([]);
+      return;
+    }
+
+    let active = true;
+
+    const loadRelatedPapers = async () => {
+      setRelatedLoading(true);
+      try {
+        const snap = await getDocs(collection(db, "pastPaper"));
+        const allPapers = snap.docs.map((docSnap, index) => {
+          const data = docSnap.data() as Record<string, unknown>;
+          return mapPaperData(docSnap.id, data);
+        });
+
+        const currentYear = paper.year ? parseInt(paper.year, 10) : 0;
+        const related = allPapers
+          .filter((p) => {
+            if (p.id === paper.id) return false;
+            const subjectMatch =
+              p.subject?.toLowerCase() === paper.subject?.toLowerCase();
+            const typeMatch =
+              !paper.type || p.type?.toLowerCase() === paper.type.toLowerCase();
+            return subjectMatch && typeMatch;
+          })
+          .sort((a, b) => {
+            const aYear = a.year ? parseInt(a.year, 10) : 0;
+            const bYear = b.year ? parseInt(b.year, 10) : 0;
+            const aYearDiff = Math.abs(aYear - currentYear);
+            const bYearDiff = Math.abs(bYear - currentYear);
+            return aYearDiff - bYearDiff;
+          })
+          .slice(0, 4);
+
+        if (active) setRelatedPapers(related);
+      } catch (error) {
+        console.error("Failed to load related papers", error);
+        if (active) setRelatedPapers([]);
+      } finally {
+        if (active) setRelatedLoading(false);
+      }
+    };
+
+    void loadRelatedPapers();
+
+    return () => {
+      active = false;
+    };
+  }, [paper?.id, paper?.subject, paper?.year, paper?.type]);
 
   const paperRef = useMemo(
     () => formatPaperReference(paper?.paperCode, paper?.paperNumber),
@@ -508,6 +563,67 @@ export function PaperPreviewScreen() {
           })}
         </View>
       </View>
+
+      {relatedPapers.length > 0 && (
+        <View style={styles.relatedCard}>
+          <Text style={styles.sectionTitle}>Practice more of this</Text>
+          <Text style={styles.relatedHint}>
+            Similar papers to build comprehensive coverage
+          </Text>
+          <FlatList
+            scrollEnabled={false}
+            data={relatedPapers}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.relatedList}
+            renderItem={({ item: relatedPaper }) => (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/paper-preview",
+                    params: {
+                      id: relatedPaper.id,
+                      title: relatedPaper.title,
+                      subject: relatedPaper.subject,
+                      year: relatedPaper.year,
+                      type: relatedPaper.type,
+                      document: relatedPaper.document,
+                      image: relatedPaper.image,
+                    },
+                  } as any)
+                }
+                style={styles.relatedItem}
+              >
+                <View style={styles.relatedImageWrap}>
+                  {relatedPaper.image ? (
+                    <Image
+                      source={{ uri: relatedPaper.image }}
+                      style={styles.relatedImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.relatedPlaceholder}>
+                      <Text style={styles.relatedPlaceholderText}>
+                        {relatedPaper.title.slice(0, 2).toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.relatedContent}>
+                  <Text style={styles.relatedYear}>
+                    {relatedPaper.year || "Recent"}
+                  </Text>
+                  <Text style={styles.relatedTitle} numberOfLines={2}>
+                    {relatedPaper.title}
+                  </Text>
+                  <Text style={styles.relatedMeta}>
+                    {relatedPaper.type || "Paper"}
+                  </Text>
+                </View>
+              </Pressable>
+            )}
+          />
+        </View>
+      )}
 
       <View style={styles.footerCard}>
         <BottomActionBar
@@ -812,5 +928,75 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "rgba(15, 23, 42, 0.06)",
+  },
+  relatedCard: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.06)",
+    marginBottom: spacing.lg,
+  },
+  relatedHint: {
+    color: colors.subtitle,
+    fontSize: 12,
+    marginBottom: spacing.md,
+    lineHeight: 18,
+  },
+  relatedList: {
+    gap: spacing.md,
+  },
+  relatedItem: {
+    flexDirection: "row",
+    gap: spacing.md,
+    padding: spacing.md,
+    backgroundColor: colors.lightBackground,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(15, 23, 42, 0.06)",
+  },
+  relatedImageWrap: {
+    width: 60,
+    height: 80,
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: colors.white,
+  },
+  relatedImage: {
+    width: "100%",
+    height: "100%",
+  },
+  relatedPlaceholder: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  relatedPlaceholderText: {
+    color: colors.white,
+    fontWeight: "700",
+    fontSize: 18,
+  },
+  relatedContent: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  relatedYear: {
+    color: colors.primary,
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
+  relatedTitle: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  relatedMeta: {
+    color: colors.subtitle,
+    fontSize: 11,
   },
 });
