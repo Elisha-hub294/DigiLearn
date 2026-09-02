@@ -80,6 +80,7 @@ export function NotificationCard({
                 source={{ uri: previewImage }}
                 style={styles.previewImage}
                 contentFit="cover"
+                contentPosition="top left"
                 onError={() => {
                   if (previewImage) {
                     setFailedPreviewUrl(previewImage);
@@ -207,13 +208,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   typeIconWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
     backgroundColor: "#E5E7EB",
+    marginRight: 5,
   },
   previewImage: {
     width: "100%",

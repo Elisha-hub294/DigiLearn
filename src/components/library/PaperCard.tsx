@@ -1,5 +1,6 @@
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
 
 type PaperCardProps = {
@@ -99,7 +100,8 @@ export function PaperCard({
           <Image
             source={{ uri: image }}
             style={styles.preview}
-            resizeMode="cover"
+            contentFit="cover"
+            contentPosition="top left"
           />
         ) : (
           <View style={[styles.preview, styles.previewFallback]} />

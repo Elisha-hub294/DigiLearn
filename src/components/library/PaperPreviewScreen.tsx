@@ -1,11 +1,11 @@
 import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
   ScrollView,
   Share,
@@ -451,7 +451,8 @@ export function PaperPreviewScreen() {
                 <Image
                   source={{ uri: paper.image }}
                   style={styles.heroImage}
-                  resizeMode="cover"
+                  contentFit="cover"
+                  contentPosition="top left"
                 />
               ) : (
                 <View style={styles.placeholderCover}>
@@ -608,7 +609,8 @@ export function PaperPreviewScreen() {
                         <Image
                           source={{ uri: relatedPaper.image }}
                           style={styles.relatedImage}
-                          resizeMode="cover"
+                          contentFit="cover"
+                          contentPosition="top left"
                         />
                       ) : (
                         <View style={styles.relatedPlaceholder}>
