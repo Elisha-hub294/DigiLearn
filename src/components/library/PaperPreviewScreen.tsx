@@ -588,15 +588,21 @@ export function PaperPreviewScreen() {
 
           {relatedPapers.length > 0 && (
             <View style={styles.relatedCard}>
-              <Text style={styles.sectionTitle}>Practice more of this</Text>
+              <Text style={styles.sectionTitle}>
+                {`More of ${paper?.subject || "this"}`}
+              </Text>
               <Text style={styles.relatedHint}>
                 Similar papers to build comprehensive coverage
               </Text>
               <FlatList
-                scrollEnabled={false}
+                horizontal
+                showsHorizontalScrollIndicator={false}
                 data={relatedPapers}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.relatedList}
+                ItemSeparatorComponent={() => (
+                  <View style={{ width: spacing.md }} />
+                )}
                 renderItem={({ item: relatedPaper }) => (
                   <Pressable
                     onPress={() =>
@@ -1044,20 +1050,21 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   relatedList: {
-    gap: spacing.md,
+    paddingRight: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   relatedItem: {
-    flexDirection: "row",
-    gap: spacing.md,
-    padding: spacing.md,
+    width: 180,
     backgroundColor: colors.lightBackground,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(15, 23, 42, 0.06)",
+    overflow: "hidden",
+    padding: spacing.sm,
   },
   relatedImageWrap: {
-    width: 60,
-    height: 80,
+    width: "100%",
+    height: 110,
     borderRadius: 8,
     overflow: "hidden",
     backgroundColor: colors.white,
@@ -1079,7 +1086,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   relatedContent: {
-    flex: 1,
+    marginTop: spacing.sm,
     justifyContent: "center",
   },
   relatedYear: {
@@ -1094,6 +1101,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginBottom: 4,
+    minHeight: 36,
   },
   relatedMeta: {
     color: colors.subtitle,

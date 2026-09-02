@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../constants/theme";
 import {
@@ -24,13 +24,10 @@ export function NotificationCard({
   const meta = NOTIFICATION_TYPE_META[notification.type];
   const resourceTitle = notification.resourceTitle?.trim();
   const previewImage = notification.previewImage?.trim();
-  const [previewFailed, setPreviewFailed] = useState(false);
+  const [failedPreviewUrl, setFailedPreviewUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    setPreviewFailed(false);
-  }, [previewImage]);
-
-  const shouldRenderPreviewImage = Boolean(previewImage) && !previewFailed;
+  const shouldRenderPreviewImage =
+    Boolean(previewImage) && failedPreviewUrl !== previewImage;
 
   return (
     <Pressable
@@ -76,7 +73,11 @@ export function NotificationCard({
               source={{ uri: previewImage }}
               style={styles.previewImage}
               contentFit="cover"
-              onError={() => setPreviewFailed(true)}
+              onError={() => {
+                if (previewImage) {
+                  setFailedPreviewUrl(previewImage);
+                }
+              }}
             />
           </View>
         ) : (

@@ -299,7 +299,7 @@ export default function HomeScreen() {
               />
             }
           >
-            <Header />
+            <Header showPublishButton />
             <SearchBar placeholder="Search DigiLearn..." />
 
             {visibleFeed.map((item, idx) => (

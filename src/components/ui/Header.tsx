@@ -3,29 +3,36 @@ import { router } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { useEffect, useState } from "react";
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { auth } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
+import { useProfile } from "../../contexts/ProfileContext";
 import { useNotifications } from "../../hooks/useNotifications";
 
 type HeaderProps = {
   title?: string;
   rightIconName?: string;
   showBadge?: boolean;
+  showPublishButton?: boolean;
 };
 
 export const Header = ({
   title,
   rightIconName = "bell",
   showBadge = true,
+  showPublishButton = false,
 }: HeaderProps) => {
   const { width } = useWindowDimensions();
   const { hasUnread } = useNotifications();
+  const { profile } = useProfile();
+  const canPublish =
+    showPublishButton &&
+    (profile?.type === "teacher" || profile?.type === "admin");
   // Scale greeting font: 22px on ~320px screens, up to 34px on ~430px+ screens
   const greetingFontSize = Math.min(
     34,
@@ -77,6 +84,15 @@ export const Header = ({
         )}
       </View>
       <View style={styles.actions}>
+        {canPublish ? (
+          <Pressable
+            style={styles.publishButton}
+            accessibilityLabel="Publish content"
+            onPress={() => router.push("/publish" as any)}
+          >
+            <Icon name="plus" size={18} color={colors.white} />
+          </Pressable>
+        ) : null}
         <Pressable
           style={styles.notificationButton}
           accessibilityLabel="Open notifications"
@@ -142,6 +158,20 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 10,
+  },
+  publishButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
   },
   notificationButton: {
     width: 46,

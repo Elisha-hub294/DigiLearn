@@ -800,9 +800,6 @@ export function AddItemModal({
         label: "Preparing upload",
         progress: 8,
       });
-      setInfoMessage(
-        "Uploading your item. Please keep this screen open until the upload finishes.",
-      );
 
       let createdItemId = "";
       let notificationType:
