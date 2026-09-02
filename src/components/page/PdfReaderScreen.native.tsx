@@ -47,6 +47,12 @@ function normalizeUriParam(
   return result;
 }
 
+function getFileExtension(uri: string | null): string {
+  const path = uri?.split("?")[0].toLowerCase() ?? "";
+  const match = path.match(/\.(pdf|docx|pptx|ppt)$/);
+  return match?.[1] ?? "pdf";
+}
+
 export function PdfReaderScreen() {
   const {
     uri,
@@ -75,6 +81,8 @@ export function PdfReaderScreen() {
   const decodedUri = resolvedUri ?? null;
   const isResolving = rawUri != null && decodedUri == null;
   const isLocalFile = Boolean(decodedUri?.startsWith("file://"));
+  const fileExtension = getFileExtension(decodedUri);
+  const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
 
   // Check if file is already downloaded in storage
   useEffect(() => {
@@ -114,6 +122,12 @@ export function PdfReaderScreen() {
   // iOS WebView renders PDFs natively; Android needs pdf.js
   const webViewSource = (() => {
     if (!decodedUri) return null;
+    if (isOfficeFile) {
+      if (isLocalFile) return null;
+      return {
+        uri: `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(decodedUri)}`,
+      };
+    }
     if (Platform.OS === "ios") return { uri: decodedUri };
 
     // Android: self-contained pdf.js HTML viewer
@@ -274,7 +288,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
       const safeTitle =
         (title ? title.trim().replace(/[^a-zA-Z0-9_\- ]/g, "") : "Document") ||
         "Document";
-      const fileName = `${safeTitle}.pdf`;
+      const fileName = `${safeTitle}.${fileExtension}`;
       const fileUri = `${FileSystem.documentDirectory}${fileName}`;
 
       const downloadResumable = FileSystem.createDownloadResumable(
@@ -392,7 +406,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     return (
       <View style={styles.center}>
         <Feather name="alert-circle" size={48} color="#CBD5E1" />
-        <Text style={styles.errorText}>No PDF document available.</Text>
+        <Text style={styles.errorText}>
+          {isOfficeFile
+            ? "Office documents can only be read while online."
+            : "No PDF document available."}
+        </Text>
         <Pressable style={styles.backBtn} onPress={goBack}>
           <Text style={styles.backBtnText}>Go back</Text>
         </Pressable>
@@ -414,7 +432,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>
-            {title || "PDF Reader"}
+            {title || `${isOfficeFile ? "Office" : "PDF"} Reader`}
           </Text>
         </View>
 
@@ -424,7 +442,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
             <Pressable
               onPress={handleDownload}
               disabled={downloading || downloaded}
-              accessibilityLabel="Download PDF"
+              accessibilityLabel={`Download ${isOfficeFile ? "office document" : "PDF"}`}
               style={({ pressed }) => [
                 styles.downloadBtn,
                 pressed && { opacity: 0.85 },

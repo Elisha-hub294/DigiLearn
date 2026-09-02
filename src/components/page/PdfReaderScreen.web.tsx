@@ -33,6 +33,12 @@ function normalizeUriParam(
   return result;
 }
 
+function getFileExtension(uri: string | null): string {
+  const path = uri?.split("?")[0].toLowerCase() ?? "";
+  const match = path.match(/\.(pdf|docx|pptx|ppt)$/);
+  return match?.[1] ?? "pdf";
+}
+
 export function PdfReaderScreen() {
   const {
     uri,
@@ -57,6 +63,12 @@ export function PdfReaderScreen() {
   // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
   const decodedUri = resolvedUri ?? null;
   const isResolving = rawUri != null && decodedUri == null;
+  const fileExtension = getFileExtension(decodedUri);
+  const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
+  const readerLabel = isOfficeFile ? "Office Reader" : "PDF Reader";
+  const viewerUri = isOfficeFile
+    ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(decodedUri || "")}`
+    : decodedUri;
 
   // Check if already downloaded
   useEffect(() => {
@@ -124,7 +136,7 @@ export function PdfReaderScreen() {
       }
 
       const blob = new Blob(chunks as unknown as BlobPart[], {
-        type: "application/pdf",
+        type: "application/octet-stream",
       });
       setDownloadProgress(1);
       triggerBlobDownload(blob);
@@ -147,7 +159,7 @@ export function PdfReaderScreen() {
           (title
             ? title.trim().replace(/[^a-zA-Z0-9_\- ]/g, "")
             : "document") || "document";
-        downloadUrl = `${downloadUrl}${separator}response-content-disposition=attachment%3Bfilename%3D%22${encodeURIComponent(safeTitle)}.pdf%22`;
+        downloadUrl = `${downloadUrl}${separator}response-content-disposition=attachment%3Bfilename%3D%22${encodeURIComponent(safeTitle)}.${fileExtension}%22`;
       }
 
       // Trigger direct download via hidden iframe without opening a new tab
@@ -183,7 +195,8 @@ export function PdfReaderScreen() {
 
   const triggerBlobDownload = (blob: Blob) => {
     const fileName =
-      (title ? title.replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") + ".pdf";
+      (title ? title.replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") +
+      `.${fileExtension}`;
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -208,7 +221,7 @@ export function PdfReaderScreen() {
 
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>
-            {title || "PDF Reader"}
+            {title || readerLabel}
           </Text>
         </View>
 
@@ -229,7 +242,7 @@ export function PdfReaderScreen() {
             <Pressable
               onPress={handleDownload}
               disabled={downloading || downloaded}
-              accessibilityLabel="Download PDF"
+              accessibilityLabel={`Download ${isOfficeFile ? "office document" : "PDF"}`}
               style={({ pressed }) => [
                 styles.downloadBtn,
                 pressed && { opacity: 0.85 },
@@ -291,7 +304,7 @@ export function PdfReaderScreen() {
       ) : !decodedUri || iframeError ? (
         <View style={styles.center}>
           <Feather name="alert-circle" size={48} color="#CBD5E1" />
-          <Text style={styles.errorTitle}>PDF unavailable</Text>
+          <Text style={styles.errorTitle}>{readerLabel} unavailable</Text>
           <Text style={styles.errorText}>
             The document could not be displayed.
           </Text>
@@ -300,10 +313,9 @@ export function PdfReaderScreen() {
           </Pressable>
         </View>
       ) : (
-        // Browsers natively render PDFs in iframes — no external viewer needed
         <iframe
-          src={decodedUri}
-          title={title || "PDF Reader"}
+          src={viewerUri ?? undefined}
+          title={title || readerLabel}
           style={{
             flex: 1,
             border: "none",
