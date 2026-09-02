@@ -361,16 +361,6 @@ export default function LibraryScreen() {
           </Animated.View>
         </ScrollView>
       </View>
-      {profile?.type === "admin" && (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Add a new book"
-          style={styles.fab}
-          onPress={() => router.push("/add-book" as never)}
-        >
-          <Icon name="plus" size={24} color={colors.white} />
-        </Pressable>
-      )}
     </SafeAreaView>
   );
 }
@@ -387,7 +377,10 @@ const styles = StyleSheet.create({
   headerWrap: { marginBottom: spacing.lg },
   section: { marginBottom: spacing.xl },
   filterSection: { marginTop: spacing.md, marginBottom: spacing.lg },
-  stickyFilter: { backgroundColor: colors.background },
+  stickyFilter: {
+    backgroundColor: colors.background,
+    paddingVertical: spacing.md,
+  },
   filterContent: { gap: spacing.sm, paddingRight: spacing.lg },
   categoryChip: {
     minHeight: 36,
@@ -436,22 +429,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     textAlign: "center",
   },
-  fab: {
-    position: "absolute",
-    right: spacing.lg,
-    bottom: spacing.xl,
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 8,
-    shadowColor: colors.text,
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
+
   skeletonContent: {
     flex: 1,
     paddingTop: spacing.xl,

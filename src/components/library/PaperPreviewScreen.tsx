@@ -486,7 +486,7 @@ export function PaperPreviewScreen() {
                   <View style={styles.buttonContent}>
                     <Feather name="book-open" size={16} color={colors.white} />
                     <Text style={styles.primaryButtonText}>
-                      {paper.document ? "Open paper" : "No document"}
+                      {paper.document ? "Open" : "No document"}
                     </Text>
                   </View>
                 </Pressable>
