@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { auth, db } from "../../firebaseConfig";
 import { TopicalNote } from "../components/page/pageTypes";
+import { DownloadedResources } from "../components/profile/DownloadedResources";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { PaperItem, useLibraryData } from "../hooks/useLibraryData";
@@ -25,7 +26,7 @@ import { recordUserActivity } from "../services/activityService";
 import { resolveVideoImageSource } from "../utils/videoUtils";
 
 type Book = { id: string; title: string; author: string; image: string };
-type ViewMode = "books" | "courses" | "papers" | "pages";
+type ViewMode = "books" | "courses" | "papers" | "pages" | "downloads";
 
 const getBookText = (value: unknown, fallback: string): string => {
   if (Array.isArray(value) && value.length > 0) {
@@ -65,7 +66,8 @@ export default function SeeAllScreen() {
   const mode: ViewMode =
     params.type === "courses" ||
     params.type === "papers" ||
-    params.type === "pages"
+    params.type === "pages" ||
+    params.type === "downloads"
       ? params.type
       : "books";
   const pages = useMemo(() => parsePages(params.pages), [params.pages]);
@@ -186,7 +188,9 @@ export default function SeeAllScreen() {
           })()
         : mode === "pages"
           ? "Similar Pages"
-          : "Books";
+          : mode === "downloads"
+            ? "My Downloads"
+            : "Books";
   const data =
     mode === "books"
       ? books
@@ -286,7 +290,9 @@ export default function SeeAllScreen() {
           </View>
         )}
 
-        {loading ? (
+        {mode === "downloads" ? (
+          <DownloadedResources showAll />
+        ) : loading ? (
           <View style={styles.state}>
             <ActivityIndicator color={colors.primary} />
             <Text style={styles.stateText}>

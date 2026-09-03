@@ -1,13 +1,13 @@
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -87,8 +87,8 @@ export default function ProfileScreen() {
                   TEACHER ACCOUNT UNDER REVIEW
                 </Text>
                 <Text style={s.reviewText}>
-                  Your account is ready to use in student mode while an admin
-                  reviews your teacher application.
+                  DigiLearn is ready to use in student mode while we review your
+                  teacher application.
                 </Text>
               </View>
             )}
@@ -99,7 +99,7 @@ export default function ProfileScreen() {
                 </Text>
                 <Text style={s.reviewText}>
                   {profile.teacherReviewReason ||
-                    "An admin requested changes before approval."}
+                    "We requested changes before approval."}
                 </Text>
                 <Pressable
                   style={s.resubmitButton}

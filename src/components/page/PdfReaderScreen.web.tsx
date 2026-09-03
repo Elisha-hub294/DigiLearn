@@ -8,6 +8,7 @@ import {
   getDownloadedFiles,
   saveDownloadedFile,
 } from "../../services/downloadService";
+import { recordPageVisit } from "../../services/activityService";
 
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 
@@ -43,10 +44,12 @@ export function PdfReaderScreen() {
   const {
     uri,
     document: pdfDocument,
+    pageId,
     title,
   } = useLocalSearchParams<{
     uri?: string;
     document?: string;
+    pageId?: string;
     title?: string;
   }>();
   const [iframeError, setIframeError] = useState(false);
@@ -65,6 +68,9 @@ export function PdfReaderScreen() {
   const isResolving = rawUri != null && decodedUri == null;
   const fileExtension = getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
+  useEffect(() => {
+    if (pageId) void recordPageVisit(pageId);
+  }, [pageId]);
   const readerLabel = isOfficeFile ? "Office Reader" : "PDF Reader";
   const viewerUri = isOfficeFile
     ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(decodedUri || "")}`

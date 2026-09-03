@@ -458,6 +458,7 @@ export function PagePreviewScreen() {
     router.push({
       pathname: "/pdf-reader",
       params: {
+        pageId: id,
         uri: encodeURIComponent(note.document),
         title: note.title ?? "PDF",
       },

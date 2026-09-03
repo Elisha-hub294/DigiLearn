@@ -1,12 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { colors, radius, spacing } from "../../constants/theme";
 import {
@@ -16,7 +11,11 @@ import {
 } from "../../services/downloadService";
 import { ActionDialog } from "../ui/ActionDialog";
 
-export function DownloadedResources() {
+export function DownloadedResources({
+  showAll = false,
+}: {
+  showAll?: boolean;
+}) {
   const router = useRouter();
   const [files, setFiles] = useState<DownloadedFile[]>([]);
   const [fileToDelete, setFileToDelete] = useState<DownloadedFile | null>(null);
@@ -29,7 +28,7 @@ export function DownloadedResources() {
   useFocusEffect(
     useCallback(() => {
       loadFiles();
-    }, [loadFiles])
+    }, [loadFiles]),
   );
 
   const handleOpenFile = (file: DownloadedFile) => {
@@ -54,6 +53,8 @@ export function DownloadedResources() {
     }
   };
 
+  const visibleFiles = showAll ? files : files.slice(0, 4);
+
   const formatDate = (timestamp: number) => {
     const d = new Date(timestamp);
     return d.toLocaleDateString("en-US", {
@@ -64,7 +65,11 @@ export function DownloadedResources() {
   };
 
   return (
-    <Animated.View entering={FadeIn.duration(250)} exiting={FadeOut.duration(200)} style={styles.container}>
+    <Animated.View
+      entering={FadeIn.duration(250)}
+      exiting={FadeOut.duration(200)}
+      style={styles.container}
+    >
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
@@ -82,14 +87,16 @@ export function DownloadedResources() {
           <View style={styles.emptyIconCircle}>
             <Feather name="download-cloud" size={28} color="#94A3B8" />
           </View>
-          <Text style={styles.emptyTitle}>Downloaded files will appear here</Text>
+          <Text style={styles.emptyTitle}>
+            Downloaded files will appear here
+          </Text>
           <Text style={styles.emptySubtitle}>
             Save PDFs and documents to access them offline anytime.
           </Text>
         </View>
       ) : (
         <View style={styles.list}>
-          {files.map((file) => (
+          {visibleFiles.map((file) => (
             <Pressable
               key={file.id}
               style={({ pressed }) => [
@@ -112,7 +119,9 @@ export function DownloadedResources() {
                     <Text style={styles.offlineText}>Offline</Text>
                   </View>
                   <Text style={styles.metaDot}>•</Text>
-                  <Text style={styles.fileDate}>{formatDate(file.downloadedAt)}</Text>
+                  <Text style={styles.fileDate}>
+                    {formatDate(file.downloadedAt)}
+                  </Text>
                 </View>
               </View>
 
@@ -136,6 +145,18 @@ export function DownloadedResources() {
             </Pressable>
           ))}
         </View>
+      )}
+
+      {!showAll && files.length > 4 && (
+        <Pressable
+          style={styles.moreButton}
+          onPress={() => router.push("/see-all?type=downloads" as never)}
+          accessibilityRole="button"
+          accessibilityLabel="View all downloaded files"
+        >
+          <Text style={styles.moreButtonText}>More</Text>
+          <Feather name="arrow-right" size={16} color={colors.primary} />
+        </Pressable>
       )}
 
       {/* Action Dialog for Delete Confirmation */}
@@ -316,5 +337,19 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: radius.pill,
     backgroundColor: "#FEF2F2",
+  },
+  moreButton: {
+    alignSelf: "flex-end",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: spacing.sm,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  moreButtonText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "700",
   },
 });

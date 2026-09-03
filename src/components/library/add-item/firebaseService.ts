@@ -220,6 +220,7 @@ export const addPage = async (
     description: description || "",
     document: documentUrl,
     level: level || "",
+    visits: 0,
     subject: subject || "General",
     title,
     updatedAt: serverTimestamp(),

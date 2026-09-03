@@ -13,16 +13,17 @@ import {
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { colors, radius, spacing } from "../../constants/theme";
+import { recordPageVisit } from "../../services/activityService";
 import {
   getDownloadedFiles,
   saveDownloadedFile,
 } from "../../services/downloadService";
+import { ActionDialog } from "../ui/ActionDialog";
+import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 
 // Fallback timeout: if onLoadEnd never fires (can happen with some PDFs),
 // hide the loading overlay after 20 seconds so the user isn't stuck.
 const LOAD_TIMEOUT_MS = 20_000;
-
-import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 
 function normalizeUriParam(
   raw: string | string[] | undefined | null,
@@ -56,10 +57,12 @@ export function PdfReaderScreen() {
   const {
     uri,
     document: pdfDocument,
+    pageId,
     title,
   } = useLocalSearchParams<{
     uri?: string;
     document?: string;
+    pageId?: string;
     title?: string;
   }>();
 
@@ -86,6 +89,10 @@ export function PdfReaderScreen() {
   const isLocalFile = Boolean(decodedUri?.startsWith("file://"));
   const fileExtension = getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
+
+  useEffect(() => {
+    if (pageId) void recordPageVisit(pageId);
+  }, [pageId]);
 
   // Check if file is already downloaded in storage
   useEffect(() => {
@@ -377,18 +384,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     outputRange: ["0%", "100%"],
   });
 
-  return (
-    <>
-      <ActionDialog
-        visible={Boolean(noticeDialog)}
-        title={noticeDialog?.title ?? "Notice"}
-        message={noticeDialog?.message ?? ""}
-        primaryText="OK"
-        onPrimary={() => setNoticeDialog(null)}
-        onClose={() => setNoticeDialog(null)}
-      />
-      {isResolving ? (
-        <View style={styles.screen}>
+  if (isResolving) {
+    return (
+      <View style={styles.screen}>
         <View style={styles.header}>
           <Pressable
             style={styles.headerBack}
@@ -430,7 +428,16 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
   }
 
   return (
-    <View style={styles.screen}>
+    <>
+      <ActionDialog
+        visible={Boolean(noticeDialog)}
+        title={noticeDialog?.title ?? "Notice"}
+        message={noticeDialog?.message ?? ""}
+        primaryText="OK"
+        onPrimary={() => setNoticeDialog(null)}
+        onClose={() => setNoticeDialog(null)}
+      />
+      <View style={styles.screen}>
       {/* ── Header ── */}
       <View style={styles.header}>
         <Pressable
@@ -558,7 +565,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
           mixedContentMode="compatibility"
         />
       )}
-    </View>
+      </View>
+    </>
   );
 }
 

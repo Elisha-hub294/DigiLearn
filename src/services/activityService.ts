@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  runTransaction,
   setDoc,
 } from "firebase/firestore";
 import { auth, db } from "../../firebaseConfig";
@@ -155,6 +156,27 @@ export async function recordUserActivity(
       `Failed to record ${type} activity for user ${userId}:`,
       error,
     );
+  }
+}
+
+export async function recordPageVisit(pageId: string): Promise<void> {
+  if (!pageId) return;
+
+  try {
+    const pageRef = doc(db, "pages", pageId);
+    await runTransaction(db, async (transaction) => {
+      const pageSnapshot = await transaction.get(pageRef);
+      const storedVisits = pageSnapshot.exists()
+        ? Number(pageSnapshot.data().visits)
+        : 0;
+      const visits = Number.isFinite(storedVisits) && storedVisits >= 0
+        ? storedVisits
+        : 0;
+
+      transaction.set(pageRef, { visits: visits + 1 }, { merge: true });
+    });
+  } catch (error) {
+    console.warn(`Failed to record page visit for ${pageId}:`, error);
   }
 }
 

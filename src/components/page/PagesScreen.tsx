@@ -35,6 +35,8 @@ type PageNote = {
   createdAt?: unknown;
   updatedAt?: unknown;
   level?: string;
+  schoolClass?: string;
+  cover?: string;
   readStatus?: string;
   isRead?: boolean;
   progress?: number;
@@ -45,6 +47,7 @@ type FilterState = {
   sortBy: string;
   readingStatus: string;
   level: string;
+  schoolClass: string;
   attachments: string;
 };
 
@@ -52,6 +55,7 @@ const DEFAULT_FILTERS: FilterState = {
   sortBy: "Newest",
   readingStatus: "All",
   level: "All",
+  schoolClass: "All",
   attachments: "All",
 };
 
@@ -59,12 +63,11 @@ const FILTER_OPTIONS = {
   sortBy: [
     "Newest",
     "Oldest",
-    "Most Read",
+    "Most Progress",
     "Recently Updated",
     "Alphabetical (A–Z)",
   ],
   readingStatus: ["All", "Unread", "Read", "Continue Reading"],
-  level: ["All", "Primary", "O level", "A level"],
   attachments: ["All", "With Books", "Without Books"],
 } as const;
 
@@ -143,13 +146,16 @@ const sortNotes = (notes: PageNote[], sortBy: string) => {
   switch (sortBy) {
     case "Oldest":
       return list.sort((a, b) => noteDate(a) - noteDate(b));
-    case "Most Read":
+    case "Most Progress":
       return list.sort(
         (a, b) =>
           (Number(b.progress ?? 0) || 0) - (Number(a.progress ?? 0) || 0),
       );
     case "Recently Updated":
-      return list.sort((a, b) => noteDate(b) - noteDate(a));
+      return list.sort(
+        (a, b) =>
+          formatCreatedAt(b.updatedAt) - formatCreatedAt(a.updatedAt),
+      );
     case "Alphabetical (A–Z)":
       return list.sort((a, b) =>
         (a.title ?? "").localeCompare(b.title ?? "", undefined, {
@@ -186,6 +192,11 @@ const filterByReadStatus = (
 const filterByLevel = (note: PageNote, level: string) => {
   if (level === "All") return true;
   return normalizeText(note.level) === normalizeText(level);
+};
+
+const filterByClass = (note: PageNote, schoolClass: string) => {
+  if (schoolClass === "All") return true;
+  return normalizeText(note.schoolClass) === normalizeText(schoolClass);
 };
 
 const filterByAttachments = (note: PageNote, attachments: string) => {
@@ -294,7 +305,16 @@ export default function PagesScreen() {
         );
         if (saved) {
           const parsed = JSON.parse(saved) as FilterState;
-          setFilters({ ...DEFAULT_FILTERS, ...parsed });
+          const restored = { ...DEFAULT_FILTERS, ...parsed };
+          setFilters({
+            ...restored,
+            sortBy:
+              restored.sortBy === "Most Read" ? DEFAULT_FILTERS.sortBy : restored.sortBy,
+            level:
+              ["Primary", "O level", "A level"].includes(restored.level)
+                ? DEFAULT_FILTERS.level
+                : restored.level,
+          });
         }
       } catch (error) {
         console.error("Failed to load persisted page filters", error);
@@ -336,6 +356,9 @@ export default function PagesScreen() {
     );
     filtered = filtered.filter((note) => filterByLevel(note, filters.level));
     filtered = filtered.filter((note) =>
+      filterByClass(note, filters.schoolClass),
+    );
+    filtered = filtered.filter((note) =>
       filterByAttachments(note, filters.attachments),
     );
 
@@ -372,8 +395,27 @@ export default function PagesScreen() {
     setFilters((current) => ({ ...current, [key]: value }));
   };
 
+  const filterOptions = useMemo(() => {
+    const uniqueValues = (key: "level" | "schoolClass") => [
+      "All",
+      ...Array.from(
+        new Set(
+          notes
+            .map((note) => note[key]?.trim())
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
+    ];
+
+    return {
+      ...FILTER_OPTIONS,
+      level: uniqueValues("level"),
+      schoolClass: uniqueValues("schoolClass"),
+    };
+  }, [notes]);
+
   const renderFilterOptions = (key: keyof FilterState) => {
-    const options = FILTER_OPTIONS[key] ?? [];
+    const options = filterOptions[key] ?? [];
     return options.map((option) => {
       const isSelected = filters[key] === option;
       return (
@@ -590,6 +632,13 @@ export default function PagesScreen() {
                   <Text style={styles.filterLabel}>Level</Text>
                   <View style={styles.filterOptionGrid}>
                     {renderFilterOptions("level")}
+                  </View>
+                </View>
+
+                <View style={styles.filterGroup}>
+                  <Text style={styles.filterLabel}>Class</Text>
+                  <View style={styles.filterOptionGrid}>
+                    {renderFilterOptions("schoolClass")}
                   </View>
                 </View>
 
