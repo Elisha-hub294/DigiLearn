@@ -169,9 +169,8 @@ export async function recordPageVisit(pageId: string): Promise<void> {
       const storedVisits = pageSnapshot.exists()
         ? Number(pageSnapshot.data().visits)
         : 0;
-      const visits = Number.isFinite(storedVisits) && storedVisits >= 0
-        ? storedVisits
-        : 0;
+      const visits =
+        Number.isFinite(storedVisits) && storedVisits >= 0 ? storedVisits : 0;
 
       transaction.set(pageRef, { visits: visits + 1 }, { merge: true });
     });

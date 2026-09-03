@@ -18,8 +18,8 @@ import {
   getDownloadedFiles,
   saveDownloadedFile,
 } from "../../services/downloadService";
-import { ActionDialog } from "../ui/ActionDialog";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
+import { ActionDialog } from "../ui/ActionDialog";
 
 // Fallback timeout: if onLoadEnd never fires (can happen with some PDFs),
 // hide the loading overlay after 20 seconds so the user isn't stuck.
@@ -438,133 +438,133 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
         onClose={() => setNoticeDialog(null)}
       />
       <View style={styles.screen}>
-      {/* ── Header ── */}
-      <View style={styles.header}>
-        <Pressable
-          style={styles.headerBack}
-          onPress={goBack}
-          accessibilityLabel="Close PDF"
-        >
-          <Feather name="arrow-left" size={22} color={colors.text} />
-        </Pressable>
+        {/* ── Header ── */}
+        <View style={styles.header}>
+          <Pressable
+            style={styles.headerBack}
+            onPress={goBack}
+            accessibilityLabel="Close PDF"
+          >
+            <Feather name="arrow-left" size={22} color={colors.text} />
+          </Pressable>
 
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
-            {title || `${isOfficeFile ? "Office" : "PDF"} Reader`}
-          </Text>
-        </View>
-
-        {/* ── Download button with gradient (only for online files) ── */}
-        {!isLocalFile && (
-          <Animated.View style={{ transform: [{ scale: downloadScale }] }}>
-            <Pressable
-              onPress={handleDownload}
-              disabled={downloading || downloaded}
-              accessibilityLabel={`Download ${isOfficeFile ? "office document" : "PDF"}`}
-              style={({ pressed }) => [
-                styles.downloadBtn,
-                pressed && { opacity: 0.85 },
-                (downloading || downloaded) && { opacity: 0.5 },
-              ]}
-            >
-              <LinearGradient
-                colors={["#006eff", "#6C63FF", "#A855F7"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.downloadGradient}
-              >
-                <Text style={styles.downloadText}>
-                  {downloading
-                    ? `${Math.round(downloadProgress * 100)}%`
-                    : downloaded
-                      ? "Downloaded"
-                      : "Download"}
-                </Text>
-              </LinearGradient>
-            </Pressable>
-          </Animated.View>
-        )}
-      </View>
-
-      {/* ── Active File Download Progress Banner & Bar ── */}
-      {downloading && (
-        <View style={styles.downloadProgressBanner}>
-          <View style={styles.downloadProgressInfo}>
-            <Feather name="download-cloud" size={16} color="#006eff" />
-            <Text style={styles.downloadProgressLabel}>
-              Downloading file… {Math.round(downloadProgress * 100)}%
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {title || `${isOfficeFile ? "Office" : "PDF"} Reader`}
             </Text>
           </View>
-          <View style={styles.downloadTrack}>
-            <Animated.View
-              style={[styles.downloadFill, { width: downloadBarWidth }]}
-            >
-              <LinearGradient
-                colors={["#006eff", "#6C63FF", "#A855F7"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={StyleSheet.absoluteFill}
-              />
+
+          {/* ── Download button with gradient (only for online files) ── */}
+          {!isLocalFile && (
+            <Animated.View style={{ transform: [{ scale: downloadScale }] }}>
+              <Pressable
+                onPress={handleDownload}
+                disabled={downloading || downloaded}
+                accessibilityLabel={`Download ${isOfficeFile ? "office document" : "PDF"}`}
+                style={({ pressed }) => [
+                  styles.downloadBtn,
+                  pressed && { opacity: 0.85 },
+                  (downloading || downloaded) && { opacity: 0.5 },
+                ]}
+              >
+                <LinearGradient
+                  colors={["#006eff", "#6C63FF", "#A855F7"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.downloadGradient}
+                >
+                  <Text style={styles.downloadText}>
+                    {downloading
+                      ? `${Math.round(downloadProgress * 100)}%`
+                      : downloaded
+                        ? "Downloaded"
+                        : "Download"}
+                  </Text>
+                </LinearGradient>
+              </Pressable>
             </Animated.View>
-          </View>
+          )}
         </View>
-      )}
 
-      {/* ── Animated progress bar ── */}
-      {!loaded && !downloading && (
-        <View style={styles.progressTrack}>
-          <Animated.View
-            style={[styles.progressBar, { width: progressBarWidth }]}
-          />
-        </View>
-      )}
-
-      {/* ── Loading overlay ── */}
-      {!loaded && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingCard}>
-            <Feather name="file-text" size={36} color={colors.primary} />
-            <Text style={styles.loadingLabel}>Opening PDF…</Text>
-            <View style={styles.loadingTrack}>
+        {/* ── Active File Download Progress Banner & Bar ── */}
+        {downloading && (
+          <View style={styles.downloadProgressBanner}>
+            <View style={styles.downloadProgressInfo}>
+              <Feather name="download-cloud" size={16} color="#006eff" />
+              <Text style={styles.downloadProgressLabel}>
+                Downloading file… {Math.round(downloadProgress * 100)}%
+              </Text>
+            </View>
+            <View style={styles.downloadTrack}>
               <Animated.View
-                style={[styles.loadingFill, { width: progressBarWidth }]}
-              />
+                style={[styles.downloadFill, { width: downloadBarWidth }]}
+              >
+                <LinearGradient
+                  colors={["#006eff", "#6C63FF", "#A855F7"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              </Animated.View>
             </View>
           </View>
-        </View>
-      )}
+        )}
 
-      {/* ── Error state ── */}
-      {loadError && (
-        <View style={styles.center}>
-          <Feather name="alert-triangle" size={52} color="#F59E0B" />
-          <Text style={styles.errorTitle}>Failed to load PDF</Text>
-          <Text style={styles.errorText}>
-            The document could not be displayed.
-          </Text>
-          <Pressable style={styles.backBtn} onPress={goBack}>
-            <Text style={styles.backBtnText}>Go back</Text>
-          </Pressable>
-        </View>
-      )}
+        {/* ── Animated progress bar ── */}
+        {!loaded && !downloading && (
+          <View style={styles.progressTrack}>
+            <Animated.View
+              style={[styles.progressBar, { width: progressBarWidth }]}
+            />
+          </View>
+        )}
 
-      {/* ── WebView — always mounted so it loads in the background ── */}
-      {!loadError && webViewSource && (
-        <WebView
-          source={webViewSource}
-          style={[styles.webview, !loaded && styles.webviewHidden]}
-          onLoadEnd={handleLoadEnd}
-          onError={handleError}
-          javaScriptEnabled
-          domStorageEnabled
-          allowFileAccess
-          allowingReadAccessToURL={decodedUri || undefined}
-          originWhitelist={["*"]}
-          startInLoadingState={false}
-          allowsFullscreenVideo={false}
-          mixedContentMode="compatibility"
-        />
-      )}
+        {/* ── Loading overlay ── */}
+        {!loaded && (
+          <View style={styles.loadingOverlay}>
+            <View style={styles.loadingCard}>
+              <Feather name="file-text" size={36} color={colors.primary} />
+              <Text style={styles.loadingLabel}>Opening PDF…</Text>
+              <View style={styles.loadingTrack}>
+                <Animated.View
+                  style={[styles.loadingFill, { width: progressBarWidth }]}
+                />
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* ── Error state ── */}
+        {loadError && (
+          <View style={styles.center}>
+            <Feather name="alert-triangle" size={52} color="#F59E0B" />
+            <Text style={styles.errorTitle}>Failed to load PDF</Text>
+            <Text style={styles.errorText}>
+              The document could not be displayed.
+            </Text>
+            <Pressable style={styles.backBtn} onPress={goBack}>
+              <Text style={styles.backBtnText}>Go back</Text>
+            </Pressable>
+          </View>
+        )}
+
+        {/* ── WebView — always mounted so it loads in the background ── */}
+        {!loadError && webViewSource && (
+          <WebView
+            source={webViewSource}
+            style={[styles.webview, !loaded && styles.webviewHidden]}
+            onLoadEnd={handleLoadEnd}
+            onError={handleError}
+            javaScriptEnabled
+            domStorageEnabled
+            allowFileAccess
+            allowingReadAccessToURL={decodedUri || undefined}
+            originWhitelist={["*"]}
+            startInLoadingState={false}
+            allowsFullscreenVideo={false}
+            mixedContentMode="compatibility"
+          />
+        )}
       </View>
     </>
   );

@@ -153,8 +153,7 @@ const sortNotes = (notes: PageNote[], sortBy: string) => {
       );
     case "Recently Updated":
       return list.sort(
-        (a, b) =>
-          formatCreatedAt(b.updatedAt) - formatCreatedAt(a.updatedAt),
+        (a, b) => formatCreatedAt(b.updatedAt) - formatCreatedAt(a.updatedAt),
       );
     case "Alphabetical (A–Z)":
       return list.sort((a, b) =>
@@ -309,11 +308,12 @@ export default function PagesScreen() {
           setFilters({
             ...restored,
             sortBy:
-              restored.sortBy === "Most Read" ? DEFAULT_FILTERS.sortBy : restored.sortBy,
-            level:
-              ["Primary", "O level", "A level"].includes(restored.level)
-                ? DEFAULT_FILTERS.level
-                : restored.level,
+              restored.sortBy === "Most Read"
+                ? DEFAULT_FILTERS.sortBy
+                : restored.sortBy,
+            level: ["Primary", "O level", "A level"].includes(restored.level)
+              ? DEFAULT_FILTERS.level
+              : restored.level,
           });
         }
       } catch (error) {
