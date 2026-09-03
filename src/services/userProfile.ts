@@ -1,15 +1,16 @@
 import { User } from "firebase/auth";
 import {
-    arrayRemove,
-    arrayUnion,
-    deleteField,
-    doc,
-    getDoc,
-    serverTimestamp,
-    setDoc,
-    Timestamp,
+  arrayRemove,
+  arrayUnion,
+  deleteField,
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+  Timestamp,
 } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { db, storage } from "../../firebaseConfig";
 
 export type AccountType = "student" | "teacher" | "admin" | "";
 
@@ -191,6 +192,32 @@ export const defaultUserProfile = (user: User): UserProfile => ({
   "paper-revision-status": {},
   savedAt: {},
 });
+
+export async function saveGoogleProfilePicture(user: User) {
+  const sourceUrl = user.photoURL?.trim();
+  if (!sourceUrl) return null;
+
+  const response = await fetch(sourceUrl);
+  if (!response.ok) {
+    throw new Error(
+      `Unable to download Google profile picture (${response.status}).`,
+    );
+  }
+
+  const image = await response.blob();
+  const contentType = image.type || "image/jpeg";
+  const imageRef = ref(storage, `profile-pics/${user.uid}/google-profile`);
+  await uploadBytes(imageRef, image, { contentType });
+  const downloadUrl = await getDownloadURL(imageRef);
+
+  await setDoc(
+    doc(db, "users", user.uid),
+    { photoURL: downloadUrl },
+    { merge: true },
+  );
+
+  return downloadUrl;
+}
 
 export const getHiddenPageEntries = (
   profile: UserProfile | null | undefined,

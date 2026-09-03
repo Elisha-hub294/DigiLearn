@@ -115,7 +115,7 @@ export default function MyProfileScreen() {
   const save = async () => {
     if (!field || !user || saving) return;
     const value =
-      field === "name" || field === "school"
+      field === "name" || field === "school" || field === "bio"
         ? normalizeProfileText(draft)
         : draft.trim();
     const original = String(profile?.[field] ?? "").trim();
@@ -127,13 +127,17 @@ export default function MyProfileScreen() {
       setError("Please enter a value before continuing.");
       return;
     }
-    if ((field === "name" || field === "school") && draft.trim() && !value) {
+    if (
+      (field === "name" || field === "school" || field === "bio") &&
+      draft.trim() &&
+      !value
+    ) {
       setError(
         `${fieldLabels[field]} must contain at least one letter or number.`,
       );
       return;
     }
-    if (field === "name" || field === "school") {
+    if (field === "name" || field === "school" || field === "bio") {
       const validationError = validateProfileText(value, fieldLabels[field]);
       if (validationError && (field === "name" || draft.trim())) {
         setError(validationError);

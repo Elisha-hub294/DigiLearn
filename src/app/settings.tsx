@@ -152,13 +152,6 @@ export default function SettingsScreen() {
                 title="Activity"
                 onPress={() => router.push("/activity" as never)}
               />
-              <SettingsRow
-                icon="bar-chart-2"
-                title="Paper revision dashboard"
-                onPress={() =>
-                  router.push("/paper-revision-dashboard" as never)
-                }
-              />
               {profile?.type === "admin" ? (
                 <SettingsRow
                   icon="activity"

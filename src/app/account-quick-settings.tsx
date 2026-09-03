@@ -221,17 +221,6 @@ export default function AccountQuickSettingsScreen() {
       return;
     }
 
-    const hasAnyData =
-      Boolean(normalizeProfileText(name)) ||
-      Boolean(level) ||
-      Boolean(normalizeProfileText(school)) ||
-      selectedSubjects.length > 0;
-
-    if (!hasAnyData) {
-      setShowContinueDialog(true);
-      return;
-    }
-
     const cleanName = normalizeProfileText(name);
     const cleanSchool = normalizeProfileText(school);
     const nameError = name.trim() ? validateProfileText(cleanName, "Name") : "";
@@ -241,6 +230,17 @@ export default function AccountQuickSettingsScreen() {
 
     if (nameError || schoolError) {
       setSaveError(nameError || schoolError);
+      return;
+    }
+
+    const hasAnyData =
+      Boolean(cleanName) ||
+      Boolean(level) ||
+      Boolean(cleanSchool) ||
+      selectedSubjects.length > 0;
+
+    if (!hasAnyData) {
+      setShowContinueDialog(true);
       return;
     }
 

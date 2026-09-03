@@ -24,7 +24,10 @@ import {
   signInWithFacebook,
   signInWithGoogle,
 } from "../services/socialAuth";
-import { getUserOnboardingState } from "../services/userProfile";
+import {
+  getUserOnboardingState,
+  saveGoogleProfilePicture,
+} from "../services/userProfile";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -104,11 +107,7 @@ export default function SignUpScreen() {
 
     try {
       setIsLoading(true);
-      const credential = await createUserWithEmailAndPassword(
-        auth,
-        email.trim(),
-        password,
-      );
+      await createUserWithEmailAndPassword(auth, email.trim(), password);
       router.replace("/account-type" as never);
     } catch (error) {
       const code =
@@ -140,6 +139,7 @@ export default function SignUpScreen() {
         return;
       }
       if (result.success && result.user) {
+        await saveGoogleProfilePicture(result.user);
         const onboarding = await getUserOnboardingState(result.user.uid);
         if (onboarding.accountTypeCompleted && onboarding.type) {
           router.replace("/" as never);
