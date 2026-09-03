@@ -11,7 +11,6 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -22,6 +21,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
+import { ActionDialog } from "../components/ui/ActionDialog";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { reviewTeacherApplication } from "../services/teacherApplications";
@@ -78,6 +78,12 @@ export default function TeacherApplicationReviewScreen() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [reason, setReason] = useState("");
   const [reviewStartedAt] = useState(() => Date.now());
+  const [reviewDialog, setReviewDialog] = useState({
+    visible: false,
+    title: "",
+    message: "",
+  });
+  const [approveDialogVisible, setApproveDialogVisible] = useState(false);
 
   useEffect(() => {
     if (profile?.type !== "admin" || !applicationId) return;
@@ -133,17 +139,18 @@ export default function TeacherApplicationReviewScreen() {
     try {
       await reviewTeacherApplication(application.id, decision, reason);
       setShowRejectModal(false);
-      Alert.alert(
-        decision === "approve" ? "Teacher approved" : "Feedback sent",
-        "The applicant has been notified.",
-        [{ text: "Done", onPress: () => router.back() }],
-      );
+      setReviewDialog({
+        visible: true,
+        title: decision === "approve" ? "Teacher approved" : "Feedback sent",
+        message: "The applicant has been notified.",
+      });
     } catch (error) {
       console.error("Failed to review teacher application:", error);
-      Alert.alert(
-        "Review failed",
-        "The application was not changed. Please try again.",
-      );
+      setReviewDialog({
+        visible: true,
+        title: "Review failed",
+        message: "The application was not changed. Please try again.",
+      });
     } finally {
       setBusy(false);
     }
@@ -176,6 +183,33 @@ export default function TeacherApplicationReviewScreen() {
   const isPending = application.status === "pending";
   return (
     <SafeAreaView style={styles.safeArea}>
+      <ActionDialog
+        visible={reviewDialog.visible}
+        title={reviewDialog.title}
+        message={reviewDialog.message}
+        primaryText="Done"
+        onPrimary={() => {
+          setReviewDialog((current) => ({ ...current, visible: false }));
+          router.back();
+        }}
+        onClose={() => {
+          setReviewDialog((current) => ({ ...current, visible: false }));
+          router.back();
+        }}
+      />
+      <ActionDialog
+        visible={approveDialogVisible}
+        title="Approve teacher?"
+        message="This grants the applicant teacher access and publishing permissions."
+        primaryText="Approve"
+        secondaryText="Cancel"
+        onPrimary={() => {
+          setApproveDialogVisible(false);
+          void submitReview("approve");
+        }}
+        onSecondary={() => setApproveDialogVisible(false)}
+        onClose={() => setApproveDialogVisible(false)}
+      />
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -283,19 +317,7 @@ export default function TeacherApplicationReviewScreen() {
               <Pressable
                 disabled={busy}
                 style={styles.approveButton}
-                onPress={() =>
-                  Alert.alert(
-                    "Approve teacher?",
-                    "This grants the applicant teacher access and publishing permissions.",
-                    [
-                      { text: "Cancel", style: "cancel" },
-                      {
-                        text: "Approve",
-                        onPress: () => void submitReview("approve"),
-                      },
-                    ],
-                  )
-                }
+                onPress={() => setApproveDialogVisible(true)}
               >
                 {busy ? (
                   <ActivityIndicator color={colors.white} />

@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Alert,
   FlatList,
   Linking,
   Pressable,
@@ -439,55 +438,51 @@ export default function TeacherProfileScreen() {
 
   const openContactSheet = useCallback(() => {
     if (!teacher) return;
-    Alert.alert("Contact teacher", "Choose how you want to reach out.", [
-      {
-        text: "Text on WhatsApp",
-        onPress: () => {
-          const firstName = teacher.name.split(" ")[0] || "Teacher";
-          const message = `Hello Teacher ${firstName}.`;
-          const url = `https://wa.me/${teacher.phone}?text=${encodeURIComponent(message)}`;
-          Linking.openURL(url);
-        },
+    const firstName = teacher.name.split(" ")[0] || "Teacher";
+    setContactDialog({
+      title: "Contact teacher",
+      message: "Choose how you want to reach out.",
+      primaryText: "WhatsApp",
+      secondaryText: "Phone call",
+      onPrimary: () => {
+        const message = `Hello Teacher ${firstName}.`;
+        const url = `https://wa.me/${teacher.phone}?text=${encodeURIComponent(message)}`;
+        Linking.openURL(url);
       },
-      {
-        text: "Phone Call",
-        onPress: () => {
-          if (teacher.phone) {
-            Linking.openURL(`tel:${teacher.phone}`);
-          }
-        },
+      onSecondary: () => {
+        if (teacher.phone) {
+          Linking.openURL(`tel:${teacher.phone}`);
+        }
       },
-      { text: "Cancel", style: "cancel" },
-    ]);
+    });
   }, [teacher]);
 
   const openYoutubePrompt = useCallback(() => {
     const youtube = teacher?.youtube;
     if (!youtube) return;
     const firstName = teacher.name.split(" ")[0] || "Teacher";
-    Alert.alert(`Visit ${firstName}'s YouTube channel?`, "", [
-      {
-        text: "Confirm",
-        onPress: () => {
-          Linking.openURL(youtube);
-        },
-      },
-      { text: "Cancel", style: "cancel" },
-    ]);
+    setContactDialog({
+      title: `Visit ${firstName}'s YouTube channel?`,
+      message:
+        "You are about to leave DigiLearn and open the teacher's YouTube channel.",
+      primaryText: "Confirm",
+      secondaryText: "Cancel",
+      onPrimary: () => Linking.openURL(youtube),
+    });
   }, [teacher]);
 
   const openEmailPrompt = useCallback(() => {
     if (!teacher?.email) return;
-    Alert.alert(`Email ${teacher.name}?`, "", [
-      {
-        text: "Confirm",
-        onPress: () => {
-          const subject = encodeURIComponent("Email From DigiLearn");
-          Linking.openURL(`mailto:${teacher.email}?subject=${subject}`);
-        },
+    setContactDialog({
+      title: `Email ${teacher.name}?`,
+      message: "You are about to open your email app to send a message.",
+      primaryText: "Confirm",
+      secondaryText: "Cancel",
+      onPrimary: () => {
+        const subject = encodeURIComponent("Email From DigiLearn");
+        Linking.openURL(`mailto:${teacher.email}?subject=${subject}`);
       },
-      { text: "Cancel", style: "cancel" },
-    ]);
+    });
   }, [teacher]);
 
   const openCommunityDialog = useCallback(() => {
@@ -966,6 +961,24 @@ export default function TeacherProfileScreen() {
             </View>
           )}
           renderItem={renderResourceCard}
+        />
+        <ActionDialog
+          visible={Boolean(contactDialog)}
+          title={contactDialog?.title ?? "Continue"}
+          message={contactDialog?.message ?? ""}
+          primaryText={contactDialog?.primaryText ?? "Continue"}
+          secondaryText={contactDialog?.secondaryText}
+          onPrimary={() => {
+            const onPrimary = contactDialog?.onPrimary;
+            setContactDialog(null);
+            onPrimary?.();
+          }}
+          onSecondary={() => {
+            const onSecondary = contactDialog?.onSecondary;
+            setContactDialog(null);
+            onSecondary?.();
+          }}
+          onClose={() => setContactDialog(null)}
         />
         <ActionDialog
           visible={isCommunityDialogVisible}

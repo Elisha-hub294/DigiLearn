@@ -4,22 +4,22 @@ import { deleteUser } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../../firebaseConfig";
+import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
@@ -99,6 +99,8 @@ export default function MyProfileScreen() {
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [updateErrorMessage, setUpdateErrorMessage] = useState("");
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const horizontalPadding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - horizontalPadding * 2);
   const openEditor = (nextField: Field) => {
@@ -123,37 +125,48 @@ export default function MyProfileScreen() {
       await updateDoc(doc(db, "users", user.uid), { [field]: value });
       setField(null);
     } catch (reason) {
-      Alert.alert("Update unavailable", friendlyError(reason));
+      setUpdateErrorMessage(friendlyError(reason));
     } finally {
       setSaving(false);
     }
   };
   const confirmDelete = () => {
     setMenuOpen(false);
-    Alert.alert(
-      "Delete account?",
-      "This permanently deletes your account. This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete Account",
-          style: "destructive",
-          onPress: async () => {
-            if (!auth.currentUser) return;
-            try {
-              await clearGuestMode();
-              await deleteUser(auth.currentUser);
-              router.replace("/welcome" as never);
-            } catch (reason) {
-              Alert.alert("Account not deleted", friendlyError(reason));
-            }
-          },
-        },
-      ],
-    );
+    setDeleteDialogVisible(true);
   };
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
+      <ActionDialog
+        visible={Boolean(updateErrorMessage)}
+        title="Update unavailable"
+        message={updateErrorMessage || "Please try again."}
+        primaryText="OK"
+        onPrimary={() => setUpdateErrorMessage("")}
+        onClose={() => setUpdateErrorMessage("")}
+      />
+      <ActionDialog
+        visible={deleteDialogVisible}
+        title="Delete account?"
+        message="This permanently deletes your account. This action cannot be undone."
+        primaryText="Delete Account"
+        secondaryText="Cancel"
+        primaryButtonColor="#DC2626"
+        onPrimary={async () => {
+          setDeleteDialogVisible(false);
+          if (!auth.currentUser) return;
+          try {
+            await clearGuestMode();
+            await deleteUser(auth.currentUser);
+            router.replace("/welcome" as never);
+          } catch (reason) {
+            setUpdateErrorMessage(
+              `Account not deleted: ${friendlyError(reason)}`,
+            );
+          }
+        }}
+        onSecondary={() => setDeleteDialogVisible(false)}
+        onClose={() => setDeleteDialogVisible(false)}
+      />
       <View style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth }]}>
           <ScrollView

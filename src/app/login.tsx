@@ -4,7 +4,6 @@ import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,6 +17,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../firebaseConfig";
+import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import {
@@ -59,6 +59,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [generalError, setGeneralError] = useState("");
@@ -203,7 +204,7 @@ export default function LoginScreen() {
       await signOut(auth);
       router.replace("/");
     } catch {
-      Alert.alert("Unable to sign out", "Please try again.");
+      setShowLogoutDialog(false);
     }
   }, [router]);
 
@@ -212,6 +213,14 @@ export default function LoginScreen() {
   if (currentUser) {
     return (
       <SafeAreaView style={styles.safeArea}>
+        <ActionDialog
+          visible={showLogoutDialog}
+          title="Unable to sign out"
+          message="Please try again."
+          primaryText="OK"
+          onPrimary={() => setShowLogoutDialog(false)}
+          onClose={() => setShowLogoutDialog(false)}
+        />
         <View
           style={[
             styles.container,
@@ -245,7 +254,7 @@ export default function LoginScreen() {
             </Pressable>
 
             <Pressable
-              onPress={handleLogout}
+              onPress={() => setShowLogoutDialog(true)}
               style={[
                 styles.continueButton,
                 {

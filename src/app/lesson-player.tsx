@@ -7,7 +7,6 @@ import * as WebBrowser from "expo-web-browser";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Alert,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -68,6 +67,10 @@ export default function LessonPlayerScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [showExternalVideoDialog, setShowExternalVideoDialog] = useState(false);
+  const [noticeDialog, setNoticeDialog] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   const params = useLocalSearchParams<{
     id?: string;
@@ -188,10 +191,10 @@ export default function LessonPlayerScreen() {
     }
 
     if (!lessonId) {
-      Alert.alert(
-        "Unable to save lesson",
-        "This lesson is missing its resource ID.",
-      );
+      setNoticeDialog({
+        title: "Unable to save lesson",
+        message: "This lesson is missing its resource ID.",
+      });
       return;
     }
 
@@ -202,15 +205,18 @@ export default function LessonPlayerScreen() {
     try {
       await toggleSavedItem(userId, "saved-lessons", lessonId, isSaved);
       setIsSaved(nextSaved);
-      Alert.alert(
-        nextSaved ? "Saved to Library" : "Removed from Saved",
-        nextSaved
+      setNoticeDialog({
+        title: nextSaved ? "Saved to Library" : "Removed from Saved",
+        message: nextSaved
           ? "This lesson is now saved in your bookmarks."
           : "Lesson removed from saved items.",
-      );
+      });
     } catch (error) {
       console.error("Failed to save lesson", error);
-      Alert.alert("Unable to save lesson", "Please try again.");
+      setNoticeDialog({
+        title: "Unable to save lesson",
+        message: "Please try again.",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -441,6 +447,14 @@ export default function LessonPlayerScreen() {
         </View>
       </View>
 
+      <ActionDialog
+        visible={Boolean(noticeDialog)}
+        title={noticeDialog?.title ?? "Notice"}
+        message={noticeDialog?.message ?? ""}
+        primaryText="OK"
+        onPrimary={() => setNoticeDialog(null)}
+        onClose={() => setNoticeDialog(null)}
+      />
       <ActionDialog
         visible={showGuestSaveDialog}
         title="Save this video"

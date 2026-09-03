@@ -3,7 +3,6 @@ import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   Share,
   StyleSheet,
@@ -126,6 +125,10 @@ export function PagePreviewScreen() {
   const [loading, setLoading] = useState(true);
   const [bookmarked, setBookmarked] = useState(false);
   const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
+  const [noticeDialog, setNoticeDialog] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   const { width } = useWindowDimensions();
   const horizontalPadding = width < 600 ? 0 : getHorizontalPadding(width);
@@ -445,7 +448,10 @@ export function PagePreviewScreen() {
 
   const handleOpenPdf = () => {
     if (!note?.document) {
-      Alert.alert("Notice", "No PDF document link is available for this note.");
+      setNoticeDialog({
+        title: "Notice",
+        message: "No PDF document link is available for this note.",
+      });
       return;
     }
     router.push({
@@ -537,6 +543,14 @@ export function PagePreviewScreen() {
         </ScrollView>
       </View>
 
+      <ActionDialog
+        visible={Boolean(noticeDialog)}
+        title={noticeDialog?.title ?? "Notice"}
+        message={noticeDialog?.message ?? ""}
+        primaryText="OK"
+        onPrimary={() => setNoticeDialog(null)}
+        onClose={() => setNoticeDialog(null)}
+      />
       {/* Fixed Bottom Action Bar */}
       <View style={styles.actionContainer}>
         <View

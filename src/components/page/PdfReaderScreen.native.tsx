@@ -4,7 +4,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   Platform,
   Pressable,
@@ -70,6 +69,10 @@ export function PdfReaderScreen() {
   const [downloaded, setDownloaded] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [localBase64, setLocalBase64] = useState<string | null>(null);
+  const [noticeDialog, setNoticeDialog] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
   const [progressAnim] = useState(() => new Animated.Value(0));
   const [downloadProgressAnim] = useState(() => new Animated.Value(0));
   const [downloadScale] = useState(() => new Animated.Value(1));
@@ -339,24 +342,23 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
         setDownloaded(true);
 
         setTimeout(() => {
-          Alert.alert(
-            "Download Complete",
-            `"${fileName}" has been saved to your downloads for offline reading.`,
-            [{ text: "OK" }],
-          );
+          setNoticeDialog({
+            title: "Download Complete",
+            message: `"${fileName}" has been saved to your downloads for offline reading.`,
+          });
         }, 300);
       } else {
-        Alert.alert(
-          "Download Failed",
-          "The file could not be downloaded. Please try again.",
-        );
+        setNoticeDialog({
+          title: "Download Failed",
+          message: "The file could not be downloaded. Please try again.",
+        });
       }
     } catch (err) {
       console.warn("PDF download error:", err);
-      Alert.alert(
-        "Download Error",
-        "Something went wrong while downloading the file.",
-      );
+      setNoticeDialog({
+        title: "Download Error",
+        message: "Something went wrong while downloading the file.",
+      });
     } finally {
       setTimeout(() => {
         setDownloading(false);
@@ -375,9 +377,18 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     outputRange: ["0%", "100%"],
   });
 
-  if (isResolving) {
-    return (
-      <View style={styles.screen}>
+  return (
+    <>
+      <ActionDialog
+        visible={Boolean(noticeDialog)}
+        title={noticeDialog?.title ?? "Notice"}
+        message={noticeDialog?.message ?? ""}
+        primaryText="OK"
+        onPrimary={() => setNoticeDialog(null)}
+        onClose={() => setNoticeDialog(null)}
+      />
+      {isResolving ? (
+        <View style={styles.screen}>
         <View style={styles.header}>
           <Pressable
             style={styles.headerBack}

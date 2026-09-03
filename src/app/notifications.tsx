@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo } from "react";
 import {
-  Alert,
   BackHandler,
   Pressable,
   SafeAreaView,
@@ -14,6 +13,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { db } from "../../firebaseConfig";
+import { ActionDialog } from "../components/ui/ActionDialog";
 import {
   NotificationCard,
   NotificationSectionHeader,
@@ -93,12 +93,10 @@ export default function NotificationsScreen() {
       }
 
       if (!notification.itemId) {
-        Alert.alert("Unavailable", "This content is no longer available.", [
-          {
-            text: "Dismiss",
-            onPress: () => handleDeleteNotification(notification.id),
-          },
-        ]);
+        setUnavailableDialog({
+          visible: true,
+          notificationId: notification.id,
+        });
         return;
       }
 
@@ -137,12 +135,10 @@ export default function NotificationsScreen() {
         const snapshot = await getDoc(ref);
 
         if (!snapshot.exists()) {
-          Alert.alert("Unavailable", "This content is no longer available.", [
-            {
-              text: "Dismiss",
-              onPress: () => handleDeleteNotification(notification.id),
-            },
-          ]);
+          setUnavailableDialog({
+            visible: true,
+            notificationId: notification.id,
+          });
           return;
         }
 
@@ -278,12 +274,10 @@ export default function NotificationsScreen() {
           await markRead(notification.id);
         }
       } catch {
-        Alert.alert("Unavailable", "This content is no longer available.", [
-          {
-            text: "Dismiss",
-            onPress: () => handleDeleteNotification(notification.id),
-          },
-        ]);
+        setUnavailableDialog({
+          visible: true,
+          notificationId: notification.id,
+        });
       }
     },
     [markRead, router, user, handleDeleteNotification],
@@ -292,6 +286,21 @@ export default function NotificationsScreen() {
   if (!user && !loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
+        <ActionDialog
+          visible={unavailableDialog.visible}
+          title="Unavailable"
+          message="This content is no longer available."
+          primaryText="Dismiss"
+          onPrimary={() => {
+            setUnavailableDialog({ visible: false, notificationId: null });
+            if (unavailableDialog.notificationId) {
+              void handleDeleteNotification(unavailableDialog.notificationId);
+            }
+          }}
+          onClose={() =>
+            setUnavailableDialog({ visible: false, notificationId: null })
+          }
+        />
         <View style={[styles.page, { maxWidth }]}>
           <View
             style={[styles.content, { paddingHorizontal: horizontalPadding }]}

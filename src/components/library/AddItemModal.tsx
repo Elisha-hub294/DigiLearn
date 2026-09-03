@@ -4,7 +4,6 @@ import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   Image,
   Modal,
   Platform,
@@ -317,7 +316,12 @@ export function AddItemModal({
         return;
       }
 
-      Alert.alert(title, error);
+      setStatusDialog({
+        title,
+        message: error,
+        primaryText: "OK",
+        onPrimary: () => setStatusDialog(null),
+      });
     },
     [setStatusDialog, showStatusDialog],
   );
@@ -801,7 +805,12 @@ export function AddItemModal({
 
     const userId = auth.currentUser?.uid;
     if (!userId) {
-      Alert.alert("Sign in required", "You must be signed in to publish.");
+      setStatusDialog({
+        title: "Sign in required",
+        message: "You must be signed in to publish.",
+        primaryText: "OK",
+        onPrimary: () => setStatusDialog(null),
+      });
       return;
     }
 
@@ -830,7 +839,12 @@ export function AddItemModal({
     }
 
     if (!sanitizedTitle) {
-      Alert.alert("Title required", "Enter a title before saving the post.");
+      setStatusDialog({
+        title: "Title required",
+        message: "Enter a title before saving the post.",
+        primaryText: "OK",
+        onPrimary: () => setStatusDialog(null),
+      });
       return;
     }
 

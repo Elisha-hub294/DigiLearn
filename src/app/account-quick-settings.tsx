@@ -4,23 +4,23 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
 import { auth, db } from "../../firebaseConfig";
+import { ActionDialog } from "../components/ui/ActionDialog";
 import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
@@ -78,6 +78,7 @@ export default function AccountQuickSettingsScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [showContinueDialog, setShowContinueDialog] = useState(false);
 
   const horizontalPadding = useMemo(() => getHorizontalPadding(width), [width]);
   const contentMaxWidth = Math.min(520, width - horizontalPadding * 2);
@@ -184,19 +185,7 @@ export default function AccountQuickSettingsScreen() {
       selectedSubjects.length > 0;
 
     if (!hasAnyData) {
-      Alert.alert(
-        "Continue without details?",
-        "You can always add your name, level, school, and subjects later in your profile.",
-        [
-          { text: "Cancel", style: "cancel" },
-          {
-            text: "Continue",
-            onPress: async () => {
-              await saveProfile();
-            },
-          },
-        ],
-      );
+      setShowContinueDialog(true);
       return;
     }
 
@@ -457,7 +446,8 @@ export default function AccountQuickSettingsScreen() {
                       Only show selected interests in feeds
                     </Text>
                     <Text style={styles.toggleSubtitle}>
-                      Filter your Home and Library feeds to only display resources matching your selected subjects.
+                      Filter your Home and Library feeds to only display
+                      resources matching your selected subjects.
                     </Text>
                   </View>
                   <Switch
@@ -495,6 +485,20 @@ export default function AccountQuickSettingsScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <ActionDialog
+        visible={showContinueDialog}
+        title="Continue without details?"
+        message="You can always add your name, level, school, and subjects later in your profile."
+        primaryText="Continue"
+        secondaryText="Cancel"
+        onPrimary={() => {
+          setShowContinueDialog(false);
+          void saveProfile();
+        }}
+        onSecondary={() => setShowContinueDialog(false)}
+        onClose={() => setShowContinueDialog(false)}
+      />
 
       <Modal
         visible={showLevelModal}

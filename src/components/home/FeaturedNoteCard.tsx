@@ -3,8 +3,6 @@ import { usePathname, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
   FlatList,
   Linking,
   Pressable,
@@ -376,16 +374,27 @@ const FeaturedNoteItem = ({
   const isSaved = Boolean(user && profile?.["saved-pages"]?.includes(note.id));
   const [loadedPdfUri, setLoadedPdfUri] = useState<string | null>(null);
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
+  const [dialogState, setDialogState] = useState<{
+    title: string;
+    message: string;
+    primaryText?: string;
+    secondaryText?: string;
+    onPrimary?: () => void;
+    onSecondary?: () => void;
+  } | null>(null);
   const pdfLoading = Boolean(
     note.document && isVisible && loadedPdfUri !== note.document,
   );
 
   const showAuthPrompt = (title: string, message: string) => {
-    Alert.alert(title, message, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Log in", onPress: () => router.push("/login" as never) },
-      { text: "Sign up", onPress: () => router.push("/signup" as never) },
-    ]);
+    setDialogState({
+      title,
+      message,
+      primaryText: "Log in",
+      secondaryText: "Sign up",
+      onPrimary: () => router.push("/login" as never),
+      onSecondary: () => router.push("/signup" as never),
+    });
   };
 
   const handleOpenMenu = () => {
@@ -412,11 +421,21 @@ const FeaturedNoteItem = ({
     try {
       await togglePageReadState(user.uid, note.id, isRead);
       if (!isRead) {
-        Alert.alert("Marked as read");
+        setDialogState({
+          title: "Marked as read",
+          message: "This page has been marked as read.",
+          primaryText: "Done",
+          onPrimary: () => setDialogState(null),
+        });
       }
     } catch (error) {
       console.error("Failed to update read state:", error);
-      Alert.alert("Couldn't update this item. Please try again.");
+      setDialogState({
+        title: "Couldn't update this item",
+        message: "Please try again.",
+        primaryText: "OK",
+        onPrimary: () => setDialogState(null),
+      });
     }
   };
 
@@ -433,18 +452,24 @@ const FeaturedNoteItem = ({
       const shouldHide = !isHidden;
       await setPageHiddenState(user.uid, note.id, shouldHide);
       if (shouldHide) {
-        Alert.alert("Page hidden", "Page hidden · Undo", [
-          {
-            text: "Undo",
-            onPress: async () => {
-              await setPageHiddenState(user.uid, note.id, false);
-            },
+        setDialogState({
+          title: "Page hidden",
+          message: "Page hidden · Undo",
+          primaryText: "Undo",
+          onPrimary: async () => {
+            setDialogState(null);
+            await setPageHiddenState(user.uid, note.id, false);
           },
-        ]);
+        });
       }
     } catch (error) {
       console.error("Failed to update hidden state:", error);
-      Alert.alert("Couldn't update this item. Please try again.");
+      setDialogState({
+        title: "Couldn't update this item",
+        message: "Please try again.",
+        primaryText: "OK",
+        onPrimary: () => setDialogState(null),
+      });
     }
   };
 
@@ -456,17 +481,21 @@ const FeaturedNoteItem = ({
     const mailtoUrl = `mailto:support@digilearn.app?subject=${subject}&body=${body}`;
     Linking.canOpenURL("mailto:").then((supported) => {
       if (!supported) {
-        Alert.alert(
-          "Email unavailable",
-          "An email application could not be opened on this device.",
-        );
+        setDialogState({
+          title: "Email unavailable",
+          message: "An email application could not be opened on this device.",
+          primaryText: "OK",
+          onPrimary: () => setDialogState(null),
+        });
         return;
       }
       Linking.openURL(mailtoUrl).catch(() => {
-        Alert.alert(
-          "Email unavailable",
-          "An email application could not be opened on this device.",
-        );
+        setDialogState({
+          title: "Email unavailable",
+          message: "An email application could not be opened on this device.",
+          primaryText: "OK",
+          onPrimary: () => setDialogState(null),
+        });
       });
     });
   };
@@ -631,6 +660,24 @@ const FeaturedNoteItem = ({
           </View>
         </View>
       </Animated.View>
+      <ActionDialog
+        visible={Boolean(dialogState)}
+        title={dialogState?.title ?? "Notice"}
+        message={dialogState?.message ?? ""}
+        primaryText={dialogState?.primaryText ?? "OK"}
+        secondaryText={dialogState?.secondaryText}
+        onPrimary={() => {
+          const onPrimary = dialogState?.onPrimary;
+          setDialogState(null);
+          onPrimary?.();
+        }}
+        onSecondary={() => {
+          const onSecondary = dialogState?.onSecondary;
+          setDialogState(null);
+          onSecondary?.();
+        }}
+        onClose={() => setDialogState(null)}
+      />
       <ActionDialog
         visible={showGuestSaveDialog}
         title="Save resources to your library"

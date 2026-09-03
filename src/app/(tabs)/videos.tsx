@@ -214,6 +214,7 @@ export default function VideosScreen() {
         subject={subject}
         setSubject={setSubject}
         loading={loading}
+        lessons={lessons}
         trendingLessons={trendingLessons}
         cardWidth={cardWidth}
         onTrendingSectionLayout={(y) => {
@@ -221,7 +222,7 @@ export default function VideosScreen() {
         }}
       />
     ),
-    [subject, loading, trendingLessons, cardWidth],
+    [subject, loading, lessons, trendingLessons, cardWidth],
   );
 
   return (
