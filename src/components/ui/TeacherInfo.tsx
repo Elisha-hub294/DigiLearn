@@ -9,23 +9,41 @@ import { FirebaseImage } from "./FirebaseImage";
 export function TeacherInfo({
   name,
   uploadedAt,
+  onPress,
 }: {
   name: string;
   uploadedAt: string;
+  onPress?: () => void;
 }) {
   return (
     <Animated.View entering={FadeIn.duration(360)} style={styles.row}>
-      <FirebaseImage
-        source={{ uri: getTeacherAvatar(name) }}
-        style={styles.avatar}
-        contentFit="cover"
-        transition={180}
-      />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Open teacher profile: ${name}`}
+        onPress={onPress}
+        disabled={!onPress}
+        hitSlop={8}
+      >
+        <FirebaseImage
+          source={{ uri: getTeacherAvatar(name) }}
+          style={styles.avatar}
+          contentFit="cover"
+          transition={180}
+        />
+      </Pressable>
       <View style={styles.copy}>
         <View style={styles.nameRow}>
-          <Text numberOfLines={1} style={styles.name}>
-            {name}
-          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Open teacher profile: ${name}`}
+            onPress={onPress}
+            disabled={!onPress}
+            hitSlop={8}
+          >
+            <Text numberOfLines={1} style={styles.name}>
+              {name}
+            </Text>
+          </Pressable>
           {/* <Ionicons name="checkmark-circle" size={15} color="#3B82F6" /> */}
         </View>
         <Text style={styles.time}>{uploadedAt}</Text>

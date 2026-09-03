@@ -92,6 +92,13 @@ export function VideoCard({
     });
   }
 
+  const openTeacherProfile = () => {
+    router.push({
+      pathname: "/teacher-profile",
+      params: { name: item.teacher },
+    } as any);
+  };
+
   const handleOpenMenu = () => {
     menuButtonRef.current?.measureInWindow((x, y, width, height) => {
       setMenuAnchor({ x, y, width, height });
@@ -247,7 +254,11 @@ export function VideoCard({
             )}
           </View>
         </Pressable>
-        <TeacherInfo name={item.teacher} uploadedAt={item.uploadedAt} />
+        <TeacherInfo
+          name={item.teacher}
+          uploadedAt={item.uploadedAt}
+          onPress={openTeacherProfile}
+        />
         <Text numberOfLines={2} style={styles.title}>
           {item.title}
         </Text>
