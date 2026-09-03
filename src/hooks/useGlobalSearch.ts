@@ -9,6 +9,14 @@ const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
 const MAX_RECENT_ITEMS = 10;
 const FALLBACK_TEACHER_AVATAR = "TeacherProfile/tr-default.png";
 
+function getSuggestionScore(value: string): number {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) | 0;
+  }
+  return Math.abs(hash);
+}
+
 export type SearchCategory =
   | "All"
   | "Notes"
@@ -354,7 +362,8 @@ export function useGlobalSearch(
   // 6. Comprehensive filtering & Priority ranking
   const results = useMemo<SearchResult[]>(() => {
     const q = debouncedQuery.trim().toLowerCase();
-    if (!hasSubmittedSearch || q.length < 2) return [];
+    const isSuggestionMode = q.length === 0 && !hasSubmittedSearch;
+    if (!isSuggestionMode && (!hasSubmittedSearch || q.length < 2)) return [];
 
     const scored: { score: number; item: SearchResult }[] = [];
 
@@ -388,31 +397,36 @@ export function useGlobalSearch(
           ? [rawKw.toLowerCase()]
           : [];
 
-      let score = 0;
+      const suggestionScore = getSuggestionScore(
+        `${type}-${rawItem.id || title}`,
+      );
+      let score = isSuggestionMode ? suggestionScore : 0;
 
       // Ranking Priority Rules:
-      // 1. Exact title/name match
-      if (lowerTitle === q) score += 1000;
-      // 2. Title starts with
-      else if (lowerTitle.startsWith(q)) score += 500;
-      // 3. Subject match
-      if (subjects.some((s) => s.includes(q))) score += 400;
-      // 4. Author match
-      if (lowerAuthor && lowerAuthor.includes(q)) score += 300;
-      // 5. Teacher match
-      if (lowerTeacher && lowerTeacher.includes(q)) score += 250;
-      // 6. Keyword match
-      if (keywords.some((k) => k.includes(q))) score += 200;
-      // 7. Partial title match
-      if (lowerTitle.includes(q) && score < 500) score += 150;
-      // 8. Description match
-      if (description.toLowerCase().includes(q)) score += 50;
+      if (!isSuggestionMode) {
+        // 1. Exact title/name match
+        if (lowerTitle === q) score += 1000;
+        // 2. Title starts with
+        else if (lowerTitle.startsWith(q)) score += 500;
+        // 3. Subject match
+        if (subjects.some((s) => s.includes(q))) score += 400;
+        // 4. Author match
+        if (lowerAuthor && lowerAuthor.includes(q)) score += 300;
+        // 5. Teacher match
+        if (lowerTeacher && lowerTeacher.includes(q)) score += 250;
+        // 6. Keyword match
+        if (keywords.some((k) => k.includes(q))) score += 200;
+        // 7. Partial title match
+        if (lowerTitle.includes(q) && score < 500) score += 150;
+        // 8. Description match
+        if (description.toLowerCase().includes(q)) score += 50;
+      }
 
-      if (score > 0) {
+      if (isSuggestionMode || score > 0) {
         scored.push({
           score,
           item: {
-            id: String(rawItem.id || Math.random()),
+            id: String(rawItem.id || `${type}-${title}`),
             type,
             title,
             subtitle,
@@ -537,12 +551,14 @@ export function useGlobalSearch(
       );
     });
 
-    // Sort by score descending
+    // Sort by score descending, which randomizes the initial suggestions.
     scored.sort((a, b) => b.score - a.score);
 
     // Apply category filter if active
     const mapped = scored.map((s) => s.item);
-    if (selectedCategory === "All") return mapped;
+    if (selectedCategory === "All") {
+      return isSuggestionMode ? mapped.slice(0, 6) : mapped;
+    }
 
     const categoryMap: Record<SearchCategory, SearchResultType | null> = {
       All: null,
@@ -554,9 +570,10 @@ export function useGlobalSearch(
     };
 
     const targetType = categoryMap[selectedCategory];
-    if (!targetType) return mapped;
+    if (!targetType) return isSuggestionMode ? mapped.slice(0, 6) : mapped;
 
-    return mapped.filter((i) => i.type === targetType);
+    const filtered = mapped.filter((i) => i.type === targetType);
+    return isSuggestionMode ? filtered.slice(0, 6) : filtered;
   }, [
     debouncedQuery,
     hasSubmittedSearch,

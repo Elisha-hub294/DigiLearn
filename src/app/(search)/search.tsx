@@ -1,15 +1,15 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useRef } from "react";
 import {
-    BackHandler,
-    FlatList,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  BackHandler,
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,9 +26,9 @@ import { SearchSkeleton } from "../../components/search/SearchSkeleton";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { getHorizontalPadding } from "../../constants/layout";
 import {
-    SearchCategory,
-    SearchResult,
-    useGlobalSearch,
+  SearchCategory,
+  SearchResult,
+  useGlobalSearch,
 } from "../../hooks/useGlobalSearch";
 
 const CATEGORIES: SearchCategory[] = [
