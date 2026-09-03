@@ -80,6 +80,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /activityEvents/{eventId} {
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          'userId', 'userName', 'userEmail', 'type', 'resourceId', 'openedAt'
+        ]);
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
+      allow update, delete: if false;
+    }
+
     match /teacherApplicationAudit/{auditId} {
       allow read: if request.auth != null &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';

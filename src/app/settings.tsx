@@ -159,6 +159,13 @@ export default function SettingsScreen() {
                   router.push("/paper-revision-dashboard" as never)
                 }
               />
+              {profile?.type === "admin" ? (
+                <SettingsRow
+                  icon="activity"
+                  title="App usage analytics"
+                  onPress={() => router.push("/admin-activity" as never)}
+                />
+              ) : null}
               <SettingsRow
                 icon="eye-off"
                 title="Hidden items"

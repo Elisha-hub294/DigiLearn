@@ -147,7 +147,7 @@ export default function SeeAllScreen() {
 
   const title =
     mode === "courses"
-      ? "Trending Lessons"
+      ? "Video Lessons"
       : mode === "papers"
         ? (() => {
             const activeType =

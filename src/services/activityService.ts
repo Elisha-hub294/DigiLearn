@@ -1,5 +1,5 @@
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../../firebaseConfig";
+import { addDoc, collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import { auth, db } from "../../firebaseConfig";
 import { ActivityItem, ActivityRecord, ActivityType } from "../types/activity";
 
 const MAX_ACTIVITY_ITEMS = 50;
@@ -133,12 +133,43 @@ export async function recordUserActivity(
     ].slice(0, MAX_ACTIVITY_ITEMS);
 
     await setDoc(userRef, { [fieldName]: updatedList }, { merge: true });
+
+    await addDoc(collection(db, "activityEvents"), {
+      userId,
+      userName: auth.currentUser?.displayName || "DigiLearn user",
+      userEmail: auth.currentUser?.email || "",
+      type,
+      resourceId: docId,
+      openedAt: new Date().toISOString(),
+    });
   } catch (error) {
     console.warn(
       `Failed to record ${type} activity for user ${userId}:`,
       error,
     );
   }
+}
+
+export type ActivityEvent = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  type: ActivityType;
+  resourceId: string;
+  resourceTitle?: string;
+  openedAt: string;
+};
+
+export async function fetchActivityEvents(): Promise<ActivityEvent[]> {
+  const snapshot = await getDocs(collection(db, "activityEvents"));
+  return snapshot.docs
+    .map((item) => ({ id: item.id, ...item.data() }) as ActivityEvent)
+    .filter((item) => item.userId && item.type && item.openedAt)
+    .sort(
+      (first, second) =>
+        new Date(second.openedAt).getTime() - new Date(first.openedAt).getTime(),
+    );
 }
 
 /**
