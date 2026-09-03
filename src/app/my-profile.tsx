@@ -24,6 +24,10 @@ import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { clearGuestMode } from "../services/guestService";
+import {
+  normalizeProfileText,
+  validateProfileText,
+} from "../utils/profileValidation";
 
 type Field = "name" | "bio" | "level" | "school" | "gender";
 type RowProps = {
@@ -110,7 +114,10 @@ export default function MyProfileScreen() {
   };
   const save = async () => {
     if (!field || !user || saving) return;
-    const value = draft.trim();
+    const value =
+      field === "name" || field === "school"
+        ? normalizeProfileText(draft)
+        : draft.trim();
     const original = String(profile?.[field] ?? "").trim();
     if (value === original) {
       setField(null);
@@ -119,6 +126,19 @@ export default function MyProfileScreen() {
     if (field === "name" && !value) {
       setError("Please enter a value before continuing.");
       return;
+    }
+    if ((field === "name" || field === "school") && draft.trim() && !value) {
+      setError(
+        `${fieldLabels[field]} must contain at least one letter or number.`,
+      );
+      return;
+    }
+    if (field === "name" || field === "school") {
+      const validationError = validateProfileText(value, fieldLabels[field]);
+      if (validationError && (field === "name" || draft.trim())) {
+        setError(validationError);
+        return;
+      }
     }
     try {
       setSaving(true);

@@ -15,8 +15,8 @@ import {
 } from "react-native";
 import { auth } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
-import SettingsRow from "../components/ui/SettingsRow";
-import SettingsSection from "../components/ui/SettingsSection";
+import { SettingsRow } from "../components/ui/SettingsRow";
+import { SettingsSection } from "../components/ui/SettingsSection";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
@@ -69,7 +69,7 @@ export default function SettingsScreen() {
     }
 
     router.replace("/profile" as never);
-  }, [profile?.name, profile?.type, router]);
+  }, [profile, router]);
 
   const handleLogout = useCallback(async () => {
     try {

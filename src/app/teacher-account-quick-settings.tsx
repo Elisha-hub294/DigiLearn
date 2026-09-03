@@ -4,20 +4,20 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Keyboard,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
 import { auth, db } from "../../firebaseConfig";
@@ -25,6 +25,10 @@ import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { resubmitTeacherApplication } from "../services/teacherApplications";
+import {
+  normalizeProfileText,
+  validateProfileText,
+} from "../utils/profileValidation";
 
 type Subject = { id: string; name: string };
 type SocialKey =
@@ -195,7 +199,7 @@ export default function TeacherAccountQuickSettingsScreen() {
         (result, item) => {
           const rawName =
             typeof item.data().name === "string" ? item.data().name : "";
-          const nameText = normalizeText(rawName);
+          const nameText = normalizeProfileText(rawName);
           const key = nameText.toLocaleLowerCase();
           if (
             nameText &&
@@ -208,12 +212,12 @@ export default function TeacherAccountQuickSettingsScreen() {
         [],
       );
 
-      const initialName = normalizeText(
+      const initialName = normalizeProfileText(
         typeof profile.name === "string"
           ? profile.name
           : (currentUser.displayName ?? ""),
       );
-      const initialSchool = normalizeText(
+      const initialSchool = normalizeProfileText(
         typeof profile.school === "string" ? profile.school : "",
       );
       const initialSelectedSubjects = getSubjectNames(profile.subjects ?? []);
@@ -311,8 +315,8 @@ export default function TeacherAccountQuickSettingsScreen() {
 
     try {
       const payload = {
-        name: normalizeText(name),
-        school: normalizeText(school),
+        name: normalizeProfileText(name),
+        school: normalizeProfileText(school),
         subjects: selectedSubjects,
         filterFeedByInterests,
         ...socialValues,
@@ -355,8 +359,20 @@ export default function TeacherAccountQuickSettingsScreen() {
       return;
     }
 
+    const cleanName = normalizeProfileText(name);
+    const cleanSchool = normalizeProfileText(school);
+    const nameError = name.trim() ? validateProfileText(cleanName, "Name") : "";
+    const schoolError = school.trim()
+      ? validateProfileText(cleanSchool, "School")
+      : "";
+
+    if (nameError || schoolError) {
+      setSaveError(nameError || schoolError);
+      return;
+    }
+
     await saveProfile();
-  }, [isSaving, saveProfile, user]);
+  }, [isSaving, name, saveProfile, school, user]);
 
   const handleLogin = useCallback(() => {
     router.replace("/login" as never);

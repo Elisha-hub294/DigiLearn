@@ -24,14 +24,14 @@ import { ActionDialog } from "../components/ui/ActionDialog";
 import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import {
+  normalizeProfileText,
+  validateProfileText,
+} from "../utils/profileValidation";
 
 type Subject = { id: string; name: string };
 
 const LEVEL_OPTIONS = ["Ordinary level", "Advanced level"];
-
-function normalizeText(value: string) {
-  return value.replace(/\s+/g, " ").trim();
-}
 
 function getSubjectNames(items: unknown): string[] {
   if (!Array.isArray(items)) {
@@ -42,7 +42,7 @@ function getSubjectNames(items: unknown): string[] {
   const result: string[] = [];
 
   items.forEach((item) => {
-    const clean = normalizeText(typeof item === "string" ? item : "");
+    const clean = normalizeProfileText(typeof item === "string" ? item : "");
     const key = clean.toLocaleLowerCase();
     if (clean && !seen.has(key)) {
       seen.add(key);
@@ -100,7 +100,7 @@ export default function AccountQuickSettingsScreen() {
         (result, item) => {
           const rawName =
             typeof item.data().name === "string" ? item.data().name : "";
-          const name = normalizeText(rawName);
+          const name = normalizeProfileText(rawName);
           const key = name.toLocaleLowerCase();
           if (
             name &&
@@ -113,21 +113,21 @@ export default function AccountQuickSettingsScreen() {
         [],
       );
 
-      const userName = normalizeText(
+      const userName = normalizeProfileText(
         typeof profile.name === "string"
           ? profile.name
           : (currentUser.displayName ?? ""),
       );
-      const fallbackName = normalizeText(currentUser.displayName ?? "");
+      const fallbackName = normalizeProfileText(currentUser.displayName ?? "");
       const initialName = userName || fallbackName;
       const initialLevel =
         typeof profile.level === "string" ? profile.level : "";
-      const initialSchool = normalizeText(
+      const initialSchool = normalizeProfileText(
         typeof profile.school === "string" ? profile.school : "",
       );
       const initialSelectedSubjects = getSubjectNames(
         profile.subjects ?? [],
-      ).map((subject) => normalizeText(subject));
+      ).map((subject) => normalizeProfileText(subject));
       const initialFilter = Boolean(profile.filterFeedByInterests);
 
       setName(initialName);
@@ -173,25 +173,6 @@ export default function AccountQuickSettingsScreen() {
     });
   }, []);
 
-  const handleSave = useCallback(async () => {
-    if (!user || isSaving) {
-      return;
-    }
-
-    const hasAnyData =
-      Boolean(normalizeText(name)) ||
-      Boolean(level) ||
-      Boolean(normalizeText(school)) ||
-      selectedSubjects.length > 0;
-
-    if (!hasAnyData) {
-      setShowContinueDialog(true);
-      return;
-    }
-
-    await saveProfile();
-  }, [isSaving, level, name, school, selectedSubjects, user]);
-
   const saveProfile = useCallback(async () => {
     if (!user || isSaving) {
       return;
@@ -206,8 +187,8 @@ export default function AccountQuickSettingsScreen() {
         accountTypeCompleted: true,
       };
 
-      const cleanName = normalizeText(name);
-      const cleanSchool = normalizeText(school);
+      const cleanName = normalizeProfileText(name);
+      const cleanSchool = normalizeProfileText(school);
 
       if (cleanName) payload.name = cleanName;
       if (level) payload.level = level;
@@ -224,7 +205,47 @@ export default function AccountQuickSettingsScreen() {
     } finally {
       setIsSaving(false);
     }
-  }, [isSaving, level, name, router, school, selectedSubjects, user]);
+  }, [
+    filterFeedByInterests,
+    isSaving,
+    level,
+    name,
+    router,
+    school,
+    selectedSubjects,
+    user,
+  ]);
+
+  const handleSave = useCallback(async () => {
+    if (!user || isSaving) {
+      return;
+    }
+
+    const hasAnyData =
+      Boolean(normalizeProfileText(name)) ||
+      Boolean(level) ||
+      Boolean(normalizeProfileText(school)) ||
+      selectedSubjects.length > 0;
+
+    if (!hasAnyData) {
+      setShowContinueDialog(true);
+      return;
+    }
+
+    const cleanName = normalizeProfileText(name);
+    const cleanSchool = normalizeProfileText(school);
+    const nameError = name.trim() ? validateProfileText(cleanName, "Name") : "";
+    const schoolError = school.trim()
+      ? validateProfileText(cleanSchool, "School")
+      : "";
+
+    if (nameError || schoolError) {
+      setSaveError(nameError || schoolError);
+      return;
+    }
+
+    await saveProfile();
+  }, [isSaving, level, name, saveProfile, school, selectedSubjects, user]);
 
   const handleLogin = useCallback(() => {
     router.replace("/login" as never);
@@ -236,7 +257,7 @@ export default function AccountQuickSettingsScreen() {
 
   const renderAuthState = () => (
     <View style={styles.authState}>
-      <Text style={styles.authTitle}>You're not signed in</Text>
+      <Text style={styles.authTitle}>You&apos;re not signed in</Text>
       <Text style={styles.authText}>
         Log in or create an account to finish setting up your DigiLearn profile.
       </Text>
