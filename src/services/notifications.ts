@@ -34,6 +34,7 @@ export type NotificationRecord = {
 
 export const DIGILEARN_PUBLISHER_NAME = "DigiLearn";
 export const DIGILEARN_PUBLISHER_AVATAR = "@/assets/images/panda.png";
+export const MAX_SAVED_NOTIFICATIONS = 50;
 
 export const NOTIFICATION_TYPE_META: Record<
   NotificationType,
@@ -309,11 +310,15 @@ export async function appendNotificationForUser(
     ...notification,
     createdAt: notification.createdAt ?? Timestamp.now(),
   });
+  const notifications = [
+    ...current.slice(-(MAX_SAVED_NOTIFICATIONS - 1)),
+    nextNotification,
+  ];
 
   await setDoc(
     userRef,
     {
-      notifications: [...current, nextNotification],
+      notifications,
     },
     { merge: true },
   );
@@ -335,9 +340,13 @@ export async function appendNotificationToAllUsers(
         ...notification,
         createdAt: notification.createdAt ?? Timestamp.now(),
       });
+      const notifications = [
+        ...current.slice(-(MAX_SAVED_NOTIFICATIONS - 1)),
+        nextNotification,
+      ];
 
       await updateDoc(userDoc.ref, {
-        notifications: [...current, nextNotification],
+        notifications,
       });
     }),
   );

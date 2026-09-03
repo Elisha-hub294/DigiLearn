@@ -1,4 +1,11 @@
-import { addDoc, collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+} from "firebase/firestore";
 import { auth, db } from "../../firebaseConfig";
 import { ActivityItem, ActivityRecord, ActivityType } from "../types/activity";
 
@@ -169,7 +176,8 @@ export async function fetchActivityEvents(): Promise<ActivityEvent[]> {
     .filter((item) => item.userId && item.type && item.openedAt)
     .sort(
       (first, second) =>
-        new Date(second.openedAt).getTime() - new Date(first.openedAt).getTime(),
+        new Date(second.openedAt).getTime() -
+        new Date(first.openedAt).getTime(),
     );
 }
 
@@ -230,110 +238,113 @@ export async function fetchUserActivity(
 
       const activityItems: ActivityItem[] = [];
 
-    // 1. Fetch Lessons
+      // 1. Fetch Lessons
       await Promise.all(
         lessonRecords.map(async (record) => {
           try {
-        const lessonSnap = await getDoc(doc(db, "trendingLessons", record.id));
-        if (lessonSnap.exists()) {
-          const data = lessonSnap.data();
-          const title = data.title || data.name || "Untitled lesson";
-          const teacher = data.teacher ? `Teacher: ${data.teacher}` : "";
-          const subject = data.subject || "General";
-          const description =
-            data.description || (teacher ? `${teacher} • ${subject}` : subject);
+            const lessonSnap = await getDoc(
+              doc(db, "trendingLessons", record.id),
+            );
+            if (lessonSnap.exists()) {
+              const data = lessonSnap.data();
+              const title = data.title || data.name || "Untitled lesson";
+              const teacher = data.teacher ? `Teacher: ${data.teacher}` : "";
+              const subject = data.subject || "General";
+              const description =
+                data.description ||
+                (teacher ? `${teacher} • ${subject}` : subject);
 
-          activityItems.push({
-            id: `lesson-${record.id}-${record.openedAt}`,
-            targetId: record.id,
-            type: "lesson",
-            title,
-            description,
-            openedAt: record.openedAt,
-            rawDoc: { id: lessonSnap.id, ...data },
-          });
-        }
-      } catch (e) {
-        console.warn(`Could not fetch lesson doc ${record.id}:`, e);
-      }
+              activityItems.push({
+                id: `lesson-${record.id}-${record.openedAt}`,
+                targetId: record.id,
+                type: "lesson",
+                title,
+                description,
+                openedAt: record.openedAt,
+                rawDoc: { id: lessonSnap.id, ...data },
+              });
+            }
+          } catch (e) {
+            console.warn(`Could not fetch lesson doc ${record.id}:`, e);
+          }
         }),
       );
 
-    // 2. Fetch Pages / Past Papers / Teacher Notes
+      // 2. Fetch Pages / Past Papers / Teacher Notes
       await Promise.all(
         pageRecords.map(async (record) => {
           try {
-        let pageSnap = await getDoc(doc(db, "pages", record.id));
-        let data: any = null;
+            let pageSnap = await getDoc(doc(db, "pages", record.id));
+            let data: any = null;
 
-        if (pageSnap.exists()) {
-          data = pageSnap.data();
-        } else {
-          // Try pastPaper collection
-          const paperSnap = await getDoc(doc(db, "pastPaper", record.id));
-          if (paperSnap.exists()) {
-            data = paperSnap.data();
+            if (pageSnap.exists()) {
+              data = pageSnap.data();
+            } else {
+              // Try pastPaper collection
+              const paperSnap = await getDoc(doc(db, "pastPaper", record.id));
+              if (paperSnap.exists()) {
+                data = paperSnap.data();
+              }
+            }
+
+            if (data) {
+              const title = data.title || data.name || "Untitled note";
+              const subject = data.subject ? `Subject: ${data.subject}` : "";
+              const typeLabel = data.type || data.examType || "Study Note";
+              const description =
+                data.description ||
+                data.subtitle ||
+                (subject ? `${typeLabel} • ${subject}` : typeLabel);
+
+              activityItems.push({
+                id: `page-${record.id}-${record.openedAt}`,
+                targetId: record.id,
+                type: "page",
+                title,
+                description,
+                openedAt: record.openedAt,
+                rawDoc: { id: record.id, ...data },
+              });
+            }
+          } catch (e) {
+            console.warn(`Could not fetch page doc ${record.id}:`, e);
           }
-        }
-
-        if (data) {
-          const title = data.title || data.name || "Untitled note";
-          const subject = data.subject ? `Subject: ${data.subject}` : "";
-          const typeLabel = data.type || data.examType || "Study Note";
-          const description =
-            data.description ||
-            data.subtitle ||
-            (subject ? `${typeLabel} • ${subject}` : typeLabel);
-
-          activityItems.push({
-            id: `page-${record.id}-${record.openedAt}`,
-            targetId: record.id,
-            type: "page",
-            title,
-            description,
-            openedAt: record.openedAt,
-            rawDoc: { id: record.id, ...data },
-          });
-        }
-      } catch (e) {
-        console.warn(`Could not fetch page doc ${record.id}:`, e);
-      }
         }),
       );
 
-    // 3. Fetch Books
+      // 3. Fetch Books
       await Promise.all(
         bookRecords.map(async (record) => {
           try {
-        const bookSnap = await getDoc(doc(db, "books", record.id));
-        if (bookSnap.exists()) {
-          const data = bookSnap.data();
-          const title =
-            data.title || data.name || data.bookTitle || "Untitled book";
-          const author =
-            data.author || data.writer
-              ? `By ${data.author || data.writer}`
-              : "";
-          const description =
-            data.description ||
-            data.subtitle ||
-            data.summary ||
-            author ||
-            "Academic Book";
+            const bookSnap = await getDoc(doc(db, "books", record.id));
+            if (bookSnap.exists()) {
+              const data = bookSnap.data();
+              const title =
+                data.title || data.name || data.bookTitle || "Untitled book";
+              const author =
+                data.author || data.writer
+                  ? `By ${data.author || data.writer}`
+                  : "";
+              const description =
+                data.description ||
+                data.subtitle ||
+                data.summary ||
+                author ||
+                "Academic Book";
 
-          activityItems.push({
-            id: `book-${record.id}-${record.openedAt}`,
-            targetId: record.id,
-            type: "book",
-            title,
-            description,
-            openedAt: record.openedAt,
-            rawDoc: { id: bookSnap.id, ...data },
-          });
-        }
-      } catch (e) {
-        console.warn(`Could not fetch book doc ${record.id}:`, e);
-      }
+              activityItems.push({
+                id: `book-${record.id}-${record.openedAt}`,
+                targetId: record.id,
+                type: "book",
+                title,
+                description,
+                openedAt: record.openedAt,
+                rawDoc: { id: bookSnap.id, ...data },
+              });
+            }
+          } catch (e) {
+            console.warn(`Could not fetch book doc ${record.id}:`, e);
+          }
         }),
       );
 

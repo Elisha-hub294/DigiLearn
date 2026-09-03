@@ -2,14 +2,14 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-    BackHandler,
-    FlatList,
-    Pressable,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  BackHandler,
+  FlatList,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { ActivityCard } from "../components/ui/ActivityCard";
 import { ActivitySkeleton } from "../components/ui/ActivitySkeleton";

@@ -1,7 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BackHandler,
   Pressable,
@@ -33,6 +33,10 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, notifications, loading, error, markRead } = useNotifications();
+  const [unavailableDialog, setUnavailableDialog] = useState<{
+    visible: boolean;
+    notificationId: string | null;
+  }>({ visible: false, notificationId: null });
   const horizontalPadding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - horizontalPadding * 2);
 
@@ -280,7 +284,7 @@ export default function NotificationsScreen() {
         });
       }
     },
-    [markRead, router, user, handleDeleteNotification],
+    [markRead, router, user],
   );
 
   if (!user && !loading) {
