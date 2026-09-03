@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { TopicalNote } from "./pageTypes";
@@ -13,7 +14,9 @@ export function SimilarPageCard({
   onPress: () => void;
   index: number;
 }) {
-  const previewUri = page.preview;
+  const [imageFailed, setImageFailed] = useState(false);
+  const previewUri = page.cover?.trim();
+  const showFallback = !previewUri || imageFailed;
 
   return (
     <Animated.View entering={FadeIn.delay(index * 70).duration(300)}>
@@ -24,20 +27,19 @@ export function SimilarPageCard({
         style={styles.card}
       >
         <View style={styles.previewWrap}>
-          {previewUri ? (
+          {!showFallback ? (
             <Image
               source={{ uri: previewUri }}
               style={styles.preview}
               contentFit="cover"
               transition={180}
+              onError={() => setImageFailed(true)}
             />
           ) : (
-            <View style={[styles.preview, styles.previewFallback]} />
+            <View style={[styles.preview, styles.previewFallback]}>
+              <Feather name="file-text" size={20} color="#FFFFFF" />
+            </View>
           )}
-          <View style={styles.overlay} />
-          <View style={styles.iconContainer}>
-            <Feather name="file-text" size={20} color="#FFFFFF" />
-          </View>
         </View>
         <Text style={styles.title} numberOfLines={2}>
           {page.title || "Untitled Page"}
@@ -69,13 +71,8 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  previewFallback: { backgroundColor: "#D1D5DB" },
-  overlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
-  },
-  iconContainer: {
-    ...StyleSheet.absoluteFill,
+  previewFallback: {
+    backgroundColor: "#64748B",
     alignItems: "center",
     justifyContent: "center",
   },

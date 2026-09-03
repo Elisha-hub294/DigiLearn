@@ -1,4 +1,3 @@
-import React from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { TopicalNote } from "./pageTypes";
 import { SimilarPageCard } from "./SimilarPageCard";
@@ -28,7 +27,9 @@ export function SimilarPages({
           onPress={onSeeAll}
           hitSlop={8}
         >
-          <Text style={[styles.seeAllText, { color: activeAccent }]}>See all</Text>
+          <Text style={[styles.seeAllText, { color: activeAccent }]}>
+            See all
+          </Text>
         </Pressable>
       </View>
       <ScrollView

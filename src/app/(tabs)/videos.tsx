@@ -3,14 +3,12 @@ import { VideoLesson } from "@/components/ui/TrendingVideoCard";
 import { VideoCard } from "@/components/ui/VideoCard";
 import { VideosScreenHeader } from "@/components/ui/VideosScreenHeader";
 import { getVideoThumbnailUrl } from "@/utils/videoUtils";
-import { Ionicons } from "@expo/vector-icons";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -278,14 +276,6 @@ export default function VideosScreen() {
           />
         )}
       </Animated.View>
-      <Pressable
-        accessibilityLabel="Add a new lesson"
-        accessibilityRole="button"
-        onPress={() => router.push("/add-trending-lesson" as never)}
-        style={styles.fab}
-      >
-        <Ionicons name="add" size={28} color="#fff" />
-      </Pressable>
     </SafeAreaView>
   );
 }
@@ -316,13 +306,13 @@ const styles = StyleSheet.create({
   },
   emptyImage: {
     height: 220,
-    marginBottom: 18,
+    marginBottom: 10,
     width: "100%",
   },
   emptyTitle: {
-    color: "#111",
-    fontSize: 20,
-    fontWeight: "700",
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "600",
     textAlign: "center",
   },
   emptyText: {
@@ -331,22 +321,5 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: 8,
     textAlign: "center",
-  },
-
-  fab: {
-    alignItems: "center",
-    backgroundColor: colors.primary,
-    borderRadius: 28,
-    bottom: 28,
-    elevation: 6,
-    height: 56,
-    justifyContent: "center",
-    position: "absolute",
-    right: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    width: 56,
   },
 });

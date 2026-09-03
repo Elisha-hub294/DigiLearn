@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { auth, db } from "../../firebaseConfig";
+import { TopicalNote } from "../components/page/pageTypes";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { PaperItem, useLibraryData } from "../hooks/useLibraryData";
@@ -24,7 +25,7 @@ import { recordUserActivity } from "../services/activityService";
 import { resolveVideoImageSource } from "../utils/videoUtils";
 
 type Book = { id: string; title: string; author: string; image: string };
-type ViewMode = "books" | "courses" | "papers";
+type ViewMode = "books" | "courses" | "papers" | "pages";
 
 const getBookText = (value: unknown, fallback: string): string => {
   if (Array.isArray(value) && value.length > 0) {
@@ -32,6 +33,22 @@ const getBookText = (value: unknown, fallback: string): string => {
   }
 
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
+};
+
+const parsePages = (value: string | string[] | undefined): TopicalNote[] => {
+  if (!value) return [];
+  const serialized = Array.isArray(value) ? value[0] : value;
+  try {
+    const parsed = JSON.parse(serialized);
+    return Array.isArray(parsed) ? (parsed as TopicalNote[]) : [];
+  } catch {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(serialized));
+      return Array.isArray(parsed) ? (parsed as TopicalNote[]) : [];
+    } catch {
+      return [];
+    }
+  }
 };
 
 export default function SeeAllScreen() {
@@ -43,11 +60,15 @@ export default function SeeAllScreen() {
     type?: string;
     paperType?: string;
     paperYear?: string;
+    pages?: string | string[];
   }>();
   const mode: ViewMode =
-    params.type === "courses" || params.type === "papers"
+    params.type === "courses" ||
+    params.type === "papers" ||
+    params.type === "pages"
       ? params.type
       : "books";
+  const pages = useMemo(() => parsePages(params.pages), [params.pages]);
   const columns = width >= 700 ? 3 : width >= 430 ? 2 : 1;
   const { paperCollections, loading: papersLoading } = useLibraryData();
   const {
@@ -163,14 +184,25 @@ export default function SeeAllScreen() {
               ? `${typePart}${activeYear}`
               : `${typePart}Past Papers`;
           })()
-        : "Books";
-  const data = mode === "books" ? books : mode === "courses" ? lessons : papers;
+        : mode === "pages"
+          ? "Similar Pages"
+          : "Books";
+  const data =
+    mode === "books"
+      ? books
+      : mode === "courses"
+        ? lessons
+        : mode === "papers"
+          ? papers
+          : pages;
   const loading =
     mode === "books"
       ? booksLoading
       : mode === "courses"
         ? coursesLoading
-        : papersLoading;
+        : mode === "papers"
+          ? papersLoading
+          : false;
 
   return (
     <View style={styles.screen}>
@@ -319,6 +351,19 @@ export default function SeeAllScreen() {
                       } as any)
                     }
                   />
+                ) : mode === "pages" ? (
+                  <PageTile
+                    item={item}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/page-preview",
+                        params: {
+                          id: item.id,
+                          source: "see-all",
+                        },
+                      } as any)
+                    }
+                  />
                 ) : (
                   <PaperTile
                     item={item}
@@ -401,6 +446,47 @@ function CourseTile({
       </Text>
       <Text style={styles.cardMeta} numberOfLines={1}>
         {item.teacher}
+      </Text>
+    </Pressable>
+  );
+}
+
+function PageTile({
+  item,
+  onPress,
+}: {
+  item: TopicalNote;
+  onPress: () => void;
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const cover = item.cover?.trim();
+
+  return (
+    <Pressable
+      style={styles.card}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Open ${item.title || "Untitled page"}`}
+    >
+      {cover && !imageFailed ? (
+        <Image
+          source={{ uri: cover }}
+          style={styles.pageImage}
+          contentFit="cover"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <View style={[styles.pageImage, styles.pageImageFallback]}>
+          <Feather name="file-text" size={28} color={colors.white} />
+        </View>
+      )}
+      <Text style={styles.cardTitle} numberOfLines={2}>
+        {item.title || "Untitled page"}
+      </Text>
+      <Text style={styles.cardMeta} numberOfLines={1}>
+        {Array.isArray(item.subject)
+          ? item.subject.join(", ")
+          : item.subject || "Study note"}
       </Text>
     </Pressable>
   );
@@ -518,6 +604,12 @@ const styles = StyleSheet.create({
   },
   courseImage: { width: "100%", height: "100%" },
   paperImage: { width: "100%", aspectRatio: 1.35 },
+  pageImage: { width: "100%", aspectRatio: 1.35 },
+  pageImageFallback: {
+    backgroundColor: "#64748B",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   play: {
     position: "absolute",
     top: spacing.sm,

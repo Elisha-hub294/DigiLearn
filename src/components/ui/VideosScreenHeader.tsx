@@ -70,13 +70,15 @@ export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
         )}
       </Animated.View>
 
-      <Animated.View
-        entering={FadeInUp.duration(480)}
-        style={styles.section}
-        onLayout={handleTrendingLayout}
-      >
-        <SectionHeader title="Trending Lessons" />
-      </Animated.View>
+      {trendingLessons.length > 0 && (
+        <Animated.View
+          entering={FadeInUp.duration(480)}
+          style={styles.section}
+          onLayout={handleTrendingLayout}
+        >
+          <SectionHeader title="Trending Lessons" />
+        </Animated.View>
+      )}
     </>
   );
 };

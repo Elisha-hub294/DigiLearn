@@ -123,6 +123,7 @@ export function PagePreviewScreen() {
   );
   const [subjectAccent, setSubjectAccent] = useState<string>("#000000");
   const [loading, setLoading] = useState(true);
+  const [currentTime] = useState(() => Date.now());
   const [bookmarked, setBookmarked] = useState(false);
   const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
   const [noticeDialog, setNoticeDialog] = useState<{
@@ -136,10 +137,10 @@ export function PagePreviewScreen() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
 
     (async () => {
       try {
+        setLoading(true);
         if (!id) return;
 
         if (auth.currentUser?.uid) {
@@ -359,14 +360,14 @@ export function PagePreviewScreen() {
         d = note.createdAt;
       }
       if (d) {
-        const diffMs = Date.now() - d.getTime();
+        const diffMs = currentTime - d.getTime();
         return diffMs <= 30 * 24 * 60 * 60 * 1000;
       }
     } catch {
       // ignore
     }
     return false;
-  }, [note?.createdAt]);
+  }, [currentTime, note?.createdAt]);
 
   if (loading || !note) {
     return (
@@ -534,9 +535,13 @@ export function PagePreviewScreen() {
                 } as any)
               }
               onSeeAll={() => {
-                if (source === "home") {
-                  router.push("/library");
-                }
+                router.push({
+                  pathname: "/see-all",
+                  params: {
+                    type: "pages",
+                    pages: encodeURIComponent(JSON.stringify(similarPages)),
+                  },
+                } as any);
               }}
             />
           </Animated.View>
