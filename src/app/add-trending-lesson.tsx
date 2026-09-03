@@ -1,5 +1,6 @@
 import { extractYoutubeId, getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
@@ -185,6 +186,7 @@ export default function AddTrendingLessonScreen() {
   const [duration, setDuration] = useState("");
   const [thumbnail, setThumbnail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pasteLoading, setPasteLoading] = useState(false);
   const [metaLoading, setMetaLoading] = useState(false);
   const [linkError, setLinkError] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
@@ -245,6 +247,20 @@ export default function AddTrendingLessonScreen() {
       setTitle("");
     } finally {
       setMetaLoading(false);
+    }
+  };
+
+  const handlePasteLink = async () => {
+    setPasteLoading(true);
+    try {
+      const pastedLink = (await Clipboard.getStringAsync()).trim();
+      if (pastedLink) {
+        await handleLinkChange(pastedLink);
+      }
+    } catch {
+      setLinkError("Unable to read a link from the clipboard.");
+    } finally {
+      setPasteLoading(false);
     }
   };
 
@@ -324,16 +340,43 @@ export default function AddTrendingLessonScreen() {
           </Text>
 
           <Text style={styles.label}>YouTube Link</Text>
-          <TextInput
-            value={link}
-            onChangeText={handleLinkChange}
-            placeholder="https://www.youtube.com/watch?v=..."
-            style={[styles.input, linkError ? styles.inputError : null]}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-            textContentType="URL"
-          />
+          <View style={styles.linkInputRow}>
+            <TextInput
+              value={link}
+              onChangeText={handleLinkChange}
+              placeholder="https://www.youtube.com/watch?v=..."
+              style={[
+                styles.input,
+                styles.linkInput,
+                linkError ? styles.inputError : null,
+              ]}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              textContentType="URL"
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Paste YouTube link"
+              disabled={pasteLoading}
+              style={[
+                styles.pasteButton,
+                pasteLoading && styles.pasteButtonDisabled,
+              ]}
+              onPress={handlePasteLink}
+            >
+              {pasteLoading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Ionicons
+                  name="clipboard-outline"
+                  size={18}
+                  color={colors.primary}
+                />
+              )}
+              <Text style={styles.pasteButtonText}>Paste</Text>
+            </Pressable>
+          </View>
           {linkError ? <Text style={styles.errorText}>{linkError}</Text> : null}
 
           {(thumbnail || metaLoading) && (
@@ -597,6 +640,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 13,
     color: colors.text,
+  },
+  linkInputRow: {
+    alignItems: "stretch",
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  linkInput: {
+    flex: 1,
+  },
+  pasteButton: {
+    alignItems: "center",
+    borderColor: "rgba(37, 99, 235, 0.3)",
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 5,
+    justifyContent: "center",
+    minWidth: 76,
+    paddingHorizontal: 10,
+  },
+  pasteButtonDisabled: {
+    opacity: 0.6,
+  },
+  pasteButtonText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "700",
   },
   inputError: {
     borderColor: "#DC2626",

@@ -468,7 +468,15 @@ export function useGlobalSearch(
         "",
         "",
         p.subject,
-        undefined,
+        typeof p.cover === "string" && p.cover.trim()
+          ? p.cover.trim()
+          : typeof p.image === "string" && p.image.trim()
+            ? p.image.trim()
+            : typeof p.coverImage === "string" && p.coverImage.trim()
+              ? p.coverImage.trim()
+              : typeof p.thumbnail === "string" && p.thumbnail.trim()
+                ? p.thumbnail.trim()
+                : undefined,
         { doc: p.doc || p.pdf },
       );
     });
