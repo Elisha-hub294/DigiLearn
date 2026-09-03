@@ -37,6 +37,7 @@ type PageNote = {
   level?: string;
   schoolClass?: string;
   cover?: string;
+  visits?: number;
   readStatus?: string;
   isRead?: boolean;
   progress?: number;
@@ -63,7 +64,7 @@ const FILTER_OPTIONS = {
   sortBy: [
     "Newest",
     "Oldest",
-    "Most Progress",
+    "Most Read",
     "Recently Updated",
     "Alphabetical (A–Z)",
   ],
@@ -146,10 +147,9 @@ const sortNotes = (notes: PageNote[], sortBy: string) => {
   switch (sortBy) {
     case "Oldest":
       return list.sort((a, b) => noteDate(a) - noteDate(b));
-    case "Most Progress":
+    case "Most Read":
       return list.sort(
-        (a, b) =>
-          (Number(b.progress ?? 0) || 0) - (Number(a.progress ?? 0) || 0),
+        (a, b) => (Number(b.visits ?? 0) || 0) - (Number(a.visits ?? 0) || 0),
       );
     case "Recently Updated":
       return list.sort(
@@ -308,7 +308,7 @@ export default function PagesScreen() {
           setFilters({
             ...restored,
             sortBy:
-              restored.sortBy === "Most Read"
+              restored.sortBy === "Most Progress"
                 ? DEFAULT_FILTERS.sortBy
                 : restored.sortBy,
             level: ["Primary", "O level", "A level"].includes(restored.level)

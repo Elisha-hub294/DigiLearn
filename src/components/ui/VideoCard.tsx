@@ -3,12 +3,25 @@ import {
   formatVideoUploadedAt,
   resolveVideoImageSource,
 } from "@/utils/videoUtils";
+import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+  Linking,
+  Pressable,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { auth } from "../../../firebaseConfig";
+import { useProfile } from "../../contexts/ProfileContext";
 import { recordUserActivity } from "../../services/activityService";
+import { toggleSavedItem } from "../../services/userProfile";
+import { ActionDialog } from "./ActionDialog";
+import { CardActionMenu } from "./CardActionMenu";
 import { DurationBadge } from "./DurationBadge";
 import { PlayButton } from "./PlayButton";
 import { TeacherInfo } from "./TeacherInfo";
@@ -24,10 +37,40 @@ export function VideoCard({
   isGrid?: boolean;
 }) {
   const router = useRouter();
+  const { user, profile } = useProfile();
+  const [menuAnchor, setMenuAnchor] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [dialogState, setDialogState] = useState<{
+    title: string;
+    message: string;
+    primaryText?: string;
+    secondaryText?: string;
+    onPrimary?: () => void;
+    onSecondary?: () => void;
+  } | null>(null);
+  const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
+  const menuButtonRef = useRef<View>(null);
+
   const item = {
     ...rawItem,
     uploadedAt: formatVideoUploadedAt(rawItem.uploadedAt),
   };
+  const [isSavedState, setIsSavedState] = useState(
+    Boolean(user && profile?.["saved-lessons"]?.includes(item.id)),
+  );
+
+  useEffect(() => {
+    setIsSavedState(
+      Boolean(user && profile?.["saved-lessons"]?.includes(item.id)),
+    );
+  }, [item.id, profile, user]);
+
+  const isSaved = isSavedState;
 
   function openLesson() {
     if (auth.currentUser?.uid) {
@@ -49,38 +92,207 @@ export function VideoCard({
     });
   }
 
+  const handleOpenMenu = () => {
+    menuButtonRef.current?.measureInWindow((x, y, width, height) => {
+      setMenuAnchor({ x, y, width, height });
+      setActiveMenuId(item.id);
+    });
+  };
+
+  const handleCloseMenu = () => {
+    setMenuAnchor(null);
+    setActiveMenuId(null);
+  };
+
+  const handleToggleSave = async () => {
+    if (!user) {
+      setShowGuestSaveDialog(true);
+      return;
+    }
+
+    const nextSaved = !isSaved;
+    setIsSavedState(nextSaved);
+
+    try {
+      await toggleSavedItem(user.uid, "saved-lessons", item.id, isSaved);
+      setDialogState({
+        title: nextSaved ? "Saved to library" : "Removed from saved lessons",
+        message: nextSaved
+          ? "You can revisit this lesson from your saved collection."
+          : "This lesson has been removed from your saved list.",
+        primaryText: "Done",
+        onPrimary: () => setDialogState(null),
+      });
+    } catch (error) {
+      setIsSavedState(isSaved);
+      console.error("Failed to update saved lesson state:", error);
+      setDialogState({
+        title: "Couldn't update this lesson",
+        message: "Please try again.",
+        primaryText: "OK",
+        onPrimary: () => setDialogState(null),
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = item.link?.trim() || "";
+
+    try {
+      await Share.share({
+        title: item.title,
+        message: `Watch "${item.title}" by ${item.teacher} on DigiLearn.`,
+        url: shareUrl,
+      });
+    } catch (error) {
+      console.error("Failed to share lesson:", error);
+      setDialogState({
+        title: "Couldn't share this lesson",
+        message: "Please try again.",
+        primaryText: "OK",
+        onPrimary: () => setDialogState(null),
+      });
+    }
+  };
+
+  const handleReportProblem = () => {
+    const subject = encodeURIComponent("Report a Problem in DigiLearn lesson");
+    const body = encodeURIComponent(
+      `Problem ID: ${item.id}\nLesson Title: ${item.title}\nTeacher: ${item.teacher}\n\nReport:\n`,
+    );
+    const mailtoUrl = `mailto:support@digilearn.app?subject=${subject}&body=${body}`;
+
+    Linking.canOpenURL("mailto:").then((supported) => {
+      if (!supported) {
+        setDialogState({
+          title: "Email unavailable",
+          message: "An email application could not be opened on this device.",
+          primaryText: "OK",
+          onPrimary: () => setDialogState(null),
+        });
+        return;
+      }
+
+      Linking.openURL(mailtoUrl).catch(() => {
+        setDialogState({
+          title: "Email unavailable",
+          message: "An email application could not be opened on this device.",
+          primaryText: "OK",
+          onPrimary: () => setDialogState(null),
+        });
+      });
+    });
+  };
+
+  const menuActions = [
+    {
+      label: isSaved ? "Remove bookmark" : "Save lesson",
+      icon: "bookmark",
+      accessibilityLabel: isSaved
+        ? "Remove this lesson from saved"
+        : "Save this lesson",
+      onPress: handleToggleSave,
+    },
+    {
+      label: "Share",
+      icon: "share-2",
+      accessibilityLabel: "Share this lesson",
+      onPress: handleShare,
+    },
+    {
+      label: "Report a problem",
+      icon: "alert-circle",
+      accessibilityLabel: "Report a problem with this lesson",
+      onPress: handleReportProblem,
+    },
+  ] as const;
+
   return (
-    <Animated.View
-      entering={FadeInDown.delay(Math.min(index * 60, 300)).duration(380)}
-      style={[styles.card, isGrid && styles.gridCard]}
-    >
-      <Pressable onPress={openLesson}>
-        <View style={styles.thumbnail}>
-          <Image
-            source={resolveVideoImageSource(item.thumbnail, item.link)}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            transition={250}
-          />
-          <View style={styles.overlay} />
-          <View style={styles.play}>
-            <PlayButton label={`Play ${item.title}`} />
-          </View>
-          <View style={styles.duration}>
-            <DurationBadge duration={item.duration} />
-          </View>
-          {item.isNew && (
-            <View style={styles.new}>
-              <Text style={styles.newText}>NEW</Text>
+    <>
+      <Animated.View
+        entering={FadeInDown.delay(Math.min(index * 60, 300)).duration(380)}
+        style={[styles.card, isGrid && styles.gridCard]}
+      >
+        <Pressable onPress={openLesson}>
+          <View style={styles.thumbnail}>
+            <Image
+              source={resolveVideoImageSource(item.thumbnail, item.link)}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              transition={250}
+            />
+            <View style={styles.overlay} />
+            <View style={styles.play}>
+              <PlayButton label={`Play ${item.title}`} />
             </View>
-          )}
-        </View>
-      </Pressable>
-      <TeacherInfo name={item.teacher} uploadedAt={item.uploadedAt} />
-      <Text numberOfLines={2} style={styles.title}>
-        {item.title}
-      </Text>
-    </Animated.View>
+            <View style={styles.duration}>
+              <DurationBadge duration={item.duration} />
+            </View>
+            <Pressable
+              ref={menuButtonRef}
+              accessibilityRole="button"
+              accessibilityLabel="More options"
+              style={styles.menuButton}
+              onPress={(event) => {
+                event.stopPropagation();
+                handleOpenMenu();
+              }}
+            >
+              <Icon name="more-vertical" size={18} color="#fff" />
+            </Pressable>
+            {item.isNew && (
+              <View style={styles.new}>
+                <Text style={styles.newText}>NEW</Text>
+              </View>
+            )}
+          </View>
+        </Pressable>
+        <TeacherInfo name={item.teacher} uploadedAt={item.uploadedAt} />
+        <Text numberOfLines={2} style={styles.title}>
+          {item.title}
+        </Text>
+      </Animated.View>
+
+      <CardActionMenu
+        visible={activeMenuId === item.id && !!menuAnchor}
+        anchor={menuAnchor}
+        actions={menuActions.map((action) => ({
+          ...action,
+          icon: action.icon as any,
+        }))}
+        onClose={handleCloseMenu}
+      />
+
+      <ActionDialog
+        visible={Boolean(dialogState)}
+        title={dialogState?.title ?? "Notice"}
+        message={dialogState?.message ?? ""}
+        primaryText={dialogState?.primaryText ?? "OK"}
+        secondaryText={dialogState?.secondaryText}
+        onPrimary={() => {
+          const onPrimary = dialogState?.onPrimary;
+          setDialogState(null);
+          onPrimary?.();
+        }}
+        onSecondary={() => {
+          const onSecondary = dialogState?.onSecondary;
+          setDialogState(null);
+          onSecondary?.();
+        }}
+        onClose={() => setDialogState(null)}
+      />
+
+      <ActionDialog
+        visible={showGuestSaveDialog}
+        title="Save lessons to your library"
+        message="Save this lesson to your personal library and access it anytime. Log in or create a free account to continue."
+        primaryText="Log in"
+        secondaryText="Sign up"
+        onPrimary={() => router.push("/login" as never)}
+        onSecondary={() => router.push("/signup" as never)}
+        onClose={() => setShowGuestSaveDialog(false)}
+      />
+    </>
   );
 }
 
@@ -91,8 +303,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#ddd",
     borderRadius: radius.sm,
     height: 200,
-    width: "100%", // Explicit full width for grid/flex layout calculation
+    width: "100%",
     overflow: "hidden",
+    position: "relative",
   },
   overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(0,0,0,0.25)" },
   play: {
@@ -105,6 +318,18 @@ const styles = StyleSheet.create({
     top: 0,
   },
   duration: { bottom: 10, position: "absolute", right: 10 },
+  menuButton: {
+    position: "absolute",
+    right: 8,
+    top: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 5,
+  },
   new: {
     backgroundColor: "#FF3B30",
     borderRadius: 6,

@@ -133,6 +133,7 @@ export default function VideosScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isOffline, setIsOffline] = useState(false);
   const flashListRef = useRef<FlashListRef<LessonRecord>>(null);
   const trendingSectionY = useRef<number>(0);
   const isTablet = width >= 768;
@@ -155,9 +156,13 @@ export default function VideosScreen() {
             return rightTime - leftTime;
           });
         setLessons(nextLessons);
+        setIsOffline(false);
         setLoading(false);
       },
-      () => {
+      (error) => {
+        console.warn("Failed to load trending lessons:", error);
+        setLessons([]);
+        setIsOffline(true);
         setLoading(false);
       },
     );
@@ -204,7 +209,13 @@ export default function VideosScreen() {
     return visibleLatest.slice(0, 3);
   }, [lessons, subject, visibleLatest]);
 
-  const showEmptyState = !loading && visibleLatest.length === 0;
+  const showEmptyState = !loading && !isOffline && visibleLatest.length === 0;
+  const onlineEmptyTitle = isOffline
+    ? "You're offline"
+    : "No lessons in this subject yet";
+  const onlineEmptyMessage = isOffline
+    ? "Check your internet connection and try again."
+    : "Try another subject or check back soon for new lessons.";
 
   const header = useMemo(
     () => (
@@ -229,7 +240,7 @@ export default function VideosScreen() {
         entering={FadeIn.duration(380)}
         style={[styles.container, { maxWidth: contentMaxWidth }]}
       >
-        {showEmptyState ? (
+        {showEmptyState || isOffline ? (
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={styles.emptyStateContainer}
@@ -245,9 +256,8 @@ export default function VideosScreen() {
                 style={styles.emptyImage}
                 contentFit="contain"
               />
-              <Text style={styles.emptyTitle}>
-                No lessons in this subject yet
-              </Text>
+              <Text style={styles.emptyTitle}>{onlineEmptyTitle}</Text>
+              <Text style={styles.emptyText}>{onlineEmptyMessage}</Text>
             </View>
           </ScrollView>
         ) : (

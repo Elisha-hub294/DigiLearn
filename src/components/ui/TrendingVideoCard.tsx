@@ -107,10 +107,18 @@ export function TrendingVideoCard({
           <DurationBadge duration={item.duration} />
         </View>
       </View>
-      <Text numberOfLines={1} ellipsizeMode="tail" style={styles.title}>
+      <Text
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        style={[styles.title, styles.truncateText]}
+      >
         {item.title}
       </Text>
-      <Text numberOfLines={1} ellipsizeMode="tail" style={styles.meta}>
+      <Text
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        style={[styles.meta, styles.truncateText]}
+      >
         {item.teacher} • {item.uploadedAt}
       </Text>
     </AnimatedPressable>
@@ -147,12 +155,16 @@ const styles = StyleSheet.create({
   },
   playIconGlyph: { marginLeft: 3 },
   duration: { bottom: 10, position: "absolute", right: 10 },
+  truncateText: {
+    width: "100%",
+  },
   title: {
     color: "#111",
     fontSize: 17,
     fontWeight: "500",
     lineHeight: 22,
     marginTop: 5,
+    textTransform: "capitalize",
   },
   meta: { color: "#6E6E73", fontSize: 13, marginTop: 5 },
 });
