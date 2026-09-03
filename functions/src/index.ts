@@ -219,9 +219,10 @@ export const getYoutubeVideoDuration = onCall(async (request) => {
     }
 
     const html = await response.text();
-    const durationMatch = html.match(
-      /(?:\\?"|&quot;)lengthSeconds(?:\\?"|&quot;)(?:\\?:)?(?:\\?"|&quot;)(\d+)/,
-    );
+    const durationMatch =
+      html.match(/"lengthSeconds"\s*:\s*"(\d+)"/) ||
+      html.match(/\\?"lengthSeconds\\?"\s*:\s*\\?"(\d+)\\?"/) ||
+      html.match(/&quot;lengthSeconds&quot;\s*:\s*&quot;(\d+)&quot;/);
     const totalSeconds = Number(durationMatch?.[1] ?? 0);
 
     return {

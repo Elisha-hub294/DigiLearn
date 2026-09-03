@@ -143,17 +143,37 @@ exports.getYoutubeVideoDuration = (0, https_1.onCall)(async (request) => {
         throw new https_1.HttpsError("invalid-argument", "A valid YouTube video is required.");
     }
     try {
+        const playerResponse = await fetch("https://www.youtube.com/youtubei/v1/player?prettyPrint=false", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                videoId,
+                context: {
+                    client: {
+                        clientName: "WEB",
+                        clientVersion: "2.20250101.00.00",
+                    },
+                },
+            }),
+        });
+        if (playerResponse.ok) {
+            const playerData = (await playerResponse.json());
+            const playerSeconds = Number(playerData.videoDetails?.lengthSeconds ?? 0);
+            if (Number.isFinite(playerSeconds) && playerSeconds > 0) {
+                return { duration: playerSeconds };
+            }
+        }
         const response = await fetch(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, { headers: { "User-Agent": "Mozilla/5.0" } });
         if (!response.ok) {
             throw new Error(`YouTube returned ${response.status}`);
         }
         const html = await response.text();
-        const durationMatch = html.match(/"lengthSeconds":"(\d+)"/);
+        const durationMatch = html.match(/"lengthSeconds"\s*:\s*"(\d+)"/) ||
+            html.match(/\\?"lengthSeconds\\?"\s*:\s*\\?"(\d+)\\?"/) ||
+            html.match(/&quot;lengthSeconds&quot;\s*:\s*&quot;(\d+)&quot;/);
         const totalSeconds = Number(durationMatch?.[1] ?? 0);
         return {
-            duration: Number.isFinite(totalSeconds) && totalSeconds > 0
-                ? totalSeconds
-                : null,
+            duration: Number.isFinite(totalSeconds) && totalSeconds > 0 ? totalSeconds : null,
         };
     }
     catch (error) {
