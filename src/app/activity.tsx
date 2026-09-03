@@ -11,8 +11,8 @@ import {
     useWindowDimensions,
     View,
 } from "react-native";
-import ActivityCard from "../components/ui/ActivityCard";
-import ActivitySkeleton from "../components/ui/ActivitySkeleton";
+import { ActivityCard } from "../components/ui/ActivityCard";
+import { ActivitySkeleton } from "../components/ui/ActivitySkeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
@@ -128,7 +128,7 @@ export default function ActivityScreen() {
           <Text style={styles.emptyTitle}>Your activity will appear here</Text>
           <Text style={styles.emptySubtitle}>
             Log in or sign up to keep track of the lessons, pages, and books
-            you've opened on DigiLearn.
+            you&apos;ve opened on DigiLearn.
           </Text>
           <Pressable
             style={({ pressed }) => [

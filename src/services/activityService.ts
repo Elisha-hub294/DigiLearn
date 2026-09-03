@@ -3,6 +3,7 @@ import { auth, db } from "../../firebaseConfig";
 import { ActivityItem, ActivityRecord, ActivityType } from "../types/activity";
 
 const MAX_ACTIVITY_ITEMS = 50;
+const ACTIVITY_FETCH_TIMEOUT_MS = 15000;
 
 const ACTIVITY_FIELD_MAP: Record<ActivityType, string> = {
   lesson: "activity-lessons",
@@ -181,56 +182,58 @@ export async function fetchUserActivity(
   if (!userId) return [];
 
   try {
-    const userRef = doc(db, "users", userId);
-    const userSnap = await getDoc(userRef);
+    const fetchActivity = async (): Promise<ActivityItem[]> => {
+      const userRef = doc(db, "users", userId);
+      const userSnap = await getDoc(userRef);
 
-    if (!userSnap.exists()) return [];
+      if (!userSnap.exists()) return [];
 
-    const userData = userSnap.data();
-    const lessonsRaw: any[] = Array.isArray(userData["activity-lessons"])
-      ? userData["activity-lessons"]
-      : [];
-    const pagesRaw: any[] = Array.isArray(userData["activity-pages"])
-      ? userData["activity-pages"]
-      : [];
-    const booksRaw: any[] = Array.isArray(userData["activity-books"])
-      ? userData["activity-books"]
-      : [];
+      const userData = userSnap.data();
+      const lessonsRaw: any[] = Array.isArray(userData["activity-lessons"])
+        ? userData["activity-lessons"]
+        : [];
+      const pagesRaw: any[] = Array.isArray(userData["activity-pages"])
+        ? userData["activity-pages"]
+        : [];
+      const booksRaw: any[] = Array.isArray(userData["activity-books"])
+        ? userData["activity-books"]
+        : [];
 
-    const normalizeRecords = (rawList: any[]): ActivityRecord[] => {
-      return rawList
-        .map((item) => {
-          if (typeof item === "string") {
-            return { id: item, openedAt: new Date().toISOString() };
-          }
-          if (item && typeof item === "object" && item.id) {
-            let openedAtStr = new Date().toISOString();
-            if (typeof item.openedAt === "string") {
-              openedAtStr = item.openedAt;
-            } else if (
-              item.openedAt &&
-              typeof item.openedAt.seconds === "number"
-            ) {
-              openedAtStr = new Date(
-                item.openedAt.seconds * 1000,
-              ).toISOString();
+      const normalizeRecords = (rawList: any[]): ActivityRecord[] => {
+        return rawList
+          .map((item) => {
+            if (typeof item === "string") {
+              return { id: item, openedAt: new Date().toISOString() };
             }
-            return { id: String(item.id), openedAt: openedAtStr };
-          }
-          return null;
-        })
-        .filter((item): item is ActivityRecord => item !== null);
-    };
+            if (item && typeof item === "object" && item.id) {
+              let openedAtStr = new Date().toISOString();
+              if (typeof item.openedAt === "string") {
+                openedAtStr = item.openedAt;
+              } else if (
+                item.openedAt &&
+                typeof item.openedAt.seconds === "number"
+              ) {
+                openedAtStr = new Date(
+                  item.openedAt.seconds * 1000,
+                ).toISOString();
+              }
+              return { id: String(item.id), openedAt: openedAtStr };
+            }
+            return null;
+          })
+          .filter((item): item is ActivityRecord => item !== null);
+      };
 
-    const lessonRecords = normalizeRecords(lessonsRaw);
-    const pageRecords = normalizeRecords(pagesRaw);
-    const bookRecords = normalizeRecords(booksRaw);
+      const lessonRecords = normalizeRecords(lessonsRaw);
+      const pageRecords = normalizeRecords(pagesRaw);
+      const bookRecords = normalizeRecords(booksRaw);
 
-    const activityItems: ActivityItem[] = [];
+      const activityItems: ActivityItem[] = [];
 
     // 1. Fetch Lessons
-    for (const record of lessonRecords) {
-      try {
+      await Promise.all(
+        lessonRecords.map(async (record) => {
+          try {
         const lessonSnap = await getDoc(doc(db, "trendingLessons", record.id));
         if (lessonSnap.exists()) {
           const data = lessonSnap.data();
@@ -253,11 +256,13 @@ export async function fetchUserActivity(
       } catch (e) {
         console.warn(`Could not fetch lesson doc ${record.id}:`, e);
       }
-    }
+        }),
+      );
 
     // 2. Fetch Pages / Past Papers / Teacher Notes
-    for (const record of pageRecords) {
-      try {
+      await Promise.all(
+        pageRecords.map(async (record) => {
+          try {
         let pageSnap = await getDoc(doc(db, "pages", record.id));
         let data: any = null;
 
@@ -293,11 +298,13 @@ export async function fetchUserActivity(
       } catch (e) {
         console.warn(`Could not fetch page doc ${record.id}:`, e);
       }
-    }
+        }),
+      );
 
     // 3. Fetch Books
-    for (const record of bookRecords) {
-      try {
+      await Promise.all(
+        bookRecords.map(async (record) => {
+          try {
         const bookSnap = await getDoc(doc(db, "books", record.id));
         if (bookSnap.exists()) {
           const data = bookSnap.data();
@@ -327,18 +334,30 @@ export async function fetchUserActivity(
       } catch (e) {
         console.warn(`Could not fetch book doc ${record.id}:`, e);
       }
-    }
+        }),
+      );
 
-    // Sort chronologically (openedAt DESC)
-    activityItems.sort((a, b) => {
-      const timeA = new Date(a.openedAt).getTime() || 0;
-      const timeB = new Date(b.openedAt).getTime() || 0;
-      return timeB - timeA;
-    });
+      // Sort chronologically (openedAt DESC)
+      activityItems.sort((a, b) => {
+        const timeA = new Date(a.openedAt).getTime() || 0;
+        const timeB = new Date(b.openedAt).getTime() || 0;
+        return timeB - timeA;
+      });
 
-    return activityItems;
+      return activityItems;
+    };
+
+    return await Promise.race([
+      fetchActivity(),
+      new Promise<ActivityItem[]>((_, reject) => {
+        setTimeout(
+          () => reject(new Error("Activity request timed out.")),
+          ACTIVITY_FETCH_TIMEOUT_MS,
+        );
+      }),
+    ]);
   } catch (error) {
     console.error("Error fetching user activity:", error);
-    return [];
+    throw error;
   }
 }
