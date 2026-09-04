@@ -262,6 +262,11 @@ export function BookPreviewScreen() {
       </View>
     );
   const goBack = () => {
+    if (typeof returnTo === "string" && returnTo.trim() === "/profile") {
+      router.back();
+      return;
+    }
+
     if (
       typeof returnTo === "string" &&
       returnTo.trim() === "/teacher-profile" &&

@@ -404,6 +404,11 @@ export function PagePreviewScreen() {
   }
 
   const goBack = () => {
+    if (returnTo === "/profile") {
+      router.back();
+      return;
+    }
+
     // If an explicit returnTo is provided, always use it (highest priority).
     // Only fall back to /pages when returnTo is explicitly /pages,
     // or there's no returnTo at all and source is "pages".
