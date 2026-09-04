@@ -38,9 +38,6 @@ export default function AdminReportsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
-  const [cursor, setCursor] = useState<Parameters<typeof listReports>[0]>();
-  const [hasMore, setHasMore] = useState(false);
-  const [filter, setFilter] = useState<ReportRecord["status"] | "all">("all");
 
   const load = useCallback(
     async (isRefresh = false) => {
@@ -51,8 +48,6 @@ export default function AdminReportsScreen() {
       try {
         const page = await listReports();
         setReports(page.reports);
-        setCursor(page.cursor);
-        setHasMore(page.hasMore);
       } catch (reason) {
         setError(
           reason instanceof Error ? reason.message : "Unable to load reports.",
@@ -64,25 +59,6 @@ export default function AdminReportsScreen() {
     },
     [profile?.type],
   );
-
-  const loadMore = async () => {
-    if (!cursor || !hasMore || loading || refreshing) return;
-    setRefreshing(true);
-    try {
-      const page = await listReports(cursor);
-      setReports((current) => [...current, ...page.reports]);
-      setCursor(page.cursor);
-      setHasMore(page.hasMore);
-    } catch (reason) {
-      setError(
-        reason instanceof Error
-          ? reason.message
-          : "Unable to load more reports.",
-      );
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
   useFocusEffect(
     useCallback(() => {
@@ -123,10 +99,6 @@ export default function AdminReportsScreen() {
   };
 
   if (profile?.type !== "admin") return null;
-  const visibleReports =
-    filter === "all"
-      ? reports
-      : reports.filter((report) => report.status === filter);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -162,24 +134,6 @@ export default function AdminReportsScreen() {
             <Text style={styles.subtitle}>
               Review, track, and resolve reported content.
             </Text>
-            <View style={styles.filterRow}>
-              {(
-                ["all", "new", "in_review", "resolved", "dismissed"] as const
-              ).map((value) => (
-                <Pressable
-                  key={value}
-                  onPress={() => setFilter(value)}
-                  style={[
-                    styles.filterButton,
-                    filter === value && styles.filterSelected,
-                  ]}
-                >
-                  <Text style={styles.filterText}>
-                    {value.replace("_", " ")}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
             {error ? <Text style={styles.error}>{error}</Text> : null}
             {loading || refreshing ? (
               <ActivityIndicator color={colors.primary} style={styles.loader} />
@@ -187,7 +141,7 @@ export default function AdminReportsScreen() {
             {!loading && !reports.length ? (
               <Text style={styles.empty}>No reports yet.</Text>
             ) : null}
-            {visibleReports.map((report) => (
+            {reports.map((report) => (
               <View key={report.id} style={styles.report}>
                 <View style={styles.reportHeader}>
                   <View style={styles.reportTitleWrap}>
@@ -255,19 +209,6 @@ export default function AdminReportsScreen() {
                 />
               </View>
             ))}
-            {hasMore ? (
-              <Pressable
-                onPress={() => void loadMore()}
-                style={styles.loadMoreButton}
-                disabled={refreshing}
-              >
-                {refreshing ? (
-                  <ActivityIndicator color={colors.white} size="small" />
-                ) : (
-                  <Text style={styles.loadMoreText}>Load more reports</Text>
-                )}
-              </Pressable>
-            ) : null}
           </ScrollView>
         </View>
       </View>
@@ -296,26 +237,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 12,
     marginBottom: 18,
-  },
-  filterRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    marginBottom: 14,
-  },
-  filterButton: {
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    borderRadius: 8,
-    paddingHorizontal: 9,
-    paddingVertical: 7,
-  },
-  filterSelected: { backgroundColor: "#EAF2FF", borderColor: colors.primary },
-  filterText: {
-    color: "#475569",
-    fontSize: 11,
-    fontWeight: "600",
-    textTransform: "capitalize",
   },
   loader: { marginVertical: 18 },
   empty: { color: colors.subtitle, textAlign: "center", marginTop: 32 },
@@ -372,13 +293,4 @@ const styles = StyleSheet.create({
     color: colors.dark,
     fontSize: 12,
   },
-  loadMoreButton: {
-    alignSelf: "center",
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginTop: 4,
-  },
-  loadMoreText: { color: colors.white, fontSize: 12, fontWeight: "700" },
 });

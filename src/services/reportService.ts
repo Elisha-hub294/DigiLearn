@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
   limit,
   orderBy,
@@ -73,11 +74,15 @@ export async function updateReport(
     reviewedAt: serverTimestamp(),
   });
   if (status === "resolved" || status === "dismissed") {
-    await updateDoc(doc(db, "adminNotifications", `report-${reportId}`), {
-      read: true,
-      dismissed: true,
-      reviewedAt: serverTimestamp(),
-    });
+    const notificationRef = doc(db, "adminNotifications", `report-${reportId}`);
+    const notification = await getDoc(notificationRef);
+    if (notification.exists()) {
+      await updateDoc(notificationRef, {
+        read: true,
+        dismissed: true,
+        reviewedAt: serverTimestamp(),
+      });
+    }
   }
 }
 

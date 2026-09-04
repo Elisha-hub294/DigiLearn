@@ -94,7 +94,10 @@ exports.reviewTeacherApplication = (0, https_1.onCall)(async (request) => {
             createdAt: now,
         });
     });
-    await db.collection("adminNotifications").doc(applicationId).set({ read: true, dismissed: true, reviewedAt: firestore_1.Timestamp.now() }, { merge: true });
+    await db
+        .collection("adminNotifications")
+        .doc(applicationId)
+        .set({ read: true, dismissed: true, reviewedAt: firestore_1.Timestamp.now() }, { merge: true });
     return { status: decision === "approve" ? "approved" : "rejected" };
 });
 exports.resubmitTeacherApplication = (0, https_1.onCall)(async (request) => {
@@ -304,7 +307,10 @@ exports.updateReport = (0, https_1.onCall)(async (request) => {
         reviewedAt: firestore_1.Timestamp.now(),
     });
     if (status === "resolved" || status === "dismissed") {
-        await db.collection("adminNotifications").doc(`report-${reportId}`).set({ read: true, dismissed: true, reviewedAt: firestore_1.Timestamp.now() }, { merge: true });
+        await db
+            .collection("adminNotifications")
+            .doc(`report-${reportId}`)
+            .set({ read: true, dismissed: true, reviewedAt: firestore_1.Timestamp.now() }, { merge: true });
     }
     return { status };
 });

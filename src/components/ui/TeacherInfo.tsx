@@ -1,5 +1,4 @@
 import { colors } from "@/constants/theme";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { getTeacherAvatar } from "../../constants/teacherAvatar";
@@ -52,13 +51,7 @@ export function TeacherInfo({
         accessibilityLabel={`More options for ${name}`}
         hitSlop={10}
         style={styles.more}
-      >
-        <MaterialCommunityIcons
-          name="dots-vertical"
-          size={24}
-          color={colors.inactive}
-        />
-      </Pressable>
+      ></Pressable>
     </Animated.View>
   );
 }

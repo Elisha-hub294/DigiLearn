@@ -225,8 +225,8 @@ export function VideoCard({
         entering={FadeInDown.delay(Math.min(index * 60, 300)).duration(380)}
         style={[styles.card, isGrid && styles.gridCard]}
       >
-        <Pressable onPress={openLesson}>
-          <View style={styles.thumbnail}>
+        <View style={styles.thumbnail}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={openLesson}>
             <Image
               source={resolveVideoImageSource(item.thumbnail, item.link)}
               style={StyleSheet.absoluteFill}
@@ -240,25 +240,22 @@ export function VideoCard({
             <View style={styles.duration}>
               <DurationBadge duration={item.duration} />
             </View>
-            <Pressable
-              ref={menuButtonRef}
-              accessibilityRole="button"
-              accessibilityLabel="More options"
-              style={styles.menuButton}
-              onPress={(event) => {
-                event.stopPropagation();
-                handleOpenMenu();
-              }}
-            >
-              <Icon name="more-vertical" size={18} color="#fff" />
-            </Pressable>
             {item.isNew && (
               <View style={styles.new}>
                 <Text style={styles.newText}>NEW</Text>
               </View>
             )}
-          </View>
-        </Pressable>
+          </Pressable>
+          <Pressable
+            ref={menuButtonRef}
+            accessibilityRole="button"
+            accessibilityLabel="More options"
+            style={styles.menuButton}
+            onPress={handleOpenMenu}
+          >
+            <Icon name="more-vertical" size={18} color="#fff" />
+          </Pressable>
+        </View>
         <TeacherInfo
           name={item.teacher}
           uploadedAt={item.uploadedAt}

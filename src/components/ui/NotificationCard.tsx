@@ -122,7 +122,9 @@ export function NotificationCard({
         </View>
       </Pressable>
 
-      {!notification.read && onMarkRead ? (
+      {!notification.read &&
+      onMarkRead &&
+      notification.adminKind !== "report" ? (
         <Pressable
           onPress={() => onMarkRead(notification.id)}
           style={({ pressed }) => [
