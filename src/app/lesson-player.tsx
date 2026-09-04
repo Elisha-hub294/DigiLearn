@@ -27,7 +27,10 @@ import { auth, db } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { getTeacherAvatar } from "../constants/teacherAvatar";
-import { recordUserActivity } from "../services/activityService";
+import {
+  recordLessonVisit,
+  recordUserActivity,
+} from "../services/activityService";
 import { toggleSavedItem } from "../services/userProfile";
 
 function getYoutubeEmbedUrl(rawUrl?: string) {
@@ -117,6 +120,9 @@ export default function LessonPlayerScreen() {
     const lessonId = params.id || params.title;
     if (auth.currentUser?.uid && lessonId) {
       recordUserActivity(auth.currentUser.uid, "lesson", lessonId);
+    }
+    if (lessonId) {
+      void recordLessonVisit(lessonId);
     }
   }, [params.id, params.title]);
 

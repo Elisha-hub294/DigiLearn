@@ -28,6 +28,7 @@ export type VideoLesson = {
   avatar?: number | string;
   link?: string;
   isNew?: boolean;
+  visits?: number;
 };
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);

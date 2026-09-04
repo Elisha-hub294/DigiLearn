@@ -5,7 +5,7 @@ import { VideosScreenHeader } from "@/components/ui/VideosScreenHeader";
 import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -32,6 +32,7 @@ type FirestoreLesson = {
   thumbnail?: string;
   link?: string;
   avatar?: string;
+  visits?: number | string;
 };
 
 type LessonRecord = VideoLesson & { _uploadedAtDate?: Date; link?: string };
@@ -103,6 +104,17 @@ function isNewLesson(value: unknown): boolean {
   return Date.now() - parsed.getTime() < 7 * 24 * 60 * 60 * 1000;
 }
 
+function parseVisits(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  }
+  return 0;
+}
+
 function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
   const uploadedAtValue = item.uploadedAt;
   const uploadedAtDate = parseUploadedDate(uploadedAtValue);
@@ -121,13 +133,13 @@ function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
     avatar: item.avatar ?? "",
     link,
     isNew: isNewLesson(uploadedAtValue),
+    visits: parseVisits(item.visits),
     _uploadedAtDate: uploadedAtDate ?? undefined,
   };
 }
 
 export default function VideosScreen() {
   const { width } = useWindowDimensions();
-  const router = useRouter();
   const { scrollTo } = useLocalSearchParams<{ scrollTo?: string }>();
   const [subject, setSubject] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
@@ -204,9 +216,13 @@ export default function VideosScreen() {
 
   const trendingLessons = useMemo(() => {
     if (subject === "All") {
-      return lessons.slice(0, 3);
+      return [...lessons]
+        .sort((left, right) => Number(right.visits) - Number(left.visits))
+        .slice(0, 3);
     }
-    return visibleLatest.slice(0, 3);
+    return [...visibleLatest]
+      .sort((left, right) => Number(right.visits) - Number(left.visits))
+      .slice(0, 3);
   }, [lessons, subject, visibleLatest]);
 
   const showEmptyState = !loading && !isOffline && visibleLatest.length === 0;

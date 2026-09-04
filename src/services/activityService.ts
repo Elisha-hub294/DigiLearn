@@ -179,6 +179,46 @@ export async function recordPageVisit(pageId: string): Promise<void> {
   }
 }
 
+export async function recordBookVisit(bookId: string): Promise<void> {
+  if (!bookId) return;
+
+  try {
+    const bookRef = doc(db, "books", bookId);
+    await runTransaction(db, async (transaction) => {
+      const bookSnapshot = await transaction.get(bookRef);
+      const storedVisits = bookSnapshot.exists()
+        ? Number(bookSnapshot.data().visits)
+        : 0;
+      const visits =
+        Number.isFinite(storedVisits) && storedVisits >= 0 ? storedVisits : 0;
+
+      transaction.set(bookRef, { visits: visits + 1 }, { merge: true });
+    });
+  } catch (error) {
+    console.warn(`Failed to record book visit for ${bookId}:`, error);
+  }
+}
+
+export async function recordLessonVisit(lessonId: string): Promise<void> {
+  if (!lessonId) return;
+
+  try {
+    const lessonRef = doc(db, "trendingLessons", lessonId);
+    await runTransaction(db, async (transaction) => {
+      const lessonSnapshot = await transaction.get(lessonRef);
+      const storedVisits = lessonSnapshot.exists()
+        ? Number(lessonSnapshot.data().visits)
+        : 0;
+      const visits =
+        Number.isFinite(storedVisits) && storedVisits >= 0 ? storedVisits : 0;
+
+      transaction.set(lessonRef, { visits: visits + 1 }, { merge: true });
+    });
+  } catch (error) {
+    console.warn(`Failed to record lesson visit for ${lessonId}:`, error);
+  }
+}
+
 export type ActivityEvent = {
   id: string;
   userId: string;

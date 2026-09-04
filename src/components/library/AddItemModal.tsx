@@ -2,6 +2,8 @@ import { Feather as Icon } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Image,
@@ -15,7 +17,7 @@ import {
   View,
 } from "react-native";
 import WebView from "react-native-webview";
-import { auth } from "../../../firebaseConfig";
+import { auth, db } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import PdfPreview from "../home/PdfPreview";
@@ -73,6 +75,13 @@ import {
 export type { FormState, FormType };
 
 const DEFAULT_USER_AVATAR = require("../../../assets/images/user-default.png");
+const DEFAULT_BOOK_COVER = require("../../../assets/images/bookcover-default.png");
+
+type OwnedBook = {
+  id: string;
+  title: string;
+  cover: string;
+};
 
 type PickerOption = {
   label: string;
@@ -182,7 +191,8 @@ export function AddItemModal({
   onSuccess,
   screen = false,
 }: AddItemModalProps) {
-  const { profile } = useProfile();
+  const router = useRouter();
+  const { profile, user } = useProfile();
   const webViewRef = useRef<any>(null);
 
   // Use custom hooks for state management
@@ -217,9 +227,56 @@ export function AddItemModal({
   const [pickerConfig, setPickerConfig] = useState<PickerConfig | null>(null);
   const [mainUploadProgress, setMainUploadProgress] = useState(0);
   const [previewUploadProgress, setPreviewUploadProgress] = useState(0);
+  const [ownedBooks, setOwnedBooks] = useState<OwnedBook[]>([]);
+  const [ownedBooksLoading, setOwnedBooksLoading] = useState(false);
 
   const isAuthorizedPublisher =
     profile?.type === "teacher" || profile?.type === "admin";
+
+  useEffect(() => {
+    if (!visible || formType !== "page" || !user?.uid) {
+      return;
+    }
+
+    let isMounted = true;
+    Promise.resolve().then(() => {
+      if (isMounted) setOwnedBooksLoading(true);
+    });
+
+    getDocs(query(collection(db, "books"), where("owner", "==", user.uid)))
+      .then((snapshot) => {
+        if (!isMounted) return;
+        const books = snapshot.docs
+          .map((book) => {
+            const data = book.data() as Record<string, unknown>;
+            const title =
+              typeof data.title === "string"
+                ? data.title.trim()
+                : typeof data.name === "string"
+                  ? data.name.trim()
+                  : "";
+            const cover = [data.cover, data.coverImage, data.image].find(
+              (value): value is string =>
+                typeof value === "string" && value.trim().length > 0,
+            );
+            return { id: book.id, title, cover: cover ?? "" };
+          })
+          .filter((book) => book.title)
+          .sort((a, b) => a.title.localeCompare(b.title));
+        setOwnedBooks(books);
+      })
+      .catch((error) => {
+        console.error("Failed to load owned books", error);
+        if (isMounted) setOwnedBooks([]);
+      })
+      .finally(() => {
+        if (isMounted) setOwnedBooksLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [formType, user?.uid, visible]);
 
   const closeOptionPicker = () => setPickerConfig(null);
 
@@ -1522,13 +1579,70 @@ export function AddItemModal({
                     </View>
                   </View>
                 )}
-                {/* <Text style={styles.fieldLabel}>Book</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Book A, Book B, Book C"
-                value={formData.book}
-                onChangeText={(val) => updateField("book", val)}
-              /> */}
+                <Text style={styles.fieldLabel}>Book</Text>
+                <View style={styles.ownedBooksSection}>
+                  {ownedBooksLoading ? (
+                    <Text style={styles.ownedBooksMessage}>
+                      Loading your books...
+                    </Text>
+                  ) : ownedBooks.length > 0 ? (
+                    <View style={styles.ownedBooksList}>
+                      {ownedBooks.map((book) => {
+                        const isSelected = formData.book === book.title;
+                        return (
+                          <Pressable
+                            key={book.id}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: isSelected }}
+                            style={[
+                              styles.ownedBookItem,
+                              isSelected && styles.ownedBookItemSelected,
+                            ]}
+                            onPress={() =>
+                              updateField("book", isSelected ? "" : book.title)
+                            }
+                          >
+                            <Image
+                              source={
+                                book.cover
+                                  ? { uri: book.cover }
+                                  : DEFAULT_BOOK_COVER
+                              }
+                              style={styles.ownedBookCover}
+                            />
+                            <Text
+                              style={styles.ownedBookTitle}
+                              numberOfLines={2}
+                            >
+                              {book.title}
+                            </Text>
+                            <Icon
+                              name={isSelected ? "check-circle" : "circle"}
+                              size={20}
+                              color={isSelected ? colors.primary : "#B8C2D1"}
+                            />
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  ) : (
+                    <View style={styles.noOwnedBooksState}>
+                      <Text style={styles.ownedBooksMessage}>
+                        You have not published a book yet.
+                      </Text>
+                      <Pressable
+                        accessibilityRole="button"
+                        style={styles.publishBookButton}
+                        onPress={() => router.push("/add-book")}
+                      >
+                        <Icon name="plus" size={16} color={colors.white} />
+                        <Text style={styles.publishBookButtonText}>
+                          Publish a book
+                        </Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
               </>
             )}
 
@@ -2426,6 +2540,69 @@ const styles = StyleSheet.create({
   },
   dropdownItemTextActive: {
     color: colors.primary,
+    fontWeight: "700",
+  },
+  ownedBooksSection: {
+    marginBottom: spacing.md,
+  },
+  ownedBooksList: {
+    gap: 8,
+  },
+  ownedBookItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minHeight: 68,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    padding: 8,
+    backgroundColor: colors.white,
+  },
+  ownedBookItemSelected: {
+    borderColor: colors.primary,
+    backgroundColor: "rgba(37, 99, 235, 0.07)",
+  },
+  ownedBookCover: {
+    width: 42,
+    height: 52,
+    borderRadius: 6,
+    backgroundColor: "#EEF2F7",
+    resizeMode: "cover",
+  },
+  ownedBookTitle: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 19,
+  },
+  ownedBooksMessage: {
+    color: colors.subtitle,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  noOwnedBooksState: {
+    gap: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    padding: spacing.md,
+    backgroundColor: "#F8FAFC",
+  },
+  publishBookButton: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    backgroundColor: colors.primary,
+  },
+  publishBookButtonText: {
+    color: colors.white,
+    fontSize: 13,
     fontWeight: "700",
   },
   toggleChipActive: {

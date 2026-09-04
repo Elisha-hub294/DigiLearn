@@ -13,7 +13,10 @@ import {
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
-import { recordUserActivity } from "../../services/activityService";
+import {
+  recordBookVisit,
+  recordUserActivity,
+} from "../../services/activityService";
 import { toggleSavedItem } from "../../services/userProfile";
 import { ActionDialog } from "../ui/ActionDialog";
 import { AuthorsCarousel } from "./AuthorsCarousel";
@@ -116,6 +119,7 @@ export function BookPreviewScreen() {
         if (auth.currentUser?.uid && id) {
           recordUserActivity(auth.currentUser.uid, "book", id);
         }
+        void recordBookVisit(id);
 
         const [selected, booksSnapshot, teachersSnapshot, defaultSnapshot] =
           await Promise.all([
@@ -222,14 +226,14 @@ export function BookPreviewScreen() {
     () =>
       book
         ? allBooks
-          .filter(
-            (candidate) =>
-              candidate.id !== book.id &&
-              candidate.subject.some((subject) =>
-                book.subject.includes(subject),
-              ),
-          )
-          .slice(0, 10)
+            .filter(
+              (candidate) =>
+                candidate.id !== book.id &&
+                candidate.subject.some((subject) =>
+                  book.subject.includes(subject),
+                ),
+            )
+            .slice(0, 10)
         : [],
     [allBooks, book],
   );
@@ -424,16 +428,16 @@ export function BookPreviewScreen() {
         primaryButtonColor="#25D366"
         onPrimary={() => {
           const phone = book?.author.length
-            ? teacherPhones[normalizeKey(book.author[0])] ?? ""
+            ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
             : "";
           const cleaned = phone.replace(/[^\d+]/g, "");
           Linking.openURL(
-            `https://wa.me/${cleaned}?text=${encodeURIComponent(`Hi, I'm interested in the book "${book?.title}" from DigiLearn.`)}`
+            `https://wa.me/${cleaned}?text=${encodeURIComponent(`Hi, I'm interested in the book "${book?.title}" from DigiLearn.`)}`,
           );
         }}
         onSecondary={() => {
           const phone = book?.author.length
-            ? teacherPhones[normalizeKey(book.author[0])] ?? ""
+            ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
             : "";
           const cleaned = phone.replace(/[^\d+]/g, "");
           Linking.openURL(`tel:${cleaned}`);

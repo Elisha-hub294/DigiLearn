@@ -155,6 +155,17 @@ const getRatingValue = (value: unknown): number => {
   return 0;
 };
 
+const getVisitValue = (value: unknown): number => {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  }
+  return 0;
+};
+
 const formatRating = (value: number): string => {
   return value > 0 ? `${value.toFixed(1)} ★` : "4.7 ★";
 };
@@ -239,14 +250,16 @@ export function useLibraryData() {
               defaultUserAvatar,
             ),
             ratingValue: ratingVal,
+            visits: getVisitValue(data.visits),
             isTop,
           };
         })
         .sort((a, b) => b.ratingValue - a.ratingValue);
 
       // Derive Hero Slides from top books
-      const dynamicHeroSlides: HeroSlideItem[] = allBooks
-        .slice(0, 5)
+      const dynamicHeroSlides: HeroSlideItem[] = [...allBooks]
+        .sort((a, b) => b.visits - a.visits)
+        .slice(0, 10)
         .map((book) => ({
           id: book.id,
           title: book.title,
