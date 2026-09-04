@@ -3,7 +3,6 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -24,6 +23,7 @@ import {
 } from "../../utils/interestFilter";
 import { resolveVideoImageSource } from "../../utils/videoUtils";
 import { SectionHeader } from "../ui/SectionHeader";
+import { Skeleton } from "../ui/Skeleton";
 
 const AUTO_SCROLL_INTERVAL_MS = 4500;
 const RESUME_DELAY_MS = 5000;
@@ -172,9 +172,29 @@ export const CoursesCarousel = () => {
   }, [startAutoScroll]);
 
   if (loading) {
+    return <CourseSkeleton cardWidth={cardWidth} />;
+  }
+
+  function CourseSkeleton({ cardWidth }: { cardWidth: number }) {
     return (
-      <View style={styles.loaderWrap}>
-        <ActivityIndicator size="small" color={colors.primary} />
+      <View accessibilityLabel="Loading trending lessons">
+        <SectionHeader title="Trending Lessons" />
+        <FlatList
+          horizontal
+          data={[0, 1, 2]}
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => `course-skeleton-${item}`}
+          renderItem={() => (
+            <View style={[styles.card, { width: cardWidth }]}>
+              <Skeleton style={styles.imageWrap} />
+              <View style={styles.body}>
+                <Skeleton style={styles.titleSkeleton} />
+                <Skeleton style={styles.teacherSkeleton} />
+              </View>
+            </View>
+          )}
+          contentContainerStyle={styles.list}
+        />
       </View>
     );
   }
@@ -292,11 +312,6 @@ export const CoursesCarousel = () => {
 };
 
 const styles = StyleSheet.create({
-  loaderWrap: {
-    height: 180,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   emptyWrap: {
     height: 100,
     alignItems: "center",
@@ -354,6 +369,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 2,
   },
+  titleSkeleton: { width: "84%", height: 15, marginBottom: 8 },
+  teacherSkeleton: { width: "52%", height: 12, marginBottom: spacing.md },
   teacher: { color: colors.subtitle, fontSize: 12, marginBottom: spacing.md },
   buttonWrap: {
     alignSelf: "flex-start",

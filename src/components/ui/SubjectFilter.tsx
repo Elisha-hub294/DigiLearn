@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { loadSubjects } from "../../services/subjectsService";
 import { FilterChip } from "./FilterChip";
+import { Skeleton } from "./Skeleton";
 
 type ResourceItem = {
   subject?: string | string[];
@@ -70,7 +71,19 @@ export function SubjectFilter({
   onSelect: (subject: string) => void;
   resourceItems?: ResourceItem[];
 }) {
-  const { subjects: subjectList } = useSubjects(resourceItems);
+  const { subjects: subjectList, loading } = useSubjects(resourceItems);
+
+  if (loading) {
+    return (
+      <View style={styles.wrap} accessibilityLabel="Loading subjects">
+        <View style={styles.skeletonContent}>
+          {[72, 96, 84, 112].map((width, index) => (
+            <Skeleton key={index} style={[styles.skeletonChip, { width }]} />
+          ))}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.wrap}>
@@ -95,4 +108,10 @@ export function SubjectFilter({
 const styles = StyleSheet.create({
   wrap: { width: "100%" },
   content: { paddingRight: spacing.md },
+  skeletonContent: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    paddingRight: spacing.md,
+  },
+  skeletonChip: { height: 34, borderRadius: 17 },
 });

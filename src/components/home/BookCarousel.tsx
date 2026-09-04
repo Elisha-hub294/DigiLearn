@@ -20,6 +20,7 @@ import {
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
 import { SectionHeader } from "../ui/SectionHeader";
+import { Skeleton } from "../ui/Skeleton";
 
 type BookItem = {
   id: string;
@@ -98,7 +99,24 @@ export const BookCarousel = () => {
   if (loading) {
     return (
       <Animated.View entering={FadeInUp.duration(680)} style={styles.container}>
-        <Text style={styles.loadingText}>Loading textbooks...</Text>
+        <SectionHeader title="Books" />
+        <FlatList
+          horizontal
+          data={[0, 1, 2]}
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => `book-skeleton-${item}`}
+          renderItem={() => (
+            <View style={[styles.card, { width: cardWidth }]}>
+              <Skeleton style={styles.image} />
+              <View style={styles.body}>
+                <Skeleton style={styles.titleSkeleton} />
+                <Skeleton style={styles.authorSkeleton} />
+              </View>
+            </View>
+          )}
+          contentContainerStyle={styles.list}
+          accessibilityLabel="Loading books"
+        />
       </Animated.View>
     );
   }
@@ -163,11 +181,6 @@ export const BookCarousel = () => {
 
 const styles = StyleSheet.create({
   container: { marginBottom: spacing.sm },
-  loadingText: {
-    color: colors.subtitle,
-    fontSize: 13,
-    paddingVertical: spacing.sm,
-  },
   list: { paddingRight: spacing.md },
   card: {
     marginRight: spacing.md,
@@ -182,5 +195,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  titleSkeleton: { width: "78%", height: 14, marginBottom: 8 },
+  authorSkeleton: { width: "46%", height: 12 },
   author: { color: colors.subtitle, fontSize: 12, marginBottom: spacing.sm },
 });

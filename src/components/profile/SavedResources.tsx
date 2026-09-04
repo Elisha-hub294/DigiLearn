@@ -1,14 +1,7 @@
 import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
@@ -18,6 +11,7 @@ import {
 } from "../../components/home/TeacherPostCard";
 import { BookCard } from "../../components/library/BookCard";
 import { PaperCard } from "../../components/library/PaperCard";
+import { Skeleton } from "../../components/ui/Skeleton";
 import {
   TrendingVideoCard,
   VideoLesson,
@@ -210,10 +204,23 @@ export function SavedResources({
         ))}
       </ScrollView>
       {loading ? (
-        <View style={s.loading}>
-          <ActivityIndicator color={colors.primary} />
-          <View style={s.skeleton} />
-          <View style={s.skeleton} />
+        <View style={s.loading} accessibilityLabel="Loading saved resources">
+          <View style={s.savedSkeletonCard}>
+            <Skeleton style={s.savedSkeletonImage} />
+            <View style={s.savedSkeletonCopy}>
+              <Skeleton style={s.savedSkeletonTitle} />
+              <Skeleton style={s.savedSkeletonLine} />
+              <Skeleton style={s.savedSkeletonLineShort} />
+            </View>
+          </View>
+          <View style={s.savedSkeletonCard}>
+            <Skeleton style={s.savedSkeletonImage} />
+            <View style={s.savedSkeletonCopy}>
+              <Skeleton style={s.savedSkeletonTitle} />
+              <Skeleton style={s.savedSkeletonLine} />
+              <Skeleton style={s.savedSkeletonLineShort} />
+            </View>
+          </View>
         </View>
       ) : displayed.length ? (
         <Animated.View
@@ -377,7 +384,26 @@ const s = StyleSheet.create({
   centeredItem: { width: "100%", alignItems: "center" },
   videoItem: { marginBottom: spacing.md },
   loading: { paddingHorizontal: spacing.lg, gap: 10 },
-  skeleton: { height: 96, borderRadius: 14, backgroundColor: "#EEF2F7" },
+  savedSkeletonCard: {
+    flexDirection: "row",
+    width: "100%",
+    minHeight: 112,
+    padding: spacing.sm,
+    borderRadius: 14,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    gap: spacing.sm,
+  },
+  savedSkeletonImage: {
+    width: 82,
+    height: 92,
+    borderRadius: 10,
+  },
+  savedSkeletonCopy: { flex: 1, justifyContent: "center", gap: 8 },
+  savedSkeletonTitle: { width: "76%", height: 15 },
+  savedSkeletonLine: { width: "92%", height: 11 },
+  savedSkeletonLineShort: { width: "58%", height: 11 },
   empty: {
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,

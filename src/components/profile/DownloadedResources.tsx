@@ -10,6 +10,7 @@ import {
   removeDownloadedFile,
 } from "../../services/downloadService";
 import { ActionDialog } from "../ui/ActionDialog";
+import { Skeleton } from "../ui/Skeleton";
 
 export function DownloadedResources({
   showAll = false,
@@ -18,11 +19,17 @@ export function DownloadedResources({
 }) {
   const router = useRouter();
   const [files, setFiles] = useState<DownloadedFile[]>([]);
+  const [loading, setLoading] = useState(true);
   const [fileToDelete, setFileToDelete] = useState<DownloadedFile | null>(null);
 
   const loadFiles = useCallback(async () => {
-    const list = await getDownloadedFiles();
-    setFiles(list);
+    setLoading(true);
+    try {
+      const list = await getDownloadedFiles();
+      setFiles(list);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useFocusEffect(
@@ -82,7 +89,20 @@ export function DownloadedResources({
       </View>
 
       {/* Content: Files List or Empty State */}
-      {files.length === 0 ? (
+      {loading ? (
+        <View style={styles.list} accessibilityLabel="Loading downloads">
+          {[0, 1, 2].map((item) => (
+            <View key={item} style={styles.fileCard}>
+              <Skeleton style={styles.fileIconSkeleton} />
+              <View style={styles.fileDetails}>
+                <Skeleton style={styles.fileTitleSkeleton} />
+                <Skeleton style={styles.fileMetaSkeleton} />
+              </View>
+              <Skeleton style={styles.openButtonSkeleton} />
+            </View>
+          ))}
+        </View>
+      ) : files.length === 0 ? (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconCircle}>
             <Feather name="download-cloud" size={28} color="#94A3B8" />
@@ -333,6 +353,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
+  fileIconSkeleton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.sm,
+  },
+  fileTitleSkeleton: { width: "72%", height: 14 },
+  fileMetaSkeleton: { width: "48%", height: 11 },
+  openButtonSkeleton: { width: 48, height: 28, borderRadius: radius.pill },
   deleteBtn: {
     padding: 8,
     borderRadius: radius.pill,
