@@ -66,9 +66,18 @@ export function VideoCard({
   );
 
   useEffect(() => {
-    setIsSavedState(
-      Boolean(user && profile?.["saved-lessons"]?.includes(item.id)),
+    let active = true;
+    const nextSavedState = Boolean(
+      user && profile?.["saved-lessons"]?.includes(item.id),
     );
+
+    Promise.resolve().then(() => {
+      if (active) setIsSavedState(nextSavedState);
+    });
+
+    return () => {
+      active = false;
+    };
   }, [item.id, profile, user]);
 
   const isSaved = isSavedState;
@@ -84,6 +93,7 @@ export function VideoCard({
         title: item.title,
         teacher: item.teacher,
         subject: item.subject,
+        description: item.description ?? "",
         duration: item.duration,
         uploadedAt: item.uploadedAt,
         link: item.link ?? "",

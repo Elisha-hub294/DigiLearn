@@ -11,6 +11,7 @@ export type TrendingLesson = {
   thumbnail: string;
   subject: string;
   link: string;
+  description: string;
 };
 
 type FirestoreLesson = {
@@ -21,6 +22,7 @@ type FirestoreLesson = {
   thumbnail?: string;
   subject?: string | string[];
   link?: string;
+  description?: string;
   uploadedAt?: unknown;
   avatar?: string;
 };
@@ -42,6 +44,7 @@ function toTrendingLesson(
       ? raw.subject.join(", ") || "General"
       : (raw.subject ?? "General"),
     link,
+    description: raw.description ?? "",
   };
 }
 

@@ -351,6 +351,7 @@ export default function SeeAllScreen() {
                           teacher: item.teacher,
                           subject: item.subject,
                           duration: item.duration,
+                          description: item.description,
                           link: item.link,
                           thumbnail: item.thumbnail,
                         },

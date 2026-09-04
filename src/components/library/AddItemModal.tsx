@@ -201,13 +201,9 @@ export function AddItemModal({
     useUploadProgress();
   const { subjects, pastPaperTypes } = useFormOptions(formType, visible);
   const {
-    levelDropdownOpen,
     setLevelDropdownOpen,
-    classDropdownOpen,
     setClassDropdownOpen,
-    subjectDropdownOpen,
     setSubjectDropdownOpen,
-    typeDropdownOpen,
     setTypeDropdownOpen,
   } = useDropdowns();
   const { statusDialog, setStatusDialog, showStatusDialog } = useStatusDialog();
@@ -374,6 +370,7 @@ export function AddItemModal({
       }
 
       setStatusDialog({
+        visible: true,
         title,
         message: error,
         primaryText: "OK",
@@ -687,9 +684,6 @@ export function AddItemModal({
   const activePaperCount = isSubsidiaryPaperSelected
     ? subsidiaryPaperCount
     : subjectPaperCount;
-  const activePaperCodePrefix = isSubsidiaryPaperSelected
-    ? selectedSubsidiaryCode
-    : selectedPaperCodePrefix;
 
   const paperCodeOptions = Array.from(
     { length: Math.max(activePaperCount, 0) },
@@ -863,6 +857,7 @@ export function AddItemModal({
     const userId = auth.currentUser?.uid;
     if (!userId) {
       setStatusDialog({
+        visible: true,
         title: "Sign in required",
         message: "You must be signed in to publish.",
         primaryText: "OK",
@@ -897,6 +892,7 @@ export function AddItemModal({
 
     if (!sanitizedTitle) {
       setStatusDialog({
+        visible: true,
         title: "Title required",
         message: "Enter a title before saving the post.",
         primaryText: "OK",

@@ -84,7 +84,7 @@ function formatLessonTitle(value: string): string {
 async function fetchYoutubeVideoMeta(videoUrl: string) {
   const videoId = extractYoutubeId(videoUrl);
   if (!videoId) {
-    return { title: "", duration: "", thumbnail: "" };
+    return { title: "", description: "", duration: "", thumbnail: "" };
   }
 
   const apiKey =
@@ -114,6 +114,7 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
         const data = await response.json();
         const item = data.items?.[0];
         const title = item?.snippet?.title || "";
+        const description = item?.snippet?.description || "";
         const durationISO = item?.contentDetails?.duration;
 
         if (durationISO) {
@@ -128,6 +129,7 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
 
             return {
               title,
+              description,
               duration:
                 formatDurationFromSeconds(totalSeconds) || serverDuration,
               thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
@@ -138,6 +140,7 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
         if (title) {
           return {
             title,
+            description,
             duration: serverDuration,
             thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
           };
@@ -154,6 +157,7 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
 
       return {
         title: typeof data.title === "string" ? data.title : "",
+        description: "",
         duration: serverDuration,
         thumbnail:
           typeof data.thumbnail_url === "string"
@@ -164,12 +168,14 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
 
     return {
       title: "",
+      description: "",
       duration: "",
       thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
     };
   } catch {
     return {
       title: "",
+      description: "",
       duration: "",
       thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
     };
@@ -181,6 +187,7 @@ export default function AddTrendingLessonScreen() {
   const { profile } = useProfile();
   const { subjects } = useSubjects();
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [subject, setSubject] = useState("Mathematics");
   const [link, setLink] = useState("");
   const [duration, setDuration] = useState("");
@@ -220,6 +227,7 @@ export default function AddTrendingLessonScreen() {
       setDuration("");
       setThumbnail("");
       setTitle("");
+      setDescription("");
       return;
     }
 
@@ -228,6 +236,7 @@ export default function AddTrendingLessonScreen() {
       setDuration("");
       setThumbnail("");
       setTitle("");
+      setDescription("");
       setMetaLoading(false);
       return;
     }
@@ -238,6 +247,7 @@ export default function AddTrendingLessonScreen() {
       const meta = await fetchYoutubeVideoMeta(value.trim());
       setDuration(meta.duration || "");
       setThumbnail(meta.thumbnail || "");
+      setDescription(meta.description || "");
       if (meta.title && !title.trim()) {
         setTitle(formatLessonTitle(meta.title));
       }
@@ -245,6 +255,7 @@ export default function AddTrendingLessonScreen() {
       setDuration("");
       setThumbnail("");
       setTitle("");
+      setDescription("");
     } finally {
       setMetaLoading(false);
     }
@@ -295,6 +306,7 @@ export default function AddTrendingLessonScreen() {
       await setDoc(doc(db, "trendingLessons", lessonId), {
         id: lessonId,
         title: formattedTitle,
+        description: description.trim(),
         subject: savedSubject,
         teacher: teacherValue,
         uploadedAt: serverTimestamp(),

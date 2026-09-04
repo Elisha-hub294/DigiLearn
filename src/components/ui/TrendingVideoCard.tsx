@@ -27,6 +27,7 @@ export type VideoLesson = {
   thumbnail?: number | string;
   avatar?: number | string;
   link?: string;
+  description?: string;
   isNew?: boolean;
   visits?: number;
 };

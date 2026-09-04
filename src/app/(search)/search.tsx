@@ -147,6 +147,7 @@ export default function SearchScreen() {
               subject:
                 typeof item.subject === "string" ? item.subject : "General",
               duration: item.duration || "10:00",
+              description: item.description || "",
               uploadedAt: item.uploadedAt || "Recently",
               link: item.link || "",
               thumbnail: item.previewImage,

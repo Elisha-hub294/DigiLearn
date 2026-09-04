@@ -80,6 +80,7 @@ export default function LessonPlayerScreen() {
     title?: string;
     teacher?: string;
     subject?: string;
+    description?: string;
     duration?: string;
     uploadedAt?: string;
     link?: string;
@@ -89,7 +90,7 @@ export default function LessonPlayerScreen() {
     returnTo?: string;
   }>();
   const lessonId = params.id;
-  const lessonReturnPath = useMemo(() => {
+  const lessonReturnPath = (() => {
     const search = Object.entries(params)
       .filter(
         (entry): entry is [string, string] =>
@@ -102,19 +103,7 @@ export default function LessonPlayerScreen() {
       .join("&");
 
     return search ? `/lesson-player?${search}` : "/lesson-player";
-  }, [
-    params.avatar,
-    params.duration,
-    params.id,
-    params.link,
-    params.returnTo,
-    params.source,
-    params.subject,
-    params.teacher,
-    params.thumbnail,
-    params.title,
-    params.uploadedAt,
-  ]);
+  })();
 
   useEffect(() => {
     const lessonId = params.id || params.title;
@@ -131,7 +120,6 @@ export default function LessonPlayerScreen() {
     const userId = auth.currentUser?.uid;
 
     if (!userId || !lessonId) {
-      setIsSaved(false);
       return;
     }
 
@@ -150,6 +138,8 @@ export default function LessonPlayerScreen() {
       active = false;
     };
   }, [lessonId]);
+
+  const lessonIsSaved = Boolean(lessonId && isSaved);
 
   const playScale = useSharedValue(1);
   const playAnimatedStyle = useAnimatedStyle(() => ({
@@ -206,10 +196,10 @@ export default function LessonPlayerScreen() {
 
     if (isSaving) return;
 
-    const nextSaved = !isSaved;
+    const nextSaved = !lessonIsSaved;
     setIsSaving(true);
     try {
-      await toggleSavedItem(userId, "saved-lessons", lessonId, isSaved);
+      await toggleSavedItem(userId, "saved-lessons", lessonId, lessonIsSaved);
       setIsSaved(nextSaved);
       setNoticeDialog({
         title: nextSaved ? "Saved to Library" : "Removed from Saved",
@@ -269,14 +259,17 @@ export default function LessonPlayerScreen() {
                 accessibilityRole="button"
                 onPress={toggleSave}
                 disabled={isSaving}
-                accessibilityState={{ selected: isSaved, disabled: isSaving }}
+                accessibilityState={{
+                  selected: lessonIsSaved,
+                  disabled: isSaving,
+                }}
                 style={styles.iconButton}
                 hitSlop={8}
               >
                 <Ionicons
-                  name={isSaved ? "bookmark" : "bookmark-outline"}
+                  name={lessonIsSaved ? "bookmark" : "bookmark-outline"}
                   size={20}
-                  color={isSaved ? "#3B82F6" : "#0F172A"}
+                  color={lessonIsSaved ? "#3B82F6" : "#0F172A"}
                 />
               </Pressable>
               <Pressable
@@ -307,10 +300,10 @@ export default function LessonPlayerScreen() {
               <Pressable
                 onPress={openVideo}
                 onPressIn={() => {
-                  playScale.value = withSpring(0.95);
+                  playScale.set(withSpring(0.95));
                 }}
                 onPressOut={() => {
-                  playScale.value = withSpring(1);
+                  playScale.set(withSpring(1));
                 }}
                 style={styles.heroPressable}
                 accessibilityLabel={`Play video: ${params.title ?? "Lesson"}`}
@@ -354,7 +347,6 @@ export default function LessonPlayerScreen() {
                 </View>
               </Pressable>
             </Animated.View>
-
             {/* Lesson Details & Educator Section */}
             <Animated.View
               entering={FadeInDown.delay(150).duration(400)}
@@ -409,46 +401,17 @@ export default function LessonPlayerScreen() {
                 </View>
               </View>
             </Animated.View>
-
-            {/* Overview & Key Highlights Card */}
-            {/* <Animated.View
-          entering={FadeInDown.delay(200).duration(400)}
-          style={styles.overviewCard}
-        >
-          <Text style={styles.sectionHeaderTitle}>Lesson Overview</Text>
-          <Text style={styles.descriptionText}>
-            This video lesson provides comprehensive study material for{" "}
-            <Text style={styles.boldText}>
-              {params.subject ?? "this subject"}
-            </Text>
-            . Review concepts, follow step-by-step explanations, and boost your
-            understanding with expert guidance.
-          </Text>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.sectionHeaderTitle}>What You'll Learn</Text>
-          <View style={styles.takeawaysList}>
-            <View style={styles.takeawayItem}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={styles.takeawayText}>
-                In-depth explanation of core topics & fundamentals
+            {/* Lesson description */}
+            <Animated.View
+              entering={FadeInDown.delay(200).duration(400)}
+              style={styles.overviewCard}
+            >
+              <Text style={styles.sectionHeaderTitle}>Lesson Overview</Text>
+              <Text style={styles.descriptionText}>
+                {params.description?.trim() ||
+                  "No description is available for this lesson."}
               </Text>
-            </View>
-            <View style={styles.takeawayItem}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={styles.takeawayText}>
-                Step-by-step problem solving & practical examples
-              </Text>
-            </View>
-            <View style={styles.takeawayItem}>
-              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
-              <Text style={styles.takeawayText}>
-                Essential revision summary and key exam insights
-              </Text>
-            </View>
-          </View>
-        </Animated.View> */}
+            </Animated.View>
           </ScrollView>
         </View>
       </View>
