@@ -36,7 +36,7 @@ DigiLearn needs Firebase and Google OAuth credentials to run fully. Here's what 
    cp .env.example .env
    ```
 
-2. **Email me** at **elishabagalw@gmail.com** to request the Firebase and Google OAuth credentials
+2. **Email me** at **elishabagalwa.dev@gmail.com** to request the Firebase and Google OAuth credentials
 
 3. Once you receive them, add them to your `.env` file. It should look like this:
 
