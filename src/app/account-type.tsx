@@ -1,25 +1,31 @@
 import { Image } from "expo-image";
-import { useFocusEffect, useNavigation, useRouter } from "expo-router";
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    BackHandler,
-    Pressable,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  BackHandler,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
 import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import {
-    AccountType,
-    getUserOnboardingState,
-    saveAccountTypeDecision,
+  AccountType,
+  getUserOnboardingState,
+  saveAccountTypeDecision,
 } from "../services/userProfile";
 
 function mapSaveError() {
@@ -29,6 +35,8 @@ function mapSaveError() {
 export default function AccountTypeScreen() {
   const router = useRouter();
   const navigation = useNavigation();
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const openedFromSettings = from === "settings";
   const { width } = useWindowDimensions();
 
   const [user, setUser] = useState<User | null>(null);
@@ -52,7 +60,7 @@ export default function AccountTypeScreen() {
 
       try {
         const onboarding = await getUserOnboardingState(nextUser.uid);
-        if (onboarding.accountTypeCompleted) {
+        if (onboarding.accountTypeCompleted && !openedFromSettings) {
           router.replace("/" as never);
         }
       } catch {
@@ -63,11 +71,16 @@ export default function AccountTypeScreen() {
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [openedFromSettings, router]);
 
   useFocusEffect(
     useCallback(() => {
-      const onBackPress = () => true;
+      const onBackPress = () => {
+        if (openedFromSettings) {
+          router.back();
+        }
+        return true;
+      };
       const subscription = BackHandler.addEventListener(
         "hardwareBackPress",
         onBackPress,
@@ -75,8 +88,12 @@ export default function AccountTypeScreen() {
 
       const unsubscribe = navigation.addListener("beforeRemove", (event) => {
         const actionType = event.data.action.type;
-        if (actionType === "GO_BACK" || actionType === "POP") {
+        if (
+          openedFromSettings &&
+          (actionType === "GO_BACK" || actionType === "POP")
+        ) {
           event.preventDefault();
+          router.back();
         }
       });
 
@@ -84,7 +101,7 @@ export default function AccountTypeScreen() {
         subscription.remove();
         unsubscribe();
       };
-    }, [navigation]),
+    }, [navigation, openedFromSettings, router]),
   );
 
   const handleSelect = useCallback((accountType: AccountType) => {
@@ -102,7 +119,23 @@ export default function AccountTypeScreen() {
 
     try {
       await saveAccountTypeDecision(user, selectedAccountType);
-      if (selectedAccountType === "student") {
+      if (openedFromSettings) {
+        if (selectedAccountType === "teacher") {
+          Alert.alert(
+            "Application under review",
+            "Your teacher application was sent to the DigiLearn team. We will notify you when a decision is made.",
+            [
+              {
+                text: "Continue",
+                onPress: () =>
+                  router.replace("/teacher-account-quick-settings" as never),
+              },
+            ],
+          );
+        } else {
+          router.back();
+        }
+      } else if (selectedAccountType === "student") {
         router.replace("/account-quick-settings" as never);
       } else if (selectedAccountType === "teacher") {
         router.replace("/teacher-account-quick-settings" as never);
@@ -114,7 +147,7 @@ export default function AccountTypeScreen() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, router, selectedAccountType, user]);
+  }, [isSubmitting, openedFromSettings, router, selectedAccountType, user]);
 
   const handleSkip = useCallback(async () => {
     if (!user || isSubmitting) {
@@ -157,7 +190,7 @@ export default function AccountTypeScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={[styles.page, { paddingHorizontal: horizontalPadding }]}>
           <View style={[styles.authState, { maxWidth: contentMaxWidth }]}>
-            <Text style={styles.title}>You're not signed in</Text>
+            <Text style={styles.title}>You are not signed in</Text>
             <Text style={styles.authSubtitle}>
               Log in or create an account to set up your DigiLearn profile.
             </Text>
@@ -197,7 +230,13 @@ export default function AccountTypeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={[styles.page, { paddingHorizontal: horizontalPadding }]}>
         <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
-          <Text style={styles.title}>Account type</Text>
+          <Text style={styles.title}>
+            {openedFromSettings ? "Choose your account type" : "Account type"}
+          </Text>
+          <Text style={styles.subtitle}>
+            Choose the experience that fits how you use DigiLearn. Compare the
+            features before deciding.
+          </Text>
 
           <View style={styles.cardRow}>
             <Pressable
@@ -220,6 +259,9 @@ export default function AccountTypeScreen() {
                 contentFit="contain"
               />
               <Text style={styles.cardLabel}>Student Account</Text>
+              <Text style={styles.cardDescription}>
+                Learn, save resources, track progress, and join discussions.
+              </Text>
             </Pressable>
 
             <Pressable
@@ -241,7 +283,11 @@ export default function AccountTypeScreen() {
                 style={styles.cardImage}
                 contentFit="contain"
               />
-              <Text style={styles.cardLabel}>Teacher</Text>
+              <Text style={styles.cardLabel}>Teacher Account</Text>
+              <Text style={styles.cardDescription}>
+                Everything in Student, plus publish resources and share lessons
+                after approval.
+              </Text>
             </Pressable>
           </View>
 
@@ -319,6 +365,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     textAlign: "center",
   },
+  subtitle: {
+    color: colors.text,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+    marginBottom: spacing.xl,
+  },
   cardRow: {
     width: "100%",
     flexDirection: "row",
@@ -367,6 +420,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     textAlign: "center",
+  },
+  cardDescription: {
+    color: colors.white,
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: "center",
+    marginTop: spacing.sm,
   },
   primaryButton: {
     width: "100%",

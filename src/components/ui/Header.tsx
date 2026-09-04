@@ -38,17 +38,14 @@ export const Header = ({
     34,
     Math.max(22, Math.round(width * 0.075)),
   );
-  const [userName, setUserName] = useState<string | null>(null);
+  const [authUser, setAuthUser] = useState<User | null>(auth.currentUser);
   const [greeting, setGreeting] = useState("Hi there");
+
+  const userName = getFirstName(authUser, profile?.type === "teacher");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const firstName = getFirstName(user);
-        setUserName(firstName);
-      } else {
-        setUserName(null);
-      }
+      setAuthUser(user);
     });
 
     return unsubscribe;
@@ -106,10 +103,12 @@ export const Header = ({
   );
 };
 
-function getFirstName(user: User) {
+function getFirstName(user: User | null, isTeacher: boolean) {
+  if (!user) return null;
   const name = user.displayName?.trim();
   if (!name) return null;
-  return name.split(" ")[0];
+  const firstName = name.split(" ")[0];
+  return isTeacher ? `Tr ${firstName}` : firstName;
 }
 
 function generateGreeting() {

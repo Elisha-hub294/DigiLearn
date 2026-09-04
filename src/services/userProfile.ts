@@ -9,8 +9,9 @@ import {
   setDoc,
   Timestamp,
 } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from "../../firebaseConfig";
+import { app, db, storage } from "../../firebaseConfig";
 
 export type AccountType = "student" | "teacher" | "admin" | "";
 
@@ -312,45 +313,14 @@ export async function saveAccountTypeDecision(
   user: User,
   accountType: AccountType,
 ) {
-  const collectionName = "users";
-  const ref = doc(db, collectionName, user.uid);
-  const snapshot = await getDoc(ref);
-
-  await setDoc(
-    ref,
-    {
-      ...(snapshot.exists() ? {} : defaultUserProfile(user)),
-      ...(snapshot.exists() ? {} : { joinedAt: serverTimestamp() }),
-      type: accountType === "teacher" ? "student" : accountType,
-      accountTypeCompleted: true,
-      ...(accountType === "teacher"
-        ? {
-            requestedAccountType: "teacher",
-            teacherApprovalStatus: "pending",
-          }
-        : {
-            requestedAccountType: deleteField(),
-            teacherApprovalStatus: deleteField(),
-          }),
-    },
-    { merge: true },
-  );
-
-  if (accountType === "teacher") {
-    await setDoc(doc(db, "teacherApplications", user.uid), {
-      applicantId: user.uid,
-      name: user.displayName?.trim() || nameFromEmail(user.email),
-      email: user.email ?? "",
-      status: "pending",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
-  }
+  if (accountType !== "student" && accountType !== "teacher") return;
+  const callable = httpsCallable(getFunctions(app), "changeAccountType");
+  await callable({ accountType });
 
   onboardingStateCache[user.uid] = {
     exists: true,
     accountTypeCompleted: true,
-    type: accountType === "teacher" ? "student" : accountType,
+    type: accountType,
   };
 }
 

@@ -145,6 +145,13 @@ export default function SettingsScreen() {
                 onPress={() => router.push("/my-profile" as never)}
               />
               <SettingsRow
+                icon="repeat"
+                title="Change account type"
+                onPress={() =>
+                  router.push("/account-type?from=settings" as never)
+                }
+              />
+              <SettingsRow
                 icon="settings"
                 title="My Preferences"
                 onPress={() => router.push("/preferences" as never)}

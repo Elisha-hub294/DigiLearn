@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.reviewTeacherApplication = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const firestore_2 = require("firebase-functions/v2/firestore");
@@ -63,8 +63,10 @@ exports.reviewTeacherApplication = (0, https_1.onCall)(async (request) => {
         const now = firestore_1.FieldValue.serverTimestamp();
         const status = decision === "approve" ? "approved" : "rejected";
         const notification = applicantNotification(decision === "approve"
-            ? "Your teacher account has been approved."
-            : `Your teacher application needs updates: ${reason}`, applicant?.name || application?.name || "Teacher application");
+            ? "Your teacher application has been approved. You can now publish books, lessons, pages, announcements, and past papers on DigiLearn."
+            : `Your teacher application needs updates: ${reason}`, decision === "approve"
+            ? "Teacher account approved"
+            : applicant?.name || application?.name || "Teacher application");
         transaction.update(applicationRef, {
             status,
             rejectionReason: decision === "reject" ? reason : firestore_1.FieldValue.delete(),
@@ -100,6 +102,68 @@ exports.reviewTeacherApplication = (0, https_1.onCall)(async (request) => {
         .set({ read: true, dismissed: true, reviewedAt: firestore_1.Timestamp.now() }, { merge: true });
     return { status: decision === "approve" ? "approved" : "rejected" };
 });
+exports.changeAccountType = (0, https_1.onCall)(async (request) => {
+    if (!request.auth)
+        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
+    const accountType = request.data?.accountType;
+    if (accountType !== "student" && accountType !== "teacher") {
+        throw new https_1.HttpsError("invalid-argument", "A valid account type is required.");
+    }
+    const userId = request.auth.uid;
+    const userRef = db.doc(`users/${userId}`);
+    const applicationRef = db.doc(`teacherApplications/${userId}`);
+    const userSnapshot = await userRef.get();
+    const authUser = request.auth.token;
+    const userData = userSnapshot.data() ?? {
+        name: authUser.name || authUser.email?.split("@")[0] || "DigiLearn learner",
+        email: authUser.email || "",
+        photoURL: authUser.picture || "",
+        bio: "",
+        level: "",
+        school: "",
+        gender: "",
+        subjects: [],
+        filterFeedByInterests: false,
+        "marked-as-read": [],
+        "hidden-pages": [],
+        "saved-pages": [],
+        "saved-books": [],
+        "saved-lessons": [],
+        "saved-posts": [],
+        "paper-revision-status": {},
+        savedAt: {},
+        joinedAt: firestore_1.FieldValue.serverTimestamp(),
+    };
+    if (accountType === "student") {
+        await userRef.set({
+            ...userData,
+            type: "student",
+            accountTypeCompleted: true,
+            requestedAccountType: firestore_1.FieldValue.delete(),
+            teacherApprovalStatus: firestore_1.FieldValue.delete(),
+            teacherReviewReason: firestore_1.FieldValue.delete(),
+        }, { merge: true });
+        await applicationRef.delete();
+        return { status: "student" };
+    }
+    await userRef.set({
+        ...userData,
+        type: "student",
+        accountTypeCompleted: true,
+        requestedAccountType: "teacher",
+        teacherApprovalStatus: "pending",
+        teacherReviewReason: firestore_1.FieldValue.delete(),
+    }, { merge: true });
+    await applicationRef.set({
+        applicantId: userId,
+        name: userData.name,
+        email: userData.email,
+        status: "pending",
+        createdAt: firestore_1.FieldValue.serverTimestamp(),
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    return { status: "pending" };
+});
 exports.resubmitTeacherApplication = (0, https_1.onCall)(async (request) => {
     if (!request.auth)
         throw new https_1.HttpsError("unauthenticated", "Sign in required.");
@@ -107,6 +171,10 @@ exports.resubmitTeacherApplication = (0, https_1.onCall)(async (request) => {
     const applicationRef = db.doc(`teacherApplications/${applicationId}`);
     const applicantRef = db.doc(`users/${applicationId}`);
     const auditRef = db.collection("teacherApplicationAudit").doc();
+    const currentApplication = await applicationRef.get();
+    if (currentApplication.data()?.status === "pending") {
+        return { status: "pending" };
+    }
     await db.runTransaction(async (transaction) => {
         const applicationSnapshot = await transaction.get(applicationRef);
         if (!applicationSnapshot.exists ||
@@ -314,27 +382,35 @@ exports.updateReport = (0, https_1.onCall)(async (request) => {
     }
     return { status };
 });
-exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentCreated)("teacherApplications/{applicationId}", async (event) => {
-    const application = event.data?.data();
+exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentWritten)("teacherApplications/{applicationId}", async (event) => {
+    const application = event.data?.after.data();
+    const previousApplication = event.data?.before.data();
     const applicationId = event.params.applicationId;
-    if (!application)
+    if (!application ||
+        application.status !== "pending" ||
+        previousApplication?.status === "pending")
         return;
-    await db
-        .collection("adminNotifications")
-        .doc(applicationId)
-        .set({
-        id: applicationId,
-        type: "announcement",
-        publisherName: "DigiLearn",
-        publisherAvatar: "@/assets/images/panda.png",
-        message: "A new teacher account is waiting for your review.",
-        resourceTitle: application.name || "Teacher application",
-        itemId: applicationId,
-        navigation: "/teacher-applications",
-        adminKind: "teacher-application",
-        createdAt: firestore_1.FieldValue.serverTimestamp(),
-        read: false,
-    }, { merge: true });
+    await Promise.all([
+        db
+            .collection("adminNotifications")
+            .doc(applicationId)
+            .set({
+            id: applicationId,
+            type: "announcement",
+            publisherName: "DigiLearn",
+            publisherAvatar: "@/assets/images/panda.png",
+            message: "A new teacher account is waiting for your review.",
+            resourceTitle: application.name || "Teacher application",
+            itemId: applicationId,
+            navigation: "/teacher-applications",
+            adminKind: "teacher-application",
+            createdAt: firestore_1.FieldValue.serverTimestamp(),
+            read: false,
+        }, { merge: true }),
+        db.doc(`users/${applicationId}`).set({
+            notifications: firestore_1.FieldValue.arrayUnion(applicantNotification("Your teacher application is under review. We will notify you when a decision is made.", application.name || "Teacher application")),
+        }, { merge: true }),
+    ]);
 });
 exports.remindOverdueTeacherApplications = (0, scheduler_1.onSchedule)("every day 09:00", async () => {
     const cutoff = firestore_1.Timestamp.fromMillis(Date.now() - 3 * 24 * 60 * 60 * 1000);

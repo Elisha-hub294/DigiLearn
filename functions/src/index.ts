@@ -1,6 +1,9 @@
 import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import {
+  onDocumentCreated,
+  onDocumentWritten,
+} from "firebase-functions/v2/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 
@@ -83,9 +86,11 @@ export const reviewTeacherApplication = onCall(async (request) => {
     const status = decision === "approve" ? "approved" : "rejected";
     const notification = applicantNotification(
       decision === "approve"
-        ? "Your teacher account has been approved."
+        ? "Your teacher application has been approved. You can now publish books, lessons, pages, announcements, and past papers on DigiLearn."
         : `Your teacher application needs updates: ${reason}`,
-      applicant?.name || application?.name || "Teacher application",
+      decision === "approve"
+        ? "Teacher account approved"
+        : applicant?.name || application?.name || "Teacher application",
     );
 
     transaction.update(applicationRef, {
@@ -133,6 +138,85 @@ export const reviewTeacherApplication = onCall(async (request) => {
   return { status: decision === "approve" ? "approved" : "rejected" };
 });
 
+export const changeAccountType = onCall(async (request) => {
+  if (!request.auth)
+    throw new HttpsError("unauthenticated", "Sign in required.");
+
+  const accountType = request.data?.accountType;
+  if (accountType !== "student" && accountType !== "teacher") {
+    throw new HttpsError(
+      "invalid-argument",
+      "A valid account type is required.",
+    );
+  }
+
+  const userId = request.auth.uid;
+  const userRef = db.doc(`users/${userId}`);
+  const applicationRef = db.doc(`teacherApplications/${userId}`);
+  const userSnapshot = await userRef.get();
+  const authUser = request.auth.token;
+  const userData = userSnapshot.data() ?? {
+    name: authUser.name || authUser.email?.split("@")[0] || "DigiLearn learner",
+    email: authUser.email || "",
+    photoURL: authUser.picture || "",
+    bio: "",
+    level: "",
+    school: "",
+    gender: "",
+    subjects: [],
+    filterFeedByInterests: false,
+    "marked-as-read": [],
+    "hidden-pages": [],
+    "saved-pages": [],
+    "saved-books": [],
+    "saved-lessons": [],
+    "saved-posts": [],
+    "paper-revision-status": {},
+    savedAt: {},
+    joinedAt: FieldValue.serverTimestamp(),
+  };
+
+  if (accountType === "student") {
+    await userRef.set(
+      {
+        ...userData,
+        type: "student",
+        accountTypeCompleted: true,
+        requestedAccountType: FieldValue.delete(),
+        teacherApprovalStatus: FieldValue.delete(),
+        teacherReviewReason: FieldValue.delete(),
+      },
+      { merge: true },
+    );
+    await applicationRef.delete();
+    return { status: "student" };
+  }
+
+  await userRef.set(
+    {
+      ...userData,
+      type: "student",
+      accountTypeCompleted: true,
+      requestedAccountType: "teacher",
+      teacherApprovalStatus: "pending",
+      teacherReviewReason: FieldValue.delete(),
+    },
+    { merge: true },
+  );
+  await applicationRef.set(
+    {
+      applicantId: userId,
+      name: userData.name,
+      email: userData.email,
+      status: "pending",
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+  return { status: "pending" };
+});
+
 export const resubmitTeacherApplication = onCall(async (request) => {
   if (!request.auth)
     throw new HttpsError("unauthenticated", "Sign in required.");
@@ -140,6 +224,10 @@ export const resubmitTeacherApplication = onCall(async (request) => {
   const applicationRef = db.doc(`teacherApplications/${applicationId}`);
   const applicantRef = db.doc(`users/${applicationId}`);
   const auditRef = db.collection("teacherApplicationAudit").doc();
+  const currentApplication = await applicationRef.get();
+  if (currentApplication.data()?.status === "pending") {
+    return { status: "pending" };
+  }
   await db.runTransaction(async (transaction) => {
     const applicationSnapshot = await transaction.get(applicationRef);
     if (
@@ -416,31 +504,51 @@ export const updateReport = onCall(async (request) => {
   return { status };
 });
 
-export const notifyAdminsOfTeacherApplication = onDocumentCreated(
+export const notifyAdminsOfTeacherApplication = onDocumentWritten(
   "teacherApplications/{applicationId}",
   async (event) => {
-    const application = event.data?.data();
+    const application = event.data?.after.data();
+    const previousApplication = event.data?.before.data();
     const applicationId = event.params.applicationId;
-    if (!application) return;
-    await db
-      .collection("adminNotifications")
-      .doc(applicationId)
-      .set(
+    if (
+      !application ||
+      application.status !== "pending" ||
+      previousApplication?.status === "pending"
+    )
+      return;
+
+    await Promise.all([
+      db
+        .collection("adminNotifications")
+        .doc(applicationId)
+        .set(
+          {
+            id: applicationId,
+            type: "announcement",
+            publisherName: "DigiLearn",
+            publisherAvatar: "@/assets/images/panda.png",
+            message: "A new teacher account is waiting for your review.",
+            resourceTitle: application.name || "Teacher application",
+            itemId: applicationId,
+            navigation: "/teacher-applications",
+            adminKind: "teacher-application",
+            createdAt: FieldValue.serverTimestamp(),
+            read: false,
+          },
+          { merge: true },
+        ),
+      db.doc(`users/${applicationId}`).set(
         {
-          id: applicationId,
-          type: "announcement",
-          publisherName: "DigiLearn",
-          publisherAvatar: "@/assets/images/panda.png",
-          message: "A new teacher account is waiting for your review.",
-          resourceTitle: application.name || "Teacher application",
-          itemId: applicationId,
-          navigation: "/teacher-applications",
-          adminKind: "teacher-application",
-          createdAt: FieldValue.serverTimestamp(),
-          read: false,
+          notifications: FieldValue.arrayUnion(
+            applicantNotification(
+              "Your teacher application is under review. We will notify you when a decision is made.",
+              application.name || "Teacher application",
+            ),
+          ),
         },
         { merge: true },
-      );
+      ),
+    ]);
   },
 );
 
