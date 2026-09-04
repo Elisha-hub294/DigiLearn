@@ -3,7 +3,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Linking,
   ScrollView,
   StyleSheet,
@@ -20,6 +19,7 @@ import {
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { toggleSavedItem } from "../../services/userProfile";
 import { ActionDialog } from "../ui/ActionDialog";
+import { Skeleton } from "../ui/Skeleton";
 import { AuthorsCarousel } from "./AuthorsCarousel";
 import { BookHero } from "./BookHero";
 import { BookOverview } from "./BookOverview";
@@ -257,15 +257,14 @@ export function BookPreviewScreen() {
             },
           ]}
         >
-          <View style={styles.skeletonHero} />
+          <Skeleton style={styles.skeletonHero} />
           <View style={styles.skeletonSheet}>
-            <View style={styles.skeletonTitle} />
-            <View style={styles.skeletonLine} />
-            <View style={styles.skeletonLineShort} />
-            <View style={styles.skeletonAvatars} />
+            <Skeleton style={styles.skeletonTitle} />
+            <Skeleton style={styles.skeletonLine} />
+            <Skeleton style={styles.skeletonLineShort} />
+            <Skeleton style={styles.skeletonAvatars} />
           </View>
         </View>
-        <ActivityIndicator style={styles.loader} color="#147B5B" />
       </View>
     );
   const goBack = () => {

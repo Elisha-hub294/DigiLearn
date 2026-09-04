@@ -2,7 +2,6 @@ import { useRouter } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +13,7 @@ import { auth, db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { PaperRevisionStatus } from "../../services/userProfile";
+import { Skeleton } from "../ui/Skeleton";
 
 type PastPaperRecord = {
   id: string;
@@ -199,8 +199,11 @@ export function PaperRevisionDashboard() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading revision dashboard...</Text>
+        <Skeleton style={styles.loadingHeroSkeleton} />
+        <Skeleton style={styles.loadingTitleSkeleton} />
+        <Skeleton style={styles.loadingLineSkeleton} />
+        <Skeleton style={styles.loadingLineSkeleton} />
+        <Skeleton style={styles.loadingLineShortSkeleton} />
       </View>
     );
   }
@@ -393,6 +396,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     fontSize: 14,
   },
+  loadingHeroSkeleton: { width: "100%", height: 150, marginBottom: spacing.lg },
+  loadingTitleSkeleton: { width: "64%", height: 22, marginBottom: spacing.md },
+  loadingLineSkeleton: { width: "100%", height: 13, marginBottom: spacing.sm },
+  loadingLineShortSkeleton: { width: "58%", height: 13 },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",

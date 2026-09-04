@@ -22,6 +22,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
+import { Skeleton } from "../components/ui/Skeleton";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { reviewTeacherApplication } from "../services/teacherApplications";
@@ -161,7 +162,7 @@ export default function TeacherApplicationReviewScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <Skeleton style={styles.loadingSkeleton} />
         </View>
       </SafeAreaView>
     );
@@ -413,6 +414,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: spacing.xxl,
   },
+  loadingSkeleton: { width: "86%", height: 180, borderRadius: 14 },
   topBar: {
     flexDirection: "row",
     alignItems: "center",

@@ -2,7 +2,6 @@ import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   ScrollView,
   Share,
   StyleSheet,
@@ -17,6 +16,7 @@ import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { toggleSavedItem } from "../../services/userProfile";
 import { FALLBACK_COVER } from "../book/bookTypes";
 import { ActionDialog } from "../ui/ActionDialog";
+import { Skeleton } from "../ui/Skeleton";
 import { BottomActionBar } from "./BottomActionBar";
 import { OverviewSection } from "./OverviewSection";
 import { PageDetailsSection } from "./PageDetailsSection";
@@ -391,21 +391,20 @@ export function PagePreviewScreen() {
             },
           ]}
         >
-          <View style={styles.skeletonHero} />
+          <Skeleton style={styles.skeletonHero} />
           <View style={styles.skeletonSheet}>
             <View style={styles.skeletonAvatarRow}>
-              <View style={styles.skeletonAvatar} />
+              <Skeleton style={styles.skeletonAvatar} />
               <View style={styles.skeletonHeaderCopy}>
-                <View style={styles.skeletonTitle} />
-                <View style={styles.skeletonSub} />
+                <Skeleton style={styles.skeletonTitle} />
+                <Skeleton style={styles.skeletonSub} />
               </View>
             </View>
-            <View style={styles.skeletonLine} />
-            <View style={styles.skeletonLine} />
-            <View style={styles.skeletonLineShort} />
+            <Skeleton style={styles.skeletonLine} />
+            <Skeleton style={styles.skeletonLine} />
+            <Skeleton style={styles.skeletonLineShort} />
           </View>
         </View>
-        <ActivityIndicator style={styles.loader} color="#6C4DD9" size="large" />
       </View>
     );
   }

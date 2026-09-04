@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
@@ -22,6 +21,7 @@ import { FloatingAssistantButton } from "../../components/home/FloatingAssistant
 import { TeacherPostCard } from "../../components/home/TeacherPostCard";
 import { TopicalNotesSlider } from "../../components/home/TopicalNotesSlider";
 import { PaperCarousel } from "../../components/library/PaperCarousel";
+import { Skeleton } from "../../components/ui/Skeleton";
 
 import { auth } from "../../../firebaseConfig";
 import { Header } from "../../components/ui/Header";
@@ -359,9 +359,13 @@ export default function HomeScreen() {
             {/* Inline Lazy Loading & End Footer */}
             <View style={styles.feedFooter}>
               {loadingMore ? (
-                <View style={styles.loaderWrap}>
-                  <ActivityIndicator size="small" color={colors.primary} />
-                  <Text style={styles.loaderText}>Loading more for you...</Text>
+                <View
+                  style={styles.loaderWrap}
+                  accessibilityLabel="Loading more resources"
+                >
+                  {[0, 1, 2].map((item) => (
+                    <Skeleton key={item} style={styles.loaderSkeleton} />
+                  ))}
                 </View>
               ) : isAllLoaded ? (
                 <Text style={styles.endText}>
@@ -418,15 +422,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   loaderWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    width: "100%",
+    gap: spacing.sm,
   },
-  loaderText: {
-    color: colors.subtitle,
-    fontSize: 13,
-    fontWeight: "500",
-  },
+  loaderSkeleton: { width: "100%", height: 64, borderRadius: 10 },
   endText: {
     color: colors.subtitle,
     fontSize: 13,

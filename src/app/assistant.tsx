@@ -6,7 +6,6 @@ import {
 } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   BackHandler,
   Image,
   KeyboardAvoidingView,
@@ -28,6 +27,7 @@ import { MessageComposer } from "../components/assistant/MessageComposer";
 import { PromptChip } from "../components/assistant/PromptChip";
 import { TypingIndicator } from "../components/assistant/TypingIndicator";
 import { ActionDialog } from "../components/ui/ActionDialog";
+import { Skeleton } from "../components/ui/Skeleton";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import {
@@ -311,11 +311,14 @@ export default function AssistantScreen() {
           />
 
           {isLoading ? (
-            <View style={styles.loadingState}>
-              <ActivityIndicator color={colors.primary} size="large" />
-              <Text style={styles.loadingText}>
-                Preparing your study space...
-              </Text>
+            <View
+              style={styles.loadingState}
+              accessibilityLabel="Loading study space"
+            >
+              <Skeleton style={styles.loadingAvatar} />
+              <Skeleton style={styles.loadingHeading} />
+              <Skeleton style={styles.loadingLine} />
+              <Skeleton style={styles.loadingLineShort} />
             </View>
           ) : (
             <>
@@ -455,7 +458,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    gap: spacing.md,
   },
+  loadingAvatar: { width: 92, height: 92, borderRadius: 46 },
+  loadingHeading: { width: 180, height: 20 },
+  loadingLine: { width: "78%", height: 13 },
+  loadingLineShort: { width: "54%", height: 13 },
   loadingText: {
     marginTop: spacing.md,
     color: colors.subtitle,

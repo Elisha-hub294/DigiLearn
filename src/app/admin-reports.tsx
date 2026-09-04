@@ -2,7 +2,6 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -12,6 +11,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
@@ -136,7 +136,20 @@ export default function AdminReportsScreen() {
             </Text>
             {error ? <Text style={styles.error}>{error}</Text> : null}
             {loading || refreshing ? (
-              <ActivityIndicator color={colors.primary} style={styles.loader} />
+              <View
+                style={styles.skeletonList}
+                accessibilityLabel="Loading reports"
+              >
+                {[0, 1, 2].map((item) => (
+                  <View key={item} style={styles.skeletonReport}>
+                    <View style={styles.skeletonReportCopy}>
+                      <Skeleton style={styles.skeletonTitle} />
+                      <Skeleton style={styles.skeletonLine} />
+                    </View>
+                    <Skeleton style={styles.skeletonStatus} />
+                  </View>
+                ))}
+              </View>
             ) : null}
             {!loading && !reports.length ? (
               <Text style={styles.empty}>No reports yet.</Text>
@@ -239,6 +252,19 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   loader: { marginVertical: 18 },
+  skeletonList: { marginTop: 18, gap: 10 },
+  skeletonReport: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: spacing.md,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  skeletonReportCopy: { flex: 1, gap: 8 },
+  skeletonTitle: { width: "58%", height: 14 },
+  skeletonLine: { width: "82%", height: 11 },
+  skeletonStatus: { width: 72, height: 24, borderRadius: 12 },
   empty: { color: colors.subtitle, textAlign: "center", marginTop: 32 },
   report: {
     backgroundColor: colors.white,

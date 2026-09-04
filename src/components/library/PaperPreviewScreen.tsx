@@ -12,7 +12,6 @@ import {
 } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
@@ -33,6 +32,7 @@ import {
   toggleSavedItem,
 } from "../../services/userProfile";
 import { ActionDialog } from "../ui/ActionDialog";
+import { Skeleton } from "../ui/Skeleton";
 
 type PaperPreviewData = {
   id: string;
@@ -427,8 +427,10 @@ export function PaperPreviewScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator color={colors.primary} size="large" />
-        <Text style={styles.loadingText}>Loading paper details...</Text>
+        <Skeleton style={styles.loadingHeroSkeleton} />
+        <Skeleton style={styles.loadingTitleSkeleton} />
+        <Skeleton style={styles.loadingLineSkeleton} />
+        <Skeleton style={styles.loadingLineShortSkeleton} />
       </View>
     );
   }
@@ -733,6 +735,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: spacing.md,
   },
+  loadingHeroSkeleton: { width: "100%", height: 180, marginBottom: spacing.lg },
+  loadingTitleSkeleton: { width: "68%", height: 22, marginBottom: spacing.md },
+  loadingLineSkeleton: { width: "100%", height: 13, marginBottom: spacing.sm },
+  loadingLineShortSkeleton: { width: "62%", height: 13 },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",

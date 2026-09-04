@@ -20,6 +20,7 @@ import {
 } from "react-native";
 
 import { auth } from "../../firebaseConfig";
+import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import {
@@ -179,7 +180,7 @@ export default function AccountTypeScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingWrap}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <Skeleton style={styles.loadingSkeleton} />
         </View>
       </SafeAreaView>
     );
@@ -358,6 +359,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  loadingSkeleton: { width: 88, height: 88, borderRadius: 44 },
   title: {
     fontSize: 30,
     fontWeight: "700",

@@ -3,7 +3,6 @@ import * as Clipboard from "expo-clipboard";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -13,6 +12,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
@@ -67,9 +67,7 @@ export default function AdminActivityScreen() {
 
   const visibleEvents = useMemo(() => {
     const cutoff =
-      range === "all"
-        ? 0
-        : currentTime - (range === "7d" ? 7 : 30) * 86400000;
+      range === "all" ? 0 : currentTime - (range === "7d" ? 7 : 30) * 86400000;
     const query = search.trim().toLowerCase();
     return events.filter((event) => {
       const matchesRange = dateFrom(event.openedAt) >= cutoff;
@@ -103,8 +101,7 @@ export default function AdminActivityScreen() {
     const average = (days: number) =>
       Math.round(
         events.filter(
-          (event) =>
-            dateFrom(event.openedAt) >= currentTime - days * 86400000,
+          (event) => dateFrom(event.openedAt) >= currentTime - days * 86400000,
         ).length / days,
       );
     const resourceCounts = visibleEvents.reduce<Record<string, number>>(
@@ -274,7 +271,21 @@ export default function AdminActivityScreen() {
             </ScrollView>
 
             {loading ? (
-              <ActivityIndicator color={colors.primary} style={styles.loader} />
+              <View
+                style={styles.skeletonList}
+                accessibilityLabel="Loading activity"
+              >
+                {[0, 1, 2, 3].map((item) => (
+                  <View key={item} style={styles.skeletonRow}>
+                    <Skeleton style={styles.skeletonIcon} />
+                    <View style={styles.skeletonCopy}>
+                      <Skeleton style={styles.skeletonTitle} />
+                      <Skeleton style={styles.skeletonLine} />
+                    </View>
+                    <Skeleton style={styles.skeletonDate} />
+                  </View>
+                ))}
+              </View>
             ) : error ? (
               <Text style={styles.error}>{error}</Text>
             ) : (
@@ -629,6 +640,20 @@ const styles = StyleSheet.create({
   eventDetail: { color: colors.subtitle, fontSize: 11, marginTop: 3 },
   eventTime: { color: colors.subtitle, fontSize: 11 },
   loader: { marginTop: spacing.xxl },
+  skeletonList: { marginTop: spacing.lg, gap: spacing.sm },
+  skeletonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  skeletonIcon: { width: 42, height: 42, borderRadius: 21 },
+  skeletonCopy: { flex: 1, gap: 8 },
+  skeletonTitle: { width: "62%", height: 14 },
+  skeletonLine: { width: "88%", height: 11 },
+  skeletonDate: { width: 54, height: 10 },
   error: { color: "#B42318", backgroundColor: "#FEE4E2", padding: spacing.md },
   empty: {
     color: colors.subtitle,

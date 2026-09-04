@@ -3,7 +3,6 @@ import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Pressable,
   StyleSheet,
@@ -14,6 +13,7 @@ import {
 import { auth } from "../../firebaseConfig";
 import { TopicalNote } from "../components/page/pageTypes";
 import { DownloadedResources } from "../components/profile/DownloadedResources";
+import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { PaperItem, useLibraryData } from "../hooks/useLibraryData";
@@ -279,11 +279,17 @@ export default function SeeAllScreen() {
         {mode === "downloads" ? (
           <DownloadedResources showAll />
         ) : loading ? (
-          <View style={styles.state}>
-            <ActivityIndicator color={colors.primary} />
-            <Text style={styles.stateText}>
-              Loading {title.toLowerCase()}...
-            </Text>
+          <View
+            style={styles.skeletonGrid}
+            accessibilityLabel={`Loading ${title.toLowerCase()}`}
+          >
+            {[0, 1, 2, 3, 4, 5].map((item) => (
+              <View key={item} style={styles.skeletonCard}>
+                <Skeleton style={styles.skeletonImage} />
+                <Skeleton style={styles.skeletonCardTitle} />
+                <Skeleton style={styles.skeletonCardLine} />
+              </View>
+            ))}
           </View>
         ) : data.length === 0 || (mode === "courses" && coursesError) ? (
           <View style={styles.state}>
@@ -580,6 +586,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   grid: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  skeletonGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md,
+    padding: spacing.lg,
+  },
+  skeletonCard: { width: "47%", gap: spacing.sm, marginBottom: spacing.md },
+  skeletonImage: { width: "100%", aspectRatio: 0.9 },
+  skeletonCardTitle: { width: "78%", height: 14 },
+  skeletonCardLine: { width: "54%", height: 11 },
   row: { alignItems: "flex-start", marginHorizontal: -spacing.xs },
   cell: { paddingHorizontal: spacing.xs, marginBottom: spacing.lg },
   card: {

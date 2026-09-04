@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Skeleton } from "../ui/Skeleton";
 
 interface PdfPreviewProps {
   uri: string;
@@ -122,7 +123,7 @@ export default function PdfPreview({
           style={StyleSheet.absoluteFill}
           className="justify-center items-center"
         >
-          <ActivityIndicator size="small" color="#007AFF" />
+          <Skeleton style={styles.loadingSkeleton} />
         </View>
       )}
       <canvas
@@ -141,6 +142,7 @@ export default function PdfPreview({
 
 const styles = StyleSheet.create({
   fallback: { backgroundColor: "#D1D5DB" },
+  loadingSkeleton: { width: "72%", height: 18, borderRadius: 5 },
   container: {
     overflow: "hidden",
     justifyContent: "flex-start",
