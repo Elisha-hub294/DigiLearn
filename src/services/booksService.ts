@@ -16,6 +16,7 @@ export type BookRecord = {
   author: string;
   subject: string;
   image: string;
+  owner?: string;
 };
 
 let inFlight: Promise<BookRecord[]> | null = null;
@@ -58,6 +59,7 @@ export async function loadBooks(force = false): Promise<BookRecord[]> {
             data.image ?? data.coverImage ?? data.cover ?? data.thumbnail,
             "",
           ),
+          owner: text(data.owner, "") || undefined,
         };
       }),
     )

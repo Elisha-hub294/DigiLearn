@@ -21,6 +21,7 @@ import {
   getReportErrorMessage,
   submitReport,
 } from "../../services/reportService";
+import { deleteResource } from "../../services/resourceDeletion";
 import {
   getHiddenPageEntries,
   getMarkedReadItemIds,
@@ -40,6 +41,7 @@ import { ReportDialog } from "../ui/ReportDialog";
 
 type TopicalNote = {
   id: string;
+  owner?: string;
   title?: string;
   description?: string;
   subject?: string | string[];
@@ -560,6 +562,18 @@ const FeaturedNoteItem = ({
     }
   };
 
+  const canDelete = Boolean(
+    user && (profile?.type === "admin" || note.owner === user.uid),
+  );
+
+  const handleDelete = async () => {
+    try {
+      await deleteResource("pages", note.id);
+    } catch (error) {
+      console.error("Failed to delete page:", error);
+    }
+  };
+
   const previewSource = source ?? "home";
   const routeTitle =
     typeof subject === "string" && subject.trim().length > 0
@@ -588,6 +602,25 @@ const FeaturedNoteItem = ({
       accessibilityLabel: "Report a problem with this page",
       onPress: handleReportProblem,
     },
+    ...(canDelete
+      ? [
+          {
+            label: "Delete",
+            icon: "trash-2",
+            accessibilityLabel: `Delete ${title}`,
+            destructive: true,
+            onPress: () =>
+              setDialogState({
+                title: "Delete this resource?",
+                message:
+                  "This will permanently delete the resource and all of its stored files. This action cannot be undone.",
+                primaryText: "Delete",
+                secondaryText: "Cancel",
+                onPrimary: handleDelete,
+              }),
+          },
+        ]
+      : []),
   ] as const;
 
   return (

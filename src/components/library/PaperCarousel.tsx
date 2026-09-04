@@ -15,6 +15,7 @@ type PaperItem = {
   pageNumber?: string | number;
   paperCode?: string;
   paperNumber?: string | number;
+  owner?: string;
 };
 
 type PaperCarouselProps = {
@@ -43,6 +44,7 @@ export function PaperCarousel({ items }: PaperCarouselProps) {
           pageNumber={item.pageNumber}
           paperCode={item.paperCode}
           paperNumber={item.paperNumber}
+          owner={item.owner}
           image={item.image}
           document={item.document}
         />

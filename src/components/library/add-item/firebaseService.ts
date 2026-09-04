@@ -225,6 +225,7 @@ export const addPage = async (
   coverUrl: string,
   documentUrl: string,
   books: string[],
+  userId: string,
 ) => {
   const itemId = `${getTitleDocId(title)}-${Date.now()}_${Math.random()
     .toString(36)
@@ -239,6 +240,7 @@ export const addPage = async (
     visits: 0,
     subject: subject || "General",
     title,
+    owner: userId,
     updatedAt: serverTimestamp(),
     ...(schoolClass ? { schoolClass } : {}),
   });
@@ -265,6 +267,7 @@ export const addPastPaper = async (
   coverUrl: string,
   documentUrl: string,
   paperCode: string,
+  userId: string,
 ) => {
   const itemId = `${getTitleDocId(title)}-${Date.now()}_${Math.random()
     .toString(36)
@@ -293,6 +296,7 @@ export const addPastPaper = async (
     level: level || "",
     year,
     paperCode: savedPaperCode || "",
+    owner: userId,
     updatedAt: serverTimestamp(),
   });
   await invalidateLocalCaches(

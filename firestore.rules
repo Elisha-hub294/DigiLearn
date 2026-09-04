@@ -5,6 +5,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.token.email_verified == true;
     }
 
+    function isAdmin() {
+      return isVerified()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
+    }
+
     match /users/{userId} {
       allow create: if isVerified() && request.auth.uid == userId;
       allow read: if isVerified() && request.auth.uid == userId;
@@ -129,7 +134,35 @@ service cloud.firestore {
       allow update: if isVerified()
         && resource.data.owner == request.auth.uid
         && request.resource.data.owner == resource.data.owner;
-      allow delete: if isVerified() && resource.data.owner == request.auth.uid;
+      allow delete: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+    }
+
+    match /pages/{pageId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && request.resource.data.owner == request.auth.uid;
+      allow update: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow delete: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+    }
+
+    match /pastPaper/{paperId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && request.resource.data.owner == request.auth.uid;
+      allow update: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow delete: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+    }
+
+    match /trendingLessons/{lessonId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && request.resource.data.owner == request.auth.uid;
+      allow update: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow delete: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+    }
+
+    match /teacherPosts/{postId} {
+      allow read: if isVerified();
+      allow create: if isVerified() && request.resource.data.owner == request.auth.uid;
+      allow update: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow delete: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
     }
 
     match /config/{documentId} {

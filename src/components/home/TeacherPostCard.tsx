@@ -29,6 +29,7 @@ import {
 } from "../../utils/interestFilter";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
+import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 
 export type TeacherPost = {
   id: string;
@@ -465,6 +466,19 @@ const TeacherPostItem = ({
           },
         ]}
       >
+        <View style={styles.menu}>
+          <ResourceDeleteMenu
+            collection="teacherPosts"
+            id={postItem.id}
+            title={title}
+            data={{
+              owner: postItem.owner,
+              cover: postItem.cover,
+              document: postItem.document,
+            }}
+            light
+          />
+        </View>
         {postItem.hasCover && postItem.cover ? (
           <Pressable
             {...({
@@ -718,7 +732,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     backgroundColor: themeColors.white,
     marginBottom: spacing.xl,
+    position: "relative",
   },
+  menu: { position: "absolute", top: 4, right: 4, zIndex: 4 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

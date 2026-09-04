@@ -22,6 +22,7 @@ import {
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
 import { resolveVideoImageSource } from "../../utils/videoUtils";
+import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 import { SectionHeader } from "../ui/SectionHeader";
 import { Skeleton } from "../ui/Skeleton";
 
@@ -281,6 +282,15 @@ export const CoursesCarousel = () => {
                     <Text style={styles.durationText}>{item.duration}</Text>
                   </View>
                 )}
+                <View style={styles.menu}>
+                  <ResourceDeleteMenu
+                    collection="trendingLessons"
+                    id={item.id}
+                    title={item.title}
+                    data={{ owner: item.owner, thumbnail: item.thumbnail }}
+                    light
+                  />
+                </View>
               </View>
               <View style={styles.body}>
                 <Text style={styles.title} numberOfLines={2}>
@@ -336,6 +346,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     overflow: "hidden",
   },
+  menu: { position: "absolute", top: 6, right: 6, zIndex: 3 },
   imagePressable: { width: "100%", height: "100%" },
   image: { width: "100%", height: "100%" },
   imagePlaceholder: { backgroundColor: "#E2E8F0" },

@@ -17,6 +17,7 @@ import {
   getReportErrorMessage,
   submitReport,
 } from "../../services/reportService";
+import { deleteResource } from "../../services/resourceDeletion";
 import { toggleSavedItem } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "./ActionDialog";
@@ -84,6 +85,17 @@ export function VideoCard({
   }, [item.id, profile, user]);
 
   const isSaved = isSavedState;
+  const canDelete = Boolean(
+    user && (profile?.type === "admin" || rawItem.owner === user.uid),
+  );
+
+  const handleDelete = async () => {
+    try {
+      await deleteResource("trendingLessons", item.id);
+    } catch (error) {
+      console.error("Failed to delete lesson:", error);
+    }
+  };
 
   async function openLesson() {
     if (checkingVideo) {
@@ -253,6 +265,25 @@ export function VideoCard({
       accessibilityLabel: "Report a problem with this lesson",
       onPress: handleReportProblem,
     },
+    ...(canDelete
+      ? [
+          {
+            label: "Delete",
+            icon: "trash-2",
+            accessibilityLabel: `Delete ${item.title}`,
+            destructive: true,
+            onPress: () =>
+              setDialogState({
+                title: "Delete this lesson?",
+                message:
+                  "This will permanently delete the lesson and all of its stored files. This action cannot be undone.",
+                primaryText: "Delete",
+                secondaryText: "Cancel",
+                onPrimary: handleDelete,
+              }),
+          },
+        ]
+      : []),
   ] as const;
 
   return (

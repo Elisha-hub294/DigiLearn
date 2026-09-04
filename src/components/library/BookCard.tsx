@@ -2,6 +2,7 @@ import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 import { FALLBACK_COVER } from "../book/bookTypes";
+import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 
 type BookCardItem = {
   id: string;
@@ -11,6 +12,7 @@ type BookCardItem = {
   image: any;
   progress?: number;
   badge?: string;
+  owner?: string;
 };
 
 type BookCardProps = {
@@ -37,6 +39,15 @@ export function BookCard({
         style={styles.image}
         contentFit="cover"
       />
+      <View style={styles.menu}>
+        <ResourceDeleteMenu
+          collection="books"
+          id={item.id}
+          title={item.title}
+          data={{ owner: item.owner, cover: item.image }}
+          light
+        />
+      </View>
       <View>
         <View style={styles.badgeRow}>
           {item.badge ? (
@@ -70,7 +81,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     overflow: "hidden",
     marginBottom: spacing.md,
+    position: "relative",
   },
+  menu: { position: "absolute", top: 6, right: 6, zIndex: 2 },
   image: {
     width: "100%",
     height: 300,

@@ -3,12 +3,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
-    useWindowDimensions,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
@@ -16,6 +16,7 @@ import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
+import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 
 type HeroBook = {
   id: string;
@@ -25,6 +26,7 @@ type HeroBook = {
   subject?: string;
   image: any;
   badge?: string;
+  owner?: string;
 };
 
 type HeroBookCarouselProps = {
@@ -125,6 +127,15 @@ export function HeroBookCarousel({ data }: HeroBookCarouselProps) {
                   end={{ x: 0, y: 1 }}
                   style={styles.overlay}
                 />
+                <View style={styles.menu}>
+                  <ResourceDeleteMenu
+                    collection="books"
+                    id={item.id}
+                    title={item.title}
+                    data={{ owner: item.owner, cover: item.image }}
+                    light
+                  />
+                </View>
                 <View style={styles.content}>
                   <Text style={styles.title} numberOfLines={2}>
                     {item.title}
@@ -176,6 +187,7 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFill,
   },
+  menu: { position: "absolute", top: 6, right: 6, zIndex: 3 },
   content: {
     flex: 1,
     justifyContent: "flex-end",

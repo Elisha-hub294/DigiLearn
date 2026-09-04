@@ -316,6 +316,7 @@ export default function AddTrendingLessonScreen() {
         thumbnail: finalThumbnail,
         link: link.trim(),
         avatar: avatarValue,
+        owner: auth.currentUser?.uid ?? "",
       });
       await invalidateLocalCaches(
         LOCAL_CACHE_KEYS.trending,

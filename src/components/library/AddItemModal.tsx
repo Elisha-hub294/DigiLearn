@@ -1066,6 +1066,7 @@ export function AddItemModal({
           coverUrl,
           documentUrl,
           bookList,
+          userId,
         );
         notificationType = "page";
       } else if (formType === "paper") {
@@ -1141,6 +1142,7 @@ export function AddItemModal({
           coverUrl,
           documentUrl,
           normalizeText(formData.paperCode),
+          userId,
         );
         notificationType = "paper";
       }

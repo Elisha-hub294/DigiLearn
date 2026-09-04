@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
+import { getStorage } from "firebase-admin/storage";
 import {
   onDocumentCreated,
   onDocumentWritten,
@@ -11,6 +12,94 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 initializeApp();
 const db = getFirestore();
 const messaging = getMessaging();
+const storage = getStorage();
+
+const deletableCollections = new Set([
+  "pages",
+  "books",
+  "pastPaper",
+  "trendingLessons",
+  "teacherPosts",
+]);
+
+const storagePrefixes = [
+  "book-covers/",
+  "page-covers/",
+  "docs/",
+  "post-covers/",
+  "post-documents/",
+  "past-papers/",
+];
+
+function collectStoragePaths(value: unknown, paths: Set<string>) {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.startsWith("gs://")) {
+      const path = trimmed.replace(/^gs:\/\/[^/]+\//, "");
+      if (path) paths.add(path);
+    } else if (trimmed.includes("/o/")) {
+      const encodedPath = trimmed.split("/o/")[1]?.split("?")[0];
+      if (encodedPath) paths.add(decodeURIComponent(encodedPath));
+    } else if (storagePrefixes.some((prefix) => trimmed.startsWith(prefix))) {
+      paths.add(trimmed);
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectStoragePaths(item, paths));
+    return;
+  }
+  if (value && typeof value === "object") {
+    Object.values(value).forEach((item) => collectStoragePaths(item, paths));
+  }
+}
+
+export const deleteResource = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+
+  const { collectionName, resourceId } = request.data ?? {};
+  if (
+    typeof collectionName !== "string" ||
+    !deletableCollections.has(collectionName) ||
+    typeof resourceId !== "string" ||
+    !resourceId.trim()
+  ) {
+    throw new HttpsError("invalid-argument", "Invalid resource.");
+  }
+
+  const resourceRef = db.collection(collectionName).doc(resourceId);
+  const resourceSnapshot = await resourceRef.get();
+  if (!resourceSnapshot.exists) {
+    throw new HttpsError("not-found", "Resource not found.");
+  }
+
+  const resource = resourceSnapshot.data() ?? {};
+  const userSnapshot = await db.collection("users").doc(request.auth.uid).get();
+  const isAdmin = userSnapshot.data()?.type === "admin";
+  if (!isAdmin && resource.owner !== request.auth.uid) {
+    throw new HttpsError(
+      "permission-denied",
+      "You cannot delete this resource.",
+    );
+  }
+
+  const paths = new Set<string>();
+  collectStoragePaths(resource, paths);
+  const bucket = storage.bucket();
+  await Promise.all(
+    Array.from(paths, async (path) => {
+      try {
+        await bucket.file(path).delete();
+      } catch (error: any) {
+        if (error?.code !== 404) throw error;
+      }
+    }),
+  );
+  await resourceRef.delete();
+  return { deleted: true };
+});
 
 type UserNotification = {
   id?: string;

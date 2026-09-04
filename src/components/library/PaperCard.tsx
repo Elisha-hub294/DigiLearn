@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
+import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 
 type PaperCardProps = {
   id?: string;
@@ -17,6 +18,8 @@ type PaperCardProps = {
   pageNumber?: string | number;
   paperCode?: string;
   paperNumber?: string | number;
+  owner?: string;
+  onDeleted?: () => void;
 };
 
 export function PaperCard({
@@ -32,6 +35,8 @@ export function PaperCard({
   pageNumber,
   paperCode,
   paperNumber,
+  owner,
+  onDeleted,
 }: PaperCardProps) {
   const router = useRouter();
 
@@ -110,6 +115,16 @@ export function PaperCard({
           <View style={[styles.preview, styles.previewFallback]} />
         )}
         <View style={styles.darkOverlay} />
+        <View style={styles.menu}>
+          <ResourceDeleteMenu
+            collection="pastPaper"
+            id={id ?? title}
+            title={title}
+            data={{ owner, cover: image, document }}
+            onDeleted={onDeleted}
+            light
+          />
+        </View>
       </View>
       <View style={styles.content}>
         {subject?.trim() ? (
@@ -155,6 +170,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.1)",
   },
+  menu: { position: "absolute", top: 6, right: 6 },
   previewFallback: {
     backgroundColor: "#D1D5DB",
   },

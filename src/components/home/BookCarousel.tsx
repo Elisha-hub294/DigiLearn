@@ -19,6 +19,7 @@ import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
+import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 import { SectionHeader } from "../ui/SectionHeader";
 import { Skeleton } from "../ui/Skeleton";
 
@@ -28,6 +29,7 @@ type BookItem = {
   author: string;
   subject?: string;
   image: any;
+  owner?: string;
 };
 
 const pickImage = (value: unknown, fallback: any) => {
@@ -151,6 +153,20 @@ export const BookCarousel = () => {
               } as any);
             }}
           >
+            <View style={styles.menu}>
+              <ResourceDeleteMenu
+                collection="books"
+                id={item.id}
+                title={item.title}
+                data={{ owner: item.owner, cover: item.image }}
+                onDeleted={() =>
+                  setBooks((current) =>
+                    current.filter((book) => book.id !== item.id),
+                  )
+                }
+                light
+              />
+            </View>
             <Image
               source={item.image}
               style={styles.image}
@@ -187,7 +203,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 5,
     overflow: "hidden",
+    position: "relative",
   },
+  menu: { position: "absolute", top: 6, right: 6, zIndex: 2 },
   image: { width: "100%", height: 200 },
   body: { paddingVertical: spacing.xs },
   title: {

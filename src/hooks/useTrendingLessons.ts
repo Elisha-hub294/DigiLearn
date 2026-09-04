@@ -10,6 +10,7 @@ export type TrendingLesson = {
   subject: string;
   link: string;
   description: string;
+  owner?: string;
 };
 
 function toTrendingLesson(
@@ -24,6 +25,7 @@ function toTrendingLesson(
     subject: raw.subject,
     link: raw.link,
     description: raw.description,
+    owner: raw.owner,
   };
 }
 

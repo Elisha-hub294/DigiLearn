@@ -19,6 +19,7 @@ import { auth } from "../../../firebaseConfig";
 import { recordUserActivity } from "../../services/activityService";
 import { ActionDialog } from "./ActionDialog";
 import { DurationBadge } from "./DurationBadge";
+import { ResourceDeleteMenu } from "./ResourceDeleteMenu";
 
 export type VideoLesson = {
   id: string;
@@ -31,6 +32,7 @@ export type VideoLesson = {
   avatar?: number | string;
   link?: string;
   description?: string;
+  owner?: string;
   isNew?: boolean;
   visits?: number;
 };
@@ -127,6 +129,15 @@ export function TrendingVideoCard({
           <View style={styles.duration}>
             <DurationBadge duration={item.duration} />
           </View>
+          <View style={styles.menu}>
+            <ResourceDeleteMenu
+              collection="trendingLessons"
+              id={item.id}
+              title={item.title}
+              data={{ owner: rawItem.owner, thumbnail: item.thumbnail }}
+              light
+            />
+          </View>
         </View>
         <Text
           numberOfLines={1}
@@ -185,6 +196,7 @@ const styles = StyleSheet.create({
   },
   playIconGlyph: { marginLeft: 3 },
   duration: { bottom: 10, position: "absolute", right: 10 },
+  menu: { position: "absolute", top: 6, right: 6 },
   truncateText: {
     width: "100%",
   },

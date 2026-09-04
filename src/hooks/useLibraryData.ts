@@ -52,6 +52,7 @@ export type HeroSlideItem = {
   author: string;
   subtitle: string;
   image: ImageSource;
+  owner?: string;
   [key: string]: any;
 };
 
@@ -85,6 +86,7 @@ export type PaperItem = {
   pageNumber?: string | number;
   paperCode?: string;
   paperNumber?: string | number;
+  owner?: string;
 };
 
 export type PaperSection = {
@@ -291,6 +293,7 @@ export function useLibraryData() {
               [data.image, data.coverImage, data.cover, data.thumbnail],
               "",
             ),
+            owner: typeof data.owner === "string" ? data.owner : undefined,
             badge: pickString(
               [data.badge, isTop ? "Featured" : data.type],
               isTop ? "Featured" : "New",
@@ -317,6 +320,7 @@ export function useLibraryData() {
           author: book.author,
           subtitle: book.subtitle,
           image: book.image,
+          owner: book.owner,
         }));
 
       const topSellingItems = allBooks.slice(0, 6).map((book) => ({
@@ -407,6 +411,7 @@ export function useLibraryData() {
             [data.doc, data.document, data.pdf, data.url],
             "",
           ),
+          owner: typeof data.owner === "string" ? data.owner : undefined,
         });
         paperGroups.set(sectionKey, sectionItems);
       });

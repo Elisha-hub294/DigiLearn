@@ -24,6 +24,7 @@ export type TrendingLessonRecord = {
   avatar: string;
   uploadedAt?: string;
   visits: number;
+  owner?: string;
 };
 
 type FirestoreLesson = Record<string, unknown>;
@@ -67,6 +68,7 @@ function normalizeLesson(
     avatar: String(raw.avatar ?? ""),
     uploadedAt: dateToString(raw.uploadedAt),
     visits: Number.isFinite(visits) && visits >= 0 ? visits : 0,
+    owner: typeof raw.owner === "string" ? raw.owner : undefined,
   };
 }
 

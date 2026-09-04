@@ -1,15 +1,95 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = exports.deleteResource = void 0;
 const app_1 = require("firebase-admin/app");
-const messaging_1 = require("firebase-admin/messaging");
 const firestore_1 = require("firebase-admin/firestore");
+const messaging_1 = require("firebase-admin/messaging");
+const storage_1 = require("firebase-admin/storage");
 const firestore_2 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 (0, app_1.initializeApp)();
 const db = (0, firestore_1.getFirestore)();
 const messaging = (0, messaging_1.getMessaging)();
+const storage = (0, storage_1.getStorage)();
+const deletableCollections = new Set([
+    "pages",
+    "books",
+    "pastPaper",
+    "trendingLessons",
+    "teacherPosts",
+]);
+const storagePrefixes = [
+    "book-covers/",
+    "page-covers/",
+    "docs/",
+    "post-covers/",
+    "post-documents/",
+    "past-papers/",
+];
+function collectStoragePaths(value, paths) {
+    if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed.startsWith("gs://")) {
+            const path = trimmed.replace(/^gs:\/\/[^/]+\//, "");
+            if (path)
+                paths.add(path);
+        }
+        else if (trimmed.includes("/o/")) {
+            const encodedPath = trimmed.split("/o/")[1]?.split("?")[0];
+            if (encodedPath)
+                paths.add(decodeURIComponent(encodedPath));
+        }
+        else if (storagePrefixes.some((prefix) => trimmed.startsWith(prefix))) {
+            paths.add(trimmed);
+        }
+        return;
+    }
+    if (Array.isArray(value)) {
+        value.forEach((item) => collectStoragePaths(item, paths));
+        return;
+    }
+    if (value && typeof value === "object") {
+        Object.values(value).forEach((item) => collectStoragePaths(item, paths));
+    }
+}
+exports.deleteResource = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
+    }
+    const { collectionName, resourceId } = request.data ?? {};
+    if (typeof collectionName !== "string" ||
+        !deletableCollections.has(collectionName) ||
+        typeof resourceId !== "string" ||
+        !resourceId.trim()) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid resource.");
+    }
+    const resourceRef = db.collection(collectionName).doc(resourceId);
+    const resourceSnapshot = await resourceRef.get();
+    if (!resourceSnapshot.exists) {
+        throw new https_1.HttpsError("not-found", "Resource not found.");
+    }
+    const resource = resourceSnapshot.data() ?? {};
+    const userSnapshot = await db.collection("users").doc(request.auth.uid).get();
+    const isAdmin = userSnapshot.data()?.type === "admin";
+    if (!isAdmin && resource.owner !== request.auth.uid) {
+        throw new https_1.HttpsError("permission-denied", "You cannot delete this resource.");
+    }
+    const paths = new Set();
+    collectStoragePaths(resource, paths);
+    const bucket = storage.bucket();
+    await Promise.all(Array.from(paths, async (path) => {
+        try {
+            await bucket.file(path).delete();
+        }
+        catch (error) {
+            if (error?.code !== 404)
+                throw error;
+        }
+    }));
+    await resourceRef.delete();
+    return { deleted: true };
+});
 function getNewNotifications(before, after) {
     const previousIds = new Set((before ?? []).map((item) => item.id));
     return (after ?? []).filter((item) => item.id && !previousIds.has(item.id));
@@ -21,7 +101,9 @@ exports.sendUserNotifications = (0, firestore_2.onDocumentWritten)("users/{userI
         return;
     const newItems = getNewNotifications(before?.notifications, after.notifications);
     const tokens = Object.values((after.pushTokens ?? {})).filter((token) => typeof token === "string" && !!token);
-    if (after.pushNotificationsEnabled === false || !tokens.length || !newItems.length) {
+    if (after.pushNotificationsEnabled === false ||
+        !tokens.length ||
+        !newItems.length) {
         return;
     }
     await messaging.sendEachForMulticast({
