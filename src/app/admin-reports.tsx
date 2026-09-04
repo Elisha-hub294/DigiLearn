@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { colors, spacing } from "../constants/theme";
@@ -15,7 +16,7 @@ import { useProfile } from "../contexts/ProfileContext";
 import {
   listReports,
   ReportRecord,
-  retryReport,
+  updateReport,
 } from "../services/reportService";
 
 const dateLabel = (value?: { seconds?: number }) =>
@@ -30,7 +31,8 @@ export default function AdminReportsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [notes, setNotes] = useState<Record<string, string>>({});
 
   const load = useCallback(
     async (isRefresh = false) => {
@@ -57,18 +59,35 @@ export default function AdminReportsScreen() {
     }, [load]),
   );
 
-  const retry = async (reportId: string) => {
-    setRetryingId(reportId);
+  const saveReport = async (
+    report: ReportRecord,
+    status: ReportRecord["status"],
+  ) => {
+    setSavingId(report.id);
     setError(null);
     try {
-      await retryReport(reportId);
-      await load(true);
+      await updateReport(
+        report.id,
+        status,
+        notes[report.id] ?? report.adminNotes ?? "",
+      );
+      setReports((current) =>
+        current.map((entry) =>
+          entry.id === report.id
+            ? {
+                ...entry,
+                status,
+                adminNotes: notes[report.id] ?? entry.adminNotes,
+              }
+            : entry,
+        ),
+      );
     } catch (reason) {
       setError(
-        reason instanceof Error ? reason.message : "Unable to retry report.",
+        reason instanceof Error ? reason.message : "Unable to update report.",
       );
     } finally {
-      setRetryingId(null);
+      setSavingId(null);
     }
   };
 
@@ -98,7 +117,7 @@ export default function AdminReportsScreen() {
           </Pressable>
         </View>
         <Text style={styles.subtitle}>
-          Review reported content and monitor email delivery.
+          Review, track, and resolve reported content.
         </Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {loading || refreshing ? (
@@ -119,7 +138,8 @@ export default function AdminReportsScreen() {
               <Text
                 style={[
                   styles.status,
-                  report.status === "failed" && styles.failed,
+                  report.status === "resolved" && styles.resolved,
+                  report.status === "dismissed" && styles.dismissed,
                 ]}
               >
                 {report.status}
@@ -137,22 +157,41 @@ export default function AdminReportsScreen() {
             <Text style={styles.meta}>
               Item ID: {report.item.id} · User ID: {report.userId}
             </Text>
-            {report.lastError ? (
-              <Text style={styles.error}>{report.lastError}</Text>
-            ) : null}
-            {report.status === "failed" ? (
-              <Pressable
-                onPress={() => void retry(report.id)}
-                disabled={retryingId === report.id}
-                style={styles.retryButton}
-              >
-                {retryingId === report.id ? (
-                  <ActivityIndicator color={colors.white} size="small" />
-                ) : (
-                  <Text style={styles.retryText}>Retry email</Text>
-                )}
-              </Pressable>
-            ) : null}
+            <View style={styles.statusActions}>
+              {(
+                [
+                  "new",
+                  "in_review",
+                  "resolved",
+                  "dismissed",
+                ] as ReportRecord["status"][]
+              ).map((status) => (
+                <Pressable
+                  key={status}
+                  onPress={() => void saveReport(report, status)}
+                  disabled={savingId === report.id}
+                  style={[
+                    styles.statusButton,
+                    report.status === status && styles.statusButtonSelected,
+                  ]}
+                >
+                  <Text style={styles.statusButtonText}>
+                    {status.replace("_", " ")}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <TextInput
+              value={notes[report.id] ?? report.adminNotes ?? ""}
+              onChangeText={(value) =>
+                setNotes((current) => ({ ...current, [report.id]: value }))
+              }
+              placeholder="Add an internal admin note"
+              placeholderTextColor="#94A3B8"
+              multiline
+              maxLength={2000}
+              style={styles.notesInput}
+            />
           </View>
         ))}
       </ScrollView>
@@ -202,16 +241,36 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
   },
-  failed: { color: "#991B1B", backgroundColor: "#FEE2E2" },
+  resolved: { color: "#166534", backgroundColor: "#DCFCE7" },
+  dismissed: { color: "#475569", backgroundColor: "#E2E8F0" },
   body: { color: "#334155", fontSize: 13, lineHeight: 19, marginTop: 10 },
   error: { color: "#B42318", fontSize: 12, marginTop: 8 },
-  retryButton: {
-    alignSelf: "flex-start",
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    marginTop: 12,
+  statusActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 14,
   },
-  retryText: { color: colors.white, fontSize: 12, fontWeight: "700" },
+  statusButton: {
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  statusButtonSelected: {
+    borderColor: colors.primary,
+    backgroundColor: "#EAF2FF",
+  },
+  statusButtonText: { color: "#334155", fontSize: 11, fontWeight: "600" },
+  notesInput: {
+    minHeight: 58,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 9,
+    padding: 9,
+    marginTop: 10,
+    color: colors.dark,
+    fontSize: 12,
+  },
 });

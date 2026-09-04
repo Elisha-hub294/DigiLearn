@@ -12,7 +12,10 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { auth } from "../../../firebaseConfig";
 import { useProfile } from "../../contexts/ProfileContext";
 import { recordUserActivity } from "../../services/activityService";
-import { submitReport } from "../../services/reportService";
+import {
+  getReportErrorMessage,
+  submitReport,
+} from "../../services/reportService";
 import { toggleSavedItem } from "../../services/userProfile";
 import { ActionDialog } from "./ActionDialog";
 import { CardActionMenu } from "./CardActionMenu";
@@ -187,7 +190,7 @@ export function VideoCard({
       });
     } catch (error) {
       console.error("Failed to submit report:", error);
-      setReportError("We couldn’t send your report. Please try again.");
+      setReportError(getReportErrorMessage(error));
     } finally {
       setReportSubmitting(false);
     }

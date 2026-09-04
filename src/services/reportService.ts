@@ -16,9 +16,9 @@ export type ReportRecord = ReportPayload & {
   userId: string;
   username: string;
   userEmail: string;
-  status: "queued" | "retrying" | "sent" | "failed";
+  status: "new" | "in_review" | "resolved" | "dismissed";
   createdAt?: { seconds?: number };
-  lastError?: string;
+  adminNotes?: string;
 };
 
 export async function submitReport(payload: ReportPayload) {
@@ -37,10 +37,31 @@ export async function listReports() {
   return (await callable()).data.reports;
 }
 
-export async function retryReport(reportId: string) {
-  const callable = httpsCallable<{ reportId: string }, { status: string }>(
-    functions,
-    "retryReport",
-  );
-  return callable({ reportId });
+export async function updateReport(
+  reportId: string,
+  status: ReportRecord["status"],
+  adminNotes: string,
+) {
+  const callable = httpsCallable<
+    { reportId: string; status: ReportRecord["status"]; adminNotes: string },
+    { status: string }
+  >(functions, "updateReport");
+  return callable({ reportId, status, adminNotes });
+}
+
+export function getReportErrorMessage(error: unknown) {
+  const firebaseError = error as { code?: string; message?: string };
+  switch (firebaseError.code) {
+    case "functions/resource-exhausted":
+      return "You recently reported this item. Please wait before sending another report.";
+    case "functions/unauthenticated":
+      return "Please log in before sending a report.";
+    case "functions/not-found":
+      return "Report service is not deployed yet. Please try again later.";
+    default:
+      return (
+        firebaseError.message ||
+        "We couldn't send your report. Please try again."
+      );
+  }
 }

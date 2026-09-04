@@ -17,7 +17,10 @@ import { auth, db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { recordUserActivity } from "../../services/activityService";
-import { submitReport } from "../../services/reportService";
+import {
+  getReportErrorMessage,
+  submitReport,
+} from "../../services/reportService";
 import {
   getHiddenPageEntries,
   getMarkedReadItemIds,
@@ -533,7 +536,7 @@ const FeaturedNoteItem = ({
       });
     } catch (error) {
       console.error("Failed to submit report:", error);
-      setReportError("We couldn’t send your report. Please try again.");
+      setReportError(getReportErrorMessage(error));
     } finally {
       setReportSubmitting(false);
     }

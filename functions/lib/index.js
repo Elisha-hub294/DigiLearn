@@ -1,20 +1,13 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.retryReport = exports.listReports = exports.emailNewReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.reviewTeacherApplication = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.reviewTeacherApplication = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
-const params_1 = require("firebase-functions/params");
 const firestore_2 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
-const nodemailer_1 = __importDefault(require("nodemailer"));
 (0, app_1.initializeApp)();
 const db = (0, firestore_1.getFirestore)();
-const reportEmailUser = (0, params_1.defineSecret)("REPORT_EMAIL_USER");
-const reportEmailPassword = (0, params_1.defineSecret)("REPORT_EMAIL_PASSWORD");
 function requireAdmin(request) {
     if (!request.auth)
         throw new https_1.HttpsError("unauthenticated", "Sign in required.");
@@ -42,7 +35,7 @@ function applicantNotification(message, title) {
 }
 exports.reviewTeacherApplication = (0, https_1.onCall)(async (request) => {
     const adminId = await requireAdmin(request);
-    const data = request.data;
+    const data = (request.data ?? {});
     const applicationId = typeof data.applicationId === "string" ? data.applicationId.trim() : "";
     const decision = data.decision === "approve" || data.decision === "reject"
         ? data.decision
@@ -220,7 +213,9 @@ exports.submitReport = (0, https_1.onCall)(async (request) => {
         db.doc(`users/${userId}`).get(),
         db.doc(`teachers/${userId}`).get(),
     ]);
-    const profile = userSnapshot.data() ?? teacherSnapshot.data();
+    const profile = userSnapshot.exists
+        ? userSnapshot.data()
+        : teacherSnapshot.data();
     const recentReports = await db
         .collection("reports")
         .where("userId", "==", userId)
@@ -244,85 +239,56 @@ exports.submitReport = (0, https_1.onCall)(async (request) => {
         details,
         item: { type: itemType, id: itemId, name: itemName },
         createdAt: firestore_1.Timestamp.now(),
-        status: "queued",
+        status: "new",
     });
     return { reportId: reportRef.id };
 });
-async function deliverReport(report) {
-    const transport = nodemailer_1.default.createTransport({
-        service: "gmail",
-        auth: {
-            user: reportEmailUser.value(),
-            pass: reportEmailPassword.value(),
-        },
-    });
-    const reasons = report.reasons?.join(", ") || "None selected";
-    const subject = `[DigiLearn] ${report.item.type} report: ${report.item.name}`;
-    const text = [
-        `A user reported a problem with a DigiLearn ${report.item.type}.`,
-        "",
-        `User: ${report.username}`,
-        `User ID: ${report.userId}`,
-        `User email: ${report.userEmail}`,
-        "",
-        `Item name: ${report.item.name}`,
-        `Item ID: ${report.item.id}`,
-        `Item type: ${report.item.type}`,
-        `Selected problems: ${reasons}`,
-        `Details: ${report.details || "None provided"}`,
-    ].join("\n");
-    await transport.sendMail({
-        from: reportEmailUser.value(),
-        to: "elishabagalw@gmail.com",
-        subject,
-        text,
-    });
-}
-async function deliverReportDocument(reportId, report) {
-    const reportRef = db.doc(`reports/${reportId}`);
-    try {
-        await deliverReport(report);
-        await reportRef.update({ status: "sent", sentAt: firestore_1.Timestamp.now(), lastError: firestore_1.FieldValue.delete() });
-    }
-    catch (error) {
-        const lastError = error instanceof Error ? error.message.slice(0, 500) : "Email delivery failed.";
-        await reportRef.update({ status: "failed", lastError, failedAt: firestore_1.Timestamp.now() });
-        throw error;
-    }
-}
-exports.emailNewReport = (0, firestore_2.onDocumentCreated)({
-    document: "reports/{reportId}",
-    secrets: [reportEmailUser, reportEmailPassword],
-}, async (event) => {
-    const report = event.data?.data();
-    if (report)
-        await deliverReportDocument(event.params.reportId, report);
-});
 exports.listReports = (0, https_1.onCall)(async (request) => {
     await requireAdmin(request);
-    const snapshot = await db.collection("reports").orderBy("createdAt", "desc").limit(100).get();
-    return { reports: snapshot.docs.map((document) => ({ id: document.id, ...document.data() })) };
+    const snapshot = await db
+        .collection("reports")
+        .orderBy("createdAt", "desc")
+        .limit(100)
+        .get();
+    return {
+        reports: snapshot.docs.map((document) => ({
+            id: document.id,
+            ...document.data(),
+        })),
+    };
 });
-exports.retryReport = (0, https_1.onCall)(async (request) => {
-    await requireAdmin(request);
-    const reportId = typeof request.data?.reportId === "string" ? request.data.reportId.trim() : "";
-    if (!reportId)
-        throw new https_1.HttpsError("invalid-argument", "A report ID is required.");
-    const reportRef = db.doc(`reports/${reportId}`);
-    const snapshot = await reportRef.get();
-    if (!snapshot.exists || snapshot.data()?.status !== "failed") {
-        throw new https_1.HttpsError("failed-precondition", "Only failed reports can be retried.");
+exports.updateReport = (0, https_1.onCall)(async (request) => {
+    const adminId = await requireAdmin(request);
+    const data = request.data;
+    const reportId = typeof data.reportId === "string" ? data.reportId.trim() : "";
+    const status = ["new", "in_review", "resolved", "dismissed"].includes(String(data.status))
+        ? String(data.status)
+        : "";
+    const adminNotes = typeof data.adminNotes === "string" ? data.adminNotes.trim() : "";
+    if (!reportId || !status || adminNotes.length > 2000) {
+        throw new https_1.HttpsError("invalid-argument", "A valid status and report are required.");
     }
-    await reportRef.update({ status: "retrying", retryCount: firestore_1.FieldValue.increment(1) });
-    await deliverReportDocument(reportId, snapshot.data());
-    return { status: "sent" };
+    const reportRef = db.doc(`reports/${reportId}`);
+    if (!(await reportRef.get()).exists) {
+        throw new https_1.HttpsError("not-found", "Report not found.");
+    }
+    await reportRef.update({
+        status,
+        adminNotes,
+        reviewedBy: adminId,
+        reviewedAt: firestore_1.Timestamp.now(),
+    });
+    return { status };
 });
 exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentCreated)("teacherApplications/{applicationId}", async (event) => {
     const application = event.data?.data();
     const applicationId = event.params.applicationId;
     if (!application)
         return;
-    await db.collection("adminNotifications").doc(applicationId).set({
+    await db
+        .collection("adminNotifications")
+        .doc(applicationId)
+        .set({
         id: applicationId,
         type: "announcement",
         publisherName: "DigiLearn",
