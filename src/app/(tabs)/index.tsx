@@ -30,6 +30,7 @@ import { SectionHeader } from "../../components/ui/SectionHeader";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { PaperSection, useLibraryData } from "../../hooks/useLibraryData";
 import { clearGuestMode, isGuestMode } from "../../services/guestService";
 import { getUserOnboardingState } from "../../services/userProfile";
@@ -100,6 +101,7 @@ function HomePastPapers({
 }
 
 export default function HomeScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const navigation = useNavigation();
   const route = useRoute();
@@ -327,7 +329,9 @@ export default function HomeScreen() {
   const isAllLoaded = visibleCount >= feedItems.length;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <Animated.View entering={FadeInUp.duration(480)} style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
           <ScrollView
@@ -373,7 +377,7 @@ export default function HomeScreen() {
                   ))}
                 </View>
               ) : isAllLoaded ? (
-                <Text style={styles.endText}>
+                <Text style={[styles.endText, { color: themeColors.subtitle }]}>
                   You&apos;re all caught up! ✨
                 </Text>
               ) : null}

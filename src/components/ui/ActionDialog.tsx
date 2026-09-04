@@ -1,6 +1,6 @@
-import { colors } from "@/constants/theme";
 import type { ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export type ActionDialogProps = {
   visible: boolean;
@@ -27,10 +27,13 @@ export function ActionDialog({
   onSecondary,
   onClose,
   icon,
-  primaryButtonColor = colors.primary,
-  secondaryButtonColor = "#E2E8F0",
+  primaryButtonColor,
+  secondaryButtonColor,
   secondaryButtonTextColor,
 }: ActionDialogProps) {
+  const { colors } = useTheme();
+  const resolvedPrimaryButtonColor = primaryButtonColor ?? colors.primary;
+  const resolvedSecondaryButtonColor = secondaryButtonColor ?? colors.lightBackground;
   return (
     <Modal
       animationType="fade"
@@ -40,13 +43,13 @@ export function ActionDialog({
     >
       <Pressable style={styles.backdrop} onPress={onClose ?? onSecondary}>
         <Pressable
-          style={styles.card}
+          style={[styles.card, { backgroundColor: colors.white, borderColor: colors.border }]}
           onPress={(event) => event.stopPropagation()}
           accessibilityRole="alert"
         >
-          {icon ? <View style={styles.iconContainer}>{icon}</View> : null}
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+          {icon ? <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }]}>{icon}</View> : null}
+          <Text style={[styles.title, { color: colors.dark }]}>{title}</Text>
+          <Text style={[styles.message, { color: colors.subtitle }]}>{message}</Text>
 
           <View style={styles.actions}>
             {secondaryText && onSecondary ? (
@@ -57,10 +60,10 @@ export function ActionDialog({
                 }}
                 style={[
                   styles.button,
-                  { backgroundColor: secondaryButtonColor },
+                  { backgroundColor: resolvedSecondaryButtonColor },
                 ]}
               >
-                <Text style={[styles.buttonText, styles.secondaryButtonText, secondaryButtonTextColor ? { color: secondaryButtonTextColor } : undefined]}>
+                <Text style={[styles.buttonText, { color: secondaryButtonTextColor ?? colors.dark }]}>
                   {secondaryText}
                 </Text>
               </Pressable>
@@ -71,7 +74,7 @@ export function ActionDialog({
                 onPrimary();
                 onClose?.();
               }}
-              style={[styles.button, { backgroundColor: primaryButtonColor }]}
+              style={[styles.button, { backgroundColor: resolvedPrimaryButtonColor }]}
             >
               <Text style={[styles.buttonText, styles.primaryButtonText]}>
                 {primaryText}
@@ -112,7 +115,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EFF6FF",
     marginBottom: 14,
   },
   title: {
@@ -147,8 +149,5 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: "#FFFFFF",
-  },
-  secondaryButtonText: {
-    color: "#0F172A",
   },
 });

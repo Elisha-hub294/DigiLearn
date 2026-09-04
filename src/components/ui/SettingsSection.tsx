@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, View, ViewProps } from "react-native";
-import { colors } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 type SettingsSectionProps = {
   children: React.ReactNode;
@@ -8,13 +8,22 @@ type SettingsSectionProps = {
 };
 
 export function SettingsSection({ children, style }: SettingsSectionProps) {
-  return <View style={[styles.container, style]}>{children}</View>;
+  const { colors } = useTheme();
+  return (
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.white, borderColor: colors.border },
+        style,
+      ]}
+    >
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.white,
-    borderColor: "#DDDDDD",
     borderWidth: 1,
     borderRadius: 12,
     overflow: "hidden",

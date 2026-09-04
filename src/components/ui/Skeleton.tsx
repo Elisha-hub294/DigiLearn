@@ -1,6 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import { Animated, StyleProp, StyleSheet, ViewStyle } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -9,6 +10,7 @@ type SkeletonProps = {
 };
 
 export function Skeleton({ style }: SkeletonProps) {
+  const { colors, isDark } = useTheme();
   const [opacity] = useState(() => new Animated.Value(0.4));
 
   useEffect(() => {
@@ -32,13 +34,25 @@ export function Skeleton({ style }: SkeletonProps) {
   }, [opacity]);
 
   return (
-    <Animated.View accessible={false} style={[styles.base, style, { opacity }]}>
+    <Animated.View
+      accessible={false}
+      style={[
+        styles.base,
+        { backgroundColor: colors.border },
+        style,
+        { opacity },
+      ]}
+    >
       <AnimatedGradient
-        colors={["transparent", "rgba(255, 255, 255, 0.72)", "transparent"]}
+        colors={
+          isDark
+            ? ["transparent", "rgba(255, 255, 255, 0.12)", "transparent"]
+            : ["transparent", "rgba(255, 255, 255, 0.72)", "transparent"]
+        }
         locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
-        style={[StyleSheet.absoluteFillObject, styles.glow, { opacity }]}
+        style={[StyleSheet.absoluteFill, styles.glow, { opacity }]}
         pointerEvents="none"
       />
     </Animated.View>
@@ -47,7 +61,6 @@ export function Skeleton({ style }: SkeletonProps) {
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: "#E2E8F0",
     borderRadius: 6,
   },
   glow: {

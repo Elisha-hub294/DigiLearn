@@ -19,8 +19,9 @@ import { ActionDialog } from "../components/ui/ActionDialog";
 import { SettingsRow } from "../components/ui/SettingsRow";
 import { SettingsSection } from "../components/ui/SettingsSection";
 import { getHorizontalPadding } from "../constants/layout";
-import { colors, spacing } from "../constants/theme";
+import { spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { useAdminReviewSignals } from "../hooks/useAdminReviewSignals";
 import {
   isAssistantEnabled,
@@ -37,6 +38,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { user, profile } = useProfile();
+  const { colors, isDark, setThemeMode } = useTheme();
   const { newReportCount, pendingApplicationCount } = useAdminReviewSignals();
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
@@ -164,7 +166,7 @@ export default function SettingsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth }]}>
           <ScrollView
@@ -183,11 +185,15 @@ export default function SettingsScreen() {
               >
                 <Icon name="arrow-left" size={22} color={colors.dark} />
               </Pressable>
-              <Text style={styles.title}>Settings</Text>
+              <Text style={[styles.title, { color: colors.dark }]}>
+                Settings
+              </Text>
             </View>
 
             {/* Account Section */}
-            <Text style={styles.sectionTitle}>Account</Text>
+            <Text style={[styles.sectionTitle, { color: colors.dark }]}>
+              Account
+            </Text>
             <SettingsSection>
               <SettingsRow
                 icon="user"
@@ -219,10 +225,35 @@ export default function SettingsScreen() {
               />
             </SettingsSection>
 
+            <View style={{ height: spacing.xxl }} />
+            <Text style={[styles.sectionTitle, { color: colors.dark }]}>
+              Appearance
+            </Text>
+            <SettingsSection>
+              <SettingsRow
+                icon="moon"
+                title="Dark mode"
+                right={
+                  <Switch
+                    value={isDark}
+                    onValueChange={(value) =>
+                      setThemeMode(value ? "dark" : "light")
+                    }
+                    accessibilityLabel="Toggle dark mode"
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.white}
+                  />
+                }
+                showSeparator={false}
+              />
+            </SettingsSection>
+
             {profile?.type === "admin" ? (
               <>
                 <View style={{ height: spacing.xxl }} />
-                <Text style={styles.sectionTitle}>Admin</Text>
+                <Text style={[styles.sectionTitle, { color: colors.dark }]}>
+                  Admin
+                </Text>
                 <SettingsSection>
                   <SettingsRow
                     icon="activity"
@@ -258,7 +289,9 @@ export default function SettingsScreen() {
 
             {/* Notifications */}
             <View style={{ height: spacing.xxl }} />
-            <Text style={styles.sectionTitle}>Notifications</Text>
+            <Text style={[styles.sectionTitle, { color: colors.dark }]}>
+              Notifications
+            </Text>
             <SettingsSection>
               <SettingsRow
                 icon="bell"
@@ -268,9 +301,10 @@ export default function SettingsScreen() {
                     value={pushEnabled}
                     onValueChange={togglePushNotifications}
                     accessibilityLabel="Toggle push notifications"
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.white}
                   />
                 }
-                onPress={() => togglePushNotifications(!pushEnabled)}
               />
               <SettingsRow
                 icon="clock"
@@ -280,16 +314,19 @@ export default function SettingsScreen() {
                     value={remindersEnabled}
                     onValueChange={toggleReminders}
                     accessibilityLabel="Toggle reminders"
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.white}
                   />
                 }
                 showSeparator={false}
-                onPress={() => toggleReminders(!remindersEnabled)}
               />
             </SettingsSection>
 
             {/* DigiLearn Assistant */}
             <View style={{ height: spacing.xxl }} />
-            <Text style={styles.sectionTitle}>DigiLearn Assistant</Text>
+            <Text style={[styles.sectionTitle, { color: colors.dark }]}>
+              DigiLearn Assistant
+            </Text>
             <SettingsSection>
               <SettingsRow
                 icon="cpu"
@@ -299,16 +336,19 @@ export default function SettingsScreen() {
                     value={assistantEnabled}
                     onValueChange={handleToggleAssistant}
                     accessibilityLabel="Toggle AI assistant features"
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={colors.white}
                   />
                 }
                 showSeparator={false}
-                onPress={() => handleToggleAssistant(!assistantEnabled)}
               />
             </SettingsSection>
 
             {/* Help & Information */}
             <View style={{ height: spacing.xxl }} />
-            <Text style={styles.sectionTitle}>Help & Information</Text>
+            <Text style={[styles.sectionTitle, { color: colors.dark }]}>
+              Help & Information
+            </Text>
             <SettingsSection>
               <SettingsRow
                 icon="headphones"
@@ -373,7 +413,7 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.white },
+  safe: { flex: 1 },
   page: { flex: 1, alignItems: "center" },
   contentContainer: { flex: 1, width: "100%" },
   scroll: { flex: 1, width: "100%" },
@@ -384,9 +424,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   backButton: { marginRight: spacing.md, padding: 6 },
-  title: { fontSize: 30, fontWeight: "700", color: colors.dark },
+  title: { fontSize: 30, fontWeight: "700" },
   sectionTitle: {
-    color: colors.dark,
     fontSize: 14,
     fontWeight: "600",
     marginBottom: spacing.md,

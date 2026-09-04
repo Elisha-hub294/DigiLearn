@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 import { formatAppVersion, getAppVersion } from "../services/appInfoService";
 
 const ABOUT_DESCRIPTION =
@@ -41,35 +42,57 @@ function AboutRow({
   onPress,
   showSeparator = true,
 }: AboutRowProps) {
+  const { colors } = useTheme();
   return (
     <View>
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+        style={({ pressed }) => [
+          styles.row,
+          { backgroundColor: colors.white },
+          pressed && { backgroundColor: colors.lightBackground },
+        ]}
         accessibilityRole="button"
         accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}
       >
         <View style={styles.iconSlot}>
-          <Feather name={icon} size={20} color={iconColor} />
+          <Feather
+            name={icon}
+            size={20}
+            color={iconColor === "#111111" ? colors.text : iconColor}
+          />
         </View>
         <View style={styles.rowText}>
-          <Text style={[styles.rowTitle, subtitle && styles.rowTitleCompact]}>
+          <Text
+            style={[
+              styles.rowTitle,
+              { color: colors.text },
+              subtitle && styles.rowTitleCompact,
+            ]}
+          >
             {title}
           </Text>
-          {subtitle ? <Text style={styles.rowSubtitle}>{subtitle}</Text> : null}
+          {subtitle ? (
+            <Text style={[styles.rowSubtitle, { color: colors.subtitle }]}>
+              {subtitle}
+            </Text>
+          ) : null}
         </View>
         {showChevron ? (
-          <Feather name="chevron-right" size={20} color="#111111" />
+          <Feather name="chevron-right" size={20} color={colors.text} />
         ) : (
           <View style={styles.chevronPlaceholder} />
         )}
       </Pressable>
-      {showSeparator ? <View style={styles.separator} /> : null}
+      {showSeparator ? (
+        <View style={[styles.separator, { backgroundColor: colors.border }]} />
+      ) : null}
     </View>
   );
 }
 
 export default function AboutScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
@@ -127,7 +150,10 @@ export default function AboutScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: themeColors.background }]}
+      edges={["top", "bottom"]}
+    >
       <View style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth }]}>
           <View
@@ -141,7 +167,9 @@ export default function AboutScreen() {
             >
               <Feather name="arrow-left" size={22} color={colors.dark} />
             </Pressable>
-            <Text style={styles.title}>About</Text>
+            <Text style={[styles.title, { color: themeColors.dark }]}>
+              About
+            </Text>
           </View>
 
           <ScrollView
@@ -166,12 +194,37 @@ export default function AboutScreen() {
               </Text>
             </View>
 
-            <View style={styles.aboutCard}>
-              <Text style={styles.aboutTitle}>About</Text>
-              <Text style={styles.aboutDescription}>{ABOUT_DESCRIPTION}</Text>
+            <View
+              style={[
+                styles.aboutCard,
+                {
+                  backgroundColor: themeColors.primaryLight,
+                  borderColor: themeColors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.aboutTitle, { color: themeColors.text }]}>
+                About
+              </Text>
+              <Text
+                style={[
+                  styles.aboutDescription,
+                  { color: themeColors.subtitle },
+                ]}
+              >
+                {ABOUT_DESCRIPTION}
+              </Text>
             </View>
 
-            <View style={styles.list}>
+            <View
+              style={[
+                styles.list,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                },
+              ]}
+            >
               <AboutRow
                 icon="star"
                 title="Rate Us on Play Store"

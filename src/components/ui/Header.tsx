@@ -12,6 +12,7 @@ import {
 import { auth } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { useNotifications } from "../../hooks/useNotifications";
 import { NotificationType } from "../../services/notifications";
 
@@ -33,6 +34,7 @@ export const Header = ({
   const { width } = useWindowDimensions();
   const { notifications } = useNotifications();
   const { profile } = useProfile();
+  const { colors } = useTheme();
   const canPublish =
     showPublishButton &&
     (profile?.type === "teacher" || profile?.type === "admin");
@@ -74,13 +76,13 @@ export const Header = ({
     <View style={styles.container}>
       <View style={styles.textWrap}>
         {isLibraryVariant ? (
-          <Text style={[styles.libraryTitle, { fontSize: greetingFontSize }]}>
+          <Text style={[styles.libraryTitle, { fontSize: greetingFontSize, color: colors.dark }]}>
             {title}
           </Text>
         ) : (
           <>
-            <Text style={styles.date}>{date}</Text>
-            <Text style={[styles.greeting, { fontSize: greetingFontSize }]}>
+            <Text style={[styles.date, { color: colors.subtitle }]}>{date}</Text>
+            <Text style={[styles.greeting, { fontSize: greetingFontSize, color: colors.dark }]}>
               {greeting}
               {userName ? (
                 <Text style={{ color: colors.primary }}> {userName}</Text>

@@ -5,6 +5,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 import { SearchResult } from "../../hooks/useGlobalSearch";
 
 type SearchResultBookCardProps = {
@@ -21,6 +22,7 @@ export function SearchResultBookCard({
   onPress,
 }: SearchResultBookCardProps) {
   const scale = useSharedValue(1);
+  const { colors } = useTheme();
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -39,7 +41,10 @@ export function SearchResultBookCard({
     const trimmedQ = query.trim();
     if (!trimmedQ || trimmedQ.length < 2) {
       return (
-        <Text style={styles.titleText} numberOfLines={2}>
+        <Text
+          style={[styles.titleText, { color: colors.text }]}
+          numberOfLines={2}
+        >
           {title}
         </Text>
       );
@@ -50,7 +55,10 @@ export function SearchResultBookCard({
       const parts = title.split(regex);
 
       return (
-        <Text style={styles.titleText} numberOfLines={2}>
+        <Text
+          style={[styles.titleText, { color: colors.text }]}
+          numberOfLines={2}
+        >
           {parts.map((part, idx) => {
             const isMatch = part.toLowerCase() === trimmedQ.toLowerCase();
             return (
@@ -81,7 +89,10 @@ export function SearchResultBookCard({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={() => onPress(item)}
-        style={styles.card}
+        style={[
+          styles.card,
+          { backgroundColor: colors.white, borderColor: colors.border },
+        ]}
       >
         <View style={styles.badgeWrap}>
           <View style={[styles.badge, { backgroundColor: "#F97316" }]}>
@@ -90,7 +101,12 @@ export function SearchResultBookCard({
         </View>
 
         <View style={styles.cardBody}>
-          <View style={styles.coverWrapper}>
+          <View
+            style={[
+              styles.coverWrapper,
+              { backgroundColor: colors.lightBackground },
+            ]}
+          >
             <Image
               source={
                 item.rawItem?.cover ||
@@ -114,11 +130,17 @@ export function SearchResultBookCard({
 
           <View style={styles.textContainer}>
             {renderTitle()}
-            <Text style={styles.authorText} numberOfLines={1}>
+            <Text
+              style={[styles.authorText, { color: colors.primary }]}
+              numberOfLines={1}
+            >
               {item.author || item.subtitle || "Author"}
             </Text>
             {!!item.description && (
-              <Text style={styles.descText} numberOfLines={2}>
+              <Text
+                style={[styles.descText, { color: colors.subtitle }]}
+                numberOfLines={2}
+              >
                 {item.description}
               </Text>
             )}
@@ -134,11 +156,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   card: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
   badgeWrap: {
     marginBottom: 10,
@@ -165,7 +185,6 @@ const styles = StyleSheet.create({
     height: 104,
     borderRadius: 5,
     overflow: "hidden",
-    backgroundColor: "#F3F4F6",
     elevation: 3,
     shadowColor: "#000",
     shadowOpacity: 0.1,
@@ -183,7 +202,6 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#111111",
     lineHeight: 22,
   },
   highlightText: {
@@ -198,7 +216,6 @@ const styles = StyleSheet.create({
   descText: {
     fontSize: 13,
     fontWeight: "400",
-    color: "#6B7280",
     lineHeight: 18,
   },
 });

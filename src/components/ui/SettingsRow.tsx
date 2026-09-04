@@ -1,14 +1,14 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import React from "react";
 import {
-    Pressable,
-    StyleProp,
-    StyleSheet,
-    Text,
-    View,
-    ViewStyle,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
 } from "react-native";
-import { colors } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 type SettingsRowProps = {
   icon?: React.ComponentProps<typeof Icon>["name"];
@@ -31,11 +31,17 @@ export function SettingsRow({
   showSeparator = true,
   accessibilityLabel,
 }: SettingsRowProps) {
+  const { colors } = useTheme();
   return (
     <View>
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.row, pressed && styles.pressed, style]}
+        style={({ pressed }) => [
+          styles.row,
+          { backgroundColor: colors.white },
+          pressed && { backgroundColor: colors.lightBackground },
+          style,
+        ]}
         accessibilityRole={onPress ? "button" : undefined}
         accessibilityLabel={accessibilityLabel ?? title}
       >
@@ -49,14 +55,19 @@ export function SettingsRow({
           ) : null}
         </View>
         <Text
-          style={[styles.title, destructive && { color: "#FF4D4D" }]}
+          style={[
+            styles.title,
+            { color: destructive ? "#FF4D4D" : colors.dark },
+          ]}
           numberOfLines={1}
         >
           {title}
         </Text>
         <View style={styles.right}>{right}</View>
       </Pressable>
-      {showSeparator ? <View style={styles.separator} /> : null}
+      {showSeparator ? (
+        <View style={[styles.separator, { backgroundColor: colors.border }]} />
+      ) : null}
     </View>
   );
 }
@@ -68,13 +79,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 18,
-    backgroundColor: colors.white,
   },
   left: { width: 28, alignItems: "center", marginRight: 12 },
-  title: { flex: 1, fontSize: 14, color: colors.dark },
+  title: { flex: 1, fontSize: 14 },
   right: { marginLeft: 12 },
-  separator: { height: 1, backgroundColor: "#E5E5E5", marginLeft: 58 },
-  pressed: { backgroundColor: "#F6F6F6" },
+  separator: { height: 1, marginLeft: 58 },
 });
 
 export default SettingsRow;

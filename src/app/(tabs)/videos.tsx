@@ -20,6 +20,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 import { loadTrendingLessons } from "../../services/trendingLessonsService";
 
 type FirestoreLesson = {
@@ -141,6 +142,7 @@ function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
 }
 
 export default function VideosScreen() {
+  const { colors: themeColors } = useTheme();
   const navigation = useNavigation<any>();
   const route = useRoute();
   const { width } = useWindowDimensions();
@@ -274,7 +276,10 @@ export default function VideosScreen() {
   );
 
   return (
-    <SafeAreaView edges={["top"]} style={styles.safe}>
+    <SafeAreaView
+      edges={["top"]}
+      style={[styles.safe, { backgroundColor: themeColors.background }]}
+    >
       <Animated.View
         entering={FadeIn.duration(380)}
         style={[styles.container, { maxWidth: contentMaxWidth }]}
@@ -319,7 +324,7 @@ export default function VideosScreen() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor={colors.primary}
+                tintColor={themeColors.primary}
               />
             }
           />

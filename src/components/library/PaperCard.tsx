@@ -94,52 +94,53 @@ export function PaperCard({
   };
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      style={({ pressed, hovered }: any) => [
-        styles.card,
-        width !== undefined && { width },
-        (pressed || hovered) && styles.cardPressed,
-      ]}
-      onPress={openPreview}
-    >
-      <View style={styles.previewContainer}>
-        {image ? (
-          <Image
-            source={{ uri: image }}
-            style={styles.preview}
-            contentFit="cover"
-            contentPosition="top left"
-          />
-        ) : (
-          <View style={[styles.preview, styles.previewFallback]} />
-        )}
-        <View style={styles.darkOverlay} />
-        <View style={styles.menu}>
-          <ResourceDeleteMenu
-            collection="pastPaper"
-            id={id ?? title}
-            title={title}
-            data={{ owner, cover: image, document }}
-            onDeleted={onDeleted}
-            light
-          />
+    <View style={[styles.card, width !== undefined && { width }]}>
+      <Pressable
+        accessibilityRole="button"
+        style={({ pressed, hovered }: any) => [
+          styles.cardPressable,
+          (pressed || hovered) && styles.cardPressed,
+        ]}
+        onPress={openPreview}
+      >
+        <View style={styles.previewContainer}>
+          {image ? (
+            <Image
+              source={{ uri: image }}
+              style={styles.preview}
+              contentFit="cover"
+              contentPosition="top left"
+            />
+          ) : (
+            <View style={[styles.preview, styles.previewFallback]} />
+          )}
+          <View style={styles.darkOverlay} />
         </View>
-      </View>
-      <View style={styles.content}>
-        {subject?.trim() ? (
-          <Text style={styles.subject}>{subject.trim()}</Text>
-        ) : null}
-        <Text style={styles.title} numberOfLines={2}>
-          {title}
-        </Text>
-        {metaParts.length > 0 && (
-          <Text style={styles.meta} numberOfLines={2}>
-            {metaParts.join(" • ")}
+        <View style={styles.content}>
+          {subject?.trim() ? (
+            <Text style={styles.subject}>{subject.trim()}</Text>
+          ) : null}
+          <Text style={styles.title} numberOfLines={2}>
+            {title}
           </Text>
-        )}
+          {metaParts.length > 0 && (
+            <Text style={styles.meta} numberOfLines={2}>
+              {metaParts.join(" • ")}
+            </Text>
+          )}
+        </View>
+      </Pressable>
+      <View style={styles.menu}>
+        <ResourceDeleteMenu
+          collection="pastPaper"
+          id={id ?? title}
+          title={title}
+          data={{ owner, cover: image, document }}
+          onDeleted={onDeleted}
+          light
+        />
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -152,6 +153,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "rgba(15, 23, 42, 0.06)",
+    position: "relative",
+  },
+  cardPressable: {
+    width: "100%",
   },
   cardPressed: {
     opacity: 0.9,

@@ -40,6 +40,9 @@ type RowProps = {
   onPress: () => void;
   about?: boolean;
 };
+
+const MAX_BIO_LENGTH = 300;
+
 const fieldLabels: Record<Field, string> = {
   name: "Name",
   bio: "About",
@@ -179,6 +182,12 @@ export default function MyProfileScreen() {
         setError(validationError);
         return;
       }
+    }
+    if (field === "bio" && value.length > MAX_BIO_LENGTH) {
+      setError(
+        `Bio must be ${MAX_BIO_LENGTH} characters or less (${value.length}/${MAX_BIO_LENGTH}).`,
+      );
+      return;
     }
     try {
       setSaving(true);
@@ -499,20 +508,28 @@ export default function MyProfileScreen() {
                 ))}
               </View>
             ) : (
-              <TextInput
-                value={draft}
-                onChangeText={setDraft}
-                autoFocus
-                placeholder={
-                  field === "bio"
-                    ? "Tell us about yourself..."
-                    : `Enter your ${field ?? "value"}`
-                }
-                placeholderTextColor="#9CA3AF"
-                multiline={field === "bio"}
-                style={[styles.input, field === "bio" && styles.bioInput]}
-                accessibilityLabel={`Enter ${field ? fieldLabels[field] : "value"}`}
-              />
+              <>
+                <TextInput
+                  value={draft}
+                  onChangeText={setDraft}
+                  autoFocus
+                  placeholder={
+                    field === "bio"
+                      ? "Tell us about yourself..."
+                      : `Enter your ${field ?? "value"}`
+                  }
+                  placeholderTextColor="#9CA3AF"
+                  multiline={field === "bio"}
+                  maxLength={field === "bio" ? MAX_BIO_LENGTH : undefined}
+                  style={[styles.input, field === "bio" && styles.bioInput]}
+                  accessibilityLabel={`Enter ${field ? fieldLabels[field] : "value"}`}
+                />
+                {field === "bio" ? (
+                  <Text style={styles.charCounter}>
+                    {draft.length}/{MAX_BIO_LENGTH}
+                  </Text>
+                ) : null}
+              </>
             )}
             {error ? <Text style={styles.validation}>{error}</Text> : null}
             <View style={styles.sheetActions}>
@@ -696,6 +713,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   bioInput: { minHeight: 110, paddingTop: 13, textAlignVertical: "top" },
+  charCounter: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    marginTop: 6,
+    textAlign: "right",
+  },
   choices: { gap: 10 },
   choice: {
     borderWidth: 1,

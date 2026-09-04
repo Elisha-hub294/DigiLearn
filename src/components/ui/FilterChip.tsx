@@ -1,4 +1,4 @@
-import { colors } from "@/constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 import { Pressable, StyleSheet, Text } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -16,6 +16,7 @@ export function FilterChip({
   selected: boolean;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
   const pressed = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: withTiming(pressed.value, { duration: 120 }) }],
@@ -31,9 +32,9 @@ export function FilterChip({
       onPressOut={() => {
         pressed.value = 1;
       }}
-      style={[styles.chip, selected && styles.selected, animatedStyle]}
+      style={[styles.chip, { backgroundColor: colors.white, borderColor: colors.inactive }, selected && { backgroundColor: colors.primary, borderColor: colors.primary }, animatedStyle]}
     >
-      <Text style={[styles.text, selected && styles.selectedText]}>
+      <Text style={[styles.text, { color: selected ? colors.white : colors.inactive }]}>
         {label}
       </Text>
     </AnimatedPressable>
@@ -41,8 +42,6 @@ export function FilterChip({
 }
 const styles = StyleSheet.create({
   chip: {
-    backgroundColor: "#fff",
-    borderColor: colors.inactive,
     borderRadius: 100,
     borderWidth: 1,
     marginRight: 10,
@@ -50,9 +49,6 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   selected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
-  text: { color: colors.inactive, fontSize: 12, fontWeight: "600" },
-  selectedText: { color: "#fff" },
+  text: { fontSize: 12, fontWeight: "600" },
 });

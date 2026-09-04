@@ -6,6 +6,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 import { formatUploadedAt, SearchResult } from "../../hooks/useGlobalSearch";
 
 type SearchResultVideoCardProps = {
@@ -21,6 +22,7 @@ export function SearchResultVideoCard({
   query,
   onPress,
 }: SearchResultVideoCardProps) {
+  const { colors } = useTheme();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -40,7 +42,10 @@ export function SearchResultVideoCard({
     const trimmedQ = query.trim();
     if (!trimmedQ || trimmedQ.length < 2) {
       return (
-        <Text style={styles.titleText} numberOfLines={2}>
+        <Text
+          style={[styles.titleText, { color: colors.text }]}
+          numberOfLines={2}
+        >
           {title}
         </Text>
       );
@@ -51,7 +56,10 @@ export function SearchResultVideoCard({
       const parts = title.split(regex);
 
       return (
-        <Text style={styles.titleText} numberOfLines={2}>
+        <Text
+          style={[styles.titleText, { color: colors.text }]}
+          numberOfLines={2}
+        >
           {parts.map((part, idx) => {
             const isMatch = part.toLowerCase() === trimmedQ.toLowerCase();
             return (
@@ -67,7 +75,10 @@ export function SearchResultVideoCard({
       );
     } catch {
       return (
-        <Text style={styles.titleText} numberOfLines={2}>
+        <Text
+          style={[styles.titleText, { color: colors.text }]}
+          numberOfLines={2}
+        >
           {title}
         </Text>
       );
@@ -82,7 +93,10 @@ export function SearchResultVideoCard({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={() => onPress(item)}
-        style={styles.card}
+        style={[
+          styles.card,
+          { backgroundColor: colors.white, borderColor: colors.border },
+        ]}
       >
         {/* Type Badge */}
         <View style={styles.badgeWrap}>
@@ -131,11 +145,19 @@ export function SearchResultVideoCard({
         <View style={styles.infoArea}>
           {renderTitle()}
           <View style={styles.metaRow}>
-            <Text style={styles.teacherText} numberOfLines={1}>
+            <Text
+              style={[styles.teacherText, { color: colors.text }]}
+              numberOfLines={1}
+            >
               {item.teacher || "Teacher"}
             </Text>
-            <Text style={styles.bulletText}>•</Text>
-            <Text style={styles.uploadText} numberOfLines={1}>
+            <Text style={[styles.bulletText, { color: colors.inactive }]}>
+              •
+            </Text>
+            <Text
+              style={[styles.uploadText, { color: colors.subtitle }]}
+              numberOfLines={1}
+            >
               {formatUploadedAt(item.uploadedAt)}
             </Text>
           </View>
@@ -150,11 +172,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   card: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
   badgeWrap: {
     marginBottom: 8,
@@ -221,7 +241,6 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#111111",
     lineHeight: 22,
   },
   highlightText: {
@@ -237,15 +256,12 @@ const styles = StyleSheet.create({
   teacherText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#4B5563",
   },
   bulletText: {
-    color: "#9CA3AF",
     fontSize: 12,
   },
   uploadText: {
     fontSize: 13,
     fontWeight: "400",
-    color: "#6B7280",
   },
 });

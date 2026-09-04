@@ -2,21 +2,23 @@ import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { useCallback } from "react";
 import {
-    BackHandler,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  BackHandler,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 type HelpSectionProps = { title: string; items: string[] };
 
 function HelpItem({ title, onPress }: { title: string; onPress?: () => void }) {
+  const { colors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -24,16 +26,17 @@ function HelpItem({ title, onPress }: { title: string; onPress?: () => void }) {
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <Text style={styles.itemText}>{title}</Text>
-      <Feather name="chevron-right" size={20} color="#222" />
+      <Text style={[styles.itemText, { color: colors.text }]}>{title}</Text>
+      <Feather name="chevron-right" size={20} color={colors.text} />
     </Pressable>
   );
 }
 
 function HelpSection({ title, items }: HelpSectionProps) {
+  const { colors } = useTheme();
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.dark }]}>{title}</Text>
       <View style={styles.items}>
         {items.map((item) => (
           <HelpItem key={item} title={item} />
@@ -44,6 +47,7 @@ function HelpSection({ title, items }: HelpSectionProps) {
 }
 
 export default function HelpScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
@@ -77,7 +81,10 @@ export default function HelpScreen() {
     }, [navigation, router]),
   );
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: themeColors.background }]}
+      edges={["top", "bottom"]}
+    >
       <View style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth }]}>
           <View
@@ -90,7 +97,9 @@ export default function HelpScreen() {
             >
               <Feather name="arrow-left" size={22} color={colors.dark} />
             </Pressable>
-            <Text style={styles.title}>How can we help?</Text>
+            <Text style={[styles.title, { color: themeColors.dark }]}>
+              How can we help?
+            </Text>
           </View>
           <ScrollView
             contentContainerStyle={[
@@ -125,7 +134,12 @@ export default function HelpScreen() {
             accessibilityRole="button"
             accessibilityLabel="Chat with us"
           >
-            <Feather name="message-circle" size={20} color="#fff" fill="#fff" />
+            <Feather
+              name="message-circle"
+              size={20}
+              color={themeColors.white}
+              fill={themeColors.white}
+            />
             <Text style={styles.chatText}>Chat with us</Text>
           </Pressable>
         </View>

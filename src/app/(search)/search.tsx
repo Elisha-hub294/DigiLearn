@@ -26,6 +26,7 @@ import { SearchSkeleton } from "../../components/search/SearchSkeleton";
 import { ActionDialog } from "../../components/ui/ActionDialog";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { getHorizontalPadding } from "../../constants/layout";
+import { useTheme } from "../../contexts/ThemeContext";
 import {
   SearchCategory,
   SearchResult,
@@ -43,6 +44,7 @@ const CATEGORIES: SearchCategory[] = [
 ];
 
 export default function SearchScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams<{
     returnTo?: string;
@@ -280,7 +282,10 @@ export default function SearchScreen() {
   );
 
   return (
-    <SafeAreaView edges={["top", "bottom"]} style={styles.safeArea}>
+    <SafeAreaView
+      edges={["top", "bottom"]}
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+    >
       <Animated.View
         entering={FadeIn.duration(250)}
         style={[
@@ -333,7 +338,7 @@ export default function SearchScreen() {
             entering={FadeInUp.duration(200)}
             style={styles.resultHeaderWrap}
           >
-            <Text style={styles.resultHeaderText}>
+            <Text style={[styles.resultHeaderText, { color: colors.primary }]}>
               Results for &quot;{debouncedQuery.trim()}&quot; ({results.length})
             </Text>
           </Animated.View>
@@ -358,12 +363,17 @@ export default function SearchScreen() {
                     }}
                     style={[
                       styles.categoryChip,
+                      {
+                        backgroundColor: colors.lightBackground,
+                        borderColor: colors.border,
+                      },
                       active && styles.categoryChipActive,
                     ]}
                   >
                     <Text
                       style={[
                         styles.categoryText,
+                        { color: active ? colors.white : colors.text },
                         active && styles.categoryTextActive,
                       ]}
                     >
@@ -430,7 +440,6 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
   },
   container: {
     flex: 1,
@@ -457,9 +466,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: "#F3F4F6",
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
   categoryChipActive: {
     backgroundColor: "#006EFF",
@@ -468,7 +475,6 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#4B5563",
   },
   categoryTextActive: {
     color: "#FFFFFF",
@@ -482,7 +488,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#333333",
     marginBottom: 12,
   },
   chipsWrap: {

@@ -5,6 +5,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 import { SearchResult } from "../../hooks/useGlobalSearch";
 
 type SearchResultCardProps = {
@@ -29,6 +30,7 @@ export function SearchResultCard({
   query,
   onPress,
 }: SearchResultCardProps) {
+  const { colors } = useTheme();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -51,7 +53,10 @@ export function SearchResultCard({
 
     if (!trimmedQ || trimmedQ.length < 2) {
       return (
-        <Text style={styles.titleText} numberOfLines={2}>
+        <Text
+          style={[styles.titleText, { color: colors.text }]}
+          numberOfLines={2}
+        >
           {title}
         </Text>
       );
@@ -63,7 +68,10 @@ export function SearchResultCard({
       const parts = title.split(regex);
 
       return (
-        <Text style={styles.titleText} numberOfLines={2}>
+        <Text
+          style={[styles.titleText, { color: colors.text }]}
+          numberOfLines={2}
+        >
           {parts.map((part, index) => {
             const isMatch = part.toLowerCase() === trimmedQ.toLowerCase();
             return (
@@ -79,7 +87,10 @@ export function SearchResultCard({
       );
     } catch {
       return (
-        <Text style={styles.titleText} numberOfLines={2}>
+        <Text
+          style={[styles.titleText, { color: colors.text }]}
+          numberOfLines={2}
+        >
           {title}
         </Text>
       );
@@ -94,7 +105,10 @@ export function SearchResultCard({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={() => onPress(item)}
-        style={styles.card}
+        style={[
+          styles.card,
+          { backgroundColor: colors.white, borderColor: colors.border },
+        ]}
       >
         <View style={styles.imageContainer}>
           {item.previewImage ? (
@@ -105,7 +119,12 @@ export function SearchResultCard({
               transition={200}
             />
           ) : (
-            <View style={styles.previewFallback} />
+            <View
+              style={[
+                styles.previewFallback,
+                { backgroundColor: colors.border },
+              ]}
+            />
           )}
         </View>
 
@@ -118,7 +137,7 @@ export function SearchResultCard({
           {renderHighlightedTitle()}
           {!!item.description && (
             <Text
-              style={styles.descriptionText}
+              style={[styles.descriptionText, { color: colors.subtitle }]}
               numberOfLines={2}
               ellipsizeMode="tail"
             >
@@ -140,17 +159,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    backgroundColor: "#FFFFFF",
     borderRadius: 14,
     padding: 10,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
   imageContainer: {
     width: 80,
     height: 64,
     borderRadius: 10,
-    backgroundColor: "#F4F4F6",
+    backgroundColor: "transparent",
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
@@ -159,7 +176,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  previewFallback: { flex: 1, backgroundColor: "#D1D5DB" },
+  previewFallback: { flex: 1 },
   textContainer: {
     flex: 1,
     justifyContent: "center",
@@ -179,7 +196,6 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#202020",
     lineHeight: 20,
   },
   highlightedPart: {
@@ -189,7 +205,6 @@ const styles = StyleSheet.create({
   descriptionText: {
     fontSize: 13,
     fontWeight: "400",
-    color: "#8A8A8A",
     lineHeight: 18,
   },
 });

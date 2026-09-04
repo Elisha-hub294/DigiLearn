@@ -1,6 +1,7 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 import { FALLBACK_COVER } from "../book/bookTypes";
 import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 
@@ -28,10 +29,14 @@ export function BookCard({
   width = 200,
   marginRight = spacing.md,
 }: BookCardProps) {
+  const { colors } = useTheme();
   return (
     <Pressable
       accessibilityRole="button"
-      style={[styles.card, { width, marginRight }]}
+      style={[
+        styles.card,
+        { width, marginRight, backgroundColor: colors.white },
+      ]}
       onPress={onPress}
     >
       <Image
@@ -56,16 +61,28 @@ export function BookCard({
             </View>
           ) : null}
           {typeof item.progress === "number" ? (
-            <View style={styles.progressLabel}>
-              <Text style={styles.progressText}>{item.progress}%</Text>
+            <View
+              style={[
+                styles.progressLabel,
+                { backgroundColor: colors.lightBackground },
+              ]}
+            >
+              <Text style={[styles.progressText, { color: colors.primary }]}>
+                {item.progress}%
+              </Text>
             </View>
           ) : null}
         </View>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.author}>{item.author}</Text>
-        <Text style={styles.description} numberOfLines={2}>
+        <Text style={[styles.author, { color: colors.subtitle }]}>
+          {item.author}
+        </Text>
+        <Text
+          style={[styles.description, { color: colors.subtitle }]}
+          numberOfLines={2}
+        >
           {item.description}
         </Text>
       </View>
@@ -78,7 +95,6 @@ const styles = StyleSheet.create({
     width: 200,
     marginRight: spacing.md,
     borderRadius: radius.sm,
-    backgroundColor: colors.white,
     overflow: "hidden",
     marginBottom: spacing.md,
     position: "relative",
@@ -106,13 +122,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   progressLabel: {
-    backgroundColor: "#FFF4DA",
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
   },
   progressText: {
-    color: "#B17A00",
     fontSize: 10,
     fontWeight: "700",
   },

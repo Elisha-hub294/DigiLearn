@@ -5,6 +5,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 import { SearchResult } from "../../hooks/useGlobalSearch";
 
 type SearchResultTeacherCardProps = {
@@ -20,6 +21,7 @@ export function SearchResultTeacherCard({
   query,
   onPress,
 }: SearchResultTeacherCardProps) {
+  const { colors } = useTheme();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -39,7 +41,9 @@ export function SearchResultTeacherCard({
     const trimmedQ = query.trim();
 
     if (!trimmedQ || trimmedQ.length < 2) {
-      return <Text style={styles.nameText}>{name}</Text>;
+      return (
+        <Text style={[styles.nameText, { color: colors.dark }]}>{name}</Text>
+      );
     }
 
     try {
@@ -48,7 +52,7 @@ export function SearchResultTeacherCard({
       const parts = name.split(regex);
 
       return (
-        <Text style={styles.nameText}>
+        <Text style={[styles.nameText, { color: colors.dark }]}>
           {parts.map((part, idx) => {
             const isMatch = part.toLowerCase() === trimmedQ.toLowerCase();
             return (
@@ -63,13 +67,20 @@ export function SearchResultTeacherCard({
         </Text>
       );
     } catch {
-      return <Text style={styles.nameText}>{name}</Text>;
+      return (
+        <Text style={[styles.nameText, { color: colors.dark }]}>{name}</Text>
+      );
     }
   };
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <View style={styles.card}>
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: colors.white, borderColor: colors.border },
+        ]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Teacher profile: ${item.title}`}
@@ -79,7 +90,12 @@ export function SearchResultTeacherCard({
           style={styles.cardPressable}
         >
           {/* Left: Large circular avatar (64px) */}
-          <View style={styles.avatarWrapper}>
+          <View
+            style={[
+              styles.avatarWrapper,
+              { backgroundColor: colors.lightBackground },
+            ]}
+          >
             <Image
               source={{
                 uri: item.rawItem?.avatar || DEFAULT_TEACHER_AVATAR,
@@ -92,8 +108,18 @@ export function SearchResultTeacherCard({
 
           {/* Center: Name with black pill background + 2-line bio */}
           <View style={styles.centerInfo}>
-            <View style={styles.namePill}>{renderName()}</View>
-            <Text style={styles.bioText} numberOfLines={2}>
+            <View
+              style={[
+                styles.namePill,
+                { backgroundColor: colors.lightBackground },
+              ]}
+            >
+              {renderName()}
+            </View>
+            <Text
+              style={[styles.bioText, { color: colors.subtitle }]}
+              numberOfLines={2}
+            >
               {item.description || `${item.subtitle || "Teacher"} at DigiLearn`}
             </Text>
           </View>
@@ -109,9 +135,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 999,
-    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E5E7EB",
     paddingHorizontal: 10,
     paddingVertical: 10,
     flexDirection: "row",
@@ -129,7 +153,6 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     overflow: "hidden",
-    backgroundColor: "#F3F4F6",
   },
   avatar: {
     width: "100%",
@@ -142,13 +165,11 @@ const styles = StyleSheet.create({
   },
   namePill: {
     alignSelf: "flex-start",
-    backgroundColor: "#000000",
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 14,
   },
   nameText: {
-    color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "700",
     textTransform: "capitalize",
@@ -160,7 +181,6 @@ const styles = StyleSheet.create({
   bioText: {
     fontSize: 12,
     fontWeight: "400",
-    color: "#666666",
     lineHeight: 16,
   },
 });

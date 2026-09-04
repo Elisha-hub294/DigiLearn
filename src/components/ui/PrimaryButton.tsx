@@ -1,6 +1,7 @@
 import { Feather as Icon } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { colors, radius, spacing } from '../../constants/theme';
+import { radius, spacing } from '../../constants/theme';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type PrimaryButtonProps = {
   title: string;
@@ -10,12 +11,15 @@ type PrimaryButtonProps = {
   variant?: 'primary' | 'secondary';
 };
 
-export const PrimaryButton = ({ title, onPress, icon = 'arrow-right', fullWidth = false, variant = 'primary' }: PrimaryButtonProps) => (
-  <Pressable onPress={onPress} style={[styles.button, fullWidth && styles.fullWidth, variant === 'secondary' ? styles.secondary : styles.primary]}>
-    <Text style={styles.text}>{title}</Text>
-    <Icon name={icon} size={16} color={colors.white} />
-  </Pressable>
-);
+export const PrimaryButton = ({ title, onPress, icon = 'arrow-right', fullWidth = false, variant = 'primary' }: PrimaryButtonProps) => {
+  const { colors } = useTheme();
+  return (
+    <Pressable onPress={onPress} style={[styles.button, fullWidth && styles.fullWidth, { backgroundColor: variant === 'secondary' ? colors.dark : colors.primary }]}>
+      <Text style={[styles.text, { color: colors.white }]}>{title}</Text>
+      <Icon name={icon} size={16} color={colors.white} />
+    </Pressable>
+  );
+};
 
 const styles = StyleSheet.create({
   button: {
@@ -28,17 +32,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignSelf: 'flex-start',
   },
-  primary: {
-    backgroundColor: colors.primary,
-  },
-  secondary: {
-    backgroundColor: colors.dark,
-  },
   fullWidth: {
     alignSelf: 'stretch',
   },
   text: {
-    color: colors.white,
     fontWeight: '700',
     fontSize: 14,
   },

@@ -19,6 +19,7 @@ import { SavedResources } from "../../components/profile/SavedResources";
 import { UserInfoCard } from "../../components/profile/UserInfoCard";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { useAdminReviewSignals } from "../../hooks/useAdminReviewSignals";
 const paddingFor = (width: number) =>
   width >= 1200
@@ -41,6 +42,7 @@ function Skeleton() {
   );
 }
 export default function ProfileScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const navigation = useNavigation();
   const route = useRoute();
@@ -74,7 +76,10 @@ export default function ProfileScreen() {
   const padding = paddingFor(width);
   const maxWidth = Math.min(1100, width - padding * 2);
   return (
-    <SafeAreaView style={s.safe} edges={["top"]}>
+    <SafeAreaView
+      style={[s.safe, { backgroundColor: themeColors.background }]}
+      edges={["top"]}
+    >
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[

@@ -24,6 +24,7 @@ import { SectionHeader } from "../../components/ui/SectionHeader";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { PaperSection, useLibraryData } from "../../hooks/useLibraryData";
 import {
   matchesUserInterests,
@@ -64,6 +65,7 @@ const shuffle = <T,>(items: T[]) => {
 };
 
 export default function LibraryScreen() {
+  const { colors: themeColors } = useTheme();
   const navigation = useNavigation();
   const route = useRoute();
   const { width } = useWindowDimensions();
@@ -216,7 +218,9 @@ export default function LibraryScreen() {
 
   if (loading)
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
         <View
           style={[
             styles.skeletonContent,
@@ -233,7 +237,9 @@ export default function LibraryScreen() {
     );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <View style={[styles.page, { maxWidth: contentMaxWidth }]}>
         <ScrollView
           ref={scrollRef}
@@ -248,7 +254,7 @@ export default function LibraryScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={colors.primary}
+              tintColor={themeColors.primary}
             />
           }
         >
@@ -295,11 +301,18 @@ export default function LibraryScreen() {
                     <Icon
                       name={category.icon ?? "file-text"}
                       size={15}
-                      color={isSelected ? colors.white : "#4B5563"}
+                      color={
+                        isSelected ? themeColors.white : themeColors.inactive
+                      }
                     />
                     <Text
                       style={[
                         styles.categoryLabel,
+                        {
+                          color: isSelected
+                            ? themeColors.white
+                            : themeColors.text,
+                        },
                         isSelected && styles.categoryLabelSelected,
                       ]}
                     >

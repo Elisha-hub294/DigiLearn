@@ -2,7 +2,8 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
 import type { RefObject } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { colors, spacing } from "../../constants/theme";
+import { spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 import type { SearchCategory } from "../../hooks/useGlobalSearch";
 
 type SearchBarProps = {
@@ -54,6 +55,11 @@ export function SearchBar({
 }: SearchBarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { colors } = useTheme();
+  const resolvedPlaceholderColor =
+    placeholderTextColor === "#8A8A8A" ? colors.subtitle : placeholderTextColor;
+  const resolvedSearchIconColor =
+    searchIconColor === "#8A8A8A" ? colors.subtitle : searchIconColor;
 
   const handlePress = () => {
     if (onPress) {
@@ -92,13 +98,17 @@ export function SearchBar({
             }}
             style={styles.backButton}
           >
-            <Icon name="arrow-left" size={22} color="#111111" />
+            <Icon name="arrow-left" size={22} color={colors.text} />
           </Pressable>
         )}
 
         <View
           style={[
             styles.inputContainer,
+            { backgroundColor: colors.white },
+            {
+              borderColor: variant === "topic" ? colors.border : colors.primary,
+            },
             variant === "topic" && styles.topicInputContainer,
             inputContainerStyle,
           ]}
@@ -110,8 +120,8 @@ export function SearchBar({
             onChangeText={onChangeText}
             onSubmitEditing={onSubmit}
             placeholder={placeholder}
-            placeholderTextColor={placeholderTextColor}
-            style={[styles.input, inputStyle]}
+            placeholderTextColor={resolvedPlaceholderColor}
+            style={[styles.input, { color: colors.text }, inputStyle]}
             returnKeyType="search"
             autoCapitalize="none"
             autoCorrect={false}
@@ -124,7 +134,7 @@ export function SearchBar({
               onPress={onClear}
               style={styles.clearBtn}
             >
-              <Icon name="x" size={16} color="#8A8A8A" />
+              <Icon name="x" size={16} color={colors.subtitle} />
             </Pressable>
           )}
           {onSubmit && (
@@ -132,7 +142,7 @@ export function SearchBar({
               accessibilityRole="button"
               accessibilityLabel="Submit search"
               onPress={onSubmit}
-              style={styles.submitBtn}
+              style={[styles.submitBtn, { backgroundColor: colors.primary }]}
             >
               <Icon name="search" size={18} color="#FFFFFF" />
             </Pressable>
@@ -147,10 +157,16 @@ export function SearchBar({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={handlePress}
-      style={styles.container}
+      style={[
+        styles.container,
+        { backgroundColor: colors.white, borderColor: colors.border },
+      ]}
     >
-      <Icon name="search" size={18} color="#8A8A8A" />
-      <Text style={styles.placeholderText} numberOfLines={1}>
+      <Icon name="search" size={18} color={resolvedSearchIconColor} />
+      <Text
+        style={[styles.placeholderText, { color: colors.subtitle }]}
+        numberOfLines={1}
+      >
         {placeholder}
       </Text>
     </Pressable>
@@ -164,15 +180,12 @@ const styles = StyleSheet.create({
     height: 45,
     paddingHorizontal: spacing.md,
     borderRadius: 100,
-    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#D9D9D9",
     marginBottom: spacing.lg,
   },
   placeholderText: {
     flex: 1,
     marginLeft: spacing.sm,
-    color: "#8A8A8A",
     fontSize: 14,
   },
   inputRow: {
@@ -196,15 +209,11 @@ const styles = StyleSheet.create({
     paddingLeft: spacing.md,
     paddingRight: 4,
     borderRadius: 28,
-    backgroundColor: colors.white,
     borderWidth: 1.5,
-    borderColor: colors.primary,
   },
   topicInputContainer: {
     height: 48,
     borderRadius: 24,
-    borderColor: "#D9D9D9",
-    backgroundColor: colors.white,
   },
   searchIcon: {
     marginRight: 6,
@@ -212,7 +221,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: "100%",
-    color: colors.primary,
     fontSize: 12,
     paddingVertical: 0,
   },
@@ -224,7 +232,6 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
