@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Modal,
+  Platform,
   Pressable,
   Animated as RNAnimated,
   StyleSheet,
@@ -49,23 +50,31 @@ const GradientTitle = ({
 }: {
   text: string;
   style?: TextStyle;
-}) => (
-  <MaskedView
-    style={styles.gradientTitleMask}
-    maskElement={
-      <Text style={[style, { backgroundColor: "transparent" }]}>{text}</Text>
-    }
-  >
-    <LinearGradient
-      style={styles.gradientTitleGradient}
-      colors={[themeColors.primary, "#c224f0", "#ff002b"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+}) => {
+  if (Platform.OS === "web") {
+    return (
+      <Text style={[style, styles.webGradientTitle as TextStyle]}>{text}</Text>
+    );
+  }
+
+  return (
+    <MaskedView
+      style={styles.gradientTitleMask}
+      maskElement={
+        <Text style={[style, { backgroundColor: "transparent" }]}>{text}</Text>
+      }
     >
-      <Text style={[style, styles.gradientTitleText]}>{text}</Text>
-    </LinearGradient>
-  </MaskedView>
-);
+      <LinearGradient
+        style={styles.gradientTitleGradient}
+        colors={[themeColors.primary, "#c224f0", "#ff002b"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <Text style={[style, styles.gradientTitleText]}>{text}</Text>
+      </LinearGradient>
+    </MaskedView>
+  );
+};
 
 const getRelativeTime = (date: Date | null | undefined): string => {
   if (!date) return "Recently shared";
@@ -742,6 +751,14 @@ const styles = StyleSheet.create({
   gradientTitleText: {
     opacity: 0,
   },
+  webGradientTitle: {
+    color: "transparent",
+    backgroundImage:
+      "linear-gradient(135deg, #7b2ff7 0%, #c224f0 50%, #ff002b 100%)",
+    backgroundClip: "text",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+  } as any,
   previewWrap: {
     overflow: "hidden",
     position: "relative",

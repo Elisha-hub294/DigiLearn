@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
@@ -512,8 +512,8 @@ export function PaperPreviewScreen() {
                   onPress={toggleBookmark}
                 >
                   <View style={styles.buttonContent}>
-                    <Feather
-                      name="bookmark"
+                    <Ionicons
+                      name={bookmarked ? "bookmark" : "bookmark-outline"}
                       size={15}
                       color={bookmarked ? colors.primary : colors.text}
                     />

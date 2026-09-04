@@ -161,8 +161,19 @@ export default function SettingsScreen() {
                 title="Activity"
                 onPress={() => router.push("/activity" as never)}
               />
-              {profile?.type === "admin" ? (
-                <>
+              <SettingsRow
+                icon="eye-off"
+                title="Hidden items"
+                onPress={() => router.push("/hidden-items" as never)}
+                showSeparator={false}
+              />
+            </SettingsSection>
+
+            {profile?.type === "admin" ? (
+              <>
+                <View style={{ height: spacing.xxl }} />
+                <Text style={styles.sectionTitle}>Admin</Text>
+                <SettingsSection>
                   <SettingsRow
                     icon="activity"
                     title="App usage analytics"
@@ -189,16 +200,11 @@ export default function SettingsScreen() {
                     onPress={() =>
                       router.push("/teacher-applications" as never)
                     }
+                    showSeparator={false}
                   />
-                </>
-              ) : null}
-              <SettingsRow
-                icon="eye-off"
-                title="Hidden items"
-                onPress={() => router.push("/hidden-items" as never)}
-                showSeparator={false}
-              />
-            </SettingsSection>
+                </SettingsSection>
+              </>
+            ) : null}
 
             {/* Notifications */}
             <View style={{ height: spacing.xxl }} />
