@@ -96,6 +96,36 @@ const friendlyError = (error: unknown) => {
   return "We couldn't save your changes. Please try again.";
 };
 
+const profilePictureError = (error: unknown) => {
+  const code =
+    typeof error === "object" && error && "code" in error
+      ? String((error as { code: string }).code).toLowerCase()
+      : "";
+  const message = error instanceof Error ? error.message : "";
+  const normalizedMessage = message.toLowerCase();
+
+  if (
+    code.includes("permission") ||
+    normalizedMessage.includes("permission") ||
+    normalizedMessage.includes("access")
+  ) {
+    return "Photo access is required to choose a profile picture. Allow access in your device settings and try again.";
+  }
+  if (code.includes("network") || normalizedMessage.includes("connect")) {
+    return "We couldn't upload your picture because of a connection problem. Check your internet and try again.";
+  }
+  if (code.includes("unauthorized") || code.includes("unauthenticated")) {
+    return "Your session has expired. Please log in again before changing your profile picture.";
+  }
+  if (
+    normalizedMessage.includes("5 mb") ||
+    normalizedMessage.includes("jpeg")
+  ) {
+    return message;
+  }
+  return "We couldn't upload your profile picture. Check your connection and try again.";
+};
+
 export default function MyProfileScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -165,16 +195,17 @@ export default function MyProfileScreen() {
   const changeProfilePicture = async () => {
     if (!user || pictureSaving) return;
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-    if (result.canceled || !result.assets[0]) return;
-
+    setPictureSaving(true);
     try {
-      setPictureSaving(true);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        shape: "rectangle",
+        quality: 0.8,
+      });
+      if (result.canceled || !result.assets[0]) return;
+
       await saveProfilePicture(
         user,
         result.assets[0].uri,
@@ -183,11 +214,7 @@ export default function MyProfileScreen() {
         profile?.type ?? "student",
       );
     } catch (reason) {
-      setPictureError(
-        reason instanceof Error
-          ? reason.message
-          : "We couldn't update your profile picture. Please try again.",
-      );
+      setPictureError(profilePictureError(reason));
     } finally {
       setPictureSaving(false);
     }
@@ -204,7 +231,8 @@ export default function MyProfileScreen() {
       />
       <ActionDialog
         visible={Boolean(pictureError)}
-        title="Profile picture unavailable"
+        icon={<Feather name="alert-circle" size={24} color="#DC2626" />}
+        title="Profile picture not updated"
         message={pictureError}
         primaryText="OK"
         onPrimary={() => setPictureError("")}

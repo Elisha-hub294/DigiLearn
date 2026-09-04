@@ -54,6 +54,20 @@
       ],
       "expo-font",
       "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "DigiLearn uses your photos so you can choose a profile picture.",
+          "microphonePermission": false,
+          "colors": {
+            "cropToolbarColor": "#006eff",
+            "cropToolbarIconColor": "#ffffff",
+            "cropToolbarActionTextColor": "#ffffff",
+            "cropBackButtonIconColor": "#ffffff",
+            "cropBackgroundColor": "#ffffff"
+          }
+        }
+      ],
       "expo-status-bar",
       "expo-web-browser",
       "@react-native-google-signin/google-signin",
