@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { deleteUser } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
@@ -24,6 +25,7 @@ import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { clearGuestMode } from "../services/guestService";
+import { saveProfilePicture } from "../services/userProfile";
 import {
   normalizeProfileText,
   validateProfileText,
@@ -104,6 +106,8 @@ export default function MyProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [updateErrorMessage, setUpdateErrorMessage] = useState("");
+  const [pictureSaving, setPictureSaving] = useState(false);
+  const [pictureError, setPictureError] = useState("");
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const horizontalPadding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - horizontalPadding * 2);
@@ -158,6 +162,36 @@ export default function MyProfileScreen() {
     setMenuOpen(false);
     setDeleteDialogVisible(true);
   };
+  const changeProfilePicture = async () => {
+    if (!user || pictureSaving) return;
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets[0]) return;
+
+    try {
+      setPictureSaving(true);
+      await saveProfilePicture(
+        user,
+        result.assets[0].uri,
+        result.assets[0].mimeType,
+        result.assets[0].fileSize,
+        profile?.type ?? "student",
+      );
+    } catch (reason) {
+      setPictureError(
+        reason instanceof Error
+          ? reason.message
+          : "We couldn't update your profile picture. Please try again.",
+      );
+    } finally {
+      setPictureSaving(false);
+    }
+  };
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ActionDialog
@@ -167,6 +201,14 @@ export default function MyProfileScreen() {
         primaryText="OK"
         onPrimary={() => setUpdateErrorMessage("")}
         onClose={() => setUpdateErrorMessage("")}
+      />
+      <ActionDialog
+        visible={Boolean(pictureError)}
+        title="Profile picture unavailable"
+        message={pictureError}
+        primaryText="OK"
+        onPrimary={() => setPictureError("")}
+        onClose={() => setPictureError("")}
       />
       <ActionDialog
         visible={deleteDialogVisible}
@@ -285,6 +327,24 @@ export default function MyProfileScreen() {
                   resizeMode="cover"
                   accessibilityLabel="Your profile picture"
                 />
+                <Pressable
+                  onPress={changeProfilePicture}
+                  disabled={pictureSaving}
+                  style={styles.changePictureButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Change profile picture"
+                >
+                  {pictureSaving ? (
+                    <ActivityIndicator color="#3B82F6" size="small" />
+                  ) : (
+                    <Feather name="camera" size={16} color="#3B82F6" />
+                  )}
+                  <Text style={styles.changePictureText}>
+                    {pictureSaving
+                      ? "Saving profile picture..."
+                      : "Change profile picture"}
+                  </Text>
+                </Pressable>
                 <View style={styles.rows}>
                   <ProfileSettingRow
                     icon="user"
@@ -485,6 +545,16 @@ const styles = StyleSheet.create({
     marginTop: 28,
     backgroundColor: "#EEF2F7",
   },
+  changePictureButton: {
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 14,
+    minHeight: 44,
+    paddingHorizontal: 12,
+  },
+  changePictureText: { color: "#3B82F6", fontSize: 14, fontWeight: "700" },
   rows: { marginTop: 40, gap: 30 },
   row: { flexDirection: "row", minHeight: 60 },
   iconArea: { width: 48, paddingTop: 2, alignItems: "center" },

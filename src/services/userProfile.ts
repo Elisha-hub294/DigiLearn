@@ -1,4 +1,4 @@
-import { User } from "firebase/auth";
+import { updateProfile, User } from "firebase/auth";
 import {
   arrayRemove,
   arrayUnion,
@@ -213,6 +213,56 @@ export async function saveGoogleProfilePicture(user: User) {
 
   await setDoc(
     doc(db, "users", user.uid),
+    { photoURL: downloadUrl },
+    { merge: true },
+  );
+
+  return downloadUrl;
+}
+
+const PROFILE_PICTURE_MAX_BYTES = 5 * 1024 * 1024;
+const PROFILE_PICTURE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+export async function saveProfilePicture(
+  user: User,
+  uri: string,
+  mimeType: string | undefined,
+  fileSize: number | undefined,
+  accountType: AccountType,
+) {
+  if (fileSize && fileSize > PROFILE_PICTURE_MAX_BYTES) {
+    throw new Error("Profile pictures must be 5 MB or smaller.");
+  }
+
+  const contentType = mimeType?.toLowerCase() || "image/jpeg";
+  if (!PROFILE_PICTURE_TYPES.has(contentType)) {
+    throw new Error("Choose a JPEG, PNG, or WebP image.");
+  }
+
+  const response = await fetch(uri);
+  if (!response.ok) {
+    throw new Error("Unable to read the selected image.");
+  }
+
+  const image = await response.blob();
+  if (image.size > PROFILE_PICTURE_MAX_BYTES) {
+    throw new Error("Profile pictures must be 5 MB or smaller.");
+  }
+
+  const imageRef = ref(
+    storage,
+    `profile-pics/${user.uid}/profile-${Date.now()}`,
+  );
+  await uploadBytes(imageRef, image, { contentType });
+  const downloadUrl = await getDownloadURL(imageRef);
+
+  await updateProfile(user, { photoURL: downloadUrl });
+  await setDoc(
+    doc(db, accountType === "teacher" ? "teachers" : "users", user.uid),
     { photoURL: downloadUrl },
     { merge: true },
   );
