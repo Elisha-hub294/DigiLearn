@@ -1,45 +1,33 @@
-import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { db } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
+import { loadSubjects, SubjectRecord } from "../../services/subjectsService";
 import { InterestCard } from "./InterestCard";
-type Subject = {
-  id: string;
-  name: string;
-  gradient?: string[];
-  "png-icon"?: string;
-  avatar?: string;
-};
 export function InterestsCarousel({ subjects }: { subjects: string[] }) {
-  const [items, setItems] = useState<Subject[]>([]);
+  const [items, setItems] = useState<SubjectRecord[]>([]);
+  const subjectKey = subjects.join("|");
   useEffect(() => {
     let active = true;
-    getDocs(collection(db, "subject"))
-      .then((s) => {
+    loadSubjects()
+      .then((subjectsList) => {
         if (!active) return;
         const byName = new Map(
-          s.docs.map((d) => {
-            const data = d.data();
-            return [
-              String(data.name ?? "")
-                .trim()
-                .toLowerCase(),
-              { id: d.id, ...data } as Subject,
-            ];
-          }),
+          subjectsList.map((subject) => [
+            subject.name.trim().toLowerCase(),
+            subject,
+          ]),
         );
         setItems(
           subjects
             .map((name) => byName.get(name.trim().toLowerCase()))
-            .filter(Boolean) as Subject[],
+            .filter(Boolean) as SubjectRecord[],
         );
       })
       .catch(() => active && setItems([]));
     return () => {
       active = false;
     };
-  }, [subjects.join("|")]);
+  }, [subjectKey, subjects]);
   return (
     <View style={s.card}>
       <Text style={s.title}>Interests</Text>

@@ -1,9 +1,13 @@
 import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import { db } from "../../firebaseConfig";
-import { readLocalCache, writeLocalCache } from "../utils/localCache";
+import {
+  LOCAL_CACHE_KEYS,
+  readLocalCache,
+  writeLocalCache,
+} from "../utils/localCache";
 
-const LIBRARY_CACHE_KEY = "digilearn-library-data";
+const LIBRARY_CACHE_KEY = LOCAL_CACHE_KEYS.library;
 const LIBRARY_CACHE_VERSION = 1;
 const LIBRARY_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
@@ -13,6 +17,34 @@ type LibraryCache = {
   promos: PromotionalBannerItem[];
   paperCollections: PaperSection[];
 };
+
+type LibrarySnapshots = [
+  Awaited<ReturnType<typeof getDocs>>,
+  Awaited<ReturnType<typeof getDocs>>,
+  Awaited<ReturnType<typeof getDocs>>,
+  Awaited<ReturnType<typeof getDocs>>,
+  Awaited<ReturnType<typeof getDocs>>,
+];
+
+let libraryFetchPromise: Promise<LibrarySnapshots> | null = null;
+
+function fetchLibrarySnapshots(): Promise<LibrarySnapshots> {
+  if (libraryFetchPromise) return libraryFetchPromise;
+  libraryFetchPromise = Promise.all([
+    getDocs(collection(db, "books")),
+    getDocs(collection(db, "promotionalBanner")),
+    getDocs(collection(db, "pastPaper")),
+    getDocs(collection(db, "teachers")),
+    getDocs(collection(db, "default")),
+  ]) as Promise<LibrarySnapshots>;
+  libraryFetchPromise.then(undefined, () => {
+    libraryFetchPromise = null;
+  });
+  libraryFetchPromise.then(() => {
+    libraryFetchPromise = null;
+  });
+  return libraryFetchPromise;
+}
 
 type ImageSource = string;
 
@@ -214,17 +246,11 @@ export function useLibraryData() {
         papersSnapshot,
         teachersSnapshot,
         defaultSnapshot,
-      ] = await Promise.all([
-        getDocs(collection(db, "books")),
-        getDocs(collection(db, "promotionalBanner")),
-        getDocs(collection(db, "pastPaper")),
-        getDocs(collection(db, "teachers")),
-        getDocs(collection(db, "default")),
-      ]);
+      ] = await fetchLibrarySnapshots();
 
       let defaultUserAvatar = "";
       defaultSnapshot.docs.forEach((doc) => {
-        const data = doc.data();
+        const data = doc.data() as Record<string, unknown>;
         const docName =
           typeof data.name === "string" ? normalizeKey(data.name) : "";
         if (docName === "user" && typeof data.icon === "string") {
@@ -234,7 +260,7 @@ export function useLibraryData() {
 
       const teacherAvatars: Record<string, string> = {};
       teachersSnapshot.docs.forEach((doc) => {
-        const data = doc.data();
+        const data = doc.data() as Record<string, unknown>;
         if (typeof data.name === "string" && typeof data.avatar === "string") {
           teacherAvatars[normalizeKey(data.name)] = data.avatar;
         }

@@ -1,7 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,7 +11,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { auth, db } from "../../firebaseConfig";
+import { auth } from "../../firebaseConfig";
 import { TopicalNote } from "../components/page/pageTypes";
 import { DownloadedResources } from "../components/profile/DownloadedResources";
 import { getHorizontalPadding } from "../constants/layout";
@@ -23,18 +22,11 @@ import {
   useTrendingLessons,
 } from "../hooks/useTrendingLessons";
 import { recordUserActivity } from "../services/activityService";
+import { loadBooks } from "../services/booksService";
 import { resolveVideoImageSource } from "../utils/videoUtils";
 
 type Book = { id: string; title: string; author: string; image: string };
 type ViewMode = "books" | "courses" | "papers" | "pages" | "downloads";
-
-const getBookText = (value: unknown, fallback: string): string => {
-  if (Array.isArray(value) && value.length > 0) {
-    return getBookText(value[0], fallback);
-  }
-
-  return typeof value === "string" && value.trim() ? value.trim() : fallback;
-};
 
 const parsePages = (value: string | string[] | undefined): TopicalNote[] => {
   if (!value) return [];
@@ -88,35 +80,29 @@ export default function SeeAllScreen() {
   );
 
   useEffect(() => {
-    setSelectedPaperType(params.paperType?.trim() || "All");
+    void Promise.resolve().then(() =>
+      setSelectedPaperType(params.paperType?.trim() || "All"),
+    );
   }, [params.paperType]);
 
   useEffect(() => {
-    setSelectedPaperYear(params.paperYear?.trim() || "All");
+    void Promise.resolve().then(() =>
+      setSelectedPaperYear(params.paperYear?.trim() || "All"),
+    );
   }, [params.paperYear]);
   useEffect(() => {
     if (mode !== "books") return;
     let mounted = true;
-    void getDocs(collection(db, "books"))
-      .then((snapshot) => {
+    void loadBooks()
+      .then((loadedBooks) => {
         if (!mounted) return;
         setBooks(
-          snapshot.docs.map((doc, index) => {
-            const data = doc.data() as Record<string, unknown>;
+          loadedBooks.map((book) => {
             return {
-              id: doc.id || `book-${index}`,
-              title: getBookText(
-                data.title || data.name || data.bookTitle,
-                "Untitled book",
-              ),
-              author: getBookText(
-                data.author || data.writer || data.publisher,
-                "Unknown author",
-              ),
-              image: getBookText(
-                data.image || data.coverImage || data.cover || data.thumbnail,
-                "",
-              ),
+              id: book.id,
+              title: book.title,
+              author: book.author,
+              image: book.image,
             };
           }),
         );

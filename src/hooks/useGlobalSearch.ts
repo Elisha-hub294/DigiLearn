@@ -3,13 +3,19 @@ import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { db } from "../../firebaseConfig";
 import { DEFAULT_SUBJECT_AVATAR } from "../components/page/pageTypes";
-import { readLocalCache, writeLocalCache } from "../utils/localCache";
+import { loadSubjects } from "../services/subjectsService";
+import { loadTrendingLessons } from "../services/trendingLessonsService";
+import {
+  LOCAL_CACHE_KEYS,
+  readLocalCache,
+  writeLocalCache,
+} from "../utils/localCache";
 import { getVideoThumbnailUrl } from "../utils/videoUtils";
 
 const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
 const MAX_RECENT_ITEMS = 10;
 const FALLBACK_TEACHER_AVATAR = "TeacherProfile/tr-default.png";
-const SEARCH_CACHE_KEY = "digilearn-search-index";
+const SEARCH_CACHE_KEY = LOCAL_CACHE_KEYS.search;
 const SEARCH_CACHE_VERSION = 1;
 const SEARCH_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
@@ -226,17 +232,17 @@ export function useGlobalSearch(
         const [
           notesSnap,
           papersSnap,
-          videosSnap,
           booksSnap,
           teachersSnap,
           subjectsSnap,
+          trendingLessons,
         ] = await Promise.all([
           getDocs(collection(db, "pages")),
           getDocs(collection(db, "pastPaper")),
-          getDocs(collection(db, "trendingLessons")),
           getDocs(collection(db, "books")),
           getDocs(collection(db, "teachers")),
-          getDocs(collection(db, "subject")),
+          loadSubjects(),
+          loadTrendingLessons(),
         ]);
         if (!isMounted) return;
 
@@ -252,10 +258,9 @@ export function useGlobalSearch(
           }
         });
         const subjectsMap: Record<string, string> = {};
-        subjectsSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          if (data.name && data.avatar) {
-            subjectsMap[data.name.toLowerCase().trim()] = data.avatar;
+        subjectsSnap.forEach((subject) => {
+          if (subject.name && typeof subject.avatar === "string") {
+            subjectsMap[subject.name.toLowerCase().trim()] = subject.avatar;
           }
         });
 
@@ -268,7 +273,7 @@ export function useGlobalSearch(
             id: doc.id,
             ...doc.data(),
           })),
-          videos: videosSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+          videos: trendingLessons,
           books: booksSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
           teachers: teacherList,
           subjectsMap,

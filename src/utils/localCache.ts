@@ -6,6 +6,16 @@ type CacheEnvelope<T> = {
   data: T;
 };
 
+const MAX_CACHE_BYTES = 2_000_000;
+
+export const LOCAL_CACHE_KEYS = {
+  library: "digilearn-library-data",
+  books: "digilearn-books",
+  search: "digilearn-search-index",
+  subjects: "digilearn-subjects",
+  trending: "digilearn-trending-lessons",
+} as const;
+
 export async function readLocalCache<T>(
   key: string,
   version = 1,
@@ -14,12 +24,22 @@ export async function readLocalCache<T>(
     const raw = await AsyncStorage.getItem(key);
     if (!raw) return null;
 
-    const cached = JSON.parse(raw) as CacheEnvelope<T>;
-    if (cached.version !== version || typeof cached.savedAt !== "number") {
+    const cached: unknown = JSON.parse(raw);
+    if (
+      typeof cached !== "object" ||
+      cached === null ||
+      (cached as CacheEnvelope<T>).version !== version ||
+      typeof (cached as CacheEnvelope<T>).savedAt !== "number" ||
+      !("data" in cached)
+    ) {
+      await AsyncStorage.removeItem(key);
       return null;
     }
 
-    return { data: cached.data, savedAt: cached.savedAt };
+    return {
+      data: (cached as CacheEnvelope<T>).data,
+      savedAt: (cached as CacheEnvelope<T>).savedAt,
+    };
   } catch (error) {
     console.warn(`Unable to read local cache: ${key}`, error);
     return null;
@@ -37,8 +57,25 @@ export async function writeLocalCache<T>(
       savedAt: Date.now(),
       data,
     };
-    await AsyncStorage.setItem(key, JSON.stringify(envelope));
+    const serialized = JSON.stringify(envelope);
+    if (serialized.length > MAX_CACHE_BYTES) {
+      console.warn(`Skipping oversized local cache: ${key}`);
+      return;
+    }
+    await AsyncStorage.setItem(key, serialized);
   } catch (error) {
     console.warn(`Unable to write local cache: ${key}`, error);
   }
+}
+
+export async function invalidateLocalCaches(...keys: string[]): Promise<void> {
+  await Promise.all(
+    keys.map(async (key) => {
+      try {
+        await AsyncStorage.removeItem(key);
+      } catch (error) {
+        console.warn(`Unable to invalidate local cache: ${key}`, error);
+      }
+    }),
+  );
 }

@@ -2,12 +2,10 @@ import { getTrendingCardWidth } from "@/components/ui/TrendingCarousel";
 import { VideoLesson } from "@/components/ui/TrendingVideoCard";
 import { VideoCard } from "@/components/ui/VideoCard";
 import { VideosScreenHeader } from "@/components/ui/VideosScreenHeader";
-import { readLocalCache, writeLocalCache } from "@/utils/localCache";
 import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
-import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   RefreshControl,
@@ -19,13 +17,9 @@ import {
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
-
-const VIDEOS_CACHE_KEY = "digilearn-trending-lessons";
-const VIDEOS_CACHE_VERSION = 1;
-const VIDEOS_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
+import { loadTrendingLessons } from "../../services/trendingLessonsService";
 
 type FirestoreLesson = {
   id?: string;
@@ -163,44 +157,16 @@ export default function VideosScreen() {
   const cardWidth = getTrendingCardWidth(width, contentWidth);
 
   const loadVideos = useCallback(async (force = false) => {
-    const cached = await readLocalCache<
-      (LessonRecord & { _uploadedAtDate?: string })[]
-    >(VIDEOS_CACHE_KEY, VIDEOS_CACHE_VERSION);
-
-    if (cached) {
-      setLessons(
-        cached.data.map((lesson) => ({
-          ...lesson,
-          _uploadedAtDate: lesson._uploadedAtDate
-            ? new Date(lesson._uploadedAtDate)
-            : undefined,
-        })),
-      );
-      setIsOffline(false);
-      setLoading(false);
-      if (!force && Date.now() - cached.savedAt < VIDEOS_CACHE_MAX_AGE_MS) {
-        setRefreshing(false);
-        return;
-      }
-    }
-
     try {
-      const snapshot = await getDocs(collection(db, "trendingLessons"));
-      const nextLessons = snapshot.docs
-        .map((doc, index) =>
-          toLessonRecord(doc.data() as FirestoreLesson, index),
-        )
+      const cachedLessons = await loadTrendingLessons(force);
+      const nextLessons = cachedLessons
+        .map((lesson, index) => toLessonRecord(lesson, index))
         .sort((left, right) => {
           const leftTime = left._uploadedAtDate?.getTime() ?? 0;
           const rightTime = right._uploadedAtDate?.getTime() ?? 0;
           return rightTime - leftTime;
         });
       setLessons(nextLessons);
-      await writeLocalCache(
-        VIDEOS_CACHE_KEY,
-        nextLessons,
-        VIDEOS_CACHE_VERSION,
-      );
       setIsOffline(false);
     } catch (error) {
       console.warn("Failed to load trending lessons:", error);

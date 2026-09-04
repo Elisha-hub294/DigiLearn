@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,6 +17,7 @@ import { db } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { loadSubjects as loadCachedSubjects } from "../services/subjectsService";
 
 type Subject = { id: string; name: string };
 
@@ -103,19 +104,8 @@ export default function PreferencesScreen() {
     setLoadingSubjects(true);
     setLoadError(false);
     try {
-      const snapshot = await getDocs(collection(db, "subject"));
-      const seen = new Set<string>();
-      const available = snapshot.docs.reduce<Subject[]>((result, item) => {
-        const name =
-          typeof item.data().name === "string" ? item.data().name.trim() : "";
-        const key = name.toLocaleLowerCase();
-        if (name && !seen.has(key)) {
-          seen.add(key);
-          result.push({ id: item.id, name });
-        }
-        return result;
-      }, []);
-      setSubjects(available);
+      const available = await loadCachedSubjects();
+      setSubjects(available.map(({ id, name }) => ({ id, name })));
     } catch {
       setLoadError(true);
     } finally {
@@ -124,7 +114,7 @@ export default function PreferencesScreen() {
   }, []);
 
   useEffect(() => {
-    loadSubjects();
+    void Promise.resolve().then(() => loadSubjects());
   }, [loadSubjects]);
 
   useEffect(() => {
@@ -153,10 +143,10 @@ export default function PreferencesScreen() {
           item.localeCompare(name, undefined, { sensitivity: "accent" }) === 0,
       )
         ? current.filter(
-          (item) =>
-            item.localeCompare(name, undefined, { sensitivity: "accent" }) !==
-            0,
-        )
+            (item) =>
+              item.localeCompare(name, undefined, { sensitivity: "accent" }) !==
+              0,
+          )
         : [...current, name],
     );
 
@@ -270,8 +260,8 @@ export default function PreferencesScreen() {
             ) : (
               <>
                 <Text style={styles.helper}>
-                  Choose the subjects you're interested in to personalize your
-                  home feed, recommendations, and learning resources.
+                  Choose the subjects you&apos;re interested in to personalize
+                  your home feed, recommendations, and learning resources.
                 </Text>
 
                 <Text style={styles.sectionTitle}>My Subjects</Text>
@@ -296,7 +286,7 @@ export default function PreferencesScreen() {
                       No subjects available yet.
                     </Text>
                     <Text style={styles.emptyCopy}>
-                      We're preparing more subjects for you.
+                      We&apos;re preparing more subjects for you.
                     </Text>
                   </View>
                 )}
@@ -305,7 +295,7 @@ export default function PreferencesScreen() {
                 ) : null}
                 {saveError ? (
                   <Text style={styles.saveError}>
-                    Couldn't save preferences. Please try again.
+                    Couldn&apos;t save preferences. Please try again.
                   </Text>
                 ) : null}
               </>
@@ -317,7 +307,8 @@ export default function PreferencesScreen() {
                   Only show selected interests in feeds
                 </Text>
                 <Text style={styles.toggleSubtitle}>
-                  Filter your Home and Library feeds to only display resources matching your selected subjects.
+                  Filter your Home and Library feeds to only display resources
+                  matching your selected subjects.
                 </Text>
               </View>
               <Switch

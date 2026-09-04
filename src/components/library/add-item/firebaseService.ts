@@ -12,6 +12,10 @@ import {
   appendNotificationToAllUsers,
   buildLibraryNotification,
 } from "../../../services/notifications";
+import {
+  invalidateLocalCaches,
+  LOCAL_CACHE_KEYS,
+} from "../../../utils/localCache";
 import { getVideoThumbnailUrl } from "../../../utils/videoUtils";
 import { getTitleDocId } from "./utils";
 
@@ -159,6 +163,11 @@ export const addBook = async (
     cover: coverUrl,
     updatedAt: serverTimestamp(),
   });
+  await invalidateLocalCaches(
+    LOCAL_CACHE_KEYS.library,
+    LOCAL_CACHE_KEYS.search,
+    LOCAL_CACHE_KEYS.books,
+  );
 
   return itemId;
 };
@@ -193,6 +202,7 @@ export const addBanner = async (
     ownerType: userType || "",
     fileType,
   });
+  await invalidateLocalCaches(LOCAL_CACHE_KEYS.library);
 
   return bannerId;
 };
@@ -226,6 +236,10 @@ export const addPage = async (
     updatedAt: serverTimestamp(),
     ...(schoolClass ? { schoolClass } : {}),
   });
+  await invalidateLocalCaches(
+    LOCAL_CACHE_KEYS.library,
+    LOCAL_CACHE_KEYS.search,
+  );
 
   return itemId;
 };
@@ -274,6 +288,10 @@ export const addPastPaper = async (
     paperCode: savedPaperCode || "",
     updatedAt: serverTimestamp(),
   });
+  await invalidateLocalCaches(
+    LOCAL_CACHE_KEYS.library,
+    LOCAL_CACHE_KEYS.search,
+  );
 
   return itemId;
 };

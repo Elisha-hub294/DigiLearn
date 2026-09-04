@@ -1,6 +1,5 @@
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
@@ -11,10 +10,11 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { auth, db } from "../../../firebaseConfig";
+import { auth } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { recordUserActivity } from "../../services/activityService";
+import { loadBooks } from "../../services/booksService";
 import {
   matchesUserInterests,
   shouldFilterByInterests,
@@ -27,13 +27,6 @@ type BookItem = {
   author: string;
   subject?: string;
   image: any;
-};
-
-const pickString = (value: unknown, fallback = "") => {
-  if (typeof value === "string" && value.trim()) {
-    return value.trim();
-  }
-  return fallback;
 };
 
 const pickImage = (value: unknown, fallback: any) => {
@@ -55,41 +48,22 @@ export const BookCarousel = () => {
 
     const fetchBooks = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "books"));
+        const fetchedBooks = await loadBooks();
 
         if (!isMounted) {
           return;
         }
 
-        const fetchedBooks = snapshot.docs.map((doc, index) => {
-          const data = doc.data() as Record<string, any>;
-
-          return {
-            id: doc.id || `book-${index}`,
-            title: pickString(
-              data.title || data.name || data.bookTitle,
-              "Untitled book",
-            ),
-            author: (() => {
-              const rawAuthor = data.author || data.writer || data.publisher;
-              if (Array.isArray(rawAuthor) && rawAuthor.length > 0) {
-                return String(rawAuthor[0]);
-              }
-              return pickString(rawAuthor, "");
-            })(),
-            subject: pickString(
-              data.subject || data.category || data.title,
-              "",
-            ),
-            image: pickImage(
-              data.image || data.coverImage || data.cover || data.thumbnail,
-              require("../../../assets/images/bookcover-default.png"),
-            ),
-          } satisfies BookItem;
-        });
+        const normalizedBooks = fetchedBooks.map((book) => ({
+          ...book,
+          image: pickImage(
+            book.image,
+            require("../../../assets/images/bookcover-default.png"),
+          ),
+        })) satisfies BookItem[];
 
         // Shuffle fetched books to randomize order
-        const shuffled = [...fetchedBooks];
+        const shuffled = [...normalizedBooks];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];

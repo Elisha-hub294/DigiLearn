@@ -27,6 +27,7 @@ import {
   appendNotificationToAllUsers,
   buildLibraryNotification,
 } from "../services/notifications";
+import { invalidateLocalCaches, LOCAL_CACHE_KEYS } from "../utils/localCache";
 
 function formatDurationFromSeconds(totalSeconds: number): string {
   if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
@@ -315,6 +316,10 @@ export default function AddTrendingLessonScreen() {
         link: link.trim(),
         avatar: avatarValue,
       });
+      await invalidateLocalCaches(
+        LOCAL_CACHE_KEYS.trending,
+        LOCAL_CACHE_KEYS.search,
+      );
 
       if (notifyUsers) {
         await appendNotificationToAllUsers(
