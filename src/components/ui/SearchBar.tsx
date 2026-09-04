@@ -26,6 +26,7 @@ type SearchBarProps = {
   onBack?: () => void;
   category?: SearchCategory;
   source?: "library";
+  hideChips?: boolean;
 };
 
 export function SearchBar({
@@ -49,6 +50,7 @@ export function SearchBar({
   onBack,
   category,
   source,
+  hideChips = false,
 }: SearchBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -65,6 +67,7 @@ export function SearchBar({
             : {}),
           ...(category ? { category } : {}),
           ...(source ? { source } : {}),
+          ...(hideChips ? { hideChips: "true" } : {}),
         },
       } as never);
     }

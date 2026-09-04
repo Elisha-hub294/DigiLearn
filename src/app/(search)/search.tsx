@@ -47,11 +47,13 @@ export default function SearchScreen() {
     category?: SearchCategory;
     initialCategory?: SearchCategory;
     source?: string;
+    hideChips?: string;
   }>();
   const { width } = useWindowDimensions();
   const searchInputRef = useRef<TextInput>(null);
 
   const openedFromLibrary = params.source === "library";
+  const hideChips = params.hideChips === "true";
   const initialCat = (
     openedFromLibrary &&
     (params.category === "Videos" || params.initialCategory === "Videos")
@@ -327,46 +329,47 @@ export default function SearchScreen() {
           </Animated.View>
         )}
 
-        {/* Category Filter Chips Bar */}
-        <View style={styles.categoryBar}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryScroll}
-          >
-            {visibleCategories.map((cat) => {
-              const active = selectedCategory === cat;
-              return (
-                <Pressable
-                  key={cat}
-                  accessibilityRole="button"
-                  onPress={() => {
-                    setSelectedCategory(cat);
-                    triggerManualSearch();
-                  }}
-                  style={[
-                    styles.categoryChip,
-                    active && styles.categoryChipActive,
-                  ]}
-                >
-                  <Text
+        {!hideChips && (
+          <View style={styles.categoryBar}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryScroll}
+            >
+              {visibleCategories.map((cat) => {
+                const active = selectedCategory === cat;
+                return (
+                  <Pressable
+                    key={cat}
+                    accessibilityRole="button"
+                    onPress={() => {
+                      setSelectedCategory(cat);
+                      triggerManualSearch();
+                    }}
                     style={[
-                      styles.categoryText,
-                      active && styles.categoryTextActive,
+                      styles.categoryChip,
+                      active && styles.categoryChipActive,
                     ]}
                   >
-                    {cat}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        active && styles.categoryTextActive,
+                      ]}
+                    >
+                      {cat}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Main Content Area */}
         <View style={styles.contentBody}>
           {/* Recent Searches Section */}
-          {recentSearches.length > 0 && !isActivelySearching && (
+          {!hideChips && recentSearches.length > 0 && !isActivelySearching && (
             <Animated.View
               entering={FadeInUp.duration(280)}
               style={styles.recentSection}
