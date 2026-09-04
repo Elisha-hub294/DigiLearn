@@ -87,15 +87,6 @@ export default function NotificationsScreen() {
 
   const openItem = useCallback(
     async (notification: NotificationRecord) => {
-      if (notification.storage === "admin") {
-        router.push({
-          pathname: "/teacher-application-review",
-          params: { applicationId: notification.itemId },
-        } as never);
-        if (user && !notification.read) await markRead(notification.id);
-        return;
-      }
-
       if (!notification.itemId) {
         setUnavailableDialog({
           visible: true,
@@ -104,17 +95,60 @@ export default function NotificationsScreen() {
         return;
       }
 
+      if (notification.storage === "admin") {
+        try {
+          const snapshot = await getDoc(
+            doc(db, "teacherApplications", notification.itemId),
+          );
+
+          if (!snapshot.exists()) {
+            setUnavailableDialog({
+              visible: true,
+              notificationId: notification.id,
+            });
+            return;
+          }
+
+          router.push({
+            pathname: "/teacher-application-review",
+            params: { applicationId: notification.itemId },
+          } as never);
+          if (user && !notification.read) await markRead(notification.id);
+        } catch {
+          setUnavailableDialog({
+            visible: true,
+            notificationId: notification.id,
+          });
+        }
+        return;
+      }
+
       if (notification.type === "announcement") {
         const teacherName = notification.publisherName.replace(/^Tr\.\s*/i, "");
-        if (notification.itemId) {
+        try {
+          const snapshot = await getDoc(
+            doc(db, notification.collection ?? "users", notification.itemId),
+          );
+
+          if (!snapshot.exists()) {
+            setUnavailableDialog({
+              visible: true,
+              notificationId: notification.id,
+            });
+            return;
+          }
+
           router.push({
             pathname: "/teacher-profile",
             params: { name: teacherName },
           } as never);
-        }
 
-        if (user && !notification.read) {
-          await markRead(notification.id);
+          if (user && !notification.read) await markRead(notification.id);
+        } catch {
+          setUnavailableDialog({
+            visible: true,
+            notificationId: notification.id,
+          });
         }
         return;
       }
@@ -290,21 +324,6 @@ export default function NotificationsScreen() {
   if (!user && !loading) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <ActionDialog
-          visible={unavailableDialog.visible}
-          title="Unavailable"
-          message="This content is no longer available."
-          primaryText="Dismiss"
-          onPrimary={() => {
-            setUnavailableDialog({ visible: false, notificationId: null });
-            if (unavailableDialog.notificationId) {
-              void handleDeleteNotification(unavailableDialog.notificationId);
-            }
-          }}
-          onClose={() =>
-            setUnavailableDialog({ visible: false, notificationId: null })
-          }
-        />
         <View style={[styles.page, { maxWidth }]}>
           <View
             style={[styles.content, { paddingHorizontal: horizontalPadding }]}
@@ -335,6 +354,21 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <ActionDialog
+        visible={unavailableDialog.visible}
+        title="Unavailable"
+        message="This content is no longer available."
+        primaryText="Dismiss"
+        onPrimary={() => {
+          setUnavailableDialog({ visible: false, notificationId: null });
+          if (unavailableDialog.notificationId) {
+            void handleDeleteNotification(unavailableDialog.notificationId);
+          }
+        }}
+        onClose={() =>
+          setUnavailableDialog({ visible: false, notificationId: null })
+        }
+      />
       <View style={[styles.page, { maxWidth }]}>
         <ScrollView
           style={styles.scroll}

@@ -48,6 +48,20 @@ const yearNumber = (year: string) => {
   return Number.isFinite(value) ? value : Number.NEGATIVE_INFINITY;
 };
 
+const shuffle = <T,>(items: T[]) => {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [
+      shuffled[randomIndex],
+      shuffled[index],
+    ];
+  }
+
+  return shuffled;
+};
+
 export default function LibraryScreen() {
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
@@ -82,7 +96,7 @@ export default function LibraryScreen() {
         })
         .filter((item) => item.label);
 
-      setPastPaperCategories(firestoreCategories);
+      setPastPaperCategories(shuffle(firestoreCategories));
     };
 
     loadPastPaperCategories();
@@ -224,10 +238,7 @@ export default function LibraryScreen() {
             <Header title="Library" rightIconName="book-open" />
           </Animated.View>
           <Animated.View entering={FadeInUp.duration(360)}>
-            <SearchBar
-              placeholder="Search by subject, title, etc"
-              source="library"
-            />
+            <SearchBar placeholder=" Search in Library" source="library" />
           </Animated.View>
           <Animated.View entering={FadeInUp.duration(400)}>
             <HeroBookCarousel data={heroSlides} />

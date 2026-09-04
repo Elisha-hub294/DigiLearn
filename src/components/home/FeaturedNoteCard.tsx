@@ -4,7 +4,6 @@ import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
-  Linking,
   Pressable,
   Animated as RNAnimated,
   StyleSheet,
@@ -18,6 +17,7 @@ import { auth, db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { recordUserActivity } from "../../services/activityService";
+import { submitReport } from "../../services/reportService";
 import {
   getHiddenPageEntries,
   getMarkedReadItemIds,
@@ -32,6 +32,7 @@ import {
 import { ActionDialog } from "../ui/ActionDialog";
 import { CardActionMenu } from "../ui/CardActionMenu";
 import { FirebaseImage } from "../ui/FirebaseImage";
+import { ReportDialog } from "../ui/ReportDialog";
 
 type TopicalNote = {
   id: string;
@@ -76,6 +77,9 @@ type FeaturedNoteCardProps = {
   source?: "home" | "library" | "pages";
   includeHiddenItems?: boolean;
   filterByInterests?: boolean;
+  onEndReached?: () => void;
+  loadingMore?: boolean;
+  hasMore?: boolean;
 };
 
 const normalizeKey = (str: string) => str.trim().toLowerCase();
@@ -88,6 +92,9 @@ export const FeaturedNoteCard = ({
   source = "home",
   includeHiddenItems = false,
   filterByInterests,
+  onEndReached,
+  loadingMore = false,
+  hasMore = false,
 }: FeaturedNoteCardProps) => {
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
@@ -132,7 +139,11 @@ export const FeaturedNoteCard = ({
 
     const loadMetadata = async () => {
       const [notesSnap, subjectsSnap, defaultSnap] = await Promise.all([
-        getDocs(query(collection(db, "pages"), orderBy("updatedAt", "desc"))),
+        providedNotes
+          ? Promise.resolve(null)
+          : getDocs(
+              query(collection(db, "pages"), orderBy("updatedAt", "desc")),
+            ),
         getDocs(collection(db, "subject")),
         getDocs(collection(db, "default")),
       ]);
@@ -161,17 +172,18 @@ export const FeaturedNoteCard = ({
       });
       setSubjectAvatars(subjectMap);
 
-      const allNotes = notesSnap.docs.map((d) => {
-        const data = d.data() as Record<string, unknown>;
-        return {
-          id: d.id,
-          ...data,
-          document:
-            [data.doc, data.document, data.pdf, data.url].find(
-              (v): v is string => typeof v === "string" && v.length > 0,
-            ) ?? undefined,
-        } as TopicalNote;
-      });
+      const allNotes =
+        notesSnap?.docs.map((d) => {
+          const data = d.data() as Record<string, unknown>;
+          return {
+            id: d.id,
+            ...data,
+            document:
+              [data.doc, data.document, data.pdf, data.url].find(
+                (v): v is string => typeof v === "string" && v.length > 0,
+              ) ?? undefined,
+          } as TopicalNote;
+        }) ?? [];
       const filteredNotes = subject
         ? allNotes.filter((note) => {
             const noteSubjects = Array.isArray(note.subject)
@@ -251,6 +263,19 @@ export const FeaturedNoteCard = ({
         contentContainerStyle={styles.listContent}
         viewabilityConfig={viewabilityConfig}
         onViewableItemsChanged={onViewableItemsChanged}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.6}
+        ListFooterComponent={
+          loadingMore ? (
+            <Text style={styles.paginationStatus}>
+              Loading more resources...
+            </Text>
+          ) : hasMore ? (
+            <Pressable onPress={onEndReached} style={styles.loadMoreButton}>
+              <Text style={styles.loadMoreText}>Load more resources</Text>
+            </Pressable>
+          ) : null
+        }
         renderItem={({ item }) => (
           <FeaturedNoteItem
             note={item}
@@ -381,8 +406,10 @@ const FeaturedNoteItem = ({
   );
   const isHidden = hiddenIds.has(note.id);
   const isSaved = Boolean(user && profile?.["saved-pages"]?.includes(note.id));
-  const [loadedPdfUri, setLoadedPdfUri] = useState<string | null>(null);
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
   const [dialogState, setDialogState] = useState<{
     title: string;
     message: string;
@@ -391,10 +418,6 @@ const FeaturedNoteItem = ({
     onPrimary?: () => void;
     onSecondary?: () => void;
   } | null>(null);
-  const pdfLoading = Boolean(
-    note.document && isVisible && loadedPdfUri !== note.document,
-  );
-
   const showAuthPrompt = (title: string, message: string) => {
     setDialogState({
       title,
@@ -483,30 +506,37 @@ const FeaturedNoteItem = ({
   };
 
   const handleReportProblem = () => {
-    const subject = encodeURIComponent("Report a Problem in DigiLearn app");
-    const body = encodeURIComponent(
-      `Problem ID: ${note.id}\nCard Type: pages\n\nReport:\n`,
-    );
-    const mailtoUrl = `mailto:support@digilearn.app?subject=${subject}&body=${body}`;
-    Linking.canOpenURL("mailto:").then((supported) => {
-      if (!supported) {
-        setDialogState({
-          title: "Email unavailable",
-          message: "An email application could not be opened on this device.",
-          primaryText: "OK",
-          onPrimary: () => setDialogState(null),
-        });
-        return;
-      }
-      Linking.openURL(mailtoUrl).catch(() => {
-        setDialogState({
-          title: "Email unavailable",
-          message: "An email application could not be opened on this device.",
-          primaryText: "OK",
-          onPrimary: () => setDialogState(null),
-        });
+    setReportError(null);
+    setShowReportDialog(true);
+  };
+
+  const handleSubmitReport = async (reasons: string[], details: string) => {
+    if (!user) {
+      setReportError("Please log in to send a report.");
+      return;
+    }
+    setReportSubmitting(true);
+    setReportError(null);
+    try {
+      await submitReport({
+        reasons,
+        details,
+        item: { type: "page", id: note.id, name: title },
       });
-    });
+      setShowReportDialog(false);
+      setDialogState({
+        title: "Report sent",
+        message:
+          "Thanks. We'll review this resource and investigate the issue.",
+        primaryText: "Done",
+        onPrimary: () => setDialogState(null),
+      });
+    } catch (error) {
+      console.error("Failed to submit report:", error);
+      setReportError("We couldn’t send your report. Please try again.");
+    } finally {
+      setReportSubmitting(false);
+    }
   };
 
   const handleToggleSave = async () => {
@@ -697,6 +727,14 @@ const FeaturedNoteItem = ({
         onSecondary={() => router.push("/signup" as never)}
         onClose={() => setShowGuestSaveDialog(false)}
       />
+      <ReportDialog
+        visible={showReportDialog}
+        itemName={title}
+        submitting={reportSubmitting}
+        error={reportError}
+        onSubmit={handleSubmitReport}
+        onClose={() => setShowReportDialog(false)}
+      />
     </>
   );
 };
@@ -710,6 +748,21 @@ const Action = ({ icon, label }: { icon: any; label: string }) => (
 const styles = StyleSheet.create({
   list: { width: "100%" },
   listContent: { paddingBottom: spacing.xl },
+  paginationStatus: {
+    paddingVertical: spacing.md,
+    textAlign: "center",
+    color: colors.subtitle,
+    fontSize: 13,
+  },
+  loadMoreButton: {
+    alignSelf: "center",
+    marginVertical: spacing.md,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 999,
+    backgroundColor: colors.dark,
+  },
+  loadMoreText: { color: colors.white, fontWeight: "700", fontSize: 13 },
   listWide: { flexDirection: "column", gap: spacing.md },
   itemWrapper: { width: "100%" },
   itemWrapperWide: { width: "100%" },

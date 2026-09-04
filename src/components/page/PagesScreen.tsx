@@ -1,7 +1,15 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  DocumentSnapshot,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  startAfter,
+} from "firebase/firestore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Modal,
@@ -86,6 +94,8 @@ const FILTER_OPTIONS = {
   readingStatus: ["All", "Unread", "Read", "Continue Reading"],
   attachments: ["All", "With Books", "Without Books"],
 } as const;
+
+const PAGE_BATCH_SIZE = 20;
 
 const normalizeText = (value?: string) => value?.trim().toLowerCase() ?? "";
 const normalizeArray = (value: unknown): string[] => {
@@ -234,6 +244,9 @@ export default function PagesScreen() {
   const [isLoadedFilters, setIsLoadedFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [subjectAccent, setSubjectAccent] = useState("#000000");
+  const [hasMoreNotes, setHasMoreNotes] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const lastPageDocument = useRef<DocumentSnapshot | null>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { width } = useWindowDimensions();
@@ -265,9 +278,17 @@ export default function PagesScreen() {
       try {
         setLoading(true);
 
+        lastPageDocument.current = null;
+        setHasMoreNotes(true);
         const [subjectsSnapshot, pagesSnapshot] = await Promise.all([
           getDocs(collection(db, "subject")),
-          getDocs(collection(db, "pages")),
+          getDocs(
+            query(
+              collection(db, "pages"),
+              orderBy("updatedAt", "desc"),
+              limit(PAGE_BATCH_SIZE),
+            ),
+          ),
         ]);
 
         if (cancelled) return;
@@ -288,6 +309,10 @@ export default function PagesScreen() {
               (matchedSubject.data() as { accent?: unknown }).accent,
             )
           : "#000000";
+
+        lastPageDocument.current =
+          pagesSnapshot.docs[pagesSnapshot.docs.length - 1] ?? null;
+        setHasMoreNotes(pagesSnapshot.size === PAGE_BATCH_SIZE);
 
         const allNotes = pagesSnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -318,6 +343,43 @@ export default function PagesScreen() {
       cancelled = true;
     };
   }, [pageTitle]);
+
+  const loadMoreNotes = async () => {
+    if (loadingMore || !hasMoreNotes || !lastPageDocument.current) return;
+
+    try {
+      setLoadingMore(true);
+      const pagesSnapshot = await getDocs(
+        query(
+          collection(db, "pages"),
+          orderBy("updatedAt", "desc"),
+          startAfter(lastPageDocument.current),
+          limit(PAGE_BATCH_SIZE),
+        ),
+      );
+      lastPageDocument.current =
+        pagesSnapshot.docs[pagesSnapshot.docs.length - 1] ??
+        lastPageDocument.current;
+      setHasMoreNotes(pagesSnapshot.size === PAGE_BATCH_SIZE);
+
+      const nextNotes = pagesSnapshot.docs
+        .map(
+          (doc) =>
+            ({
+              id: doc.id,
+              ...(doc.data() as Record<string, unknown>),
+            }) as PageNote,
+        )
+        .filter((note) =>
+          normalizeArray(note.subject).includes(normalizeText(pageTitle)),
+        );
+      setNotes((current) => [...current, ...nextNotes]);
+    } catch (error) {
+      console.error("Failed to load more pages", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     const loadPersistedFilters = async () => {
@@ -611,6 +673,17 @@ export default function PagesScreen() {
                 >
                   <Text style={styles.emptyButtonText}>Clear Filters</Text>
                 </Pressable>
+                {hasMoreNotes && (
+                  <Pressable
+                    onPress={loadMoreNotes}
+                    disabled={loadingMore}
+                    style={styles.loadMoreEmptyButton}
+                  >
+                    <Text style={styles.loadMoreEmptyText}>
+                      {loadingMore ? "Loading..." : "Load more resources"}
+                    </Text>
+                  </Pressable>
+                )}
               </Animated.View>
             ) : (
               <Animated.View
@@ -637,6 +710,9 @@ export default function PagesScreen() {
                   source="pages"
                   includeHiddenItems={viewOptions.showHiddenItems}
                   filterByInterests={viewOptions.followPreferences}
+                  onEndReached={loadMoreNotes}
+                  loadingMore={loadingMore}
+                  hasMore={hasMoreNotes}
                 />
               </Animated.View>
             )}
@@ -937,11 +1013,13 @@ const styles = StyleSheet.create({
   badge: {
     position: "absolute",
     top: 6,
-    right: 6,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#111111",
+    right: -2,
+    width: 12,
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: "#ff0000",
+    borderWidth: 2,
+    borderColor: colors.white,
   },
   listSection: {
     flex: 1,
@@ -984,6 +1062,15 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: "700",
   },
+  loadMoreEmptyButton: {
+    marginTop: spacing.md,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+  },
+  loadMoreEmptyText: { color: "#111111", fontWeight: "700" },
   modalBackdrop: {
     flex: 1,
     justifyContent: "flex-end",

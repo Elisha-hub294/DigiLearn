@@ -63,6 +63,21 @@ You'll see a QR code. Here's how to run it:
 - **On Android emulator**: Press `a`
 - **On iOS simulator**: Press `i`
 
+### Report Email Delivery
+
+Reports are submitted through Firebase Functions and emailed to
+**elishabagalw@gmail.com**. Configure the sender account as Firebase secrets
+before deploying Functions:
+
+```bash
+firebase functions:secrets:set REPORT_EMAIL_USER
+firebase functions:secrets:set REPORT_EMAIL_PASSWORD
+firebase deploy --only functions
+```
+
+Use a Gmail app password for `REPORT_EMAIL_PASSWORD`; do not put either value
+in the app environment file or source code.
+
 ## What You'll Find Inside
 
 ### Authentication

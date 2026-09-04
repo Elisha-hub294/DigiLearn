@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
     borderColor: "#B8CBE7",
   },
   readCard: {
-    backgroundColor: "#E8E8E8",
-    borderColor: "#D3D3D3",
+    backgroundColor: "#f0f0f0",
+    borderColor: "#e0e0e0",
   },
   pressed: {
     opacity: 0.96,

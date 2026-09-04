@@ -1,13 +1,20 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.reviewTeacherApplication = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.emailNewReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.reviewTeacherApplication = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const firestore_2 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
+const params_1 = require("firebase-functions/params");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
+const nodemailer_1 = __importDefault(require("nodemailer"));
 (0, app_1.initializeApp)();
 const db = (0, firestore_1.getFirestore)();
+const reportEmailUser = (0, params_1.defineSecret)("REPORT_EMAIL_USER");
+const reportEmailPassword = (0, params_1.defineSecret)("REPORT_EMAIL_PASSWORD");
 function requireAdmin(request) {
     if (!request.auth)
         throw new https_1.HttpsError("unauthenticated", "Sign in required.");
@@ -180,6 +187,85 @@ exports.getYoutubeVideoDuration = (0, https_1.onCall)(async (request) => {
         console.error("Failed to fetch YouTube duration:", error);
         throw new https_1.HttpsError("unavailable", "Unable to fetch video duration.");
     }
+});
+const reportReasons = new Set([
+    "Incorrect information",
+    "Broken or unavailable",
+    "Inappropriate content",
+    "Duplicate resource",
+    "Other",
+]);
+exports.submitReport = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Sign in required to report an item.");
+    }
+    const data = request.data;
+    const reasons = Array.isArray(data.reasons)
+        ? data.reasons.filter((reason) => typeof reason === "string" && reportReasons.has(reason))
+        : [];
+    const details = typeof data.details === "string" ? data.details.trim() : "";
+    const item = data.item ?? {};
+    const itemType = typeof item.type === "string" ? item.type.trim() : "";
+    const itemId = typeof item.id === "string" ? item.id.trim() : "";
+    const itemName = typeof item.name === "string" ? item.name.trim() : "";
+    if ((!reasons.length && !details) || details.length > 1000 || !itemType || !itemId || !itemName) {
+        throw new https_1.HttpsError("invalid-argument", "A reason and valid item details are required.");
+    }
+    const [userSnapshot, teacherSnapshot] = await Promise.all([
+        db.doc(`users/${request.auth.uid}`).get(),
+        db.doc(`teachers/${request.auth.uid}`).get(),
+    ]);
+    const profile = userSnapshot.data() ?? teacherSnapshot.data();
+    const reportRef = db.collection("reports").doc();
+    await reportRef.set({
+        userId: request.auth.uid,
+        username: profile?.name || request.auth.token.name || "Unknown user",
+        userEmail: request.auth.token.email || "Unavailable",
+        reasons,
+        details,
+        item: { type: itemType, id: itemId, name: itemName },
+        createdAt: firestore_1.Timestamp.now(),
+        status: "queued",
+    });
+    return { reportId: reportRef.id };
+});
+exports.emailNewReport = (0, firestore_2.onDocumentCreated)({
+    document: "reports/{reportId}",
+    secrets: [reportEmailUser, reportEmailPassword],
+}, async (event) => {
+    const report = event.data?.data();
+    if (!report)
+        return;
+    const transport = nodemailer_1.default.createTransport({
+        service: "gmail",
+        auth: {
+            user: reportEmailUser.value(),
+            pass: reportEmailPassword.value(),
+        },
+    });
+    const item = report.item;
+    const reasons = report.reasons?.join(", ") || "None selected";
+    const subject = `[DigiLearn] ${item.type} report: ${item.name}`;
+    const text = [
+        `A user reported a problem with a DigiLearn ${item.type}.`,
+        "",
+        `User: ${report.username}`,
+        `User ID: ${report.userId}`,
+        `User email: ${report.userEmail}`,
+        "",
+        `Item name: ${item.name}`,
+        `Item ID: ${item.id}`,
+        `Item type: ${item.type}`,
+        `Selected problems: ${reasons}`,
+        `Details: ${report.details || "None provided"}`,
+    ].join("\n");
+    await transport.sendMail({
+        from: reportEmailUser.value(),
+        to: "elishabagalw@gmail.com",
+        subject,
+        text,
+    });
+    await event.data?.ref.update({ status: "sent", sentAt: firestore_1.Timestamp.now() });
 });
 exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentCreated)("teacherApplications/{applicationId}", async (event) => {
     const application = event.data?.data();

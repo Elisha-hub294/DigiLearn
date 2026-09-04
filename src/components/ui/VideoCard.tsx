@@ -7,23 +7,18 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import {
-  Linking,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, Share, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { auth } from "../../../firebaseConfig";
 import { useProfile } from "../../contexts/ProfileContext";
 import { recordUserActivity } from "../../services/activityService";
+import { submitReport } from "../../services/reportService";
 import { toggleSavedItem } from "../../services/userProfile";
 import { ActionDialog } from "./ActionDialog";
 import { CardActionMenu } from "./CardActionMenu";
 import { DurationBadge } from "./DurationBadge";
 import { PlayButton } from "./PlayButton";
+import { ReportDialog } from "./ReportDialog";
 import { TeacherInfo } from "./TeacherInfo";
 import { VideoLesson } from "./TrendingVideoCard";
 
@@ -54,6 +49,9 @@ export function VideoCard({
     onSecondary?: () => void;
   } | null>(null);
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
   const menuButtonRef = useRef<View>(null);
 
   const item = {
@@ -163,32 +161,36 @@ export function VideoCard({
   };
 
   const handleReportProblem = () => {
-    const subject = encodeURIComponent("Report a Problem in DigiLearn lesson");
-    const body = encodeURIComponent(
-      `Problem ID: ${item.id}\nLesson Title: ${item.title}\nTeacher: ${item.teacher}\n\nReport:\n`,
-    );
-    const mailtoUrl = `mailto:support@digilearn.app?subject=${subject}&body=${body}`;
+    setReportError(null);
+    setShowReportDialog(true);
+  };
 
-    Linking.canOpenURL("mailto:").then((supported) => {
-      if (!supported) {
-        setDialogState({
-          title: "Email unavailable",
-          message: "An email application could not be opened on this device.",
-          primaryText: "OK",
-          onPrimary: () => setDialogState(null),
-        });
-        return;
-      }
-
-      Linking.openURL(mailtoUrl).catch(() => {
-        setDialogState({
-          title: "Email unavailable",
-          message: "An email application could not be opened on this device.",
-          primaryText: "OK",
-          onPrimary: () => setDialogState(null),
-        });
+  const handleSubmitReport = async (reasons: string[], details: string) => {
+    if (!user) {
+      setReportError("Please log in to send a report.");
+      return;
+    }
+    setReportSubmitting(true);
+    setReportError(null);
+    try {
+      await submitReport({
+        reasons,
+        details,
+        item: { type: "lesson", id: item.id, name: item.title },
       });
-    });
+      setShowReportDialog(false);
+      setDialogState({
+        title: "Report sent",
+        message: "Thanks. We'll review this lesson and investigate the issue.",
+        primaryText: "Done",
+        onPrimary: () => setDialogState(null),
+      });
+    } catch (error) {
+      console.error("Failed to submit report:", error);
+      setReportError("We couldn’t send your report. Please try again.");
+    } finally {
+      setReportSubmitting(false);
+    }
   };
 
   const menuActions = [
@@ -302,6 +304,15 @@ export function VideoCard({
         onPrimary={() => router.push("/login" as never)}
         onSecondary={() => router.push("/signup" as never)}
         onClose={() => setShowGuestSaveDialog(false)}
+      />
+
+      <ReportDialog
+        visible={showReportDialog}
+        itemName={item.title}
+        submitting={reportSubmitting}
+        error={reportError}
+        onSubmit={handleSubmitReport}
+        onClose={() => setShowReportDialog(false)}
       />
     </>
   );
