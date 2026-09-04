@@ -1,6 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -63,6 +64,8 @@ const shuffle = <T,>(items: T[]) => {
 };
 
 export default function LibraryScreen() {
+  const navigation = useNavigation();
+  const route = useRoute();
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
   const { loading, refreshing, heroSlides, paperCollections, onRefresh } =
@@ -71,6 +74,18 @@ export default function LibraryScreen() {
   const [pastPaperCategories, setPastPaperCategories] = useState<
     LibraryCategory[]
   >([]);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const handleTabPress = useCallback(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    onRefresh();
+  }, [onRefresh]);
+
+  useEffect(() => {
+    return navigation.addListener("tabPress", (event) => {
+      if (event.target === route.key) handleTabPress();
+    });
+  }, [handleTabPress, navigation, route.key]);
 
   useEffect(() => {
     let isMounted = true;
@@ -216,6 +231,7 @@ export default function LibraryScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={[styles.page, { maxWidth: contentMaxWidth }]}>
         <ScrollView
+          ref={scrollRef}
           style={styles.scrollView}
           contentContainerStyle={[
             styles.content,

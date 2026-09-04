@@ -3,6 +3,7 @@ import { VideoLesson } from "@/components/ui/TrendingVideoCard";
 import { VideoCard } from "@/components/ui/VideoCard";
 import { VideosScreenHeader } from "@/components/ui/VideosScreenHeader";
 import { getVideoThumbnailUrl } from "@/utils/videoUtils";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
@@ -140,6 +141,8 @@ function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
 }
 
 export default function VideosScreen() {
+  const navigation = useNavigation<any>();
+  const route = useRoute();
   const { width } = useWindowDimensions();
   const { scrollTo } = useLocalSearchParams<{ scrollTo?: string }>();
   const [subject, setSubject] = useState("All");
@@ -208,6 +211,20 @@ export default function VideosScreen() {
     setRefreshing(true);
     setRefreshToken((current) => current + 1);
   }, []);
+
+  useEffect(() => {
+    const addTabPressListener = navigation.addListener as unknown as (
+      eventName: "tabPress",
+      listener: (event: { target?: string }) => void,
+    ) => () => void;
+
+    return addTabPressListener("tabPress", (event) => {
+      if (event.target !== route.key) return;
+
+      flashListRef.current?.scrollToOffset({ offset: 0, animated: true });
+      onRefresh();
+    });
+  }, [navigation, onRefresh, route.key]);
 
   const visibleLatest = useMemo(() => {
     if (subject === "All") {

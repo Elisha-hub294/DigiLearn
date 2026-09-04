@@ -1,6 +1,7 @@
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   NativeScrollEvent,
@@ -100,6 +101,8 @@ function HomePastPapers({
 
 export default function HomeScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
+  const route = useRoute();
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
   const { paperCollections } = useLibraryData();
@@ -107,6 +110,7 @@ export default function HomeScreen() {
   const [showLoading, setShowLoading] = useState(true);
   const [authCheckReady, setAuthCheckReady] = useState(false);
   const [shuffleSeed, setShuffleSeed] = useState(() => Date.now());
+  const scrollRef = useRef<ScrollView>(null);
 
   // Infinite Scroll & Lazy Loading Pagination State
   const INITIAL_BATCH_SIZE = 3;
@@ -185,6 +189,15 @@ export default function HomeScreen() {
     setShuffleSeed(Date.now());
     setTimeout(() => setRefreshing(false), 800);
   }, []);
+
+  useEffect(() => {
+    return navigation.addListener("tabPress", (event) => {
+      if (event.target !== route.key) return;
+
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+      onRefresh();
+    });
+  }, [navigation, onRefresh, route.key]);
 
   // Modern Feed Pool Definitions
   const candidateModules: Omit<FeedModule, "id">[] = useMemo(
@@ -313,6 +326,7 @@ export default function HomeScreen() {
       <Animated.View entering={FadeInUp.duration(480)} style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
           <ScrollView
+            ref={scrollRef}
             style={styles.container}
             contentContainerStyle={[
               styles.content,

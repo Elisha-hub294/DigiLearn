@@ -1,5 +1,6 @@
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -41,10 +42,13 @@ function Skeleton() {
 }
 export default function ProfileScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
+  const route = useRoute();
   const { width } = useWindowDimensions();
   const { user, profile, loading, error, refresh } = useProfile();
   const { newReportCount, pendingApplicationCount } = useAdminReviewSignals();
   const [refreshing, setRefreshing] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -53,11 +57,21 @@ export default function ProfileScreen() {
       setRefreshing(false);
     }
   }, [refresh]);
+
+  useEffect(() => {
+    return navigation.addListener("tabPress", (event) => {
+      if (event.target !== route.key) return;
+
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
+      void onRefresh();
+    });
+  }, [navigation, onRefresh, route.key]);
   const padding = paddingFor(width);
   const maxWidth = Math.min(1100, width - padding * 2);
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[
           s.content,
           !loading && !user && s.guestContent,
