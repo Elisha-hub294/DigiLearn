@@ -153,11 +153,18 @@ export default function SettingsScreen() {
                 onPress={() => router.push("/activity" as never)}
               />
               {profile?.type === "admin" ? (
-                <SettingsRow
-                  icon="activity"
-                  title="App usage analytics"
-                  onPress={() => router.push("/admin-activity" as never)}
-                />
+                <>
+                  <SettingsRow
+                    icon="activity"
+                    title="App usage analytics"
+                    onPress={() => router.push("/admin-activity" as never)}
+                  />
+                  <SettingsRow
+                    icon="flag"
+                    title="Resource reports"
+                    onPress={() => router.push("/admin-reports" as never)}
+                  />
+                </>
               ) : null}
               <SettingsRow
                 icon="eye-off"

@@ -122,6 +122,12 @@ export default function ProfileScreen() {
                     Review teacher applications
                   </Text>
                 </Pressable>
+                <Pressable
+                  style={s.reviewLink}
+                  onPress={() => router.push("/admin-reports" as never)}
+                >
+                  <Text style={s.reviewLinkText}>Review resource reports</Text>
+                </Pressable>
               </>
             )}
             <UserInfoCard profile={profile} />

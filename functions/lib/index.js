@@ -3,12 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.emailNewReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.reviewTeacherApplication = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.retryReport = exports.listReports = exports.emailNewReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.reviewTeacherApplication = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
+const params_1 = require("firebase-functions/params");
 const firestore_2 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
-const params_1 = require("firebase-functions/params");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const nodemailer_1 = __importDefault(require("nodemailer"));
 (0, app_1.initializeApp)();
@@ -199,6 +199,7 @@ exports.submitReport = (0, https_1.onCall)(async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Sign in required to report an item.");
     }
+    const userId = request.auth.uid;
     const data = request.data;
     const reasons = Array.isArray(data.reasons)
         ? data.reasons.filter((reason) => typeof reason === "string" && reportReasons.has(reason))
@@ -208,17 +209,35 @@ exports.submitReport = (0, https_1.onCall)(async (request) => {
     const itemType = typeof item.type === "string" ? item.type.trim() : "";
     const itemId = typeof item.id === "string" ? item.id.trim() : "";
     const itemName = typeof item.name === "string" ? item.name.trim() : "";
-    if ((!reasons.length && !details) || details.length > 1000 || !itemType || !itemId || !itemName) {
+    if ((!reasons.length && !details) ||
+        details.length > 1000 ||
+        !itemType ||
+        !itemId ||
+        !itemName) {
         throw new https_1.HttpsError("invalid-argument", "A reason and valid item details are required.");
     }
     const [userSnapshot, teacherSnapshot] = await Promise.all([
-        db.doc(`users/${request.auth.uid}`).get(),
-        db.doc(`teachers/${request.auth.uid}`).get(),
+        db.doc(`users/${userId}`).get(),
+        db.doc(`teachers/${userId}`).get(),
     ]);
     const profile = userSnapshot.data() ?? teacherSnapshot.data();
+    const recentReports = await db
+        .collection("reports")
+        .where("userId", "==", userId)
+        .limit(20)
+        .get();
+    const cutoff = Date.now() - 10 * 60 * 1000;
+    const hasRecentReport = recentReports.docs.some((document) => {
+        const report = document.data();
+        return (report.item?.id === itemId &&
+            (report.createdAt?.toMillis() ?? 0) > cutoff);
+    });
+    if (hasRecentReport) {
+        throw new https_1.HttpsError("resource-exhausted", "You recently reported this item. Please wait before sending another report.");
+    }
     const reportRef = db.collection("reports").doc();
     await reportRef.set({
-        userId: request.auth.uid,
+        userId,
         username: profile?.name || request.auth.token.name || "Unknown user",
         userEmail: request.auth.token.email || "Unavailable",
         reasons,
@@ -229,13 +248,7 @@ exports.submitReport = (0, https_1.onCall)(async (request) => {
     });
     return { reportId: reportRef.id };
 });
-exports.emailNewReport = (0, firestore_2.onDocumentCreated)({
-    document: "reports/{reportId}",
-    secrets: [reportEmailUser, reportEmailPassword],
-}, async (event) => {
-    const report = event.data?.data();
-    if (!report)
-        return;
+async function deliverReport(report) {
     const transport = nodemailer_1.default.createTransport({
         service: "gmail",
         auth: {
@@ -243,19 +256,18 @@ exports.emailNewReport = (0, firestore_2.onDocumentCreated)({
             pass: reportEmailPassword.value(),
         },
     });
-    const item = report.item;
     const reasons = report.reasons?.join(", ") || "None selected";
-    const subject = `[DigiLearn] ${item.type} report: ${item.name}`;
+    const subject = `[DigiLearn] ${report.item.type} report: ${report.item.name}`;
     const text = [
-        `A user reported a problem with a DigiLearn ${item.type}.`,
+        `A user reported a problem with a DigiLearn ${report.item.type}.`,
         "",
         `User: ${report.username}`,
         `User ID: ${report.userId}`,
         `User email: ${report.userEmail}`,
         "",
-        `Item name: ${item.name}`,
-        `Item ID: ${item.id}`,
-        `Item type: ${item.type}`,
+        `Item name: ${report.item.name}`,
+        `Item ID: ${report.item.id}`,
+        `Item type: ${report.item.type}`,
         `Selected problems: ${reasons}`,
         `Details: ${report.details || "None provided"}`,
     ].join("\n");
@@ -265,17 +277,52 @@ exports.emailNewReport = (0, firestore_2.onDocumentCreated)({
         subject,
         text,
     });
-    await event.data?.ref.update({ status: "sent", sentAt: firestore_1.Timestamp.now() });
+}
+async function deliverReportDocument(reportId, report) {
+    const reportRef = db.doc(`reports/${reportId}`);
+    try {
+        await deliverReport(report);
+        await reportRef.update({ status: "sent", sentAt: firestore_1.Timestamp.now(), lastError: firestore_1.FieldValue.delete() });
+    }
+    catch (error) {
+        const lastError = error instanceof Error ? error.message.slice(0, 500) : "Email delivery failed.";
+        await reportRef.update({ status: "failed", lastError, failedAt: firestore_1.Timestamp.now() });
+        throw error;
+    }
+}
+exports.emailNewReport = (0, firestore_2.onDocumentCreated)({
+    document: "reports/{reportId}",
+    secrets: [reportEmailUser, reportEmailPassword],
+}, async (event) => {
+    const report = event.data?.data();
+    if (report)
+        await deliverReportDocument(event.params.reportId, report);
+});
+exports.listReports = (0, https_1.onCall)(async (request) => {
+    await requireAdmin(request);
+    const snapshot = await db.collection("reports").orderBy("createdAt", "desc").limit(100).get();
+    return { reports: snapshot.docs.map((document) => ({ id: document.id, ...document.data() })) };
+});
+exports.retryReport = (0, https_1.onCall)(async (request) => {
+    await requireAdmin(request);
+    const reportId = typeof request.data?.reportId === "string" ? request.data.reportId.trim() : "";
+    if (!reportId)
+        throw new https_1.HttpsError("invalid-argument", "A report ID is required.");
+    const reportRef = db.doc(`reports/${reportId}`);
+    const snapshot = await reportRef.get();
+    if (!snapshot.exists || snapshot.data()?.status !== "failed") {
+        throw new https_1.HttpsError("failed-precondition", "Only failed reports can be retried.");
+    }
+    await reportRef.update({ status: "retrying", retryCount: firestore_1.FieldValue.increment(1) });
+    await deliverReportDocument(reportId, snapshot.data());
+    return { status: "sent" };
 });
 exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentCreated)("teacherApplications/{applicationId}", async (event) => {
     const application = event.data?.data();
     const applicationId = event.params.applicationId;
     if (!application)
         return;
-    await db
-        .collection("adminNotifications")
-        .doc(applicationId)
-        .set({
+    await db.collection("adminNotifications").doc(applicationId).set({
         id: applicationId,
         type: "announcement",
         publisherName: "DigiLearn",

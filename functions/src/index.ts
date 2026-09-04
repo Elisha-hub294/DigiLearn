@@ -186,7 +186,6 @@ export const getYoutubeVideoDuration = onCall(async (request) => {
       "A valid YouTube video is required.",
     );
   }
-
   try {
     const playerResponse = await fetch(
       "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
@@ -254,6 +253,7 @@ export const submitReport = onCall(async (request) => {
       "Sign in required to report an item.",
     );
   }
+  const userId = request.auth.uid;
 
   const data = request.data as {
     reasons?: unknown;
@@ -286,13 +286,32 @@ export const submitReport = onCall(async (request) => {
   }
 
   const [userSnapshot, teacherSnapshot] = await Promise.all([
-    db.doc(`users/${request.auth.uid}`).get(),
-    db.doc(`teachers/${request.auth.uid}`).get(),
+    db.doc(`users/${userId}`).get(),
+    db.doc(`teachers/${userId}`).get(),
   ]);
   const profile = userSnapshot.data() ?? teacherSnapshot.data();
+  const recentReports = await db
+    .collection("reports")
+    .where("userId", "==", userId)
+    .limit(20)
+    .get();
+  const cutoff = Date.now() - 10 * 60 * 1000;
+  const hasRecentReport = recentReports.docs.some((document) => {
+    const report = document.data();
+    return (
+      (report.item as { id?: string } | undefined)?.id === itemId &&
+      ((report.createdAt as Timestamp | undefined)?.toMillis() ?? 0) > cutoff
+    );
+  });
+  if (hasRecentReport) {
+    throw new HttpsError(
+      "resource-exhausted",
+      "You recently reported this item. Please wait before sending another report.",
+    );
+  }
   const reportRef = db.collection("reports").doc();
   await reportRef.set({
-    userId: request.auth.uid,
+    userId,
     username: profile?.name || request.auth.token.name || "Unknown user",
     userEmail: request.auth.token.email || "Unavailable",
     reasons,
@@ -305,6 +324,69 @@ export const submitReport = onCall(async (request) => {
   return { reportId: reportRef.id };
 });
 
+type StoredReport = {
+  username: string;
+  userId: string;
+  userEmail: string;
+  reasons?: string[];
+  details?: string;
+  item: { type: string; id: string; name: string };
+};
+
+async function deliverReport(report: StoredReport) {
+  const transport = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: reportEmailUser.value(),
+      pass: reportEmailPassword.value(),
+    },
+  });
+  const reasons = report.reasons?.join(", ") || "None selected";
+  const subject = `[DigiLearn] ${report.item.type} report: ${report.item.name}`;
+  const text = [
+    `A user reported a problem with a DigiLearn ${report.item.type}.`,
+    "",
+    `User: ${report.username}`,
+    `User ID: ${report.userId}`,
+    `User email: ${report.userEmail}`,
+    "",
+    `Item name: ${report.item.name}`,
+    `Item ID: ${report.item.id}`,
+    `Item type: ${report.item.type}`,
+    `Selected problems: ${reasons}`,
+    `Details: ${report.details || "None provided"}`,
+  ].join("\n");
+  await transport.sendMail({
+    from: reportEmailUser.value(),
+    to: "elishabagalw@gmail.com",
+    subject,
+    text,
+  });
+}
+
+async function deliverReportDocument(reportId: string, report: StoredReport) {
+  const reportRef = db.doc(`reports/${reportId}`);
+  try {
+    await deliverReport(report);
+    await reportRef.update({
+      status: "sent",
+      sentAt: Timestamp.now(),
+      lastError: FieldValue.delete(),
+    });
+  } catch (error) {
+    const lastError =
+      error instanceof Error
+        ? error.message.slice(0, 500)
+        : "Email delivery failed.";
+    await reportRef.update({
+      status: "failed",
+      lastError,
+      failedAt: Timestamp.now(),
+    });
+    throw error;
+  }
+}
+
 export const emailNewReport = onDocumentCreated(
   {
     document: "reports/{reportId}",
@@ -312,42 +394,52 @@ export const emailNewReport = onDocumentCreated(
   },
   async (event) => {
     const report = event.data?.data();
-    if (!report) return;
-
-    const transport = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: reportEmailUser.value(),
-        pass: reportEmailPassword.value(),
-      },
-    });
-    const item = report.item as { type: string; id: string; name: string };
-    const reasons =
-      (report.reasons as string[] | undefined)?.join(", ") || "None selected";
-    const subject = `[DigiLearn] ${item.type} report: ${item.name}`;
-    const text = [
-      `A user reported a problem with a DigiLearn ${item.type}.`,
-      "",
-      `User: ${report.username}`,
-      `User ID: ${report.userId}`,
-      `User email: ${report.userEmail}`,
-      "",
-      `Item name: ${item.name}`,
-      `Item ID: ${item.id}`,
-      `Item type: ${item.type}`,
-      `Selected problems: ${reasons}`,
-      `Details: ${report.details || "None provided"}`,
-    ].join("\n");
-
-    await transport.sendMail({
-      from: reportEmailUser.value(),
-      to: "elishabagalw@gmail.com",
-      subject,
-      text,
-    });
-    await event.data?.ref.update({ status: "sent", sentAt: Timestamp.now() });
+    if (report)
+      await deliverReportDocument(
+        event.params.reportId,
+        report as StoredReport,
+      );
   },
 );
+
+export const listReports = onCall(async (request) => {
+  await requireAdmin(request);
+  const snapshot = await db
+    .collection("reports")
+    .orderBy("createdAt", "desc")
+    .limit(100)
+    .get();
+  return {
+    reports: snapshot.docs.map((document) => ({
+      id: document.id,
+      ...document.data(),
+    })),
+  };
+});
+
+export const retryReport = onCall(async (request) => {
+  await requireAdmin(request);
+  const reportId =
+    typeof request.data?.reportId === "string"
+      ? request.data.reportId.trim()
+      : "";
+  if (!reportId)
+    throw new HttpsError("invalid-argument", "A report ID is required.");
+  const reportRef = db.doc(`reports/${reportId}`);
+  const snapshot = await reportRef.get();
+  if (!snapshot.exists || snapshot.data()?.status !== "failed") {
+    throw new HttpsError(
+      "failed-precondition",
+      "Only failed reports can be retried.",
+    );
+  }
+  await reportRef.update({
+    status: "retrying",
+    retryCount: FieldValue.increment(1),
+  });
+  await deliverReportDocument(reportId, snapshot.data() as StoredReport);
+  return { status: "sent" };
+});
 
 export const notifyAdminsOfTeacherApplication = onDocumentCreated(
   "teacherApplications/{applicationId}",
