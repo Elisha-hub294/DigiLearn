@@ -16,7 +16,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   useWindowDimensions,
   View,
@@ -37,6 +36,7 @@ import {
 } from "../../services/userProfile";
 import { matchesUserInterests } from "../../utils/interestFilter";
 import { FeaturedNoteCard } from "../home/FeaturedNoteCard";
+import { NotifyToggle } from "../library/add-item/SharedFormControls";
 import { SearchBar } from "../ui/SearchBar";
 
 type PageNote = {
@@ -788,13 +788,14 @@ export default function PagesScreen() {
                         Include pages you previously hid.
                       </Text>
                     </View>
-                    <Switch
-                      value={viewOptions.showHiddenItems}
-                      onValueChange={(value) =>
-                        updateViewOption("showHiddenItems", value)
+                    <NotifyToggle
+                      checked={viewOptions.showHiddenItems}
+                      onToggle={() =>
+                        updateViewOption(
+                          "showHiddenItems",
+                          !viewOptions.showHiddenItems,
+                        )
                       }
-                      trackColor={{ false: "#D1D5DB", true: subjectAccent }}
-                      thumbColor={colors.white}
                       accessibilityLabel="Show hidden items"
                     />
                   </View>
@@ -807,13 +808,14 @@ export default function PagesScreen() {
                         Only show resources matching your selected subjects.
                       </Text>
                     </View>
-                    <Switch
-                      value={viewOptions.followPreferences}
-                      onValueChange={(value) =>
-                        updateViewOption("followPreferences", value)
+                    <NotifyToggle
+                      checked={viewOptions.followPreferences}
+                      onToggle={() =>
+                        updateViewOption(
+                          "followPreferences",
+                          !viewOptions.followPreferences,
+                        )
                       }
-                      trackColor={{ false: "#D1D5DB", true: subjectAccent }}
-                      thumbColor={colors.white}
                       accessibilityLabel="Follow set preferences"
                     />
                   </View>

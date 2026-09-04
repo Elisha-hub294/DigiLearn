@@ -12,7 +12,6 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   useWindowDimensions,
@@ -20,6 +19,7 @@ import {
 } from "react-native";
 
 import { auth, db } from "../../firebaseConfig";
+import { NotifyToggle } from "../components/library/add-item/SharedFormControls";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
@@ -471,11 +471,9 @@ export default function AccountQuickSettingsScreen() {
                       resources matching your selected subjects.
                     </Text>
                   </View>
-                  <Switch
-                    value={filterFeedByInterests}
-                    onValueChange={setFilterFeedByInterests}
-                    trackColor={{ false: "#D1D5DB", true: "#3B82F6" }}
-                    thumbColor={colors.white}
+                  <NotifyToggle
+                    checked={filterFeedByInterests}
+                    onToggle={() => setFilterFeedByInterests((value) => !value)}
                     accessibilityLabel="Toggle filter feeds by interests"
                   />
                 </View>

@@ -8,12 +8,12 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
 import { db } from "../../firebaseConfig";
+import { NotifyToggle } from "../components/library/add-item/SharedFormControls";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
@@ -311,11 +311,9 @@ export default function PreferencesScreen() {
                   matching your selected subjects.
                 </Text>
               </View>
-              <Switch
-                value={filterFeedByInterests}
-                onValueChange={setFilterFeedByInterests}
-                trackColor={{ false: "#D1D5DB", true: "#3B82F6" }}
-                thumbColor={colors.white}
+              <NotifyToggle
+                checked={filterFeedByInterests}
+                onToggle={() => setFilterFeedByInterests((value) => !value)}
                 accessibilityLabel="Toggle filter feeds by interests"
               />
             </View>

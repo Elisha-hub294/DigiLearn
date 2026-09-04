@@ -9,12 +9,12 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   useWindowDimensions,
   View,
 } from "react-native";
 import { auth, db } from "../../firebaseConfig";
+import { NotifyToggle } from "../components/library/add-item/SharedFormControls";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { SettingsRow } from "../components/ui/SettingsRow";
 import { SettingsSection } from "../components/ui/SettingsSection";
@@ -234,14 +234,10 @@ export default function SettingsScreen() {
                 icon="moon"
                 title="Dark mode"
                 right={
-                  <Switch
-                    value={isDark}
-                    onValueChange={(value) =>
-                      setThemeMode(value ? "dark" : "light")
-                    }
+                  <NotifyToggle
+                    checked={isDark}
+                    onToggle={() => setThemeMode(isDark ? "light" : "dark")}
                     accessibilityLabel="Toggle dark mode"
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={colors.white}
                   />
                 }
                 showSeparator={false}
@@ -297,12 +293,10 @@ export default function SettingsScreen() {
                 icon="bell"
                 title="Push Notifications"
                 right={
-                  <Switch
-                    value={pushEnabled}
-                    onValueChange={togglePushNotifications}
+                  <NotifyToggle
+                    checked={pushEnabled}
+                    onToggle={() => togglePushNotifications(!pushEnabled)}
                     accessibilityLabel="Toggle push notifications"
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={colors.white}
                   />
                 }
               />
@@ -310,12 +304,10 @@ export default function SettingsScreen() {
                 icon="clock"
                 title="Reminders"
                 right={
-                  <Switch
-                    value={remindersEnabled}
-                    onValueChange={toggleReminders}
+                  <NotifyToggle
+                    checked={remindersEnabled}
+                    onToggle={() => toggleReminders(!remindersEnabled)}
                     accessibilityLabel="Toggle reminders"
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={colors.white}
                   />
                 }
                 showSeparator={false}
@@ -332,12 +324,10 @@ export default function SettingsScreen() {
                 icon="cpu"
                 title="AI Assistant Features"
                 right={
-                  <Switch
-                    value={assistantEnabled}
-                    onValueChange={handleToggleAssistant}
+                  <NotifyToggle
+                    checked={assistantEnabled}
+                    onToggle={() => handleToggleAssistant(!assistantEnabled)}
                     accessibilityLabel="Toggle AI assistant features"
-                    trackColor={{ false: colors.border, true: colors.primary }}
-                    thumbColor={colors.white}
                   />
                 }
                 showSeparator={false}

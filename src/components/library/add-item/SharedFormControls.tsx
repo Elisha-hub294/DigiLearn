@@ -1,5 +1,5 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -103,11 +103,13 @@ export function CharacterCounter({
 export function NotifyToggle({
   checked,
   onToggle,
+  accessibilityLabel = "Notify Community",
 }: {
   checked: boolean;
   onToggle: () => void;
+  accessibilityLabel?: string;
 }) {
-  const transition = useRef(new Animated.Value(checked ? 1 : 0)).current;
+  const [transition] = useState(() => new Animated.Value(checked ? 1 : 0));
 
   useEffect(() => {
     Animated.timing(transition, {
@@ -122,7 +124,7 @@ export function NotifyToggle({
       style={styles.toggleSwitch}
       onPress={onToggle}
       accessibilityRole="switch"
-      accessibilityLabel="Notify Community"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ checked }}
     >
       <Animated.View
