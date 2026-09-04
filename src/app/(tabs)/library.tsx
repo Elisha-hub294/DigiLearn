@@ -1,6 +1,6 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { useNavigation, useRoute } from "@react-navigation/native";
 import { router } from "expo-router";
+import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Pressable,
@@ -82,7 +82,12 @@ export default function LibraryScreen() {
   }, [onRefresh]);
 
   useEffect(() => {
-    return navigation.addListener("tabPress", (event) => {
+    const addTabPressListener = navigation.addListener as unknown as (
+      eventName: "tabPress",
+      listener: (event: { target?: string }) => void,
+    ) => () => void;
+
+    return addTabPressListener("tabPress", (event) => {
       if (event.target === route.key) handleTabPress();
     });
   }, [handleTabPress, navigation, route.key]);

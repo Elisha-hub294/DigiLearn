@@ -1,5 +1,5 @@
-import { useNavigation, useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
+import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { onAuthStateChanged } from "firebase/auth";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -191,7 +191,12 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    return navigation.addListener("tabPress", (event) => {
+    const addTabPressListener = navigation.addListener as unknown as (
+      eventName: "tabPress",
+      listener: (event: { target?: string }) => void,
+    ) => () => void;
+
+    return addTabPressListener("tabPress", (event) => {
       if (event.target !== route.key) return;
 
       scrollRef.current?.scrollTo({ y: 0, animated: true });

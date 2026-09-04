@@ -3,10 +3,10 @@ import { VideoLesson } from "@/components/ui/TrendingVideoCard";
 import { VideoCard } from "@/components/ui/VideoCard";
 import { VideosScreenHeader } from "@/components/ui/VideosScreenHeader";
 import { getVideoThumbnailUrl } from "@/utils/videoUtils";
-import { useNavigation, useRoute } from "@react-navigation/native";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   RefreshControl,

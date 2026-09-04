@@ -1,5 +1,5 @@
-import { useNavigation, useRoute } from "@react-navigation/native";
 import { useRouter } from "expo-router";
+import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Pressable,
@@ -59,7 +59,12 @@ export default function ProfileScreen() {
   }, [refresh]);
 
   useEffect(() => {
-    return navigation.addListener("tabPress", (event) => {
+    const addTabPressListener = navigation.addListener as unknown as (
+      eventName: "tabPress",
+      listener: (event: { target?: string }) => void,
+    ) => () => void;
+
+    return addTabPressListener("tabPress", (event) => {
       if (event.target !== route.key) return;
 
       scrollRef.current?.scrollTo({ y: 0, animated: true });
