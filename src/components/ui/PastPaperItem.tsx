@@ -1,6 +1,6 @@
-import { Feather as Icon } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, shadows, spacing } from '../../constants/theme';
+import { Feather as Icon } from "@expo/vector-icons";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { colors, radius, shadows, spacing } from "../../constants/theme";
 
 export type PastPaperItemData = {
   id: string;
@@ -35,9 +35,9 @@ export const PastPaperItem = ({ item }: PastPaperItemProps) => (
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: colors.white,
     borderRadius: radius.xl,
     padding: spacing.md,
@@ -45,8 +45,8 @@ const styles = StyleSheet.create({
     ...shadows.soft,
   },
   left: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   iconWrap: {
@@ -54,19 +54,19 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 14,
     backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.md,
   },
   title: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 4,
   },
   badgeWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   badgeText: {
     color: colors.subtitle,
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
     color: colors.primary,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   button: {
     backgroundColor: colors.lightBackground,
@@ -87,6 +87,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: colors.text,
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });
