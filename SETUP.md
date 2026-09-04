@@ -66,11 +66,11 @@ You'll see a QR code. Here's how to run it:
 ### Report Review
 
 Reports are stored in Firestore and reviewed by admins in the Resource Reports
-screen. Deploy the Firebase Functions once so the authenticated report
-submission and admin review callables are available:
+screen. Deploy the Firestore rules once so authenticated report submission and
+admin review access are available:
 
 ```bash
-npx firebase-tools deploy --only functions
+npx firebase-tools deploy --only firestore:rules
 ```
 
 ## What You'll Find Inside

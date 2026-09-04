@@ -1,5 +1,14 @@
-import { httpsCallable } from "firebase/functions";
-import { functions } from "../../firebaseConfig";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
+import { auth, db } from "../../firebaseConfig";
 
 export type ReportPayload = {
   reasons: string[];
@@ -22,19 +31,23 @@ export type ReportRecord = ReportPayload & {
 };
 
 export async function submitReport(payload: ReportPayload) {
-  const callable = httpsCallable<ReportPayload, { reportId: string }>(
-    functions,
-    "submitReport",
-  );
-  return callable(payload);
+  return addDoc(collection(db, "reports"), {
+    ...payload,
+    userId: auth.currentUser?.uid,
+    username: auth.currentUser?.displayName || "Unknown user",
+    userEmail: auth.currentUser?.email || "Unavailable",
+    createdAt: serverTimestamp(),
+    status: "new",
+  });
 }
 
 export async function listReports() {
-  const callable = httpsCallable<undefined, { reports: ReportRecord[] }>(
-    functions,
-    "listReports",
+  const snapshot = await getDocs(
+    query(collection(db, "reports"), orderBy("createdAt", "desc")),
   );
-  return (await callable()).data.reports;
+  return snapshot.docs.map(
+    (report) => ({ id: report.id, ...report.data() }) as ReportRecord,
+  );
 }
 
 export async function updateReport(
@@ -42,11 +55,11 @@ export async function updateReport(
   status: ReportRecord["status"],
   adminNotes: string,
 ) {
-  const callable = httpsCallable<
-    { reportId: string; status: ReportRecord["status"]; adminNotes: string },
-    { status: string }
-  >(functions, "updateReport");
-  return callable({ reportId, status, adminNotes });
+  return updateDoc(doc(db, "reports", reportId), {
+    status,
+    adminNotes,
+    reviewedAt: serverTimestamp(),
+  });
 }
 
 export function getReportErrorMessage(error: unknown) {
