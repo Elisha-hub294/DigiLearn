@@ -17,6 +17,7 @@ import { type TeacherPost } from "../constants/homeData";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { toggleSavedItem } from "../services/userProfile";
+import { feedbackMessages, showNativeToast } from "../utils/nativeToast";
 import { ActionDialog } from "./ui/ActionDialog";
 
 const GradientTitle = ({
@@ -73,6 +74,9 @@ export const TeacherPostCard = ({
     }
     try {
       await toggleSavedItem(user.uid, "saved-posts", post.id, isSaved);
+      showNativeToast(
+        isSaved ? feedbackMessages.itemUnsaved : feedbackMessages.itemSaved,
+      );
     } catch (err) {
       console.error("Failed to toggle saved post:", err);
     }

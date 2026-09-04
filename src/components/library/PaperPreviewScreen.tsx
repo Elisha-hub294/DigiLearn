@@ -31,6 +31,7 @@ import {
   setPaperRevisionStatus,
   toggleSavedItem,
 } from "../../services/userProfile";
+import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
 import { Skeleton } from "../ui/Skeleton";
 
@@ -402,6 +403,9 @@ export function PaperPreviewScreen() {
     try {
       await toggleSavedItem(userId, "saved-papers", paper.id, bookmarked);
       setBookmarked((value) => !value);
+      showNativeToast(
+        bookmarked ? feedbackMessages.itemUnsaved : feedbackMessages.itemSaved,
+      );
     } catch (error) {
       console.error("Failed to toggle paper bookmark", error);
     }
@@ -419,6 +423,7 @@ export function PaperPreviewScreen() {
     try {
       await setPaperRevisionStatus(userId, paper.id, nextStatus);
       setRevisionStatus(nextStatus);
+      showNativeToast(feedbackMessages.revisionUpdated);
     } catch (error) {
       console.error("Failed to update revision status", error);
     }

@@ -32,6 +32,7 @@ import {
   recordUserActivity,
 } from "../services/activityService";
 import { toggleSavedItem } from "../services/userProfile";
+import { feedbackMessages, showNativeToast } from "../utils/nativeToast";
 import { validateVideoLink } from "../utils/videoUtils";
 
 function getYoutubeEmbedUrl(rawUrl?: string) {
@@ -210,12 +211,17 @@ export default function LessonPlayerScreen() {
     try {
       await toggleSavedItem(userId, "saved-lessons", lessonId, lessonIsSaved);
       setIsSaved(nextSaved);
-      setNoticeDialog({
-        title: nextSaved ? "Saved to Library" : "Removed from Saved",
-        message: nextSaved
-          ? "This lesson is now saved in your bookmarks."
-          : "Lesson removed from saved items.",
-      });
+      const showedToast = showNativeToast(
+        nextSaved ? feedbackMessages.itemSaved : feedbackMessages.itemUnsaved,
+      );
+      if (!showedToast) {
+        setNoticeDialog({
+          title: nextSaved ? "Saved to Library" : "Removed from Saved",
+          message: nextSaved
+            ? "This lesson is now saved in your bookmarks."
+            : "Lesson removed from saved items.",
+        });
+      }
     } catch (error) {
       console.error("Failed to save lesson", error);
       setNoticeDialog({

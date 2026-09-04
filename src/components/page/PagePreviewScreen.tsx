@@ -14,6 +14,7 @@ import { getHorizontalPadding } from "../../constants/layout";
 import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { toggleSavedItem } from "../../services/userProfile";
+import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { FALLBACK_COVER } from "../book/bookTypes";
 import { ActionDialog } from "../ui/ActionDialog";
 import { Skeleton } from "../ui/Skeleton";
@@ -591,6 +592,11 @@ export function PagePreviewScreen() {
               try {
                 await toggleSavedItem(userId, "saved-pages", id, bookmarked);
                 setBookmarked((value) => !value);
+                showNativeToast(
+                  bookmarked
+                    ? feedbackMessages.itemUnsaved
+                    : feedbackMessages.itemSaved,
+                );
               } catch (error) {
                 console.error("Failed to toggle page bookmark", error);
               }

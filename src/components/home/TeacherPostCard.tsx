@@ -27,6 +27,7 @@ import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
+import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
 
 export type TeacherPost = {
@@ -432,6 +433,9 @@ const TeacherPostItem = ({
     }
     try {
       await toggleSavedItem(user.uid, "saved-posts", postItem.id, isSaved);
+      showNativeToast(
+        isSaved ? feedbackMessages.itemUnsaved : feedbackMessages.itemSaved,
+      );
     } catch (err) {
       console.error("Failed to toggle saved teacher post:", err);
     }

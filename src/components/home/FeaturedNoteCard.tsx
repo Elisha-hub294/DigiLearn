@@ -32,6 +32,7 @@ import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
+import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
 import { CardActionMenu } from "../ui/CardActionMenu";
 import { FirebaseImage } from "../ui/FirebaseImage";
@@ -487,6 +488,7 @@ const FeaturedNoteItem = ({
       const shouldHide = !isHidden;
       await setPageHiddenState(user.uid, note.id, shouldHide);
       if (shouldHide) {
+        showNativeToast(feedbackMessages.itemHidden);
         setDialogState({
           title: "Page hidden",
           message: "Page hidden · Undo",
@@ -494,6 +496,7 @@ const FeaturedNoteItem = ({
           onPrimary: async () => {
             setDialogState(null);
             await setPageHiddenState(user.uid, note.id, false);
+            showNativeToast(feedbackMessages.itemRestored);
           },
         });
       }
@@ -549,6 +552,9 @@ const FeaturedNoteItem = ({
     }
     try {
       await toggleSavedItem(user.uid, "saved-pages", note.id, isSaved);
+      showNativeToast(
+        isSaved ? feedbackMessages.itemUnsaved : feedbackMessages.itemSaved,
+      );
     } catch (err) {
       console.error("Failed to toggle saved note:", err);
     }

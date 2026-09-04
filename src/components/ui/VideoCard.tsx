@@ -18,6 +18,7 @@ import {
   submitReport,
 } from "../../services/reportService";
 import { toggleSavedItem } from "../../services/userProfile";
+import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "./ActionDialog";
 import { CardActionMenu } from "./CardActionMenu";
 import { DurationBadge } from "./DurationBadge";
@@ -153,14 +154,19 @@ export function VideoCard({
 
     try {
       await toggleSavedItem(user.uid, "saved-lessons", item.id, isSaved);
-      setDialogState({
-        title: nextSaved ? "Saved to library" : "Removed from saved lessons",
-        message: nextSaved
-          ? "You can revisit this lesson from your saved collection."
-          : "This lesson has been removed from your saved list.",
-        primaryText: "Done",
-        onPrimary: () => setDialogState(null),
-      });
+      const showedToast = showNativeToast(
+        isSaved ? feedbackMessages.itemUnsaved : feedbackMessages.itemSaved,
+      );
+      if (!showedToast) {
+        setDialogState({
+          title: nextSaved ? "Saved to library" : "Removed from saved lessons",
+          message: nextSaved
+            ? "You can revisit this lesson from your saved collection."
+            : "This lesson has been removed from your saved list.",
+          primaryText: "Done",
+          onPrimary: () => setDialogState(null),
+        });
+      }
     } catch (error) {
       setIsSavedState(isSaved);
       console.error("Failed to update saved lesson state:", error);

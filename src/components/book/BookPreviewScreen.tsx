@@ -18,6 +18,7 @@ import {
 } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { toggleSavedItem } from "../../services/userProfile";
+import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
 import { Skeleton } from "../ui/Skeleton";
 import { AuthorsCarousel } from "./AuthorsCarousel";
@@ -389,6 +390,11 @@ export function BookPreviewScreen() {
                   bookmarked,
                 );
                 setBookmarked((value) => !value);
+                showNativeToast(
+                  bookmarked
+                    ? feedbackMessages.itemUnsaved
+                    : feedbackMessages.itemSaved,
+                );
               } catch (e) {
                 console.error("Failed to toggle bookmark", e);
               }
