@@ -18,6 +18,7 @@ import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { recordUserActivity } from "../../services/activityService";
+import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import {
   PaperRevisionStatus,
   setPaperRevisionStatus,
@@ -284,7 +285,10 @@ export function PaperPreviewScreen() {
 
     const loadRelatedPapers = async () => {
       try {
-        const snap = await getDocs(collection(db, "pastPaper"));
+        const snap = await readThroughFirestoreCache(
+          "collection:pastPaper",
+          () => getDocs(collection(db, "pastPaper")),
+        );
         const allPapers = snap.docs.map((docSnap) => {
           const data = docSnap.data() as Record<string, unknown>;
           return mapPaperData(docSnap.id, data);

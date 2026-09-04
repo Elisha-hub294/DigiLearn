@@ -8,6 +8,7 @@ import {
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "../../../../firebaseConfig";
+import { invalidateFirestoreReadCache } from "../../../services/firestoreReadCache";
 import {
   appendNotificationToAllUsers,
   buildLibraryNotification,
@@ -168,6 +169,7 @@ export const addBook = async (
     LOCAL_CACHE_KEYS.search,
     LOCAL_CACHE_KEYS.books,
   );
+  invalidateFirestoreReadCache("collection:books");
 
   return itemId;
 };
@@ -203,6 +205,10 @@ export const addBanner = async (
     fileType,
   });
   await invalidateLocalCaches(LOCAL_CACHE_KEYS.library);
+  invalidateFirestoreReadCache(
+    "collection:teacherPosts",
+    "collection:promotionalBanner",
+  );
 
   return bannerId;
 };
@@ -240,6 +246,7 @@ export const addPage = async (
     LOCAL_CACHE_KEYS.library,
     LOCAL_CACHE_KEYS.search,
   );
+  invalidateFirestoreReadCache("collection:pages");
 
   return itemId;
 };
@@ -292,6 +299,7 @@ export const addPastPaper = async (
     LOCAL_CACHE_KEYS.library,
     LOCAL_CACHE_KEYS.search,
   );
+  invalidateFirestoreReadCache("collection:pastPaper");
 
   return itemId;
 };

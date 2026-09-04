@@ -23,6 +23,7 @@ import { AdminPublishHeader } from "../components/library/AdminPublishHeader";
 import { useSubjects } from "../components/ui/SubjectFilter";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { invalidateFirestoreReadCache } from "../services/firestoreReadCache";
 import {
   appendNotificationToAllUsers,
   buildLibraryNotification,
@@ -320,6 +321,7 @@ export default function AddTrendingLessonScreen() {
         LOCAL_CACHE_KEYS.trending,
         LOCAL_CACHE_KEYS.search,
       );
+      invalidateFirestoreReadCache("collection:trendingLessons");
 
       if (notifyUsers) {
         await appendNotificationToAllUsers(

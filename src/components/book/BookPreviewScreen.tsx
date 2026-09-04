@@ -17,6 +17,7 @@ import {
   recordBookVisit,
   recordUserActivity,
 } from "../../services/activityService";
+import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { toggleSavedItem } from "../../services/userProfile";
 import { ActionDialog } from "../ui/ActionDialog";
 import { AuthorsCarousel } from "./AuthorsCarousel";
@@ -124,9 +125,15 @@ export function BookPreviewScreen() {
         const [selected, booksSnapshot, teachersSnapshot, defaultSnapshot] =
           await Promise.all([
             getDoc(doc(db, "books", id)),
-            getDocs(collection(db, "books")),
-            getDocs(collection(db, "teachers")),
-            getDocs(collection(db, "default")),
+            readThroughFirestoreCache("collection:books", () =>
+              getDocs(collection(db, "books")),
+            ),
+            readThroughFirestoreCache("collection:teachers", () =>
+              getDocs(collection(db, "teachers")),
+            ),
+            readThroughFirestoreCache("collection:default", () =>
+              getDocs(collection(db, "default")),
+            ),
           ]);
 
         if (!active) return;

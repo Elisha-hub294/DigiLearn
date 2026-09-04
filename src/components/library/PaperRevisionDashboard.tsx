@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { auth, db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
+import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { PaperRevisionStatus } from "../../services/userProfile";
 
 type PastPaperRecord = {
@@ -77,7 +78,9 @@ export function PaperRevisionDashboard() {
       try {
         const userId = auth.currentUser?.uid;
         const [papersSnapshot, userSnapshot] = await Promise.all([
-          getDocs(collection(db, "pastPaper")),
+          readThroughFirestoreCache("collection:pastPaper", () =>
+            getDocs(collection(db, "pastPaper")),
+          ),
           userId ? getDoc(doc(db, "users", userId)) : Promise.resolve(null),
         ]);
 

@@ -13,6 +13,7 @@ import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { recordUserActivity } from "../../services/activityService";
+import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { toggleSavedItem } from "../../services/userProfile";
 import { FALLBACK_COVER } from "../book/bookTypes";
 import { ActionDialog } from "../ui/ActionDialog";
@@ -150,9 +151,15 @@ export function PagePreviewScreen() {
         const [selectedSnap, notesSnap, booksSnap, subjectsSnap] =
           await Promise.all([
             getDoc(doc(db, "pages", id)),
-            getDocs(collection(db, "pages")),
-            getDocs(collection(db, "books")),
-            getDocs(collection(db, "subject")),
+            readThroughFirestoreCache("collection:pages", () =>
+              getDocs(collection(db, "pages")),
+            ),
+            readThroughFirestoreCache("collection:books", () =>
+              getDocs(collection(db, "books")),
+            ),
+            readThroughFirestoreCache("collection:subject", () =>
+              getDocs(collection(db, "subject")),
+            ),
           ]);
 
         if (!active) return;
