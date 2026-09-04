@@ -8,7 +8,7 @@ import {
 } from "../utils/localCache";
 
 const LIBRARY_CACHE_KEY = LOCAL_CACHE_KEYS.library;
-const LIBRARY_CACHE_VERSION = 1;
+const LIBRARY_CACHE_VERSION = 2;
 const LIBRARY_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
 type LibraryCache = {
@@ -360,12 +360,14 @@ export function useLibraryData() {
           [data.type, data.examType, data.category, data.paperType],
           "Other",
         );
-        const year = pickString(
-          [data.year, data.examYear, data.session, data.publishedYear],
-          String(new Date().getFullYear()),
-        );
+        const year = pickString([
+          data.year,
+          data.examYear,
+          data.session,
+          data.publishedYear,
+        ]);
         const normalizedType = type.trim() || "Other";
-        const normalizedYear = year.trim() || String(new Date().getFullYear());
+        const normalizedYear = year.trim();
         const title = pickString([data.title, data.name], `Paper ${index + 1}`);
         const subject = pickString([data.subject, data.topic], "General");
         const description = pickString(
@@ -415,7 +417,7 @@ export function useLibraryData() {
         .map(([key, items]) => {
           const [type, year] = key.split("::");
           const normalizedType = type || "Other";
-          const normalizedYear = year || String(new Date().getFullYear());
+          const normalizedYear = year || "";
           return {
             title: formatPaperSectionTitle(normalizedType, normalizedYear),
             type: normalizedType,

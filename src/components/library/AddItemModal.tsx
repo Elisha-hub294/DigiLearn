@@ -1535,7 +1535,9 @@ export function AddItemModal({
                       <View style={styles.filePickerTextWrap}>
                         <Text style={styles.filePickerText} numberOfLines={1}>
                           {selectedFile?.assets?.[0]?.name ||
-                            "Drag a file here or tap to upload"}
+                            (Platform.OS === "web"
+                              ? "Drag a file here or tap to upload"
+                              : "Tap to upload a file")}
                         </Text>
                         <Text style={styles.filePickerHint}>
                           {selectedFile?.assets?.[0]

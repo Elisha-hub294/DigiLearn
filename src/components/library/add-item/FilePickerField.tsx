@@ -1,5 +1,5 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "../../../constants/theme";
 
 type FilePickerFieldProps = {
@@ -43,7 +43,10 @@ export function FilePickerField({
         </View>
         <View style={styles.filePickerTextWrap}>
           <Text style={styles.filePickerText} numberOfLines={1}>
-            {value || "Drag a file here or tap to upload"}
+            {value ||
+              (Platform.OS === "web"
+                ? "Drag a file here or tap to upload"
+                : "Tap to upload a file")}
           </Text>
           <Text style={styles.filePickerHint}>
             {hint || "PDF, DOCX, PPT, or PPTX • max 10 MB"}
