@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
+import { getMessaging } from "firebase-admin/messaging";
 import {
   onDocumentCreated,
   onDocumentWritten,
@@ -9,6 +10,59 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 
 initializeApp();
 const db = getFirestore();
+const messaging = getMessaging();
+
+type UserNotification = {
+  id?: string;
+  message?: string;
+  resourceTitle?: string;
+  publisherName?: string;
+  read?: boolean;
+};
+
+function getNewNotifications(
+  before: UserNotification[] | undefined,
+  after: UserNotification[] | undefined,
+) {
+  const previousIds = new Set((before ?? []).map((item) => item.id));
+  return (after ?? []).filter((item) => item.id && !previousIds.has(item.id));
+}
+
+export const sendUserNotifications = onDocumentWritten(
+  "users/{userId}",
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!after) return;
+
+    const newItems = getNewNotifications(
+      before?.notifications as UserNotification[] | undefined,
+      after.notifications as UserNotification[] | undefined,
+    );
+    const tokens = Object.values(
+      (after.pushTokens ?? {}) as Record<string, unknown>,
+    ).filter((token): token is string => typeof token === "string" && !!token);
+    if (
+      after.pushNotificationsEnabled === false ||
+      !tokens.length ||
+      !newItems.length
+    ) {
+      return;
+    }
+
+    await messaging.sendEachForMulticast({
+      tokens,
+      notification: {
+        title: "DigiLearn",
+        body:
+          newItems[0].resourceTitle ??
+          newItems[0].message ??
+          "You have a new notification.",
+      },
+      data: { screen: "/notifications" },
+    });
+  },
+);
 
 function requireAdmin(request: { auth?: { uid: string } | null }) {
   if (!request.auth)

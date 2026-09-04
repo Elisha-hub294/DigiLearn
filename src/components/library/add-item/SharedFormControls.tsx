@@ -1,6 +1,8 @@
 import { Feather as Icon } from "@expo/vector-icons";
+import { useEffect, useRef } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Modal,
   Pressable,
   StyleSheet,
@@ -105,17 +107,51 @@ export function NotifyToggle({
   checked: boolean;
   onToggle: () => void;
 }) {
+  const transition = useRef(new Animated.Value(checked ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(transition, {
+      toValue: checked ? 1 : 0,
+      duration: 180,
+      useNativeDriver: false,
+    }).start();
+  }, [checked, transition]);
+
   return (
     <Pressable
-      style={[styles.toggleSwitch, checked && styles.toggleSwitchActive]}
+      style={styles.toggleSwitch}
       onPress={onToggle}
       accessibilityRole="switch"
       accessibilityLabel="Notify Community"
       accessibilityState={{ checked }}
     >
-      <View
-        style={[styles.toggleCircle, checked && styles.toggleCircleActive]}
-      />
+      <Animated.View
+        style={[
+          styles.toggleSwitchTrack,
+          {
+            backgroundColor: transition.interpolate({
+              inputRange: [0, 1],
+              outputRange: ["#DCE3ED", colors.primary],
+            }),
+          },
+        ]}
+      >
+        <Animated.View
+          style={[
+            styles.toggleCircle,
+            {
+              transform: [
+                {
+                  translateX: transition.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 22],
+                  }),
+                },
+              ],
+            },
+          ]}
+        />
+      </Animated.View>
     </Pressable>
   );
 }
@@ -285,23 +321,18 @@ const styles = StyleSheet.create({
   toggleSwitch: {
     width: 50,
     height: 28,
+  },
+  toggleSwitchTrack: {
+    flex: 1,
     borderRadius: 14,
-    backgroundColor: "#DCE3ED",
     alignItems: "flex-start",
     justifyContent: "center",
     paddingHorizontal: 2,
-  },
-  toggleSwitchActive: {
-    backgroundColor: colors.primary,
-    alignItems: "flex-end",
   },
   toggleCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.white,
-  },
-  toggleCircleActive: {
     backgroundColor: colors.white,
   },
   modalActions: {

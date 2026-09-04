@@ -1,13 +1,40 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = void 0;
 const app_1 = require("firebase-admin/app");
+const messaging_1 = require("firebase-admin/messaging");
 const firestore_1 = require("firebase-admin/firestore");
 const firestore_2 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 (0, app_1.initializeApp)();
 const db = (0, firestore_1.getFirestore)();
+const messaging = (0, messaging_1.getMessaging)();
+function getNewNotifications(before, after) {
+    const previousIds = new Set((before ?? []).map((item) => item.id));
+    return (after ?? []).filter((item) => item.id && !previousIds.has(item.id));
+}
+exports.sendUserNotifications = (0, firestore_2.onDocumentWritten)("users/{userId}", async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!after)
+        return;
+    const newItems = getNewNotifications(before?.notifications, after.notifications);
+    const tokens = Object.values((after.pushTokens ?? {})).filter((token) => typeof token === "string" && !!token);
+    if (after.pushNotificationsEnabled === false || !tokens.length || !newItems.length) {
+        return;
+    }
+    await messaging.sendEachForMulticast({
+        tokens,
+        notification: {
+            title: "DigiLearn",
+            body: newItems[0].resourceTitle ??
+                newItems[0].message ??
+                "You have a new notification.",
+        },
+        data: { screen: "/notifications" },
+    });
+});
 function requireAdmin(request) {
     if (!request.auth)
         throw new https_1.HttpsError("unauthenticated", "Sign in required.");

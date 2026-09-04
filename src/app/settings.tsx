@@ -1,6 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import {
   BackHandler,
@@ -13,7 +14,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { auth } from "../../firebaseConfig";
+import { auth, db } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { SettingsRow } from "../components/ui/SettingsRow";
 import { SettingsSection } from "../components/ui/SettingsSection";
@@ -26,6 +27,11 @@ import {
   setAssistantEnabled,
 } from "../services/aiAssistantService";
 import { clearGuestMode } from "../services/guestService";
+import {
+  getPushNotificationSettings,
+  setRemindersEnabled as persistRemindersEnabled,
+  setPushNotificationsEnabled,
+} from "../services/pushNotificationService";
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -54,6 +60,50 @@ export default function SettingsScreen() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadNotificationSettings = async () => {
+      const localSettings = await getPushNotificationSettings();
+      let pushValue = localSettings.pushEnabled;
+      if (user) {
+        const snapshot = await getDoc(doc(db, "users", user.uid));
+        const remoteValue = snapshot.data()?.pushNotificationsEnabled;
+        if (typeof remoteValue === "boolean") pushValue = remoteValue;
+      }
+      if (!cancelled) {
+        setPushEnabled(pushValue);
+        setRemindersEnabled(localSettings.remindersEnabled);
+      }
+    };
+    void loadNotificationSettings();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const togglePushNotifications = useCallback(
+    async (value: boolean) => {
+      setPushEnabled(value);
+      try {
+        await setPushNotificationsEnabled(user?.uid, value);
+      } catch (error) {
+        console.error("Unable to update push notification settings:", error);
+        setPushEnabled(!value);
+      }
+    },
+    [user],
+  );
+
+  const toggleReminders = useCallback(async (value: boolean) => {
+    setRemindersEnabled(value);
+    try {
+      await persistRemindersEnabled(value);
+    } catch (error) {
+      console.error("Unable to update reminder settings:", error);
+      setRemindersEnabled(!value);
+    }
   }, []);
 
   const handleToggleAssistant = useCallback(async (value: boolean) => {
@@ -211,27 +261,29 @@ export default function SettingsScreen() {
             <Text style={styles.sectionTitle}>Notifications</Text>
             <SettingsSection>
               <SettingsRow
+                icon="bell"
                 title="Push Notifications"
                 right={
                   <Switch
                     value={pushEnabled}
-                    onValueChange={setPushEnabled}
+                    onValueChange={togglePushNotifications}
                     accessibilityLabel="Toggle push notifications"
                   />
                 }
-                onPress={() => setPushEnabled((s) => !s)}
+                onPress={() => togglePushNotifications(!pushEnabled)}
               />
               <SettingsRow
+                icon="clock"
                 title="Reminders"
                 right={
                   <Switch
                     value={remindersEnabled}
-                    onValueChange={setRemindersEnabled}
+                    onValueChange={toggleReminders}
                     accessibilityLabel="Toggle reminders"
                   />
                 }
                 showSeparator={false}
-                onPress={() => setRemindersEnabled((s) => !s)}
+                onPress={() => toggleReminders(!remindersEnabled)}
               />
             </SettingsSection>
 
