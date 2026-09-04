@@ -109,6 +109,15 @@ const teacherTabOptions = [
 ] as const;
 type TeacherTab = (typeof teacherTabOptions)[number];
 
+type ContactDialogState = {
+  title: string;
+  message: string;
+  primaryText: string;
+  secondaryText?: string;
+  onPrimary: () => void;
+  onSecondary?: () => void;
+};
+
 export default function TeacherProfileScreen() {
   const router = useRouter();
   const { user, profile } = useProfile();
@@ -119,6 +128,7 @@ export default function TeacherProfileScreen() {
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
+  const avatarSize = Math.min(150, Math.max(104, width * 0.32));
   const compactActionRow = width < 390;
   const actionRowGap = compactActionRow ? 10 : 16;
   const actionIconSize = compactActionRow ? 46 : 54;
@@ -131,6 +141,9 @@ export default function TeacherProfileScreen() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TeacherTab>("All");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [contactDialog, setContactDialog] = useState<ContactDialogState | null>(
+    null,
+  );
   const [isCommunityDialogVisible, setCommunityDialogVisible] = useState(false);
   const [pulseAnim] = useState(() => new RNAnimated.Value(0.45));
 
@@ -535,7 +548,15 @@ export default function TeacherProfileScreen() {
               source={{
                 uri: teacher?.avatar || "TeacherProfile/user-default.png",
               }}
-              style={[styles.avatar, { borderColor: accentColor }]}
+              style={[
+                styles.avatar,
+                {
+                  width: avatarSize,
+                  height: avatarSize,
+                  borderRadius: avatarSize / 2,
+                  borderColor: accentColor,
+                },
+              ]}
               contentFit="cover"
             />
           </View>
@@ -700,6 +721,7 @@ export default function TeacherProfileScreen() {
       stats.pages,
       teacher,
       teacherName,
+      avatarSize,
       actionIconSize,
       actionRowGap,
       isOwnProfile,
@@ -853,7 +875,15 @@ export default function TeacherProfileScreen() {
                   )}
                   <View style={styles.avatarShell}>
                     <RNAnimated.View
-                      style={[styles.skeletonAvatar, { opacity: pulseAnim }]}
+                      style={[
+                        styles.skeletonAvatar,
+                        {
+                          width: avatarSize,
+                          height: avatarSize,
+                          borderRadius: avatarSize / 2,
+                          opacity: pulseAnim,
+                        },
+                      ]}
                     />
                   </View>
                 </View>

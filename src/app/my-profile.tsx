@@ -20,6 +20,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../../firebaseConfig";
+import WebProfilePictureCropper from "../components/profile/WebProfilePictureCropper";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
@@ -138,6 +139,7 @@ export default function MyProfileScreen() {
   const [updateErrorMessage, setUpdateErrorMessage] = useState("");
   const [pictureSaving, setPictureSaving] = useState(false);
   const [pictureError, setPictureError] = useState("");
+  const [pendingPicture, setPendingPicture] = useState<string | null>(null);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const horizontalPadding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - horizontalPadding * 2);
@@ -192,31 +194,49 @@ export default function MyProfileScreen() {
     setMenuOpen(false);
     setDeleteDialogVisible(true);
   };
-  const changeProfilePicture = async () => {
+  const uploadProfilePicture = async (uri: string, mimeType = "image/jpeg") => {
     if (!user || pictureSaving) return;
 
-    setPictureSaving(true);
+    setPendingPicture(null);
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: [1, 1],
-        shape: "rectangle",
-        quality: 0.8,
-      });
-      if (result.canceled || !result.assets[0]) return;
-
+      setPictureSaving(true);
       await saveProfilePicture(
         user,
-        result.assets[0].uri,
-        result.assets[0].mimeType,
-        result.assets[0].fileSize,
+        uri,
+        mimeType,
+        undefined,
         profile?.type ?? "student",
       );
     } catch (reason) {
       setPictureError(profilePictureError(reason));
     } finally {
       setPictureSaving(false);
+    }
+  };
+  const changeProfilePicture = async () => {
+    if (!user || pictureSaving) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: Platform.OS !== "web",
+        aspect: [1, 1],
+        shape: "rectangle",
+        quality: 0.8,
+      });
+      if (result.canceled || !result.assets[0]) return;
+
+      if (Platform.OS === "web") {
+        setPendingPicture(result.assets[0].uri);
+        return;
+      }
+
+      await uploadProfilePicture(
+        result.assets[0].uri,
+        result.assets[0].mimeType,
+      );
+    } catch (reason) {
+      setPictureError(profilePictureError(reason));
     }
   };
   return (
@@ -237,6 +257,12 @@ export default function MyProfileScreen() {
         primaryText="OK"
         onPrimary={() => setPictureError("")}
         onClose={() => setPictureError("")}
+      />
+      <WebProfilePictureCropper
+        visible={pendingPicture !== null}
+        image={pendingPicture}
+        onCancel={() => setPendingPicture(null)}
+        onConfirm={(croppedImage) => uploadProfilePicture(croppedImage)}
       />
       <ActionDialog
         visible={deleteDialogVisible}

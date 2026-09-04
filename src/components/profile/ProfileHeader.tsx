@@ -3,7 +3,13 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { colors } from "../../constants/theme";
 import type { UserProfile } from "../../services/userProfile";
 
@@ -16,8 +22,10 @@ export function ProfileHeader({
   photoURL?: string | null;
 }) {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const requestedUri = photoURL || profile.photoURL;
   const [uri, setUri] = useState(requestedUri);
+  const avatarSize = Math.min(150, Math.max(104, width * 0.32));
   useEffect(() => setUri(requestedUri), [requestedUri]);
   return (
     <View style={s.wrap}>
@@ -42,7 +50,16 @@ export function ProfileHeader({
         </Pressable>
       </View>
       <View style={s.sheet}>
-        <View style={s.avatarWrap}>
+        <View
+          style={[
+            s.avatarWrap,
+            {
+              width: avatarSize,
+              height: avatarSize,
+              marginTop: -avatarSize * 0.47,
+            },
+          ]}
+        >
           <Image
             source={uri ? { uri } : fallbackAvatar}
             placeholder={fallbackAvatar}
@@ -73,7 +90,11 @@ const s = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: colors.white,
   },
-  banner: { height: 132, backgroundColor: colors.primaryDark, overflow: "hidden" },
+  banner: {
+    height: 132,
+    backgroundColor: colors.primaryDark,
+    overflow: "hidden",
+  },
   adminBadge: {
     position: "absolute",
     top: 0,
@@ -108,12 +129,9 @@ const s = StyleSheet.create({
     minHeight: 130,
   },
   avatarWrap: {
-    width: 150,
-    height: 150,
     borderRadius: 999,
     backgroundColor: "#fff",
     padding: 4,
-    marginTop: -70,
     marginBottom: 10,
   },
   avatar: { width: "100%", height: "100%", borderRadius: 999 },
