@@ -36,7 +36,7 @@ DigiLearn needs Firebase and Google OAuth credentials to run fully. Here's what 
    cp .env.example .env
    ```
 
-2. **Email me** at **elishabagalw@gmail.com** to request the Firebase and Google OAuth credentials
+2. **Email me** at **elishabagalwa.dev@gmail.com** to request the Firebase and Google OAuth credentials
 
 3. Once you receive them, add them to your `.env` file. It should look like this:
 
@@ -62,16 +62,6 @@ You'll see a QR code. Here's how to run it:
 - **On web**: Press `w` in the terminal to open the web preview
 - **On Android emulator**: Press `a`
 - **On iOS simulator**: Press `i`
-
-### Report Review
-
-Reports are stored in Firestore and reviewed by admins in the Resource Reports
-screen. Deploy the Firestore rules once so authenticated report submission and
-admin review access are available:
-
-```bash
-npx firebase-tools deploy --only firestore:rules
-```
 
 ## What You'll Find Inside
 
@@ -144,7 +134,7 @@ src/
 
 ## Need Help?
 
-Reach out to me directly at **elishabagalw@gmail.com**. I'm happy to help with:
+Reach out to me directly at **elishabagalwa.dev@gmail.com**. I'm happy to help with:
 
 - Sending you the Firebase credentials
 - Debugging any setup issues
