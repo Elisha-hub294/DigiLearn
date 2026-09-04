@@ -105,6 +105,13 @@ export default function LoginScreen() {
         email.trim(),
         password,
       );
+      if (!credential.user.emailVerified) {
+        router.replace({
+          pathname: "/verify-email",
+          params: { next: "/" },
+        });
+        return;
+      }
       router.replace("/");
     } catch (error) {
       const code =

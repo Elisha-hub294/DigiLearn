@@ -1,6 +1,9 @@
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from "firebase/auth";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -58,10 +61,13 @@ export default function SignUpScreen() {
   const emailInputRef = useRef<TextInput>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [generalError, setGeneralError] = useState("");
 
   const horizontalPadding = useMemo(() => getHorizontalPadding(width), [width]);
@@ -91,8 +97,18 @@ export default function SignUpScreen() {
       setPasswordError("");
     }
 
+    if (!confirmPassword) {
+      setConfirmPasswordError("Please confirm your password.");
+      hasError = true;
+    } else if (password !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match.");
+      hasError = true;
+    } else {
+      setConfirmPasswordError("");
+    }
+
     return !hasError;
-  }, [email, password]);
+  }, [email, password, confirmPassword]);
 
   const handleContinue = useCallback(async () => {
     if (isLoading) {
@@ -107,8 +123,16 @@ export default function SignUpScreen() {
 
     try {
       setIsLoading(true);
-      await createUserWithEmailAndPassword(auth, email.trim(), password);
-      router.replace("/account-type" as never);
+      const credential = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password,
+      );
+      await sendEmailVerification(credential.user);
+      router.replace({
+        pathname: "/verify-email",
+        params: { next: "/account-type" },
+      });
     } catch (error) {
       const code =
         typeof error === "object" && error !== null && "code" in error
@@ -215,6 +239,10 @@ export default function SignUpScreen() {
     setShowPassword((current) => !current);
   }, []);
 
+  const toggleShowConfirmPassword = useCallback(() => {
+    setShowConfirmPassword((current) => !current);
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -308,6 +336,51 @@ export default function SignUpScreen() {
                 </View>
                 {passwordError ? (
                   <Text style={styles.fieldError}>{passwordError}</Text>
+                ) : null}
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>Confirm password</Text>
+                <View
+                  style={[
+                    styles.passwordRow,
+                    confirmPasswordError ? styles.inputError : null,
+                  ]}
+                >
+                  <TextInput
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                    placeholder="Re-enter password"
+                    placeholderTextColor="#9CA3AF"
+                    style={styles.passwordInput}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    textContentType="password"
+                    autoComplete="off"
+                    importantForAutofill="no"
+                    accessibilityLabel="Confirm password"
+                    accessibilityHint="Re-enter your password"
+                  />
+                  <Pressable
+                    onPress={toggleShowConfirmPassword}
+                    style={styles.visibilityButton}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      showConfirmPassword
+                        ? "Hide confirmed password"
+                        : "Show confirmed password"
+                    }
+                  >
+                    <Feather
+                      name={showConfirmPassword ? "eye-off" : "eye"}
+                      size={20}
+                      color="#666666"
+                    />
+                  </Pressable>
+                </View>
+                {confirmPasswordError ? (
+                  <Text style={styles.fieldError}>{confirmPasswordError}</Text>
                 ) : null}
               </View>
 

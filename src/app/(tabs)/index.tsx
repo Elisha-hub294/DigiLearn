@@ -148,6 +148,18 @@ export default function HomeScreen() {
 
       await clearGuestMode();
 
+      if (
+        !user.emailVerified &&
+        user.providerData.some((provider) => provider.providerId === "password")
+      ) {
+        setAuthCheckReady(true);
+        router.replace({
+          pathname: "/verify-email",
+          params: { next: "/" },
+        });
+        return;
+      }
+
       try {
         const onboarding = await getUserOnboardingState(user.uid);
         const completed = onboarding.accountTypeCompleted;
