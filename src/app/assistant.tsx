@@ -20,12 +20,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import fallbackAvatar from "../../assets/images/panda.png";
+import { auth } from "../../firebaseConfig";
 import { AssistantHeader } from "../components/assistant/AssistantHeader";
 import { ChatBubble } from "../components/assistant/ChatBubble";
 import { ConversationList } from "../components/assistant/ConversationList";
 import { MessageComposer } from "../components/assistant/MessageComposer";
 import { PromptChip } from "../components/assistant/PromptChip";
 import { TypingIndicator } from "../components/assistant/TypingIndicator";
+import { ActionDialog } from "../components/ui/ActionDialog";
 import { colors, radius, spacing } from "../constants/theme";
 import {
   getAssistantContent,
@@ -38,6 +40,14 @@ import {
   type ChatMessage,
   type ConversationRecord,
 } from "../services/assistantChatService";
+
+function createMessageId(role: ChatMessage["role"]) {
+  return `${Date.now()}-${role}`;
+}
+
+function createLocalConversationId() {
+  return `local-${Date.now()}`;
+}
 
 export default function AssistantScreen() {
   const router = useRouter();
@@ -58,16 +68,8 @@ export default function AssistantScreen() {
     string | null
   >(null);
   const [assistantAvatar, setAssistantAvatar] = useState<string | null>(null);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
-
-  useEffect(() => {
-    if (
-      typeof params.initialPrompt === "string" &&
-      params.initialPrompt.trim()
-    ) {
-      setMessage(params.initialPrompt.trim());
-    }
-  }, [params.initialPrompt]);
 
   useEffect(() => {
     let active = true;
@@ -95,7 +97,7 @@ export default function AssistantScreen() {
         if (active) {
           setConversations(history);
         }
-      } catch (error) {
+      } catch {
         if (active) {
           setSuggestions([
             "Explain Osmosis",
@@ -116,7 +118,7 @@ export default function AssistantScreen() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -143,8 +145,14 @@ export default function AssistantScreen() {
       return;
     }
 
+    await auth.authStateReady();
+    if (!auth.currentUser) {
+      setShowAuthDialog(true);
+      return;
+    }
+
     const userMessage: ChatMessage = {
-      id: `${Date.now()}-user`,
+      id: createMessageId("user"),
       role: "user",
       content: prompt,
       createdAt: new Date().toISOString(),
@@ -160,7 +168,7 @@ export default function AssistantScreen() {
     try {
       const reply = await generateAssistantReply(prompt, nextMessages);
       const assistantMessage: ChatMessage = {
-        id: `${Date.now()}-assistant`,
+        id: createMessageId("assistant"),
         role: "assistant",
         content: reply,
         createdAt: new Date().toISOString(),
@@ -171,7 +179,7 @@ export default function AssistantScreen() {
       setIsTyping(false);
 
       const conversationPayload: ConversationRecord = {
-        id: activeConversationId ?? `local-${Date.now()}`,
+        id: activeConversationId ?? createLocalConversationId(),
         title: activeConversationId
           ? (conversations.find((item) => item.id === activeConversationId)
               ?.title ?? createConversationTitle(prompt))
@@ -219,7 +227,7 @@ export default function AssistantScreen() {
     void handleSend(suggestion);
   };
 
-  const handleBackToMain = () => {
+  const handleBackToMain = useCallback(() => {
     if (hasStartedConversation) {
       setMessages([]);
       setMessage("");
@@ -231,7 +239,7 @@ export default function AssistantScreen() {
     }
 
     router.back();
-  };
+  }, [hasStartedConversation, router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -261,7 +269,7 @@ export default function AssistantScreen() {
         subscription.remove();
         unsubscribe();
       };
-    }, [hasStartedConversation, navigation]),
+    }, [hasStartedConversation, navigation, handleBackToMain]),
   );
 
   return (
@@ -387,6 +395,22 @@ export default function AssistantScreen() {
           />
         </View>
       </KeyboardAvoidingView>
+      <ActionDialog
+        visible={showAuthDialog}
+        title="Sign in to use DigiLearn AI"
+        message="Create an account or log in to send messages and save your conversations."
+        primaryText="Log in"
+        secondaryText="Sign up"
+        onPrimary={() => {
+          setShowAuthDialog(false);
+          router.push("/login" as never);
+        }}
+        onSecondary={() => {
+          setShowAuthDialog(false);
+          router.push("/signup" as never);
+        }}
+        onClose={() => setShowAuthDialog(false)}
+      />
     </SafeAreaView>
   );
 }

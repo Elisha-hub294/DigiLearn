@@ -75,6 +75,7 @@ type FeaturedNoteCardProps = {
   loading?: boolean;
   source?: "home" | "library" | "pages";
   includeHiddenItems?: boolean;
+  filterByInterests?: boolean;
 };
 
 const normalizeKey = (str: string) => str.trim().toLowerCase();
@@ -86,6 +87,7 @@ export const FeaturedNoteCard = ({
   loading: externalLoading,
   source = "home",
   includeHiddenItems = false,
+  filterByInterests,
 }: FeaturedNoteCardProps) => {
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
@@ -214,13 +216,20 @@ export const FeaturedNoteCard = ({
       ? sourceNotes
       : sourceNotes.filter((note) => !hiddenIds.has(note.id));
 
-    if (shouldFilterByInterests(profile)) {
+    if (filterByInterests ?? shouldFilterByInterests(profile)) {
       result = result.filter((note) =>
         matchesUserInterests(note.subject, profile?.subjects),
       );
     }
     return result;
-  }, [hiddenIds, includeHiddenItems, notes, profile, providedNotes]);
+  }, [
+    filterByInterests,
+    hiddenIds,
+    includeHiddenItems,
+    notes,
+    profile,
+    providedNotes,
+  ]);
 
   if ((providedNotes ? Boolean(externalLoading) : loading) || externalLoading) {
     return (

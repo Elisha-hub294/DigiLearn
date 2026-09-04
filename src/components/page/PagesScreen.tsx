@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   useWindowDimensions,
   View,
@@ -22,7 +23,11 @@ import { db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
-import { getMarkedReadItemIds } from "../../services/userProfile";
+import {
+  getHiddenPageEntries,
+  getMarkedReadItemIds,
+} from "../../services/userProfile";
+import { matchesUserInterests } from "../../utils/interestFilter";
 import { FeaturedNoteCard } from "../home/FeaturedNoteCard";
 import { SearchBar } from "../ui/SearchBar";
 
@@ -50,6 +55,16 @@ type FilterState = {
   level: string;
   schoolClass: string;
   attachments: string;
+};
+
+type PageViewOptions = {
+  showHiddenItems: boolean;
+  followPreferences: boolean;
+};
+
+const DEFAULT_VIEW_OPTIONS: PageViewOptions = {
+  showHiddenItems: false,
+  followPreferences: false,
 };
 
 const DEFAULT_FILTERS: FilterState = {
@@ -214,6 +229,8 @@ export default function PagesScreen() {
   const [searchText, setSearchText] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [viewOptions, setViewOptions] =
+    useState<PageViewOptions>(DEFAULT_VIEW_OPTIONS);
   const [isLoadedFilters, setIsLoadedFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [subjectAccent, setSubjectAccent] = useState("#000000");
@@ -224,12 +241,18 @@ export default function PagesScreen() {
   const contentMaxWidth = Math.min(1080, width - horizontalPadding * 2);
 
   const activeFilterCount = useMemo(() => {
-    return Object.values(filters).filter(
+    const chipCount = Object.values(filters).filter(
       (option) => option !== "All" && option !== "Newest",
     ).length;
-  }, [filters]);
+    const optionCount = Object.values(viewOptions).filter(Boolean).length;
+    return chipCount + optionCount;
+  }, [filters, viewOptions]);
   const readNoteIds = useMemo(
     () => new Set(getMarkedReadItemIds(profile)),
+    [profile],
+  );
+  const hiddenNoteIds = useMemo(
+    () => new Set(getHiddenPageEntries(profile).map((entry) => entry.id)),
     [profile],
   );
 
@@ -303,7 +326,7 @@ export default function PagesScreen() {
           `digilearn-pages-filters:${pageTitle}`,
         );
         if (saved) {
-          const parsed = JSON.parse(saved) as FilterState;
+          const parsed = JSON.parse(saved) as FilterState & PageViewOptions;
           const restored = { ...DEFAULT_FILTERS, ...parsed };
           setFilters({
             ...restored,
@@ -314,6 +337,10 @@ export default function PagesScreen() {
             level: ["Primary", "O level", "A level"].includes(restored.level)
               ? DEFAULT_FILTERS.level
               : restored.level,
+          });
+          setViewOptions({
+            showHiddenItems: Boolean(parsed.showHiddenItems),
+            followPreferences: Boolean(parsed.followPreferences),
           });
         }
       } catch (error) {
@@ -330,12 +357,24 @@ export default function PagesScreen() {
     if (!isLoadedFilters) return;
     AsyncStorage.setItem(
       `digilearn-pages-filters:${pageTitle}`,
-      JSON.stringify(filters),
-    );
-  }, [filters, isLoadedFilters, pageTitle]);
+      JSON.stringify({ ...filters, ...viewOptions }),
+    ).catch((error) => {
+      console.error("Failed to save page filters", error);
+    });
+  }, [filters, isLoadedFilters, pageTitle, viewOptions]);
 
   const visibleNotes = useMemo(() => {
     let filtered = [...notes];
+
+    if (!viewOptions.showHiddenItems) {
+      filtered = filtered.filter((note) => !hiddenNoteIds.has(note.id));
+    }
+
+    if (viewOptions.followPreferences) {
+      filtered = filtered.filter((note) =>
+        matchesUserInterests(note.subject, profile?.subjects),
+      );
+    }
 
     if (searchQuery.trim().length >= 2) {
       const query = searchQuery.trim().toLowerCase();
@@ -363,7 +402,15 @@ export default function PagesScreen() {
     );
 
     return sortNotes(filtered, filters.sortBy);
-  }, [filters, notes, readNoteIds, searchQuery]);
+  }, [
+    filters,
+    hiddenNoteIds,
+    notes,
+    profile?.subjects,
+    readNoteIds,
+    searchQuery,
+    viewOptions,
+  ]);
 
   useEffect(() => {
     if (searchTimeout.current) {
@@ -383,6 +430,7 @@ export default function PagesScreen() {
 
   const resetFilters = () => {
     setFilters(DEFAULT_FILTERS);
+    setViewOptions(DEFAULT_VIEW_OPTIONS);
     setSearchText("");
     setShowFilters(false);
   };
@@ -393,6 +441,10 @@ export default function PagesScreen() {
 
   const updateFilter = (key: keyof FilterState, value: string) => {
     setFilters((current) => ({ ...current, [key]: value }));
+  };
+
+  const updateViewOption = (key: keyof PageViewOptions, value: boolean) => {
+    setViewOptions((current) => ({ ...current, [key]: value }));
   };
 
   const filterOptions = useMemo(() => {
@@ -583,6 +635,8 @@ export default function PagesScreen() {
                   }))}
                   loading={false}
                   source="pages"
+                  includeHiddenItems={viewOptions.showHiddenItems}
+                  filterByInterests={viewOptions.followPreferences}
                 />
               </Animated.View>
             )}
@@ -646,6 +700,46 @@ export default function PagesScreen() {
                   <Text style={styles.filterLabel}>Attachments</Text>
                   <View style={styles.filterOptionGrid}>
                     {renderFilterOptions("attachments")}
+                  </View>
+                </View>
+
+                <View style={styles.filterGroup}>
+                  <Text style={styles.filterLabel}>More resources</Text>
+                  <View style={styles.toggleRow}>
+                    <View style={styles.toggleCopy}>
+                      <Text style={styles.toggleTitle}>Show hidden items</Text>
+                      <Text style={styles.toggleSubtitle}>
+                        Include pages you previously hid.
+                      </Text>
+                    </View>
+                    <Switch
+                      value={viewOptions.showHiddenItems}
+                      onValueChange={(value) =>
+                        updateViewOption("showHiddenItems", value)
+                      }
+                      trackColor={{ false: "#D1D5DB", true: subjectAccent }}
+                      thumbColor={colors.white}
+                      accessibilityLabel="Show hidden items"
+                    />
+                  </View>
+                  <View style={styles.toggleRow}>
+                    <View style={styles.toggleCopy}>
+                      <Text style={styles.toggleTitle}>
+                        Follow set preferences
+                      </Text>
+                      <Text style={styles.toggleSubtitle}>
+                        Only show resources matching your selected subjects.
+                      </Text>
+                    </View>
+                    <Switch
+                      value={viewOptions.followPreferences}
+                      onValueChange={(value) =>
+                        updateViewOption("followPreferences", value)
+                      }
+                      trackColor={{ false: "#D1D5DB", true: subjectAccent }}
+                      thumbColor={colors.white}
+                      accessibilityLabel="Follow set preferences"
+                    />
                   </View>
                 </View>
 
@@ -954,6 +1048,21 @@ const styles = StyleSheet.create({
   },
   filterOptionTextSelected: {
     color: colors.white,
+  },
+  toggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+    paddingVertical: 10,
+  },
+  toggleCopy: { flex: 1 },
+  toggleTitle: { color: "#111111", fontSize: 14, fontWeight: "700" },
+  toggleSubtitle: {
+    color: colors.subtitle,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 3,
   },
   sheetActions: {
     flexDirection: "row",
