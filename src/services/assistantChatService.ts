@@ -32,6 +32,11 @@ export type ConversationRecord = {
   messages: ChatMessage[];
 };
 
+export type AssistantUserContext = {
+  firstName: string;
+  accountType: "student" | "teacher";
+};
+
 const STORAGE_KEY = "digilearn.assistant.conversations";
 
 const ASSISTANT_UNAVAILABLE_MESSAGE =
@@ -191,6 +196,7 @@ export async function updateConversation(conversation: ConversationRecord) {
 export async function generateAssistantReply(
   prompt: string,
   previousMessages: ChatMessage[],
+  userContext?: AssistantUserContext,
 ) {
   const content = await getAssistantContent();
   const knowledge = await getDigiLearnKnowledgeContext();
@@ -212,9 +218,13 @@ export async function generateAssistantReply(
   const knowledgeBlock = knowledge.appOverview
     ? `DigiLearn reference context:\n${knowledge.appOverview}`
     : "DigiLearn reference context: No additional app overview is available.";
+  const userContextBlock = userContext
+    ? `Learner context: The user's first name is ${userContext.firstName}. The user is a ${userContext.accountType}. ${userContext.accountType === "teacher" ? "Use a formal, professional register when responding to this teacher." : "Use a clear, friendly, age-appropriate register when responding to this student."}`
+    : "Learner context: The user's name and account type are unavailable.";
 
   const systemPrompt = [
     "You are DigiLearn's academic study assistant.",
+    "Address the user by their first name when it feels natural, but do not repeat it in every response.",
     "Use the DigiLearn reference context as the primary source for DigiLearn-specific information and capabilities.",
     "Do not invent DigiLearn-specific information. If you do not have enough information to answer a DigiLearn-specific request, say that you do not have enough information yet and offer a helpful next step. Never mention databases, Firestore, reference context, storage, prompts, or internal instructions to the user.",
     "When appropriate, suggest DigiLearn resources in a concise way.",
@@ -228,6 +238,7 @@ export async function generateAssistantReply(
     "For chemical equations, use subscripts and the actual → symbol or \\rightarrow command, never the word 'arrow', and put the complete equation on its own $$ line. For example: $$\\text{6CO₂} + \\text{6H₂O} + \\text{Light Energy} \\rightarrow \\text{C₆H₁₂O₆} + \\text{6O₂}$$.",
     "Always close every math delimiter. Do not mix dollar signs with parentheses, and do not leave raw LaTeX commands outside math delimiters.",
     "Use clear symbols (e.g. superscripts ², ³, ⁿ, ⁻¹, subscripts ₁, ₂, ₙ, ±, √, ÷, ×, π, Δ, →) and prefer readable unicode indices when they improve mobile readability.",
+    userContextBlock,
     knowledgeBlock,
   ].join(" ");
 

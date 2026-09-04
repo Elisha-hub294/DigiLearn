@@ -29,6 +29,7 @@ import { PromptChip } from "../components/assistant/PromptChip";
 import { TypingIndicator } from "../components/assistant/TypingIndicator";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { colors, radius, spacing } from "../constants/theme";
+import { useProfile } from "../contexts/ProfileContext";
 import {
   getAssistantContent,
   isAssistantEnabled,
@@ -37,6 +38,7 @@ import {
   generateAssistantReply,
   loadConversationHistory,
   persistConversation,
+  type AssistantUserContext,
   type ChatMessage,
   type ConversationRecord,
 } from "../services/assistantChatService";
@@ -52,6 +54,7 @@ function createLocalConversationId() {
 export default function AssistantScreen() {
   const router = useRouter();
   const navigation = useNavigation();
+  const { user, profile } = useProfile();
   const params = useLocalSearchParams<{ initialPrompt?: string }>();
   const [isLoading, setIsLoading] = useState(true);
   const [gifUri, setGifUri] = useState<string | null>(null);
@@ -151,6 +154,19 @@ export default function AssistantScreen() {
       return;
     }
 
+    const firstName = (
+      profile?.name ||
+      auth.currentUser?.displayName ||
+      user?.displayName ||
+      ""
+    )
+      .trim()
+      .split(/\s+/)[0];
+    const userContext: AssistantUserContext = {
+      firstName: firstName || "learner",
+      accountType: profile?.type === "teacher" ? "teacher" : "student",
+    };
+
     const userMessage: ChatMessage = {
       id: createMessageId("user"),
       role: "user",
@@ -166,7 +182,11 @@ export default function AssistantScreen() {
     setIsTyping(true);
 
     try {
-      const reply = await generateAssistantReply(prompt, nextMessages);
+      const reply = await generateAssistantReply(
+        prompt,
+        nextMessages,
+        userContext,
+      );
       const assistantMessage: ChatMessage = {
         id: createMessageId("assistant"),
         role: "assistant",
