@@ -1,14 +1,17 @@
 import { Feather } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system/legacy";
 import { LinearGradient } from "expo-linear-gradient";
+import { useNetworkState } from "expo-network";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
+  NativeModules,
   Platform,
   Pressable,
   StyleSheet,
   Text,
+  UIManager,
   View,
 } from "react-native";
 import { WebView } from "react-native-webview";
@@ -24,6 +27,16 @@ import { ActionDialog } from "../ui/ActionDialog";
 // Fallback timeout: if onLoadEnd never fires (can happen with some PDFs),
 // hide the loading overlay after 20 seconds so the user isn't stuck.
 const LOAD_TIMEOUT_MS = 20_000;
+
+let NativePdfComponent: any = null;
+try {
+  const hasNativePdf =
+    !!NativeModules.RNPDFPdfViewManager ||
+    !!UIManager.getViewManagerConfig?.("RNPDFPdfView");
+  if (hasNativePdf) NativePdfComponent = require("react-native-pdf").default;
+} catch {
+  NativePdfComponent = null;
+}
 
 function normalizeUriParam(
   raw: string | string[] | undefined | null,
@@ -68,8 +81,12 @@ export function PdfReaderScreen() {
 
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [loadErrorMessage, setLoadErrorMessage] = useState(
+    "The document could not be displayed.",
+  );
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
+  const [offlineNoticeDismissed, setOfflineNoticeDismissed] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [localBase64, setLocalBase64] = useState<string | null>(null);
   const [noticeDialog, setNoticeDialog] = useState<{
@@ -80,6 +97,7 @@ export function PdfReaderScreen() {
   const [downloadProgressAnim] = useState(() => new Animated.Value(0));
   const [downloadScale] = useState(() => new Animated.Value(1));
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const networkState = useNetworkState();
 
   const rawUri = normalizeUriParam(uri ?? pdfDocument);
   const resolvedUri = useFirebaseStorageUrl(rawUri ?? undefined);
@@ -89,6 +107,11 @@ export function PdfReaderScreen() {
   const isLocalFile = Boolean(decodedUri?.startsWith("file://"));
   const fileExtension = getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
+  const useNativePdf =
+    Platform.OS === "android" && Boolean(NativePdfComponent) && !isOfficeFile;
+  const isOffline =
+    networkState.isConnected === false ||
+    networkState.isInternetReachable === false;
 
   useEffect(() => {
     if (pageId) void recordPageVisit(pageId);
@@ -245,16 +268,24 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 
   // Start a safety-net timer that dismisses the loading screen if the
   // WebView never fires onLoadEnd (common with large PDFs / slow connections)
-  const startTimeout = () => {
+  const startTimeout = useCallback(() => {
     clearTimeout(timeoutRef.current!);
-    timeoutRef.current = setTimeout(() => setLoaded(true), LOAD_TIMEOUT_MS);
-  };
+    timeoutRef.current = setTimeout(() => {
+      setLoaded(true);
+      setLoadError(true);
+      setLoadErrorMessage(
+        isLocalFile
+          ? "This downloaded file could not be opened. It may be incomplete or no longer available."
+          : "This document is not available offline. Connect to the internet or open a downloaded copy.",
+      );
+    }, LOAD_TIMEOUT_MS);
+  }, [isLocalFile]);
 
   useEffect(() => {
     animateTo(0.3, 200); // immediately fill 30 % to show something is happening
     startTimeout();
     return () => clearTimeout(timeoutRef.current!);
-  }, [animateTo]);
+  }, [animateTo, startTimeout]);
 
   const handleLoadEnd = () => {
     clearTimeout(timeoutRef.current!);
@@ -266,6 +297,26 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     clearTimeout(timeoutRef.current!);
     setLoaded(true);
     setLoadError(true);
+    setLoadErrorMessage(
+      isLocalFile
+        ? "This downloaded file could not be opened. It may be incomplete or no longer available."
+        : "This document is not available offline. Connect to the internet or open a downloaded copy.",
+    );
+  };
+
+  const handleMessage = (event: { nativeEvent: { data: string } }) => {
+    try {
+      const message = JSON.parse(event.nativeEvent.data) as {
+        type?: string;
+      };
+      if (message.type === "loaded") {
+        handleLoadEnd();
+      } else if (message.type === "error") {
+        handleError();
+      }
+    } catch {
+      // Ignore messages that are not from the PDF viewer.
+    }
   };
 
   const goBack = () => {
@@ -411,31 +462,69 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     );
   }
 
-  if (!decodedUri || !webViewSource) {
+  if (!decodedUri || (!webViewSource && !useNativePdf)) {
     return (
-      <View style={styles.center}>
-        <Feather name="alert-circle" size={48} color="#CBD5E1" />
-        <Text style={styles.errorText}>
-          {isOfficeFile
-            ? "Office documents can only be read while online."
-            : "No PDF document available."}
-        </Text>
-        <Pressable style={styles.backBtn} onPress={goBack}>
-          <Text style={styles.backBtnText}>Go back</Text>
-        </Pressable>
-      </View>
+      <>
+        <ActionDialog
+          visible
+          title={
+            isOfficeFile ? "Internet connection required" : "PDF unavailable"
+          }
+          message={
+            isOfficeFile
+              ? "Office documents can only be read while online. Connect to the internet and try again."
+              : "No PDF document is available to open."
+          }
+          primaryText="Go back"
+          onPrimary={goBack}
+          onClose={goBack}
+        />
+        <View style={styles.center}>
+          <Feather name="alert-circle" size={48} color="#CBD5E1" />
+        </View>
+      </>
     );
   }
 
   return (
     <>
       <ActionDialog
-        visible={Boolean(noticeDialog)}
-        title={noticeDialog?.title ?? "Notice"}
-        message={noticeDialog?.message ?? ""}
-        primaryText="OK"
-        onPrimary={() => setNoticeDialog(null)}
-        onClose={() => setNoticeDialog(null)}
+        visible={
+          Boolean(noticeDialog) ||
+          loadError ||
+          (isOffline && !isLocalFile && !offlineNoticeDismissed)
+        }
+        title={
+          loadError
+            ? "Unable to open document"
+            : isOffline && !noticeDialog
+              ? "Internet connection required"
+              : (noticeDialog?.title ?? "Notice")
+        }
+        message={
+          loadError
+            ? loadErrorMessage
+            : isOffline && !noticeDialog
+              ? "This document is not available offline. Connect to the internet or open a downloaded copy."
+              : (noticeDialog?.message ?? "")
+        }
+        primaryText={loadError ? "Go back" : "OK"}
+        onPrimary={
+          loadError
+            ? goBack
+            : () => {
+                setNoticeDialog(null);
+                setOfflineNoticeDismissed(true);
+              }
+        }
+        onClose={
+          loadError
+            ? goBack
+            : () => {
+                setNoticeDialog(null);
+                setOfflineNoticeDismissed(true);
+              }
+        }
       />
       <View style={styles.screen}>
         {/* ── Header ── */}
@@ -538,23 +627,29 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
         {loadError && (
           <View style={styles.center}>
             <Feather name="alert-triangle" size={52} color="#F59E0B" />
-            <Text style={styles.errorTitle}>Failed to load PDF</Text>
-            <Text style={styles.errorText}>
-              The document could not be displayed.
-            </Text>
-            <Pressable style={styles.backBtn} onPress={goBack}>
-              <Text style={styles.backBtnText}>Go back</Text>
-            </Pressable>
           </View>
         )}
 
         {/* ── WebView — always mounted so it loads in the background ── */}
-        {!loadError && webViewSource && (
+        {!loadError && useNativePdf && decodedUri && (
+          <NativePdfComponent
+            source={{ uri: decodedUri, cache: true }}
+            style={styles.webview}
+            onLoadComplete={handleLoadEnd}
+            onError={handleError}
+            enablePaging={false}
+            fitPolicy={0}
+            trustAllCerts={false}
+          />
+        )}
+
+        {!loadError && !useNativePdf && webViewSource && (
           <WebView
             source={webViewSource}
             style={[styles.webview, !loaded && styles.webviewHidden]}
             onLoadEnd={handleLoadEnd}
             onError={handleError}
+            onMessage={handleMessage}
             javaScriptEnabled
             domStorageEnabled
             allowFileAccess

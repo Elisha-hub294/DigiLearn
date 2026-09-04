@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useNetworkState } from "expo-network";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -7,10 +8,12 @@ import { colors, radius, spacing } from "../../constants/theme";
 import { recordPageVisit } from "../../services/activityService";
 import {
   getDownloadedFiles,
+  getWebDownloadedFileUrl,
   saveDownloadedFile,
 } from "../../services/downloadService";
 
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
+import { ActionDialog } from "../ui/ActionDialog";
 
 function normalizeUriParam(
   raw: string | string[] | undefined | null,
@@ -53,19 +56,45 @@ export function PdfReaderScreen() {
     title?: string;
   }>();
   const [iframeError, setIframeError] = useState(false);
+  const [offlineNoticeVisible, setOfflineNoticeVisible] = useState(false);
+  const [offlineNoticeDismissed, setOfflineNoticeDismissed] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [localBlobUri, setLocalBlobUri] = useState<string | null>(null);
+  const networkState = useNetworkState();
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
   };
 
   const rawUri = normalizeUriParam(uri ?? pdfDocument);
-  const resolvedUri = useFirebaseStorageUrl(rawUri ?? undefined);
+  useEffect(() => {
+    let active = true;
+    if (rawUri?.startsWith("indexeddb://")) {
+      getWebDownloadedFileUrl(rawUri).then((url) => {
+        if (active) setLocalBlobUri(url);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [rawUri]);
+
+  useEffect(() => {
+    return () => {
+      if (localBlobUri?.startsWith("blob:")) URL.revokeObjectURL(localBlobUri);
+    };
+  }, [localBlobUri]);
+
+  const sourceUri = rawUri?.startsWith("indexeddb://") ? localBlobUri : rawUri;
+  const resolvedUri = useFirebaseStorageUrl(sourceUri ?? undefined);
   // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
   const decodedUri = resolvedUri ?? null;
   const isResolving = rawUri != null && decodedUri == null;
+  const isOffline =
+    networkState.isConnected === false ||
+    networkState.isInternetReachable === false;
   const fileExtension = getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
   useEffect(() => {
@@ -75,6 +104,25 @@ export function PdfReaderScreen() {
   const viewerUri = isOfficeFile
     ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(decodedUri || "")}`
     : decodedUri;
+  const missingDocument = !isResolving && !decodedUri;
+  const showReaderDialog =
+    offlineNoticeVisible || iframeError || missingDocument;
+  const readerDialogTitle = missingDocument
+    ? isOfficeFile
+      ? "Internet connection required"
+      : `${readerLabel} unavailable`
+    : "Internet connection required";
+  const readerDialogMessage = missingDocument
+    ? isOfficeFile
+      ? "Office documents can only be read while online. Connect to the internet and try again."
+      : "No document is available to open."
+    : "This document is not available offline. Connect to the internet or open a downloaded copy from My Downloads.";
+
+  const closeReaderDialog = () => {
+    setOfflineNoticeVisible(false);
+    setOfflineNoticeDismissed(true);
+    setIframeError(false);
+  };
 
   // Check if already downloaded
   useEffect(() => {
@@ -118,7 +166,8 @@ export function PdfReaderScreen() {
         await saveDownloadedFile({
           title: title || "PDF Document",
           uri: decodedUri,
-          localUri: decodedUri,
+          localUri: "",
+          webBlob: blob,
         });
         setDownloaded(true);
         return;
@@ -149,7 +198,8 @@ export function PdfReaderScreen() {
       await saveDownloadedFile({
         title: title || "PDF Document",
         uri: decodedUri,
-        localUri: decodedUri,
+        localUri: "",
+        webBlob: blob,
       });
       setDownloaded(true);
     } catch (err) {
@@ -168,7 +218,7 @@ export function PdfReaderScreen() {
         downloadUrl = `${downloadUrl}${separator}response-content-disposition=attachment%3Bfilename%3D%22${encodeURIComponent(safeTitle)}.${fileExtension}%22`;
       }
 
-      // Trigger direct download via hidden iframe without opening a new tab
+      // A direct link may download the file, but it cannot be restored offline.
       const iframe = document.createElement("iframe");
       iframe.style.display = "none";
       iframe.src = downloadUrl;
@@ -181,16 +231,7 @@ export function PdfReaderScreen() {
         } catch {}
       }, 6000);
 
-      try {
-        await saveDownloadedFile({
-          title: title || "PDF Document",
-          uri: decodedUri,
-          localUri: decodedUri,
-        });
-        setDownloaded(true);
-      } catch (saveErr) {
-        console.warn("Failed to register download in-app:", saveErr);
-      }
+      setOfflineNoticeVisible(true);
     } finally {
       setTimeout(() => {
         setDownloading(false);
@@ -215,6 +256,21 @@ export function PdfReaderScreen() {
 
   return (
     <View style={styles.screen}>
+      <ActionDialog
+        visible={
+          showReaderDialog ||
+          (isOffline &&
+            Boolean(decodedUri) &&
+            !downloaded &&
+            !rawUri?.startsWith("indexeddb://") &&
+            !offlineNoticeDismissed)
+        }
+        title={readerDialogTitle}
+        message={readerDialogMessage}
+        primaryText={missingDocument ? "Go back" : "OK"}
+        onPrimary={missingDocument ? goBack : closeReaderDialog}
+        onClose={missingDocument ? goBack : closeReaderDialog}
+      />
       {/* ── Header ── */}
       <View style={styles.header}>
         <Pressable
@@ -310,13 +366,6 @@ export function PdfReaderScreen() {
       ) : !decodedUri || iframeError ? (
         <View style={styles.center}>
           <Feather name="alert-circle" size={48} color="#CBD5E1" />
-          <Text style={styles.errorTitle}>{readerLabel} unavailable</Text>
-          <Text style={styles.errorText}>
-            The document could not be displayed.
-          </Text>
-          <Pressable style={styles.backBtn} onPress={goBack}>
-            <Text style={styles.backBtnText}>Go back</Text>
-          </Pressable>
         </View>
       ) : (
         <iframe
@@ -329,7 +378,10 @@ export function PdfReaderScreen() {
             height: "100%",
             backgroundColor: "#1A1A2E",
           }}
-          onError={() => setIframeError(true)}
+          onError={() => {
+            setIframeError(true);
+            setOfflineNoticeVisible(true);
+          }}
         />
       )}
     </View>

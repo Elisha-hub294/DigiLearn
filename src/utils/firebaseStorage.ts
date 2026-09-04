@@ -260,21 +260,29 @@ export async function getFirebaseStorageUrl(
 export function useFirebaseStorageUrl(
   url: string | undefined,
 ): string | undefined {
-  const [resolvedUrl, setResolvedUrl] = useState<string | undefined>(undefined);
+  const isDirectUrl =
+    typeof url === "string" &&
+    (url.startsWith("http://") ||
+      url.startsWith("https://") ||
+      url.startsWith("file://") ||
+      url.startsWith("data:") ||
+      url.startsWith("blob:") ||
+      url.startsWith("/"));
+  const [resolvedUrl, setResolvedUrl] = useState<string | undefined>(
+    isDirectUrl ? url : undefined,
+  );
 
   useEffect(() => {
     let active = true;
-    if (url) {
+    if (url && !isDirectUrl) {
       getFirebaseStorageUrl(url).then((res) => {
         if (active) setResolvedUrl(res);
       });
-    } else {
-      setResolvedUrl(url);
     }
     return () => {
       active = false;
     };
-  }, [url]);
+  }, [url, isDirectUrl]);
 
-  return resolvedUrl;
+  return isDirectUrl ? url : url ? resolvedUrl : undefined;
 }
