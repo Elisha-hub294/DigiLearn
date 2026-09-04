@@ -1,13 +1,27 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { db } from "../../firebaseConfig";
 import { DEFAULT_SUBJECT_AVATAR } from "../components/page/pageTypes";
+import { readLocalCache, writeLocalCache } from "../utils/localCache";
 import { getVideoThumbnailUrl } from "../utils/videoUtils";
 
 const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
 const MAX_RECENT_ITEMS = 10;
 const FALLBACK_TEACHER_AVATAR = "TeacherProfile/tr-default.png";
+const SEARCH_CACHE_KEY = "digilearn-search-index";
+const SEARCH_CACHE_VERSION = 1;
+const SEARCH_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+
+type SearchCache = {
+  topicalNotes: any[];
+  pastPapers: any[];
+  videos: any[];
+  books: any[];
+  teachers: any[];
+  subjectsMap: Record<string, string>;
+  teachersAvatarMap: Record<string, string>;
+};
 
 function getSuggestionScore(value: string): number {
   let hash = 0;
@@ -146,16 +160,11 @@ export function useGlobalSearch(
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [hasSubmittedSearch, setHasSubmittedSearch] = useState(false);
-  const [selectedCategory, setSelectedCategory] =
-    useState<SearchCategory>(initialCategory);
+  const [selectedCategory, setSelectedCategory] = useState<SearchCategory>(
+    () => initialCategory,
+  );
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (initialCategory) {
-      setSelectedCategory(initialCategory);
-    }
-  }, [initialCategory]);
 
   const [topicalNotes, setTopicalNotes] = useState<any[]>([]);
   const [pastPapers, setPastPapers] = useState<any[]>([]);
@@ -188,102 +197,94 @@ export function useGlobalSearch(
     };
   }, []);
 
-  // 2. Fetch subject icons
+  // 2. Load the search index from local storage, refreshing it when stale.
   useEffect(() => {
     let isMounted = true;
 
-    const unsubSubjects = onSnapshot(
-      collection(db, "subject"),
-      (snapshot) => {
+    const applyCache = (data: SearchCache) => {
+      setTopicalNotes(data.topicalNotes);
+      setPastPapers(data.pastPapers);
+      setVideos(data.videos);
+      setBooks(data.books);
+      setTeachers(data.teachers);
+      setSubjectsMap(data.subjectsMap);
+      setTeachersAvatarMap(data.teachersAvatarMap);
+      setLoading(false);
+    };
+
+    const loadSearchIndex = async () => {
+      const cached = await readLocalCache<SearchCache>(
+        SEARCH_CACHE_KEY,
+        SEARCH_CACHE_VERSION,
+      );
+      if (cached && isMounted) {
+        applyCache(cached.data);
+        if (Date.now() - cached.savedAt < SEARCH_CACHE_MAX_AGE_MS) return;
+      }
+
+      try {
+        const [
+          notesSnap,
+          papersSnap,
+          videosSnap,
+          booksSnap,
+          teachersSnap,
+          subjectsSnap,
+        ] = await Promise.all([
+          getDocs(collection(db, "pages")),
+          getDocs(collection(db, "pastPaper")),
+          getDocs(collection(db, "trendingLessons")),
+          getDocs(collection(db, "books")),
+          getDocs(collection(db, "teachers")),
+          getDocs(collection(db, "subject")),
+        ]);
         if (!isMounted) return;
-        const map: Record<string, string> = {};
-        snapshot.docs.forEach((doc) => {
+
+        const teacherList = teachersSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        const teachersAvatarMap: Record<string, string> = {};
+        teacherList.forEach((teacher: any) => {
+          if (teacher.name && (teacher.avatar || teacher.image)) {
+            teachersAvatarMap[String(teacher.name).toLowerCase().trim()] =
+              String(teacher.avatar || teacher.image).trim();
+          }
+        });
+        const subjectsMap: Record<string, string> = {};
+        subjectsSnap.docs.forEach((doc) => {
           const data = doc.data();
           if (data.name && data.avatar) {
-            map[data.name.toLowerCase().trim()] = data.avatar;
+            subjectsMap[data.name.toLowerCase().trim()] = data.avatar;
           }
         });
-        setSubjectsMap(map);
-      },
-      (err) => console.warn("Error fetching subjects:", err),
-    );
 
-    return () => {
-      isMounted = false;
-      unsubSubjects();
+        const next: SearchCache = {
+          topicalNotes: notesSnap.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })),
+          pastPapers: papersSnap.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })),
+          videos: videosSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+          books: booksSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+          teachers: teacherList,
+          subjectsMap,
+          teachersAvatarMap,
+        };
+        applyCache(next);
+        await writeLocalCache(SEARCH_CACHE_KEY, next, SEARCH_CACHE_VERSION);
+      } catch (error) {
+        console.warn("Failed to load search index:", error);
+        if (isMounted) setLoading(false);
+      }
     };
-  }, []);
 
-  // 3. Subscribe to Firestore collections simultaneously
-  useEffect(() => {
-    let isMounted = true;
-
-    const unsubNotes = onSnapshot(
-      collection(db, "pages"),
-      (snap) => {
-        if (!isMounted) return;
-        setTopicalNotes(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      },
-      (err) => console.warn("Notes error:", err),
-    );
-
-    const unsubPapers = onSnapshot(
-      collection(db, "pastPaper"),
-      (snap) => {
-        if (!isMounted) return;
-        setPastPapers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      },
-      (err) => console.warn("Papers error:", err),
-    );
-
-    const unsubVideos = onSnapshot(
-      collection(db, "trendingLessons"),
-      (snap) => {
-        if (!isMounted) return;
-        setVideos(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      },
-      (err) => console.warn("Videos error:", err),
-    );
-
-    const unsubBooks = onSnapshot(
-      collection(db, "books"),
-      (snap) => {
-        if (!isMounted) return;
-        setBooks(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      },
-      (err) => console.warn("Books error:", err),
-    );
-
-    const unsubTeachers = onSnapshot(
-      collection(db, "teachers"),
-      (snap) => {
-        if (!isMounted) return;
-        const teacherList = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setTeachers(teacherList);
-
-        const avatarMap: Record<string, string> = {};
-        teacherList.forEach((t: any) => {
-          if (t.name && (t.avatar || t.image)) {
-            const nameKey = String(t.name).toLowerCase().trim();
-            avatarMap[nameKey] = String(t.avatar || t.image).trim();
-          }
-        });
-        setTeachersAvatarMap(avatarMap);
-        setLoading(false);
-      },
-      (err) => {
-        console.warn("Teachers error:", err);
-        setLoading(false);
-      },
-    );
-
+    void loadSearchIndex();
     return () => {
       isMounted = false;
-      unsubNotes();
-      unsubPapers();
-      unsubVideos();
-      unsubBooks();
-      unsubTeachers();
     };
   }, []);
 

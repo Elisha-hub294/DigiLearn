@@ -1,7 +1,12 @@
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../firebaseConfig";
+import { readLocalCache, writeLocalCache } from "../utils/localCache";
 import { getVideoThumbnailUrl } from "../utils/videoUtils";
+
+const TRENDING_CACHE_KEY = "digilearn-trending-lessons-shared";
+const TRENDING_CACHE_VERSION = 1;
+const TRENDING_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 
 export type TrendingLesson = {
   id: string;
@@ -27,6 +32,8 @@ type FirestoreLesson = {
   avatar?: string;
 };
 
+let trendingFetchPromise: Promise<TrendingLesson[]> | null = null;
+
 function toTrendingLesson(
   raw: FirestoreLesson,
   docId: string,
@@ -48,30 +55,61 @@ function toTrendingLesson(
   };
 }
 
+function fetchTrendingLessons(): Promise<TrendingLesson[]> {
+  if (trendingFetchPromise) return trendingFetchPromise;
+
+  trendingFetchPromise = getDocs(collection(db, "trendingLessons"))
+    .then((snapshot) =>
+      snapshot.docs.map((doc, index) =>
+        toTrendingLesson(doc.data() as FirestoreLesson, doc.id, index),
+      ),
+    )
+    .finally(() => {
+      trendingFetchPromise = null;
+    });
+
+  return trendingFetchPromise;
+}
+
 export function useTrendingLessons() {
   const [lessons, setLessons] = useState<TrendingLesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "trendingLessons"),
-      (snapshot) => {
-        const next = snapshot.docs.map((doc, index) =>
-          toTrendingLesson(doc.data() as FirestoreLesson, doc.id, index),
-        );
+    let isMounted = true;
+
+    const loadLessons = async () => {
+      const cached = await readLocalCache<TrendingLesson[]>(
+        TRENDING_CACHE_KEY,
+        TRENDING_CACHE_VERSION,
+      );
+      if (cached && isMounted) {
+        setLessons(cached.data);
+        setLoading(false);
+        setError(null);
+        if (Date.now() - cached.savedAt < TRENDING_CACHE_MAX_AGE_MS) return;
+      }
+
+      try {
+        const next = await fetchTrendingLessons();
+        if (!isMounted) return;
         setLessons(next);
         setLoading(false);
         setError(null);
-      },
-      (err) => {
+        await writeLocalCache(TRENDING_CACHE_KEY, next, TRENDING_CACHE_VERSION);
+      } catch (err) {
         console.error("useTrendingLessons error:", err);
+        if (!isMounted) return;
         setError("Failed to load lessons");
         setLoading(false);
-      },
-    );
+      }
+    };
 
-    return () => unsubscribe();
+    void loadLessons();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return { lessons, loading, error };

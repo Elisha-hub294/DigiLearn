@@ -2,11 +2,12 @@ import { getTrendingCardWidth } from "@/components/ui/TrendingCarousel";
 import { VideoLesson } from "@/components/ui/TrendingVideoCard";
 import { VideoCard } from "@/components/ui/VideoCard";
 import { VideosScreenHeader } from "@/components/ui/VideosScreenHeader";
+import { readLocalCache, writeLocalCache } from "@/utils/localCache";
 import { getVideoThumbnailUrl } from "@/utils/videoUtils";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   RefreshControl,
@@ -21,6 +22,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
+
+const VIDEOS_CACHE_KEY = "digilearn-trending-lessons";
+const VIDEOS_CACHE_VERSION = 1;
+const VIDEOS_CACHE_MAX_AGE_MS = 30 * 60 * 1000;
 
 type FirestoreLesson = {
   id?: string;
@@ -148,6 +153,7 @@ export default function VideosScreen() {
   const [lessons, setLessons] = useState<LessonRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
+  const [refreshToken, setRefreshToken] = useState(0);
   const flashListRef = useRef<FlashListRef<LessonRecord>>(null);
   const trendingSectionY = useRef<number>(0);
   const isTablet = width >= 768;
@@ -156,33 +162,65 @@ export default function VideosScreen() {
   const contentWidth = Math.min(width, contentMaxWidth) - horizontalPadding * 2;
   const cardWidth = getTrendingCardWidth(width, contentWidth);
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "trendingLessons"),
-      (snapshot) => {
-        const nextLessons = snapshot.docs
-          .map((doc, index) =>
-            toLessonRecord(doc.data() as FirestoreLesson, index),
-          )
-          .sort((left, right) => {
-            const leftTime = left._uploadedAtDate?.getTime() ?? 0;
-            const rightTime = right._uploadedAtDate?.getTime() ?? 0;
-            return rightTime - leftTime;
-          });
-        setLessons(nextLessons);
-        setIsOffline(false);
-        setLoading(false);
-      },
-      (error) => {
-        console.warn("Failed to load trending lessons:", error);
-        setLessons([]);
-        setIsOffline(true);
-        setLoading(false);
-      },
-    );
+  const loadVideos = useCallback(async (force = false) => {
+    const cached = await readLocalCache<
+      (LessonRecord & { _uploadedAtDate?: string })[]
+    >(VIDEOS_CACHE_KEY, VIDEOS_CACHE_VERSION);
 
-    return () => unsubscribe();
+    if (cached) {
+      setLessons(
+        cached.data.map((lesson) => ({
+          ...lesson,
+          _uploadedAtDate: lesson._uploadedAtDate
+            ? new Date(lesson._uploadedAtDate)
+            : undefined,
+        })),
+      );
+      setIsOffline(false);
+      setLoading(false);
+      if (!force && Date.now() - cached.savedAt < VIDEOS_CACHE_MAX_AGE_MS) {
+        setRefreshing(false);
+        return;
+      }
+    }
+
+    try {
+      const snapshot = await getDocs(collection(db, "trendingLessons"));
+      const nextLessons = snapshot.docs
+        .map((doc, index) =>
+          toLessonRecord(doc.data() as FirestoreLesson, index),
+        )
+        .sort((left, right) => {
+          const leftTime = left._uploadedAtDate?.getTime() ?? 0;
+          const rightTime = right._uploadedAtDate?.getTime() ?? 0;
+          return rightTime - leftTime;
+        });
+      setLessons(nextLessons);
+      await writeLocalCache(
+        VIDEOS_CACHE_KEY,
+        nextLessons,
+        VIDEOS_CACHE_VERSION,
+      );
+      setIsOffline(false);
+    } catch (error) {
+      console.warn("Failed to load trending lessons:", error);
+      setIsOffline(true);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void loadVideos(refreshToken > 0);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [loadVideos, refreshToken]);
 
   // Auto-scroll to Trending Lessons section every time the screen
   // gains focus with the scrollTo=trending param
@@ -202,7 +240,7 @@ export default function VideosScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 650);
+    setRefreshToken((current) => current + 1);
   }, []);
 
   const visibleLatest = useMemo(() => {
@@ -258,7 +296,7 @@ export default function VideosScreen() {
         entering={FadeIn.duration(380)}
         style={[styles.container, { maxWidth: contentMaxWidth }]}
       >
-        {showEmptyState || isOffline ? (
+        {showEmptyState || (isOffline && lessons.length === 0) ? (
           <ScrollView
             showsVerticalScrollIndicator={false}
             style={styles.emptyStateContainer}

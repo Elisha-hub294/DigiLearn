@@ -1,6 +1,18 @@
 import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import { db } from "../../firebaseConfig";
+import { readLocalCache, writeLocalCache } from "../utils/localCache";
+
+const LIBRARY_CACHE_KEY = "digilearn-library-data";
+const LIBRARY_CACHE_VERSION = 1;
+const LIBRARY_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+
+type LibraryCache = {
+  heroSlides: HeroSlideItem[];
+  topBooks: TopSellingBook[];
+  promos: PromotionalBannerItem[];
+  paperCollections: PaperSection[];
+};
 
 type ImageSource = string;
 
@@ -179,7 +191,22 @@ export function useLibraryData() {
   const [promos, setPromos] = useState<PromotionalBannerItem[]>([]);
   const [paperCollections, setPaperCollections] = useState<PaperSection[]>([]);
 
-  const loadLibraryData = useCallback(async () => {
+  const loadLibraryData = useCallback(async (force = false) => {
+    const cached = await readLocalCache<LibraryCache>(
+      LIBRARY_CACHE_KEY,
+      LIBRARY_CACHE_VERSION,
+    );
+    if (cached) {
+      setHeroSlides(cached.data.heroSlides);
+      setTopBooks(cached.data.topBooks);
+      setPromos(cached.data.promos);
+      setPaperCollections(cached.data.paperCollections);
+      setLoading(false);
+      if (!force && Date.now() - cached.savedAt < LIBRARY_CACHE_MAX_AGE_MS) {
+        return;
+      }
+    }
+
     try {
       const [
         booksSnapshot,
@@ -381,12 +408,18 @@ export function useLibraryData() {
       setTopBooks(topSellingItems);
       setPromos(promotionalItems);
       setPaperCollections(sections);
+      await writeLocalCache<LibraryCache>(
+        LIBRARY_CACHE_KEY,
+        {
+          heroSlides: dynamicHeroSlides,
+          topBooks: topSellingItems,
+          promos: promotionalItems,
+          paperCollections: sections,
+        },
+        LIBRARY_CACHE_VERSION,
+      );
     } catch (error) {
       console.error("Failed to load library data", error);
-      setHeroSlides([]);
-      setTopBooks([]);
-      setPromos([]);
-      setPaperCollections([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -394,12 +427,12 @@ export function useLibraryData() {
   }, []);
 
   useEffect(() => {
-    void loadLibraryData();
+    void Promise.resolve().then(() => loadLibraryData());
   }, [loadLibraryData]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadLibraryData();
+    await loadLibraryData(true);
   }, [loadLibraryData]);
 
   return {
