@@ -2,10 +2,12 @@ import { colors, radius } from "@/constants/theme";
 import {
   formatVideoUploadedAt,
   resolveVideoImageSource,
+  validateVideoLink,
 } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -15,6 +17,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { auth } from "../../../firebaseConfig";
 import { recordUserActivity } from "../../services/activityService";
+import { ActionDialog } from "./ActionDialog";
 import { DurationBadge } from "./DurationBadge";
 
 export type VideoLesson = {
@@ -45,6 +48,8 @@ export function TrendingVideoCard({
 }) {
   const router = useRouter();
   const scale = useSharedValue(1);
+  const [checkingVideo, setCheckingVideo] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const item = {
     ...rawItem,
     uploadedAt: formatVideoUploadedAt(rawItem.uploadedAt),
@@ -53,7 +58,20 @@ export function TrendingVideoCard({
     transform: [{ scale: scale.value }],
   }));
 
-  function openLesson() {
+  async function openLesson() {
+    if (checkingVideo) {
+      return;
+    }
+
+    setCheckingVideo(true);
+    const linkCheck = await validateVideoLink(item.link);
+    setCheckingVideo(false);
+
+    if (!linkCheck.valid) {
+      setNotice(linkCheck.message);
+      return;
+    }
+
     if (auth.currentUser?.uid) {
       recordUserActivity(auth.currentUser.uid, "lesson", item.id);
     }
@@ -74,56 +92,66 @@ export function TrendingVideoCard({
   }
 
   return (
-    <AnimatedPressable
-      entering={FadeIn.duration(450)}
-      accessibilityLabel={`Watch trending video: ${item.title}`}
-      accessibilityRole="button"
-      onPressIn={() => {
-        scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1, { damping: 15, stiffness: 300 });
-      }}
-      onPress={openLesson}
-      style={[styles.card, { width, marginRight }, animatedStyle]}
-    >
-      <View style={styles.thumbnail}>
-        <Image
-          source={resolveVideoImageSource(item.thumbnail, item.link)}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          transition={250}
-        />
-        <View pointerEvents="none" style={styles.overlay} />
-        <View pointerEvents="none" style={styles.play}>
-          <View style={styles.playIcon}>
-            <Ionicons
-              name="play"
-              size={25}
-              color={"white"}
-              style={styles.playIconGlyph}
-            />
+    <>
+      <AnimatedPressable
+        entering={FadeIn.duration(450)}
+        accessibilityLabel={`Watch trending video: ${item.title}`}
+        accessibilityRole="button"
+        onPressIn={() => {
+          scale.set(withSpring(0.97, { damping: 15, stiffness: 300 }));
+        }}
+        onPressOut={() => {
+          scale.set(withSpring(1, { damping: 15, stiffness: 300 }));
+        }}
+        onPress={openLesson}
+        style={[styles.card, { width, marginRight }, animatedStyle]}
+      >
+        <View style={styles.thumbnail}>
+          <Image
+            source={resolveVideoImageSource(item.thumbnail, item.link)}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={250}
+          />
+          <View pointerEvents="none" style={styles.overlay} />
+          <View pointerEvents="none" style={styles.play}>
+            <View style={styles.playIcon}>
+              <Ionicons
+                name="play"
+                size={25}
+                color={"white"}
+                style={styles.playIconGlyph}
+              />
+            </View>
+          </View>
+          <View style={styles.duration}>
+            <DurationBadge duration={item.duration} />
           </View>
         </View>
-        <View style={styles.duration}>
-          <DurationBadge duration={item.duration} />
-        </View>
-      </View>
-      <Text
-        numberOfLines={1}
-        ellipsizeMode="tail"
-        style={[styles.title, styles.truncateText]}
-      >
-        {item.title}
-      </Text>
-      <Text
-        numberOfLines={1}
-        ellipsizeMode="tail"
-        style={[styles.meta, styles.truncateText]}
-      >
-        {item.teacher} • {item.uploadedAt}
-      </Text>
-    </AnimatedPressable>
+        <Text
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={[styles.title, styles.truncateText]}
+        >
+          {item.title}
+        </Text>
+        <Text
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={[styles.meta, styles.truncateText]}
+        >
+          {item.teacher} • {item.uploadedAt}
+        </Text>
+      </AnimatedPressable>
+      <ActionDialog
+        visible={Boolean(notice)}
+        title="Video unavailable"
+        message={notice ?? "This video cannot be opened right now."}
+        primaryText="OK"
+        onPrimary={() => setNotice(null)}
+        onClose={() => setNotice(null)}
+      />
+    </>
   );
 }
 

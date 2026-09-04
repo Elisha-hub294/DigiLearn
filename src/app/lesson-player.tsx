@@ -32,10 +32,11 @@ import {
   recordUserActivity,
 } from "../services/activityService";
 import { toggleSavedItem } from "../services/userProfile";
+import { validateVideoLink } from "../utils/videoUtils";
 
 function getYoutubeEmbedUrl(rawUrl?: string) {
   if (!rawUrl) {
-    return "https://www.youtube.com/embed/dQw4w9WgXcQ";
+    return "";
   }
 
   const trimmed = rawUrl.trim();
@@ -161,7 +162,15 @@ export default function LessonPlayerScreen() {
     });
   }
 
-  function openVideo() {
+  async function openVideo() {
+    const linkCheck = await validateVideoLink(params.link);
+    if (!linkCheck.valid) {
+      setNoticeDialog({
+        title: "Video unavailable",
+        message: linkCheck.message,
+      });
+      return;
+    }
     setShowExternalVideoDialog(true);
   }
 

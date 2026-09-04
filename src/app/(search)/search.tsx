@@ -1,5 +1,5 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   BackHandler,
   FlatList,
@@ -23,6 +23,7 @@ import { SearchResultCard } from "../../components/search/SearchResultCard";
 import { SearchResultTeacherCard } from "../../components/search/SearchResultTeacherCard";
 import { SearchResultVideoCard } from "../../components/search/SearchResultVideoCard";
 import { SearchSkeleton } from "../../components/search/SearchSkeleton";
+import { ActionDialog } from "../../components/ui/ActionDialog";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { getHorizontalPadding } from "../../constants/layout";
 import {
@@ -30,6 +31,7 @@ import {
   SearchResult,
   useGlobalSearch,
 } from "../../hooks/useGlobalSearch";
+import { validateVideoLink } from "../../utils/videoUtils";
 
 const CATEGORIES: SearchCategory[] = [
   "All",
@@ -51,6 +53,7 @@ export default function SearchScreen() {
   }>();
   const { width } = useWindowDimensions();
   const searchInputRef = useRef<TextInput>(null);
+  const [videoNotice, setVideoNotice] = useState<string | null>(null);
 
   const openedFromLibrary = params.source === "library";
   const hideChips = params.hideChips === "true";
@@ -125,7 +128,7 @@ export default function SearchScreen() {
     hasSubmittedSearch && debouncedQuery.trim().length >= 2;
 
   const handleResultPress = useCallback(
-    (item: SearchResult) => {
+    async (item: SearchResult) => {
       // 1. Save search term to recent searches
       if (item.title) {
         addRecentSearch(item.title);
@@ -137,6 +140,13 @@ export default function SearchScreen() {
       // Stack navigation means router.back() in sub-screens will return here automatically
       switch (item.type) {
         case "video":
+          {
+            const linkCheck = await validateVideoLink(item.link);
+            if (!linkCheck.valid) {
+              setVideoNotice(linkCheck.message);
+              return;
+            }
+          }
           if (auth.currentUser?.uid) {
             recordUserActivity(auth.currentUser.uid, "lesson", item.id);
           }
@@ -404,6 +414,14 @@ export default function SearchScreen() {
             />
           )}
         </View>
+        <ActionDialog
+          visible={Boolean(videoNotice)}
+          title="Video unavailable"
+          message={videoNotice ?? "This video cannot be opened right now."}
+          primaryText="OK"
+          onPrimary={() => setVideoNotice(null)}
+          onClose={() => setVideoNotice(null)}
+        />
       </Animated.View>
     </SafeAreaView>
   );

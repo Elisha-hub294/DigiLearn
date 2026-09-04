@@ -2,6 +2,7 @@ import { radius } from "@/constants/theme";
 import {
   formatVideoUploadedAt,
   resolveVideoImageSource,
+  validateVideoLink,
 } from "@/utils/videoUtils";
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -54,6 +55,7 @@ export function VideoCard({
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [checkingVideo, setCheckingVideo] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
   const menuButtonRef = useRef<View>(null);
 
@@ -82,7 +84,25 @@ export function VideoCard({
 
   const isSaved = isSavedState;
 
-  function openLesson() {
+  async function openLesson() {
+    if (checkingVideo) {
+      return;
+    }
+
+    setCheckingVideo(true);
+    const linkCheck = await validateVideoLink(item.link);
+    setCheckingVideo(false);
+
+    if (!linkCheck.valid) {
+      setDialogState({
+        title: "Video unavailable",
+        message: linkCheck.message,
+        primaryText: "OK",
+        onPrimary: () => setDialogState(null),
+      });
+      return;
+    }
+
     if (auth.currentUser?.uid) {
       recordUserActivity(auth.currentUser.uid, "lesson", item.id);
     }

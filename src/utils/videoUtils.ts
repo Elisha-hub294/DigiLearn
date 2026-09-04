@@ -69,6 +69,63 @@ export function extractYoutubeId(url?: string): string | null {
   return null;
 }
 
+export type VideoLinkCheck =
+  | { valid: true }
+  | { valid: false; message: string };
+
+/** Validates a lesson link before it is passed to the external video player. */
+export async function validateVideoLink(
+  rawUrl?: string,
+): Promise<VideoLinkCheck> {
+  const trimmed = rawUrl?.trim() ?? "";
+  if (!trimmed) {
+    return {
+      valid: false,
+      message: "This lesson does not have a video link yet.",
+    };
+  }
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(trimmed);
+  } catch {
+    return {
+      valid: false,
+      message: "This lesson has an invalid video link.",
+    };
+  }
+
+  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+    return {
+      valid: false,
+      message: "This lesson has an invalid video link.",
+    };
+  }
+
+  if (!extractYoutubeId(trimmed)) {
+    return { valid: true };
+  }
+
+  try {
+    const response = await fetch(
+      `https://www.youtube.com/oembed?url=${encodeURIComponent(trimmed)}&format=json`,
+    );
+    if (response.ok) {
+      return { valid: true };
+    }
+  } catch {
+    return {
+      valid: false,
+      message: "We couldn't verify this YouTube video. Please try again.",
+    };
+  }
+
+  return {
+    valid: false,
+    message: "This YouTube video is no longer available.",
+  };
+}
+
 /**
  * Resolves the best available remote image URL for a video.
  * Checks thumbnail parameter first, then link parameter for YouTube video ID.
