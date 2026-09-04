@@ -235,7 +235,11 @@ export default function LibraryScreen() {
             entering={FadeInUp.duration(320)}
             style={styles.headerWrap}
           >
-            <Header title="Library" rightIconName="book-open" />
+            <Header
+              title="Library"
+              rightIconName="book-open"
+              notificationTypes={["book", "page", "paper"]}
+            />
           </Animated.View>
           <Animated.View entering={FadeInUp.duration(360)}>
             <SearchBar placeholder=" Search in Library" source="library" />

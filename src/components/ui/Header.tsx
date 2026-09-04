@@ -13,12 +13,14 @@ import { auth } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useNotifications } from "../../hooks/useNotifications";
+import { NotificationType } from "../../services/notifications";
 
 type HeaderProps = {
   title?: string;
   rightIconName?: string;
   showBadge?: boolean;
   showPublishButton?: boolean;
+  notificationTypes?: readonly NotificationType[];
 };
 
 export const Header = ({
@@ -26,13 +28,20 @@ export const Header = ({
   rightIconName = "bell",
   showBadge = true,
   showPublishButton = false,
+  notificationTypes,
 }: HeaderProps) => {
   const { width } = useWindowDimensions();
-  const { hasUnread } = useNotifications();
+  const { notifications } = useNotifications();
   const { profile } = useProfile();
   const canPublish =
     showPublishButton &&
     (profile?.type === "teacher" || profile?.type === "admin");
+  const hasUnread = notifications.some(
+    (notification) =>
+      !notification.read &&
+      (!notificationTypes?.length ||
+        notificationTypes.includes(notification.type)),
+  );
   // Scale greeting font: 22px on ~320px screens, up to 34px on ~430px+ screens
   const greetingFontSize = Math.min(
     34,
@@ -93,7 +102,14 @@ export const Header = ({
         <Pressable
           style={styles.notificationButton}
           accessibilityLabel="Open notifications"
-          onPress={() => router.push("/notifications" as any)}
+          onPress={() =>
+            router.push({
+              pathname: "/notifications",
+              params: notificationTypes?.length
+                ? { types: notificationTypes.join(",") }
+                : undefined,
+            } as any)
+          }
         >
           <Icon name={rightIconName as any} size={22} color={colors.text} />
           {showBadge && hasUnread ? <View style={styles.badge} /> : null}

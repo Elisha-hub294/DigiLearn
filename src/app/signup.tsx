@@ -93,6 +93,9 @@ export default function SignUpScreen() {
     } else if (password.length < 6) {
       setPasswordError("Password must be at least 6 characters.");
       hasError = true;
+    } else if (password.length > 50) {
+      setPasswordError("Password must be 50 characters or fewer.");
+      hasError = true;
     } else {
       setPasswordError("");
     }
@@ -310,6 +313,7 @@ export default function SignUpScreen() {
                     secureTextEntry={!showPassword}
                     placeholder="Enter password"
                     placeholderTextColor="#9CA3AF"
+                    maxLength={50}
                     style={styles.passwordInput}
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -353,6 +357,7 @@ export default function SignUpScreen() {
                     secureTextEntry={!showConfirmPassword}
                     placeholder="Re-enter password"
                     placeholderTextColor="#9CA3AF"
+                    maxLength={50}
                     style={styles.passwordInput}
                     autoCapitalize="none"
                     autoCorrect={false}

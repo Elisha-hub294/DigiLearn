@@ -42,7 +42,11 @@ export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
         entering={FadeInUp.duration(320)}
         style={styles.headerWrap}
       >
-        <Header title="Videos" rightIconName="video" />
+        <Header
+          title="Videos"
+          rightIconName="video"
+          notificationTypes={["lesson"]}
+        />
       </Animated.View>
 
       <Animated.View entering={FadeInUp.duration(360)}>

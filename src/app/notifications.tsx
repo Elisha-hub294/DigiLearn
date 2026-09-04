@@ -1,5 +1,5 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -25,12 +25,22 @@ import { colors, spacing } from "../constants/theme";
 import { useNotifications } from "../hooks/useNotifications";
 import {
   NotificationRecord,
+  NotificationType,
   deleteNotification,
   getNotificationSections,
 } from "../services/notifications";
 
+const notificationTypes = new Set<NotificationType>([
+  "book",
+  "lesson",
+  "page",
+  "paper",
+  "announcement",
+]);
+
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { types } = useLocalSearchParams<{ types?: string }>();
   const { width } = useWindowDimensions();
   const { user, notifications, loading, error, markRead, markAllRead } =
     useNotifications();
@@ -54,10 +64,22 @@ export default function NotificationsScreen() {
     return () => subscription.remove();
   }, [router]);
 
-  const sections = useMemo(
-    () => getNotificationSections(notifications),
-    [notifications],
-  );
+  const sections = useMemo(() => {
+    const allowedTypes = new Set(
+      (types ?? "")
+        .split(",")
+        .filter((type): type is NotificationType =>
+          notificationTypes.has(type as NotificationType),
+        ),
+    );
+    const visibleNotifications = allowedTypes.size
+      ? notifications.filter((notification) =>
+          allowedTypes.has(notification.type),
+        )
+      : notifications;
+
+    return getNotificationSections(visibleNotifications);
+  }, [notifications, types]);
 
   const handleBack = useCallback(() => {
     if (router.canGoBack()) {
