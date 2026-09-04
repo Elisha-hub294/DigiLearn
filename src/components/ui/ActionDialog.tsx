@@ -33,7 +33,8 @@ export function ActionDialog({
 }: ActionDialogProps) {
   const { colors } = useTheme();
   const resolvedPrimaryButtonColor = primaryButtonColor ?? colors.primary;
-  const resolvedSecondaryButtonColor = secondaryButtonColor ?? colors.lightBackground;
+  const resolvedSecondaryButtonColor =
+    secondaryButtonColor ?? colors.lightBackground;
   return (
     <Modal
       animationType="fade"
@@ -43,13 +44,27 @@ export function ActionDialog({
     >
       <Pressable style={styles.backdrop} onPress={onClose ?? onSecondary}>
         <Pressable
-          style={[styles.card, { backgroundColor: colors.white, borderColor: colors.border }]}
+          style={[
+            styles.card,
+            { backgroundColor: colors.white, borderColor: colors.border },
+          ]}
           onPress={(event) => event.stopPropagation()}
           accessibilityRole="alert"
         >
-          {icon ? <View style={[styles.iconContainer, { backgroundColor: colors.primaryLight }]}>{icon}</View> : null}
+          {icon ? (
+            <View
+              style={[
+                styles.iconContainer,
+                { backgroundColor: colors.primaryLight },
+              ]}
+            >
+              {icon}
+            </View>
+          ) : null}
           <Text style={[styles.title, { color: colors.dark }]}>{title}</Text>
-          <Text style={[styles.message, { color: colors.subtitle }]}>{message}</Text>
+          <Text style={[styles.message, { color: colors.subtitle }]}>
+            {message}
+          </Text>
 
           <View style={styles.actions}>
             {secondaryText && onSecondary ? (
@@ -63,7 +78,12 @@ export function ActionDialog({
                   { backgroundColor: resolvedSecondaryButtonColor },
                 ]}
               >
-                <Text style={[styles.buttonText, { color: secondaryButtonTextColor ?? colors.dark }]}>
+                <Text
+                  style={[
+                    styles.buttonText,
+                    { color: secondaryButtonTextColor ?? colors.dark },
+                  ]}
+                >
                   {secondaryText}
                 </Text>
               </Pressable>
@@ -74,7 +94,10 @@ export function ActionDialog({
                 onPrimary();
                 onClose?.();
               }}
-              style={[styles.button, { backgroundColor: resolvedPrimaryButtonColor }]}
+              style={[
+                styles.button,
+                { backgroundColor: resolvedPrimaryButtonColor },
+              ]}
             >
               <Text style={[styles.buttonText, styles.primaryButtonText]}>
                 {primaryText}

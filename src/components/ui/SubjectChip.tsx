@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
-import { radius, spacing } from '../../constants/theme';
-import { useTheme } from '../../contexts/ThemeContext';
+import { Pressable, StyleSheet, Text } from "react-native";
+import { radius, spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export type SubjectChipItem = {
   id: string;
@@ -16,8 +16,25 @@ type SubjectChipProps = {
 export const SubjectChip = ({ item, onPress }: SubjectChipProps) => {
   const { colors } = useTheme();
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={[styles.chip, { backgroundColor: item.active ? colors.dark : colors.white, borderColor: item.active ? colors.dark : colors.border }]}>
-      <Text style={[styles.label, { color: item.active ? colors.white : colors.text }]}>{item.label}</Text>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={[
+        styles.chip,
+        {
+          backgroundColor: item.active ? colors.dark : colors.white,
+          borderColor: item.active ? colors.dark : colors.border,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.label,
+          { color: item.active ? colors.white : colors.text },
+        ]}
+      >
+        {item.label}
+      </Text>
     </Pressable>
   );
 };
@@ -33,6 +50,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

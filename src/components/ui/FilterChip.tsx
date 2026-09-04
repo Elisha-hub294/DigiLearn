@@ -1,10 +1,10 @@
-import { useTheme } from "../../contexts/ThemeContext";
 import { Pressable, StyleSheet, Text } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export function FilterChip({
@@ -32,9 +32,22 @@ export function FilterChip({
       onPressOut={() => {
         pressed.value = 1;
       }}
-      style={[styles.chip, { backgroundColor: colors.white, borderColor: colors.inactive }, selected && { backgroundColor: colors.primary, borderColor: colors.primary }, animatedStyle]}
+      style={[
+        styles.chip,
+        { backgroundColor: colors.white, borderColor: colors.inactive },
+        selected && {
+          backgroundColor: colors.primary,
+          borderColor: colors.primary,
+        },
+        animatedStyle,
+      ]}
     >
-      <Text style={[styles.text, { color: selected ? colors.white : colors.inactive }]}>
+      <Text
+        style={[
+          styles.text,
+          { color: selected ? colors.white : colors.inactive },
+        ]}
+      >
         {label}
       </Text>
     </AnimatedPressable>
@@ -48,7 +61,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 7,
   },
-  selected: {
-  },
+  selected: {},
   text: { fontSize: 12, fontWeight: "600" },
 });

@@ -76,13 +76,25 @@ export const Header = ({
     <View style={styles.container}>
       <View style={styles.textWrap}>
         {isLibraryVariant ? (
-          <Text style={[styles.libraryTitle, { fontSize: greetingFontSize, color: colors.dark }]}>
+          <Text
+            style={[
+              styles.libraryTitle,
+              { fontSize: greetingFontSize, color: colors.dark },
+            ]}
+          >
             {title}
           </Text>
         ) : (
           <>
-            <Text style={[styles.date, { color: colors.subtitle }]}>{date}</Text>
-            <Text style={[styles.greeting, { fontSize: greetingFontSize, color: colors.dark }]}>
+            <Text style={[styles.date, { color: colors.subtitle }]}>
+              {date}
+            </Text>
+            <Text
+              style={[
+                styles.greeting,
+                { fontSize: greetingFontSize, color: colors.dark },
+              ]}
+            >
               {greeting}
               {userName ? (
                 <Text style={{ color: colors.primary }}> {userName}</Text>
