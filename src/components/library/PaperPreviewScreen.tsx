@@ -1,7 +1,15 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  query,
+  where,
+} from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -285,9 +293,21 @@ export function PaperPreviewScreen() {
 
     const loadRelatedPapers = async () => {
       try {
-        const snap = await readThroughFirestoreCache(
-          "collection:pastPaper",
-          () => getDocs(collection(db, "pastPaper")),
+        const relatedQuery = paper.type
+          ? query(
+              collection(db, "pastPaper"),
+              where("subject", "==", paper.subject),
+              where("type", "==", paper.type),
+              limit(20),
+            )
+          : query(
+              collection(db, "pastPaper"),
+              where("subject", "==", paper.subject),
+              limit(20),
+            );
+        const cacheKey = `related-papers:${paper.subject}:${paper.type ?? ""}`;
+        const snap = await readThroughFirestoreCache(cacheKey, () =>
+          getDocs(relatedQuery),
         );
         const allPapers = snap.docs.map((docSnap) => {
           const data = docSnap.data() as Record<string, unknown>;
