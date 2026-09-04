@@ -239,11 +239,11 @@ export function FloatingAssistantButton() {
   }));
 
   const handlePressIn = () => {
-    scale.value = withTiming(0.96, { duration: 120 });
+    scale.set(withTiming(0.96, { duration: 120 }));
   };
 
   const handlePressOut = () => {
-    scale.value = withTiming(1, { duration: 120 });
+    scale.set(withTiming(1, { duration: 120 }));
   };
 
   const handlePress = () => {
@@ -268,6 +268,7 @@ export function FloatingAssistantButton() {
     <Animated.View
       entering={FadeIn.duration(600)}
       exiting={FadeOut.duration(220)}
+      pointerEvents="box-none"
       style={[
         styles.wrapper,
         { bottom: insets.bottom, right: 5, maxWidth: width - 32 },
