@@ -3,7 +3,7 @@
     "name": "DigiLearn",
     "slug": "DigiLearn",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/panda.png",
     "scheme": "digilearn",
     "userInterfaceStyle": "automatic",
