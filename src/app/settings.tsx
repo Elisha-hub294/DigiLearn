@@ -20,6 +20,7 @@ import { SettingsSection } from "../components/ui/SettingsSection";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useAdminReviewSignals } from "../hooks/useAdminReviewSignals";
 import {
   isAssistantEnabled,
   setAssistantEnabled,
@@ -30,6 +31,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { user, profile } = useProfile();
+  const { newReportCount, pendingApplicationCount } = useAdminReviewSignals();
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - horizontalPadding * 2);
@@ -162,7 +164,24 @@ export default function SettingsScreen() {
                   <SettingsRow
                     icon="flag"
                     title="Resource reports"
+                    right={
+                      newReportCount > 0 ? (
+                        <View style={styles.alertDot} />
+                      ) : undefined
+                    }
                     onPress={() => router.push("/admin-reports" as never)}
+                  />
+                  <SettingsRow
+                    icon="file-text"
+                    title="Teacher applications"
+                    right={
+                      pendingApplicationCount > 0 ? (
+                        <View style={styles.alertDot} />
+                      ) : undefined
+                    }
+                    onPress={() =>
+                      router.push("/teacher-applications" as never)
+                    }
                   />
                 </>
               ) : null}
@@ -313,5 +332,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 12,
     fontWeight: "600",
+  },
+  alertDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: "#DC2626",
   },
 });

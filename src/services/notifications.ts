@@ -30,6 +30,7 @@ export type NotificationRecord = {
   collection?: string;
   navigation?: string;
   storage?: "admin";
+  adminKind?: "report" | "teacher-application";
 };
 
 export const DIGILEARN_PUBLISHER_NAME = "DigiLearn";
@@ -160,6 +161,11 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
         ? candidate.navigation
         : undefined,
     storage: candidate.storage === "admin" ? "admin" : undefined,
+    adminKind:
+      candidate.adminKind === "report" ||
+      candidate.adminKind === "teacher-application"
+        ? candidate.adminKind
+        : undefined,
   };
 
   return stripUndefinedFields(normalized) as NotificationRecord;
@@ -371,6 +377,25 @@ export async function markNotificationAsRead(
   await setDoc(
     userRef,
     { notifications: stripUndefinedFields(updated) },
+    { merge: true },
+  );
+  return true;
+}
+
+export async function markAllUserNotificationsAsRead(userId: string) {
+  if (!userId) return false;
+  const userRef = doc(db, "users", userId);
+  const snapshot = await getDoc(userRef);
+  const current = Array.isArray(snapshot.data()?.notifications)
+    ? (snapshot.data()?.notifications as NotificationRecord[])
+    : [];
+  await setDoc(
+    userRef,
+    {
+      notifications: stripUndefinedFields(
+        current.map((item) => ({ ...item, read: true })),
+      ),
+    },
     { merge: true },
   );
   return true;

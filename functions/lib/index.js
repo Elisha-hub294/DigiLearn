@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.reviewTeacherApplication = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.reviewTeacherApplication = void 0;
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const firestore_2 = require("firebase-functions/v2/firestore");
@@ -94,6 +94,7 @@ exports.reviewTeacherApplication = (0, https_1.onCall)(async (request) => {
             createdAt: now,
         });
     });
+    await db.collection("adminNotifications").doc(applicationId).set({ read: true, dismissed: true, reviewedAt: firestore_1.Timestamp.now() }, { merge: true });
     return { status: decision === "approve" ? "approved" : "rejected" };
 });
 exports.resubmitTeacherApplication = (0, https_1.onCall)(async (request) => {
@@ -243,6 +244,30 @@ exports.submitReport = (0, https_1.onCall)(async (request) => {
     });
     return { reportId: reportRef.id };
 });
+exports.notifyAdminsOfReport = (0, firestore_2.onDocumentCreated)("reports/{reportId}", async (event) => {
+    const report = event.data?.data();
+    const reportId = event.params.reportId;
+    if (!report)
+        return;
+    await db
+        .collection("adminNotifications")
+        .doc(`report-${reportId}`)
+        .set({
+        id: `report-${reportId}`,
+        type: "announcement",
+        publisherName: "DigiLearn",
+        publisherAvatar: "@/assets/images/panda.png",
+        message: "A new resource report needs review.",
+        resourceTitle: report.item?.name || "Reported resource",
+        itemId: reportId,
+        collection: "reports",
+        navigation: "/admin-reports",
+        adminKind: "report",
+        storage: "admin",
+        createdAt: firestore_1.FieldValue.serverTimestamp(),
+        read: false,
+    });
+});
 exports.listReports = (0, https_1.onCall)(async (request) => {
     await requireAdmin(request);
     const snapshot = await db
@@ -278,6 +303,9 @@ exports.updateReport = (0, https_1.onCall)(async (request) => {
         reviewedBy: adminId,
         reviewedAt: firestore_1.Timestamp.now(),
     });
+    if (status === "resolved" || status === "dismissed") {
+        await db.collection("adminNotifications").doc(`report-${reportId}`).set({ read: true, dismissed: true, reviewedAt: firestore_1.Timestamp.now() }, { merge: true });
+    }
     return { status };
 });
 exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentCreated)("teacherApplications/{applicationId}", async (event) => {
@@ -297,6 +325,7 @@ exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentCreated)("t
         resourceTitle: application.name || "Teacher application",
         itemId: applicationId,
         navigation: "/teacher-applications",
+        adminKind: "teacher-application",
         createdAt: firestore_1.FieldValue.serverTimestamp(),
         read: false,
     }, { merge: true });

@@ -22,6 +22,7 @@ export function NotificationCard({
   onMarkRead,
 }: NotificationCardProps) {
   const meta = NOTIFICATION_TYPE_META[notification.type];
+  const adminNotification = notification.storage === "admin";
   const resourceTitle = notification.resourceTitle?.trim();
   const previewImage = notification.previewImage?.trim();
   const [failedPreviewUrl, setFailedPreviewUrl] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export function NotificationCard({
     <View
       style={[
         styles.card,
+        adminNotification && styles.adminCard,
         notification.read ? styles.readCard : styles.unreadCard,
       ]}
     >
@@ -45,14 +47,24 @@ export function NotificationCard({
           pressed && styles.pressed,
         ]}
       >
-        <View style={styles.avatarWrap}>
-          <Image
-            source={resolveNotificationAvatarSource(
-              notification.publisherAvatar,
-            )}
-            style={styles.avatar}
-            contentFit="cover"
-          />
+        <View
+          style={[styles.avatarWrap, adminNotification && styles.adminAvatar]}
+        >
+          {adminNotification ? (
+            <MaterialCommunityIcons
+              name="shield-alert-outline"
+              size={22}
+              color="#B45309"
+            />
+          ) : (
+            <Image
+              source={resolveNotificationAvatarSource(
+                notification.publisherAvatar,
+              )}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+          )}
         </View>
 
         <View style={styles.content}>
@@ -93,11 +105,15 @@ export function NotificationCard({
               accessibilityLabel={`${meta.label} notification icon`}
               style={[
                 styles.typeIconWrap,
-                { backgroundColor: meta.background },
+                {
+                  backgroundColor: adminNotification
+                    ? "#B45309"
+                    : meta.background,
+                },
               ]}
             >
               <MaterialCommunityIcons
-                name={meta.icon as any}
+                name={adminNotification ? "flag" : (meta.icon as any)}
                 size={22}
                 color={colors.white}
               />
@@ -147,6 +163,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     borderColor: "#e0e0e0",
   },
+  adminCard: { borderLeftWidth: 4, borderLeftColor: "#B45309" },
   pressed: {
     opacity: 0.96,
   },
@@ -165,6 +182,11 @@ const styles = StyleSheet.create({
   avatar: {
     width: "100%",
     height: "100%",
+  },
+  adminAvatar: {
+    backgroundColor: "#FEF3C7",
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     flex: 1,

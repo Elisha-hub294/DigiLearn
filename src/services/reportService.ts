@@ -3,9 +3,12 @@ import {
   collection,
   doc,
   getDocs,
+  limit,
   orderBy,
   query,
+  QueryDocumentSnapshot,
   serverTimestamp,
+  startAfter,
   updateDoc,
 } from "firebase/firestore";
 import { auth, db } from "../../firebaseConfig";
@@ -41,13 +44,22 @@ export async function submitReport(payload: ReportPayload) {
   });
 }
 
-export async function listReports() {
+export async function listReports(cursor?: QueryDocumentSnapshot) {
+  const constraints = [
+    orderBy("createdAt", "desc"),
+    limit(25),
+    ...(cursor ? [startAfter(cursor)] : []),
+  ];
   const snapshot = await getDocs(
-    query(collection(db, "reports"), orderBy("createdAt", "desc")),
+    query(collection(db, "reports"), ...constraints),
   );
-  return snapshot.docs.map(
-    (report) => ({ id: report.id, ...report.data() }) as ReportRecord,
-  );
+  return {
+    reports: snapshot.docs.map(
+      (report) => ({ id: report.id, ...report.data() }) as ReportRecord,
+    ),
+    cursor: snapshot.docs.at(-1),
+    hasMore: snapshot.docs.length === 25,
+  };
 }
 
 export async function updateReport(
@@ -55,11 +67,18 @@ export async function updateReport(
   status: ReportRecord["status"],
   adminNotes: string,
 ) {
-  return updateDoc(doc(db, "reports", reportId), {
+  await updateDoc(doc(db, "reports", reportId), {
     status,
     adminNotes,
     reviewedAt: serverTimestamp(),
   });
+  if (status === "resolved" || status === "dismissed") {
+    await updateDoc(doc(db, "adminNotifications", `report-${reportId}`), {
+      read: true,
+      dismissed: true,
+      reviewedAt: serverTimestamp(),
+    });
+  }
 }
 
 export function getReportErrorMessage(error: unknown) {

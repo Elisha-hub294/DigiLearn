@@ -32,7 +32,8 @@ import {
 export default function NotificationsScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { user, notifications, loading, error, markRead } = useNotifications();
+  const { user, notifications, loading, error, markRead, markAllRead } =
+    useNotifications();
   const [unavailableDialog, setUnavailableDialog] = useState<{
     visible: boolean;
     notificationId: string | null;
@@ -97,6 +98,11 @@ export default function NotificationsScreen() {
 
       if (notification.storage === "admin") {
         try {
+          if (notification.adminKind === "report") {
+            router.push("/admin-reports" as never);
+            if (user && !notification.read) await markRead(notification.id);
+            return;
+          }
           const snapshot = await getDoc(
             doc(db, "teacherApplications", notification.itemId),
           );
@@ -387,6 +393,15 @@ export default function NotificationsScreen() {
               <Icon name="arrow-left" size={22} color={colors.dark} />
             </Pressable>
             <Text style={styles.title}>Notifications</Text>
+            {notifications.some((notification) => !notification.read) ? (
+              <Pressable
+                onPress={() => void markAllRead()}
+                accessibilityLabel="Mark all notifications as read"
+                style={styles.markAllButton}
+              >
+                <Text style={styles.markAllText}>Mark all read</Text>
+              </Pressable>
+            ) : null}
           </View>
 
           {loading ? (
@@ -487,6 +502,12 @@ const styles = StyleSheet.create({
     color: colors.dark,
     letterSpacing: -0.6,
   },
+  markAllButton: {
+    marginLeft: "auto",
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+  },
+  markAllText: { color: colors.primary, fontSize: 12, fontWeight: "700" },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",

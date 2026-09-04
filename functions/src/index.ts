@@ -122,6 +122,14 @@ export const reviewTeacherApplication = onCall(async (request) => {
     });
   });
 
+  await db
+    .collection("adminNotifications")
+    .doc(applicationId)
+    .set(
+      { read: true, dismissed: true, reviewedAt: Timestamp.now() },
+      { merge: true },
+    );
+
   return { status: decision === "approve" ? "approved" : "rejected" };
 });
 
@@ -322,6 +330,33 @@ export const submitReport = onCall(async (request) => {
   return { reportId: reportRef.id };
 });
 
+export const notifyAdminsOfReport = onDocumentCreated(
+  "reports/{reportId}",
+  async (event) => {
+    const report = event.data?.data();
+    const reportId = event.params.reportId;
+    if (!report) return;
+    await db
+      .collection("adminNotifications")
+      .doc(`report-${reportId}`)
+      .set({
+        id: `report-${reportId}`,
+        type: "announcement",
+        publisherName: "DigiLearn",
+        publisherAvatar: "@/assets/images/panda.png",
+        message: "A new resource report needs review.",
+        resourceTitle: report.item?.name || "Reported resource",
+        itemId: reportId,
+        collection: "reports",
+        navigation: "/admin-reports",
+        adminKind: "report",
+        storage: "admin",
+        createdAt: FieldValue.serverTimestamp(),
+        read: false,
+      });
+  },
+);
+
 export const listReports = onCall(async (request) => {
   await requireAdmin(request);
   const snapshot = await db
@@ -369,6 +404,15 @@ export const updateReport = onCall(async (request) => {
     reviewedBy: adminId,
     reviewedAt: Timestamp.now(),
   });
+  if (status === "resolved" || status === "dismissed") {
+    await db
+      .collection("adminNotifications")
+      .doc(`report-${reportId}`)
+      .set(
+        { read: true, dismissed: true, reviewedAt: Timestamp.now() },
+        { merge: true },
+      );
+  }
   return { status };
 });
 
@@ -391,6 +435,7 @@ export const notifyAdminsOfTeacherApplication = onDocumentCreated(
           resourceTitle: application.name || "Teacher application",
           itemId: applicationId,
           navigation: "/teacher-applications",
+          adminKind: "teacher-application",
           createdAt: FieldValue.serverTimestamp(),
           read: false,
         },

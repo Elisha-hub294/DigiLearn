@@ -1,10 +1,11 @@
 import { onAuthStateChanged, User } from "firebase/auth";
-import { collection, doc, onSnapshot } from "firebase/firestore";
+import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { auth, db } from "../../firebaseConfig";
 import { useProfile } from "../contexts/ProfileContext";
 import {
   deleteNotification,
+  markAllUserNotificationsAsRead,
   markNotificationAsRead,
   normalizeNotification,
   NotificationRecord,
@@ -91,11 +92,36 @@ export function useNotifications() {
   const markRead = useCallback(
     async (notificationId: string) => {
       if (!user) return false;
+      const adminNotification = notifications.find(
+        (notification) =>
+          notification.id === notificationId &&
+          notification.storage === "admin",
+      );
+      if (adminNotification) {
+        await updateDoc(doc(db, "adminNotifications", notificationId), {
+          read: true,
+        });
+        return true;
+      }
       const updated = await markNotificationAsRead(user.uid, notificationId);
       return updated;
     },
     [user],
   );
+
+  const markAllRead = useCallback(async () => {
+    if (!user) return false;
+    await markAllUserNotificationsAsRead(user.uid);
+    const adminItems = notifications.filter(
+      (item) => item.storage === "admin" && !item.read,
+    );
+    await Promise.all(
+      adminItems.map((item) =>
+        updateDoc(doc(db, "adminNotifications", item.id), { read: true }),
+      ),
+    );
+    return true;
+  }, [notifications, user]);
 
   const deleteNotif = useCallback(
     async (notificationId: string) => {
@@ -114,6 +140,7 @@ export function useNotifications() {
     unreadCount,
     hasUnread: unreadCount > 0,
     markRead,
+    markAllRead,
     deleteNotif,
   };
 }

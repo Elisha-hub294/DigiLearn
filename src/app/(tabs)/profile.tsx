@@ -18,6 +18,7 @@ import { SavedResources } from "../../components/profile/SavedResources";
 import { UserInfoCard } from "../../components/profile/UserInfoCard";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useAdminReviewSignals } from "../../hooks/useAdminReviewSignals";
 const paddingFor = (width: number) =>
   width >= 1200
     ? 150
@@ -42,6 +43,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, profile, loading, error, refresh } = useProfile();
+  const { newReportCount, pendingApplicationCount } = useAdminReviewSignals();
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -118,15 +120,25 @@ export default function ProfileScreen() {
                   style={s.reviewLink}
                   onPress={() => router.push("/teacher-applications" as never)}
                 >
-                  <Text style={s.reviewLinkText}>
-                    Review teacher applications
-                  </Text>
+                  <View style={s.reviewLinkContent}>
+                    <Text style={s.reviewLinkText}>
+                      Review teacher applications
+                    </Text>
+                    {pendingApplicationCount > 0 ? (
+                      <View style={s.alertDot} />
+                    ) : null}
+                  </View>
                 </Pressable>
                 <Pressable
                   style={s.reviewLink}
                   onPress={() => router.push("/admin-reports" as never)}
                 >
-                  <Text style={s.reviewLinkText}>Review resource reports</Text>
+                  <View style={s.reviewLinkContent}>
+                    <Text style={s.reviewLinkText}>
+                      Review resource reports
+                    </Text>
+                    {newReportCount > 0 ? <View style={s.alertDot} /> : null}
+                  </View>
                 </Pressable>
               </>
             )}
@@ -199,4 +211,11 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   reviewLinkText: { color: colors.primary, fontWeight: "700" },
+  reviewLinkContent: { flexDirection: "row", alignItems: "center", gap: 8 },
+  alertDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: "#DC2626",
+  },
 });
