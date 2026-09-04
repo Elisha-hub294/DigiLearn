@@ -1,6 +1,7 @@
 import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import { db } from "../../firebaseConfig";
+import { readThroughFirestoreCache } from "../services/firestoreReadCache";
 import {
   LOCAL_CACHE_KEYS,
   readLocalCache,
@@ -26,24 +27,21 @@ type LibrarySnapshots = [
   Awaited<ReturnType<typeof getDocs>>,
 ];
 
-let libraryFetchPromise: Promise<LibrarySnapshots> | null = null;
+function fetchLibrarySnapshots(force = false): Promise<LibrarySnapshots> {
+  const readCollection = (name: string) =>
+    readThroughFirestoreCache(
+      `collection:${name}`,
+      () => getDocs(collection(db, name)),
+      { force },
+    );
 
-function fetchLibrarySnapshots(): Promise<LibrarySnapshots> {
-  if (libraryFetchPromise) return libraryFetchPromise;
-  libraryFetchPromise = Promise.all([
-    getDocs(collection(db, "books")),
-    getDocs(collection(db, "promotionalBanner")),
-    getDocs(collection(db, "pastPaper")),
-    getDocs(collection(db, "teachers")),
-    getDocs(collection(db, "default")),
+  return Promise.all([
+    readCollection("books"),
+    readCollection("promotionalBanner"),
+    readCollection("pastPaper"),
+    readCollection("teachers"),
+    readCollection("default"),
   ]) as Promise<LibrarySnapshots>;
-  libraryFetchPromise.then(undefined, () => {
-    libraryFetchPromise = null;
-  });
-  libraryFetchPromise.then(() => {
-    libraryFetchPromise = null;
-  });
-  return libraryFetchPromise;
 }
 
 type ImageSource = string;
@@ -246,7 +244,7 @@ export function useLibraryData() {
         papersSnapshot,
         teachersSnapshot,
         defaultSnapshot,
-      ] = await fetchLibrarySnapshots();
+      ] = await fetchLibrarySnapshots(force);
 
       let defaultUserAvatar = "";
       defaultSnapshot.docs.forEach((doc) => {

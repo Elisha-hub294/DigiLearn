@@ -5,6 +5,7 @@ import {
   readLocalCache,
   writeLocalCache,
 } from "../utils/localCache";
+import { readThroughFirestoreCache } from "./firestoreReadCache";
 
 const CACHE_VERSION = 1;
 const CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
@@ -34,7 +35,11 @@ export async function loadBooks(force = false): Promise<BookRecord[]> {
   }
   if (inFlight) return inFlight;
 
-  inFlight = getDocs(collection(db, "books"))
+  inFlight = readThroughFirestoreCache(
+    "collection:books",
+    () => getDocs(collection(db, "books")),
+    { force },
+  )
     .then((snapshot) =>
       snapshot.docs.map((doc, index) => {
         const data = doc.data() as Record<string, unknown>;

@@ -5,6 +5,7 @@ import {
   readLocalCache,
   writeLocalCache,
 } from "../utils/localCache";
+import { readThroughFirestoreCache } from "./firestoreReadCache";
 
 const CACHE_KEY = LOCAL_CACHE_KEYS.subjects;
 const CACHE_VERSION = 1;
@@ -28,7 +29,11 @@ export async function loadSubjects(force = false): Promise<SubjectRecord[]> {
   }
   if (inFlight) return inFlight;
 
-  inFlight = getDocs(collection(db, "subject"))
+  inFlight = readThroughFirestoreCache(
+    "collection:subject",
+    () => getDocs(collection(db, "subject")),
+    { force },
+  )
     .then((snapshot) => {
       const seen = new Set<string>();
       return snapshot.docs.reduce<SubjectRecord[]>((subjects, doc) => {

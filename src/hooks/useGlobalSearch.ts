@@ -3,6 +3,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { db } from "../../firebaseConfig";
 import { DEFAULT_SUBJECT_AVATAR } from "../components/page/pageTypes";
+import { readThroughFirestoreCache } from "../services/firestoreReadCache";
 import { loadSubjects } from "../services/subjectsService";
 import { loadTrendingLessons } from "../services/trendingLessonsService";
 import {
@@ -237,10 +238,18 @@ export function useGlobalSearch(
           subjectsSnap,
           trendingLessons,
         ] = await Promise.all([
-          getDocs(collection(db, "pages")),
-          getDocs(collection(db, "pastPaper")),
-          getDocs(collection(db, "books")),
-          getDocs(collection(db, "teachers")),
+          readThroughFirestoreCache("collection:pages", () =>
+            getDocs(collection(db, "pages")),
+          ),
+          readThroughFirestoreCache("collection:pastPaper", () =>
+            getDocs(collection(db, "pastPaper")),
+          ),
+          readThroughFirestoreCache("collection:books", () =>
+            getDocs(collection(db, "books")),
+          ),
+          readThroughFirestoreCache("collection:teachers", () =>
+            getDocs(collection(db, "teachers")),
+          ),
           loadSubjects(),
           loadTrendingLessons(),
         ]);

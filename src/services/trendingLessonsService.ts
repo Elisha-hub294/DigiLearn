@@ -6,6 +6,7 @@ import {
   writeLocalCache,
 } from "../utils/localCache";
 import { getVideoThumbnailUrl } from "../utils/videoUtils";
+import { readThroughFirestoreCache } from "./firestoreReadCache";
 
 const CACHE_KEY = LOCAL_CACHE_KEYS.trending;
 const CACHE_VERSION = 1;
@@ -81,7 +82,11 @@ export async function loadTrendingLessons(
   }
   if (inFlight) return inFlight;
 
-  inFlight = getDocs(collection(db, "trendingLessons"))
+  inFlight = readThroughFirestoreCache(
+    "collection:trendingLessons",
+    () => getDocs(collection(db, "trendingLessons")),
+    { ttlMs: CACHE_MAX_AGE_MS, force },
+  )
     .then((snapshot) =>
       snapshot.docs.map((doc, index) =>
         normalizeLesson(doc.data(), doc.id, index),
