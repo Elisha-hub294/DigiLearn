@@ -63,16 +63,6 @@ You'll see a QR code. Here's how to run it:
 - **On Android emulator**: Press `a`
 - **On iOS simulator**: Press `i`
 
-### Report Review
-
-Reports are stored in Firestore and reviewed by admins in the Resource Reports
-screen. Deploy the Firestore rules once so authenticated report submission and
-admin review access are available:
-
-```bash
-npx firebase-tools deploy --only firestore:rules
-```
-
 ## What You'll Find Inside
 
 ### Authentication
@@ -144,7 +134,7 @@ src/
 
 ## Need Help?
 
-Reach out to me directly at **elishabagalw@gmail.com**. I'm happy to help with:
+Reach out to me directly at **elishabagalwa.dev@gmail.com**. I'm happy to help with:
 
 - Sending you the Firebase credentials
 - Debugging any setup issues
