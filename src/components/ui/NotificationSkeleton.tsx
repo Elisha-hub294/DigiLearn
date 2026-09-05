@@ -1,31 +1,11 @@
-import { memo, useEffect, useRef } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import { memo } from "react";
+import { StyleSheet, View } from "react-native";
 import { spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
+import { Skeleton } from "./Skeleton";
 
 export const NotificationSkeleton = memo(() => {
   const { colors } = useTheme();
-  const pulse = useRef(new Animated.Value(0.35)).current;
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0.35,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-
-    animation.start();
-    return () => animation.stop();
-  }, [pulse]);
 
   return (
     <View style={styles.wrapper}>
@@ -40,34 +20,12 @@ export const NotificationSkeleton = memo(() => {
             },
           ]}
         >
-          <Animated.View
-            style={[
-              styles.avatar,
-              { backgroundColor: colors.border, opacity: pulse },
-            ]}
-          />
+          <Skeleton style={styles.avatar} />
           <View style={styles.content}>
-            <Animated.View
-              style={[
-                styles.line,
-                styles.lineShort,
-                { backgroundColor: colors.border, opacity: pulse },
-              ]}
-            />
-            <Animated.View
-              style={[
-                styles.line,
-                styles.lineLong,
-                { backgroundColor: colors.border, opacity: pulse },
-              ]}
-            />
+            <Skeleton style={[styles.line, styles.lineShort]} />
+            <Skeleton style={[styles.line, styles.lineLong]} />
           </View>
-          <Animated.View
-            style={[
-              styles.icon,
-              { backgroundColor: colors.border, opacity: pulse },
-            ]}
-          />
+          <Skeleton style={styles.icon} />
         </View>
       ))}
     </View>

@@ -17,6 +17,7 @@ import { ProfileHeader } from "../../components/profile/ProfileHeader";
 import { PublishButton } from "../../components/profile/PublishButton";
 import { SavedResources } from "../../components/profile/SavedResources";
 import { UserInfoCard } from "../../components/profile/UserInfoCard";
+import { Skeleton as UiSkeleton } from "../../components/ui/Skeleton";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -32,19 +33,27 @@ const paddingFor = (width: number) =>
           ? 5
           : 3;
 function Skeleton() {
-  const { colors: themeColors } = useTheme();
   return (
     <View style={s.skeleton}>
-      <View style={[s.skeletonHero, { backgroundColor: themeColors.border }]} />
-      <View
-        style={[s.skeletonBlock, { backgroundColor: themeColors.border }]}
-      />
-      <View
-        style={[s.skeletonBlock, { backgroundColor: themeColors.border }]}
-      />
-      <View
-        style={[s.skeletonBlock, { backgroundColor: themeColors.border }]}
-      />
+      <UiSkeleton style={s.skeletonHero} />
+      <View style={s.skeletonIdentity}>
+        <UiSkeleton style={s.skeletonAvatar} />
+        <View style={s.skeletonIdentityCopy}>
+          <UiSkeleton style={s.skeletonName} />
+          <UiSkeleton style={s.skeletonBio} />
+        </View>
+      </View>
+      <View style={s.skeletonResourceList}>
+        {[0, 1, 2].map((item) => (
+          <View key={item} style={s.skeletonResource}>
+            <UiSkeleton style={s.skeletonResourceIcon} />
+            <View style={s.skeletonResourceCopy}>
+              <UiSkeleton style={s.skeletonResourceTitle} />
+              <UiSkeleton style={s.skeletonResourceLine} />
+            </View>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -244,7 +253,22 @@ const s = StyleSheet.create({
   sections: { gap: 20 },
   skeleton: { gap: 20 },
   skeletonHero: { height: 280, borderRadius: 24 },
-  skeletonBlock: { height: 130, borderRadius: 18 },
+  skeletonIdentity: { flexDirection: "row", alignItems: "center", gap: 14 },
+  skeletonAvatar: { width: 64, height: 64, borderRadius: 32 },
+  skeletonIdentityCopy: { flex: 1, gap: 9 },
+  skeletonName: { width: "58%", height: 17 },
+  skeletonBio: { width: "82%", height: 12 },
+  skeletonResourceList: { gap: 12 },
+  skeletonResource: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    minHeight: 76,
+  },
+  skeletonResourceIcon: { width: 52, height: 52, borderRadius: 12 },
+  skeletonResourceCopy: { flex: 1, gap: 8 },
+  skeletonResourceTitle: { width: "66%", height: 14 },
+  skeletonResourceLine: { width: "44%", height: 11 },
   error: { padding: 28, alignItems: "center" },
   errorTitle: { fontWeight: "700", fontSize: 17 },
   errorCopy: { marginTop: 8, textAlign: "center" },

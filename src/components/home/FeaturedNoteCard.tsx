@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
   Pressable,
-  Animated as RNAnimated,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -14,7 +13,7 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
-import { colors, radius, spacing } from "../../constants/theme";
+import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
@@ -39,6 +38,7 @@ import { ActionDialog } from "../ui/ActionDialog";
 import { CardActionMenu } from "../ui/CardActionMenu";
 import { FirebaseImage } from "../ui/FirebaseImage";
 import { ReportDialog } from "../ui/ReportDialog";
+import { Skeleton } from "../ui/Skeleton";
 
 type TopicalNote = {
   id: string;
@@ -303,26 +303,6 @@ export const FeaturedNoteCard = ({
 
 const SkeletonNoteCard = ({ isWide }: { isWide: boolean }) => {
   const { colors: themeColors } = useTheme();
-  const [pulseAnim] = useState(() => new RNAnimated.Value(0.3));
-
-  useEffect(() => {
-    const pulse = RNAnimated.loop(
-      RNAnimated.sequence([
-        RNAnimated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        RNAnimated.timing(pulseAnim, {
-          toValue: 0.3,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    pulse.start();
-    return () => pulse.stop();
-  }, [pulseAnim]);
 
   return (
     <View style={[styles.itemWrapper, isWide && styles.itemWrapperWide]}>
@@ -335,45 +315,17 @@ const SkeletonNoteCard = ({ isWide }: { isWide: boolean }) => {
           },
         ]}
       >
-        <RNAnimated.View
-          style={[
-            styles.previewWrap,
-            styles.skeletonBox,
-            { backgroundColor: themeColors.border },
-            styles.skeletonPreview,
-            { opacity: pulseAnim },
-          ]}
-        />
+        <Skeleton style={[styles.previewWrap, styles.skeletonPreview]} />
         <View style={styles.content}>
-          <RNAnimated.View
-            style={[styles.skeletonBox, { opacity: pulseAnim }]}
-          />
           <View style={styles.contentData}>
-            <RNAnimated.View
-              style={[
-                styles.skeletonBox,
-                { backgroundColor: themeColors.border },
-                styles.skeletonTitle,
-                { opacity: pulseAnim },
-              ]}
-            />
-            <RNAnimated.View
-              style={[
-                styles.skeletonBox,
-                { backgroundColor: themeColors.lightBackground },
-                styles.skeletonDesc,
-                { opacity: pulseAnim },
-              ]}
-            />
-            <RNAnimated.View
-              style={[
-                styles.skeletonBox,
-                { backgroundColor: themeColors.lightBackground },
-                styles.skeletonDescShort,
-                { opacity: pulseAnim },
-              ]}
-            />
+            <Skeleton style={styles.skeletonTitle} />
+            <Skeleton style={styles.skeletonDesc} />
+            <Skeleton style={styles.skeletonDescShort} />
           </View>
+        </View>
+        <View style={styles.actions}>
+          <Skeleton style={styles.skeletonAction} />
+          <Skeleton style={styles.skeletonAction} />
         </View>
       </View>
     </View>
@@ -920,13 +872,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
-  skeletonBox: {
-    backgroundColor: "#EFEFEF",
-    borderRadius: radius.sm,
-    overflow: "hidden",
-  },
-  skeletonPreview: { height: 250, marginBottom: spacing.sm },
+  skeletonPreview: { height: 320, marginBottom: spacing.sm },
   skeletonTitle: { height: 16, width: "60%", marginBottom: 8 },
   skeletonDesc: { height: 12, width: "90%", marginBottom: 6 },
   skeletonDescShort: { height: 12, width: "40%" },
+  skeletonAction: { width: 28, height: 28, borderRadius: 14 },
 });

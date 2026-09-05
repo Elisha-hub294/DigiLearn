@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { db } from "../../firebaseConfig";
 import { NotifyToggle } from "../components/library/add-item/SharedFormControls";
+import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
@@ -261,9 +262,13 @@ export default function PreferencesScreen() {
               <AuthPrompt />
             ) : isLoading ? (
               <View style={styles.skeleton}>
-                <View style={styles.skeletonText} />
-                <View style={styles.skeletonHeading} />
-                <View style={styles.skeletonChips} />
+                <Skeleton style={styles.skeletonText} />
+                <Skeleton style={styles.skeletonHeading} />
+                <View style={styles.skeletonChips}>
+                  {[0, 1, 2, 3, 4].map((item) => (
+                    <Skeleton key={item} style={styles.skeletonChip} />
+                  ))}
+                </View>
               </View>
             ) : loadError ? (
               <View style={styles.error}>
@@ -456,10 +461,14 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
   skeletonChips: {
-    height: 95,
-    width: "100%",
-    borderRadius: 10,
-    backgroundColor: "#EDF2F8",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  skeletonChip: {
+    width: 78,
+    height: 34,
+    borderRadius: 999,
   },
   error: { paddingTop: 80, alignItems: "center" },
   errorTitle: { fontSize: 17, fontWeight: "700", color: "#111" },

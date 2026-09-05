@@ -21,6 +21,7 @@ import {
 import { auth, db } from "../../firebaseConfig";
 import { NotifyToggle } from "../components/library/add-item/SharedFormControls";
 import { ActionDialog } from "../components/ui/ActionDialog";
+import { Skeleton } from "../components/ui/Skeleton";
 import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
@@ -338,11 +339,15 @@ export default function AccountQuickSettingsScreen() {
 
             {isLoading ? (
               <View style={styles.skeletonWrap}>
-                <View style={styles.skeletonLine} />
-                <View style={styles.skeletonLineShort} />
-                <View style={styles.skeletonField} />
-                <View style={styles.skeletonField} />
-                <View style={styles.skeletonChips} />
+                <Skeleton style={styles.skeletonLine} />
+                <Skeleton style={styles.skeletonLineShort} />
+                <Skeleton style={styles.skeletonField} />
+                <Skeleton style={styles.skeletonField} />
+                <View style={styles.skeletonChips}>
+                  {[0, 1, 2, 3, 4].map((item) => (
+                    <Skeleton key={item} style={styles.skeletonChip} />
+                  ))}
+                </View>
               </View>
             ) : loadError ? (
               <View style={styles.errorState}>
@@ -824,26 +829,27 @@ const styles = StyleSheet.create({
   skeletonLine: {
     height: 18,
     width: "35%",
-    backgroundColor: "#E9EEF5",
     borderRadius: 8,
   },
   skeletonLineShort: {
     height: 18,
     width: "52%",
-    backgroundColor: "#E9EEF5",
     borderRadius: 8,
   },
   skeletonField: {
     height: 48,
     width: "100%",
-    backgroundColor: "#E9EEF5",
     borderRadius: 10,
   },
   skeletonChips: {
-    height: 90,
-    width: "100%",
-    backgroundColor: "#E9EEF5",
-    borderRadius: 10,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  skeletonChip: {
+    width: 76,
+    height: 34,
+    borderRadius: 999,
   },
   toggleCard: {
     flexDirection: "row",

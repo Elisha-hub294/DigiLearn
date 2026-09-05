@@ -1,30 +1,10 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, View } from "react-native";
+import React from "react";
+import { StyleSheet, View } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
+import { Skeleton } from "./Skeleton";
 
 export const ActivitySkeleton: React.FC = () => {
   const { colors } = useTheme();
-  const animatedValue = useRef(new Animated.Value(0.3)).current;
-
-  useEffect(() => {
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(animatedValue, {
-          toValue: 0.8,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-        Animated.timing(animatedValue, {
-          toValue: 0.3,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    pulse.start();
-    return () => pulse.stop();
-  }, [animatedValue]);
-
   return (
     <View style={styles.container}>
       {[1, 2, 3, 4, 5].map((key) => (
@@ -35,43 +15,12 @@ export const ActivitySkeleton: React.FC = () => {
             { backgroundColor: colors.white, borderColor: colors.border },
           ]}
         >
-          <Animated.View
-            style={[
-              styles.leftPanelSkeleton,
-              { backgroundColor: colors.border, opacity: animatedValue },
-            ]}
-          />
+          <Skeleton style={styles.leftPanelSkeleton} />
           <View style={styles.infoSkeleton}>
-            <Animated.View
-              style={[
-                styles.titleLine,
-                { backgroundColor: colors.border, opacity: animatedValue },
-              ]}
-            />
-            <Animated.View
-              style={[
-                styles.descLine1,
-                {
-                  backgroundColor: colors.lightBackground,
-                  opacity: animatedValue,
-                },
-              ]}
-            />
-            <Animated.View
-              style={[
-                styles.descLine2,
-                {
-                  backgroundColor: colors.lightBackground,
-                  opacity: animatedValue,
-                },
-              ]}
-            />
-            <Animated.View
-              style={[
-                styles.dateLine,
-                { backgroundColor: colors.border, opacity: animatedValue },
-              ]}
-            />
+            <Skeleton style={styles.titleLine} />
+            <Skeleton style={styles.descLine1} />
+            <Skeleton style={styles.descLine2} />
+            <Skeleton style={styles.dateLine} />
           </View>
         </View>
       ))}

@@ -21,6 +21,7 @@ import { PaperCarousel } from "../../components/library/PaperCarousel";
 import { Header } from "../../components/ui/Header";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { SectionHeader } from "../../components/ui/SectionHeader";
+import { Skeleton } from "../../components/ui/Skeleton";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
@@ -228,11 +229,23 @@ export default function LibraryScreen() {
             { paddingHorizontal: horizontalPadding, maxWidth: contentMaxWidth },
           ]}
         >
-          <View style={styles.skeletonHeader} />
-          <View style={styles.skeletonSearch} />
-          <View style={styles.skeletonHero} />
-          <View style={styles.skeletonRow} />
-          <View style={styles.skeletonGrid} />
+          <Skeleton style={styles.skeletonHeader} />
+          <Skeleton style={styles.skeletonSearch} />
+          <Skeleton style={styles.skeletonHero} />
+          <View style={styles.skeletonCategoryRow}>
+            {[0, 1, 2, 3].map((item) => (
+              <Skeleton key={item} style={styles.skeletonCategory} />
+            ))}
+          </View>
+          <View style={styles.skeletonCards}>
+            {[0, 1, 2].map((item) => (
+              <View key={item} style={styles.skeletonCard}>
+                <Skeleton style={styles.skeletonCardImage} />
+                <Skeleton style={styles.skeletonCardTitle} />
+                <Skeleton style={styles.skeletonCardLine} />
+              </View>
+            ))}
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -514,16 +527,34 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6",
     marginBottom: spacing.xl,
   },
-  skeletonRow: {
-    height: 36,
-    borderRadius: radius.pill,
-    backgroundColor: "#F3F4F6",
+  skeletonCategoryRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
     marginBottom: spacing.md,
   },
-  skeletonGrid: {
+  skeletonCategory: {
+    width: 72,
+    height: 36,
+    borderRadius: radius.pill,
+  },
+  skeletonCards: {
+    gap: spacing.md,
+  },
+  skeletonCard: {
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  skeletonCardImage: {
+    width: "100%",
     height: 140,
     borderRadius: radius.xl,
-    backgroundColor: "#F3F4F6",
-    marginBottom: spacing.md,
+  },
+  skeletonCardTitle: {
+    width: "68%",
+    height: 16,
+  },
+  skeletonCardLine: {
+    width: "42%",
+    height: 12,
   },
 });

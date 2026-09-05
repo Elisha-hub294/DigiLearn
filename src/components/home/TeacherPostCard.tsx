@@ -10,7 +10,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  Animated as RNAnimated,
   StyleSheet,
   Text,
   TextStyle,
@@ -31,6 +30,7 @@ import {
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
 import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
+import { Skeleton } from "../ui/Skeleton";
 
 export type TeacherPost = {
   id: string;
@@ -628,26 +628,6 @@ const TeacherPostItem = ({
 
 const SkeletonTeacherPostCard = () => {
   const { colors } = useTheme();
-  const [pulseAnim] = useState(() => new RNAnimated.Value(0.3));
-
-  useEffect(() => {
-    const pulse = RNAnimated.loop(
-      RNAnimated.sequence([
-        RNAnimated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        RNAnimated.timing(pulseAnim, {
-          toValue: 0.3,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    pulse.start();
-    return () => pulse.stop();
-  }, [pulseAnim]);
 
   return (
     <View
@@ -656,82 +636,24 @@ const SkeletonTeacherPostCard = () => {
         { backgroundColor: colors.white, marginBottom: spacing.xl },
       ]}
     >
-      <RNAnimated.View
-        style={[
-          styles.skeletonBox,
-          { backgroundColor: colors.border },
-          styles.skeletonPreview,
-          { opacity: pulseAnim },
-        ]}
-      />
-
       <View style={styles.header}>
         <View style={styles.profileRow}>
-          <RNAnimated.View
-            style={[
-              styles.skeletonBox,
-              { backgroundColor: colors.border },
-              styles.skeletonAvatar,
-              { opacity: pulseAnim },
-            ]}
-          />
+          <Skeleton style={styles.skeletonAvatar} />
           <View style={{ flex: 1 }}>
-            <RNAnimated.View
-              style={[
-                styles.skeletonBox,
-                { backgroundColor: colors.border },
-                styles.skeletonName,
-                { opacity: pulseAnim },
-              ]}
-            />
-            <RNAnimated.View
-              style={[
-                styles.skeletonBox,
-                { backgroundColor: colors.border },
-                styles.skeletonTime,
-                { opacity: pulseAnim },
-              ]}
-            />
+            <Skeleton style={styles.skeletonName} />
+            <Skeleton style={styles.skeletonTime} />
           </View>
         </View>
-        <RNAnimated.View
-          style={[
-            styles.skeletonBox,
-            { backgroundColor: colors.border },
-            styles.skeletonBadge,
-            { opacity: pulseAnim },
-          ]}
-        />
       </View>
 
-      <RNAnimated.View
-        style={[
-          styles.skeletonBox,
-          { backgroundColor: colors.border },
-          styles.skeletonCaption,
-          { opacity: pulseAnim },
-        ]}
-      />
-      <RNAnimated.View
-        style={[
-          styles.skeletonBox,
-          { backgroundColor: colors.border },
-          styles.skeletonCaptionShort,
-          { opacity: pulseAnim },
-        ]}
-      />
+      <Skeleton style={styles.skeletonTitle} />
+      <Skeleton style={styles.skeletonCaption} />
+      <Skeleton style={styles.skeletonCaptionShort} />
+      <Skeleton style={styles.skeletonPreview} />
 
       <View style={styles.actions}>
         {[0, 1, 2].map((i) => (
-          <RNAnimated.View
-            key={i}
-            style={[
-              styles.skeletonBox,
-              { backgroundColor: colors.border },
-              styles.skeletonAction,
-              { opacity: pulseAnim },
-            ]}
-          />
+          <Skeleton key={i} style={styles.skeletonAction} />
         ))}
       </View>
     </View>
@@ -852,12 +774,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   actionLabel: { fontSize: 12, fontWeight: "500" },
-  skeletonBox: { borderRadius: radius.sm },
   skeletonPreview: {
-    height: 250,
-    marginBottom: spacing.xs,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
+    height: 180,
+    marginBottom: spacing.md,
+    borderRadius: 18,
   },
   skeletonAvatar: {
     width: 44,
@@ -865,9 +785,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     marginRight: spacing.sm,
   },
+  skeletonTitle: { height: 17, width: "72%", marginBottom: 6 },
   skeletonName: { height: 14, width: "45%", marginBottom: 6 },
   skeletonTime: { height: 11, width: "28%" },
-  skeletonBadge: { height: 28, width: 64, borderRadius: radius.pill },
   skeletonCaption: { height: 13, width: "90%", marginBottom: 6 },
   skeletonCaptionShort: { height: 13, width: "60%", marginBottom: spacing.sm },
   skeletonAction: { height: 34, width: 70, borderRadius: 999 },

@@ -24,6 +24,7 @@ import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import PdfPreview from "../home/PdfPreview";
 import { ActionDialog } from "../ui/ActionDialog";
+import { Skeleton } from "../ui/Skeleton";
 import { AdminPublishHeader } from "./AdminPublishHeader";
 import { BannerFormSection } from "./add-item/BannerFormSection";
 import { BookFormSection } from "./add-item/BookFormSection";
@@ -1699,9 +1700,27 @@ export function AddItemModal({
                 </Text>
                 <View style={styles.ownedBooksSection}>
                   {ownedBooksLoading ? (
-                    <Text style={styles.ownedBooksMessage}>
-                      Loading your books...
-                    </Text>
+                    <View style={styles.ownedBooksList}>
+                      {[0, 1].map((index) => (
+                        <View
+                          key={index}
+                          style={[
+                            styles.ownedBookItem,
+                            {
+                              backgroundColor: themeColors.white,
+                              borderColor: themeColors.border,
+                            },
+                          ]}
+                        >
+                          <Skeleton style={styles.ownedBookCover} />
+                          <View style={styles.ownedBookLoadingCopy}>
+                            <Skeleton style={styles.ownedBookLoadingTitle} />
+                            <Skeleton style={styles.ownedBookLoadingSubtitle} />
+                          </View>
+                          <Skeleton style={styles.ownedBookLoadingIcon} />
+                        </View>
+                      ))}
+                    </View>
                   ) : ownedBooks.length > 0 ? (
                     <View style={styles.ownedBooksList}>
                       {ownedBooks.map((book) => {
@@ -2858,6 +2877,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     lineHeight: 19,
+  },
+  ownedBookLoadingCopy: {
+    flex: 1,
+    gap: 7,
+  },
+  ownedBookLoadingTitle: {
+    width: "76%",
+    height: 13,
+  },
+  ownedBookLoadingSubtitle: {
+    width: "48%",
+    height: 10,
+  },
+  ownedBookLoadingIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   },
   ownedBooksMessage: {
     color: colors.subtitle,
