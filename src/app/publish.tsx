@@ -93,12 +93,20 @@ export default function PublishScreen() {
             accessibilityLabel="Go back"
             hitSlop={8}
             onPress={() => router.back()}
-            style={styles.backButton}
+            style={[
+              styles.backButton,
+              {
+                backgroundColor: themeColors.white,
+                borderColor: themeColors.border,
+              },
+            ]}
           >
-            <Icon name="arrow-left" size={21} color={colors.text} />
+            <Icon name="arrow-left" size={21} color={themeColors.dark} />
           </Pressable>
           <View>
-            <Text style={styles.title}>Post on DigiLearn</Text>
+            <Text style={[styles.title, { color: themeColors.dark }]}>
+              Post on DigiLearn
+            </Text>
           </View>
         </View>
 
@@ -122,7 +130,15 @@ export default function PublishScreen() {
           </View>
         </LinearGradient>
 
-        <View style={styles.list}>
+        <View
+          style={[
+            styles.list,
+            {
+              backgroundColor: themeColors.white,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
           {publishOptions.map((option, index) => (
             <Pressable
               key={option.route}
@@ -131,8 +147,16 @@ export default function PublishScreen() {
               onPress={() => openComposer(option.route)}
               style={({ pressed, hovered }) => [
                 styles.option,
+                { borderLeftColor: "transparent" },
+                index < publishOptions.length - 1 && {
+                  borderBottomColor: themeColors.border,
+                },
                 pressed && styles.optionPressed,
-                hovered && styles.optionHovered,
+                pressed && { backgroundColor: themeColors.lightBackground },
+                hovered && {
+                  backgroundColor: themeColors.lightBackground,
+                  borderLeftColor: option.color,
+                },
               ]}
             >
               <View
@@ -144,14 +168,30 @@ export default function PublishScreen() {
                 <Icon name={option.icon} size={23} color={option.color} />
               </View>
               <View style={styles.optionCopy}>
-                <Text style={styles.optionTitle}>{option.title}</Text>
-                <Text style={styles.optionDescription}>
+                <Text style={[styles.optionTitle, { color: themeColors.text }]}>
+                  {option.title}
+                </Text>
+                <Text
+                  style={[
+                    styles.optionDescription,
+                    { color: themeColors.subtitle },
+                  ]}
+                >
                   {option.description}
                 </Text>
               </View>
-              <Icon name="chevron-right" size={20} color="#94A3B8" />
+              <Icon
+                name="chevron-right"
+                size={20}
+                color={themeColors.inactive}
+              />
               {index < publishOptions.length - 1 && (
-                <View style={styles.divider} />
+                <View
+                  style={[
+                    styles.divider,
+                    { backgroundColor: themeColors.border },
+                  ]}
+                />
               )}
             </Pressable>
           ))}
@@ -185,7 +225,7 @@ type PublishStyles = {
 };
 
 const styles = StyleSheet.create<PublishStyles>({
-  safe: { flex: 1, backgroundColor: "#F7F9FC" },
+  safe: { flex: 1 },
   content: {
     width: "100%",
     maxWidth: 760,
@@ -203,11 +243,9 @@ const styles = StyleSheet.create<PublishStyles>({
     width: 42,
     height: 42,
     borderRadius: 13,
-    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#E6EBF2",
   },
   eyebrow: {
     color: colors.primary,
@@ -252,11 +290,10 @@ const styles = StyleSheet.create<PublishStyles>({
     borderLeftWidth: 3,
     borderLeftColor: "#ffffff",
   },
-  optionPressed: { backgroundColor: "#F4F7FB" },
+  optionPressed: { opacity: 0.92 },
   optionHovered: {
-    backgroundColor: "#EEF4FF",
+    backgroundColor: "transparent",
     borderLeftWidth: 3,
-    borderLeftColor: "#3F7BEB",
   },
   optionIcon: {
     width: 48,
@@ -267,14 +304,13 @@ const styles = StyleSheet.create<PublishStyles>({
     marginRight: 14,
   },
   optionCopy: { flex: 1, paddingRight: 12 },
-  optionTitle: { color: colors.text, fontSize: 16, fontWeight: "700" },
-  optionDescription: { color: colors.subtitle, fontSize: 13, marginTop: 4 },
+  optionTitle: { fontSize: 16, fontWeight: "700" },
+  optionDescription: { fontSize: 13, marginTop: 4 },
   divider: {
     position: "absolute",
     left: 78,
     right: 16,
     bottom: 0,
     height: 1,
-    backgroundColor: "#EDF1F6",
   },
 });

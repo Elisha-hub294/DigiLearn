@@ -1,11 +1,11 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BottomTabBarProps } from "expo-router/js-tabs";
 import {
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-    useWindowDimensions,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";

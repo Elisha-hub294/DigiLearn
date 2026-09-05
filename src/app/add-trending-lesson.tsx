@@ -23,6 +23,7 @@ import { AdminPublishHeader } from "../components/library/AdminPublishHeader";
 import { useSubjects } from "../components/ui/SubjectFilter";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { invalidateFirestoreReadCache } from "../services/firestoreReadCache";
 import {
   appendNotificationToAllUsers,
@@ -185,6 +186,7 @@ async function fetchYoutubeVideoMeta(videoUrl: string) {
 }
 
 export default function AddTrendingLessonScreen() {
+  const { colors: themeColors, isDark } = useTheme();
   const router = useRouter();
   const { profile } = useProfile();
   const { subjects } = useSubjects();
@@ -346,8 +348,10 @@ export default function AddTrendingLessonScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.page}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
+      <View style={[styles.page, { backgroundColor: themeColors.background }]}>
         <AdminPublishHeader title="Add Lesson" onBack={() => router.back()} />
 
         <ScrollView
@@ -355,11 +359,13 @@ export default function AddTrendingLessonScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.helperText}>
+          <Text style={[styles.helperText, { color: themeColors.subtitle }]}>
             Paste a YouTube link to auto-fill the lesson details.
           </Text>
 
-          <Text style={styles.label}>YouTube Link</Text>
+          <Text style={[styles.label, { color: themeColors.subtitle }]}>
+            YouTube Link
+          </Text>
           <View style={styles.linkInputRow}>
             <TextInput
               value={link}
@@ -367,6 +373,11 @@ export default function AddTrendingLessonScreen() {
               placeholder="https://www.youtube.com/watch?v=..."
               style={[
                 styles.input,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                  color: themeColors.text,
+                },
                 styles.linkInput,
                 linkError ? styles.inputError : null,
               ]}
@@ -394,15 +405,29 @@ export default function AddTrendingLessonScreen() {
                   color={colors.primary}
                 />
               )}
-              <Text style={styles.pasteButtonText}>Paste</Text>
+              <Text
+                style={[styles.pasteButtonText, { color: themeColors.primary }]}
+              >
+                Paste
+              </Text>
             </Pressable>
           </View>
           {linkError ? <Text style={styles.errorText}>{linkError}</Text> : null}
 
           {(thumbnail || metaLoading) && (
             <View style={styles.previewWrap}>
-              <Text style={styles.label}>Lesson Preview</Text>
-              <View style={styles.previewCard}>
+              <Text style={[styles.label, { color: themeColors.subtitle }]}>
+                Lesson Preview
+              </Text>
+              <View
+                style={[
+                  styles.previewCard,
+                  {
+                    backgroundColor: themeColors.white,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
                 {thumbnail ? (
                   <View style={styles.previewImageWrap}>
                     <Image
@@ -414,7 +439,12 @@ export default function AddTrendingLessonScreen() {
                     </View>
                   </View>
                 ) : (
-                  <View style={styles.previewThumbPlaceholder}>
+                  <View
+                    style={[
+                      styles.previewThumbPlaceholder,
+                      { backgroundColor: themeColors.lightBackground },
+                    ]}
+                  >
                     <ActivityIndicator color={colors.primary} />
                   </View>
                 )}
@@ -427,20 +457,38 @@ export default function AddTrendingLessonScreen() {
             </View>
           )}
 
-          <Text style={styles.label}>Title</Text>
+          <Text style={[styles.label, { color: themeColors.subtitle }]}>
+            Title
+          </Text>
           <TextInput
             value={title}
             onChangeText={handleTitleChange}
             placeholder="Lesson title"
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: themeColors.white,
+                borderColor: themeColors.border,
+                color: themeColors.text,
+              },
+            ]}
+            placeholderTextColor={themeColors.subtitle}
           />
 
-          <Text style={styles.label}>Subject</Text>
+          <Text style={[styles.label, { color: themeColors.subtitle }]}>
+            Subject
+          </Text>
           <View style={styles.subjectRow}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select subject"
-              style={styles.dropdown}
+              style={[
+                styles.dropdown,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                },
+              ]}
               onPress={() => setDropdownVisible(true)}
             >
               <View style={styles.dropdownContent}>
@@ -449,11 +497,17 @@ export default function AddTrendingLessonScreen() {
                   size={16}
                   color={colors.primary}
                 />
-                <Text style={styles.dropdownText}>
+                <Text
+                  style={[styles.dropdownText, { color: themeColors.text }]}
+                >
                   {subject || "Select subject"}
                 </Text>
               </View>
-              <Ionicons name="chevron-down" size={18} color="#6B7280" />
+              <Ionicons
+                name="chevron-down"
+                size={18}
+                color={themeColors.inactive}
+              />
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -487,15 +541,32 @@ export default function AddTrendingLessonScreen() {
                     )
                   }
                 >
-                  <Text style={styles.subjectChipText}>{selectedSubject}</Text>
+                  <Text
+                    style={[
+                      styles.subjectChipText,
+                      { color: themeColors.primary },
+                    ]}
+                  >
+                    {selectedSubject}
+                  </Text>
                   <Ionicons name="close" size={14} color={colors.primary} />
                 </Pressable>
               ))}
             </View>
           )}
 
-          <Text style={styles.label}>Teacher</Text>
-          <View style={styles.teacherChip}>
+          <Text style={[styles.label, { color: themeColors.subtitle }]}>
+            Teacher
+          </Text>
+          <View
+            style={[
+              styles.teacherChip,
+              {
+                backgroundColor: themeColors.lightBackground,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
             {teacherAvatar ? (
               <Image
                 source={{ uri: teacherAvatar }}
@@ -508,14 +579,28 @@ export default function AddTrendingLessonScreen() {
                 </Text>
               </View>
             )}
-            <Text style={styles.teacherChipText}>{teacherName}</Text>
+            <Text style={[styles.teacherChipText, { color: themeColors.text }]}>
+              {teacherName}
+            </Text>
           </View>
 
-          <View style={styles.notifySection}>
+          <View
+            style={[
+              styles.notifySection,
+              { backgroundColor: themeColors.lightBackground },
+            ]}
+          >
             <View style={styles.notifySectionContent}>
               <View>
-                <Text style={styles.notifyLabel}>Notify Community</Text>
-                <Text style={styles.notifyDescription}>
+                <Text style={[styles.notifyLabel, { color: themeColors.text }]}>
+                  Notify Community
+                </Text>
+                <Text
+                  style={[
+                    styles.notifyDescription,
+                    { color: themeColors.subtitle },
+                  ]}
+                >
                   Send notifications to users about this lesson
                 </Text>
               </View>
@@ -551,7 +636,9 @@ export default function AddTrendingLessonScreen() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitText}>Publish lesson</Text>
+              <Text style={[styles.submitText, { color: themeColors.dark }]}>
+                Publish lesson
+              </Text>
             )}
           </Pressable>
         </ScrollView>
@@ -563,14 +650,23 @@ export default function AddTrendingLessonScreen() {
           onPress={() => setDropdownVisible(false)}
         >
           <Pressable
-            style={styles.modalCard}
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: themeColors.white,
+                borderColor: themeColors.border,
+              },
+            ]}
             onPress={(event) => event.stopPropagation()}
           >
-            <Text style={styles.modalTitle}>Select subject</Text>
+            <Text style={[styles.modalTitle, { color: themeColors.dark }]}>
+              Select subject
+            </Text>
             <ScrollView
               style={styles.modalScrollView}
               contentContainerStyle={styles.optionList}
               showsVerticalScrollIndicator
+              indicatorStyle={isDark ? "white" : "black"}
               bounces={false}
             >
               {subjects
@@ -593,6 +689,10 @@ export default function AddTrendingLessonScreen() {
                       }
                       style={[
                         styles.optionRow,
+                        {
+                          backgroundColor: themeColors.lightBackground,
+                          borderColor: themeColors.border,
+                        },
                         isSelected && styles.optionRowSelected,
                         isHovered && styles.optionRowHovered,
                       ]}
@@ -604,6 +704,7 @@ export default function AddTrendingLessonScreen() {
                       <Text
                         style={[
                           styles.optionText,
+                          { color: themeColors.text },
                           isSelected && styles.optionTextSelected,
                         ]}
                       >

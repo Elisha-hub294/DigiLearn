@@ -1,6 +1,7 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image, Pressable, Text, TextInput, View } from "react-native";
 import { colors } from "../../../constants/theme";
+import { useTheme } from "../../../contexts/ThemeContext";
 import PdfPreview from "../../home/PdfPreview";
 import type { FormState } from "../AddItemModal";
 
@@ -41,11 +42,23 @@ export function BannerFormSection({
   isSubmitting,
   styles,
 }: BannerFormSectionProps) {
+  const { colors: themeColors } = useTheme();
   return (
     <>
-      <Text style={styles.fieldLabel}>Description</Text>
+      <Text style={[styles.fieldLabel, { color: themeColors.subtitle }]}>
+        Description
+      </Text>
       <TextInput
-        style={[styles.input, styles.textArea]}
+        style={[
+          styles.input,
+          styles.textArea,
+          {
+            backgroundColor: themeColors.white,
+            borderColor: themeColors.border,
+            color: themeColors.text,
+          },
+        ]}
+        placeholderTextColor={themeColors.subtitle}
         placeholder="Short description"
         value={formData.subtitle}
         onChangeText={(val) => updateField("subtitle", val)}
@@ -53,14 +66,24 @@ export function BannerFormSection({
         numberOfLines={4}
         maxLength={500}
       />
-      <Text style={styles.titleCharacterCount}>
+      <Text
+        style={[styles.titleCharacterCount, { color: themeColors.subtitle }]}
+      >
         {formData.subtitle.length}/500
       </Text>
-      <Text style={styles.fieldLabel}>Subject</Text>
+      <Text style={[styles.fieldLabel, { color: themeColors.subtitle }]}>
+        Subject
+      </Text>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Select subject"
-        style={styles.dropdownTrigger}
+        style={[
+          styles.dropdownTrigger,
+          {
+            backgroundColor: themeColors.white,
+            borderColor: themeColors.border,
+          },
+        ]}
         onPress={() => {
           if (onSelectSubject) {
             onSelectSubject();
@@ -73,12 +96,14 @@ export function BannerFormSection({
       >
         <View style={styles.dropdownContent}>
           <Icon name="book-open" size={16} color={colors.primary} />
-          <Text style={styles.dropdownText}>
+          <Text style={[styles.dropdownText, { color: themeColors.text }]}>
             {formData.subject || "Select subject"}
           </Text>
         </View>
       </Pressable>
-      <Text style={styles.fieldLabel}>Attachment</Text>
+      <Text style={[styles.fieldLabel, { color: themeColors.subtitle }]}>
+        Attachment
+      </Text>
       <View style={styles.attachmentRow}>
         <View {...getWebDropHandlers("document")}>
           <Pressable
@@ -90,6 +115,10 @@ export function BannerFormSection({
             }
             style={({ pressed }) => [
               styles.attachmentButton,
+              {
+                backgroundColor: themeColors.lightBackground,
+                borderColor: themeColors.border,
+              },
               pressed && styles.attachmentButtonPressed,
               selectedFile?.assets?.[0] && styles.attachmentButtonSelected,
             ]}
@@ -101,11 +130,22 @@ export function BannerFormSection({
                 <Icon name="file-text" size={18} color={colors.primary} />
               </View>
               <View style={styles.attachmentButtonTextWrap}>
-                <Text style={styles.attachmentButtonText} numberOfLines={1}>
+                <Text
+                  style={[
+                    styles.attachmentButtonText,
+                    { color: themeColors.text },
+                  ]}
+                  numberOfLines={1}
+                >
                   {selectedFile?.assets?.[0]?.name ||
                     "Drag file here or tap to upload"}
                 </Text>
-                <Text style={styles.attachmentButtonHint}>
+                <Text
+                  style={[
+                    styles.attachmentButtonHint,
+                    { color: themeColors.subtitle },
+                  ]}
+                >
                   {selectedFile?.assets?.[0]
                     ? "Document ready to publish"
                     : "PDF, DOCX, PPT, or PPTX • max 10 MB"}
@@ -124,6 +164,10 @@ export function BannerFormSection({
             }
             style={({ pressed }) => [
               styles.attachmentButton,
+              {
+                backgroundColor: themeColors.lightBackground,
+                borderColor: themeColors.border,
+              },
               pressed && styles.attachmentButtonPressed,
               selectedImage && styles.attachmentButtonSelected,
             ]}
@@ -135,11 +179,22 @@ export function BannerFormSection({
                 <Icon name="image" size={18} color={colors.primary} />
               </View>
               <View style={styles.attachmentButtonTextWrap}>
-                <Text style={styles.attachmentButtonText} numberOfLines={1}>
+                <Text
+                  style={[
+                    styles.attachmentButtonText,
+                    { color: themeColors.text },
+                  ]}
+                  numberOfLines={1}
+                >
                   {selectedImage?.fileName ||
                     "Drag image here or tap to upload"}
                 </Text>
-                <Text style={styles.attachmentButtonHint}>
+                <Text
+                  style={[
+                    styles.attachmentButtonHint,
+                    { color: themeColors.subtitle },
+                  ]}
+                >
                   {selectedImage
                     ? "Image ready to publish"
                     : "JPG, JPEG, or PNG • max 10 MB"}
@@ -151,7 +206,15 @@ export function BannerFormSection({
       </View>
       {selectedPreviewAsset && (
         <View style={styles.previewContainer}>
-          <View style={styles.coverPreviewFrame}>
+          <View
+            style={[
+              styles.coverPreviewFrame,
+              {
+                backgroundColor: themeColors.white,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
             {selectedPreviewAsset.type === "image" ? (
               <Image
                 source={{ uri: selectedPreviewAsset.uri }}

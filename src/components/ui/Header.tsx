@@ -125,7 +125,7 @@ export const Header = ({
             } as any)
           }
         >
-          <Icon name={rightIconName as any} size={22} color={colors.text} />
+          <Icon name={rightIconName as any} size={22} color={colors.dark} />
           {showBadge && hasUnread ? <View style={styles.badge} /> : null}
         </Pressable>
       </View>
@@ -208,7 +208,8 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.white,
+    borderColor: colors.border,
+    borderWidth: 1,
     position: "relative",
   },
   badge: {

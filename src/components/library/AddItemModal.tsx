@@ -111,7 +111,7 @@ function OptionPickerModal({
   onClose: () => void;
   onSelect: (value: string) => void;
 }) {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
 
   return (
@@ -139,6 +139,7 @@ function OptionPickerModal({
             style={styles.optionPickerScrollView}
             contentContainerStyle={styles.optionPickerList}
             showsVerticalScrollIndicator
+            indicatorStyle={isDark ? "white" : "black"}
             bounces={false}
           >
             {options.map((option) => {
@@ -854,12 +855,10 @@ export function AddItemModal({
 
   const handleAddItem = async () => {
     if (!isAuthorizedPublisher) {
-      setInfoMessage(
-        "Publishing access is restricted to teacher and admin accounts.",
-      );
+      setInfoMessage("Publishing access is restricted to teacher.");
       showStatusDialog(
         "Publishing restricted",
-        "Only teacher or admin users can publish books, pages, announcements, and past papers. Please switch to an approved account type to continue.",
+        "Only teacher can publish books, pages, announcements, and past papers. Please switch to an approved account type to continue.",
         "Go back",
         () => {
           setStatusDialog(null);
@@ -1217,12 +1216,21 @@ export function AddItemModal({
   };
 
   const composerContent = (
-    <View style={screen ? styles.screenContainer : styles.modalBackdrop}>
+    <View
+      style={[
+        screen ? styles.screenContainer : styles.modalBackdrop,
+        screen && { backgroundColor: themeColors.background },
+      ]}
+    >
       {isAuthorizedPublisher ? (
         <View
           style={[
             screen ? styles.screenCard : styles.modalCard,
-            { backgroundColor: themeColors.white },
+            {
+              backgroundColor: screen
+                ? themeColors.background
+                : themeColors.white,
+            },
           ]}
         >
           {screen && (
@@ -1245,7 +1253,7 @@ export function AddItemModal({
             showsVerticalScrollIndicator={false}
           >
             {!screen && (
-              <Text style={styles.modalTitle}>
+              <Text style={[styles.modalTitle, { color: themeColors.dark }]}>
                 {formType === "book"
                   ? "Add Book"
                   : formType === "banner"
@@ -1260,7 +1268,14 @@ export function AddItemModal({
               <>
                 <FieldLabel>Title</FieldLabel>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                      color: themeColors.text,
+                    },
+                  ]}
                   placeholder={
                     formType === "book"
                       ? "Book title"
@@ -1345,9 +1360,21 @@ export function AddItemModal({
 
             {formType === "page" && (
               <>
-                <Text style={styles.fieldLabel}>Description</Text>
+                <Text
+                  style={[styles.fieldLabel, { color: themeColors.subtitle }]}
+                >
+                  Description
+                </Text>
                 <TextInput
-                  style={[styles.input, styles.textArea]}
+                  style={[
+                    styles.input,
+                    styles.textArea,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                      color: themeColors.text,
+                    },
+                  ]}
                   placeholder="Page description"
                   value={formData.description}
                   onChangeText={(val) => updateField("description", val)}
@@ -1358,11 +1385,21 @@ export function AddItemModal({
                 <Text style={styles.titleCharacterCount}>
                   {formData.description.length}/{DESCRIPTION_MAX_LENGTH}
                 </Text>
-                <Text style={styles.fieldLabel}>Subject</Text>
+                <Text
+                  style={[styles.fieldLabel, { color: themeColors.subtitle }]}
+                >
+                  Subject
+                </Text>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Select subject"
-                  style={styles.dropdownTrigger}
+                  style={[
+                    styles.dropdownTrigger,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
                   onPress={() =>
                     openOptionPicker(
                       "Select subject",
@@ -1377,7 +1414,9 @@ export function AddItemModal({
                 >
                   <View style={styles.dropdownContent}>
                     <Icon name="book-open" size={16} color={colors.primary} />
-                    <Text style={styles.dropdownText}>
+                    <Text
+                      style={[styles.dropdownText, { color: themeColors.text }]}
+                    >
                       {formData.subject || "Select subject"}
                     </Text>
                   </View>
@@ -1385,11 +1424,24 @@ export function AddItemModal({
 
                 <View style={styles.twoColumnRow}>
                   <View style={styles.twoColumnField}>
-                    <Text style={styles.fieldLabel}>Level</Text>
+                    <Text
+                      style={[
+                        styles.fieldLabel,
+                        { color: themeColors.subtitle },
+                      ]}
+                    >
+                      Level
+                    </Text>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Select page level"
-                      style={styles.dropdownTrigger}
+                      style={[
+                        styles.dropdownTrigger,
+                        {
+                          backgroundColor: themeColors.white,
+                          borderColor: themeColors.border,
+                        },
+                      ]}
                       onPress={() =>
                         openOptionPicker(
                           "Select level",
@@ -1401,7 +1453,12 @@ export function AddItemModal({
                     >
                       <View style={styles.dropdownContent}>
                         <Icon name="layers" size={16} color={colors.primary} />
-                        <Text style={styles.dropdownText}>
+                        <Text
+                          style={[
+                            styles.dropdownText,
+                            { color: themeColors.text },
+                          ]}
+                        >
                           {formData.level}
                         </Text>
                       </View>
@@ -1409,11 +1466,24 @@ export function AddItemModal({
                   </View>
 
                   <View style={styles.twoColumnField}>
-                    <Text style={styles.fieldLabel}>Class</Text>
+                    <Text
+                      style={[
+                        styles.fieldLabel,
+                        { color: themeColors.subtitle },
+                      ]}
+                    >
+                      Class
+                    </Text>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Select class"
-                      style={styles.dropdownTrigger}
+                      style={[
+                        styles.dropdownTrigger,
+                        {
+                          backgroundColor: themeColors.white,
+                          borderColor: themeColors.border,
+                        },
+                      ]}
                       onPress={() =>
                         openOptionPicker(
                           "Select class",
@@ -1428,7 +1498,12 @@ export function AddItemModal({
                     >
                       <View style={styles.dropdownContent}>
                         <Icon name="users" size={16} color={colors.primary} />
-                        <Text style={styles.dropdownText}>
+                        <Text
+                          style={[
+                            styles.dropdownText,
+                            { color: themeColors.text },
+                          ]}
+                        >
                           {formData.schoolClass || "Select class"}
                         </Text>
                       </View>
@@ -1442,7 +1517,14 @@ export function AddItemModal({
                     <View style={styles.paperCodeSection}>
                       <Text style={styles.fieldLabel}>Paper code</Text>
                       <TextInput
-                        style={styles.paperCodeInput}
+                        style={[
+                          styles.paperCodeInput,
+                          {
+                            backgroundColor: themeColors.white,
+                            borderColor: themeColors.border,
+                            color: themeColors.text,
+                          },
+                        ]}
                         value={formData.paperCode}
                         editable={false}
                         placeholder="Select a paper code"
@@ -1480,6 +1562,11 @@ export function AddItemModal({
                                   <Text
                                     style={[
                                       styles.paperCodeChipText,
+                                      {
+                                        color: isSelected
+                                          ? themeColors.white
+                                          : themeColors.primary,
+                                      },
                                       isSelected &&
                                         styles.paperCodeChipTextSelected,
                                     ]}
@@ -1517,6 +1604,11 @@ export function AddItemModal({
                               <Text
                                 style={[
                                   styles.paperCodeChipText,
+                                  {
+                                    color: isSubsidiaryPaperSelected
+                                      ? themeColors.white
+                                      : themeColors.primary,
+                                  },
                                   isSubsidiaryPaperSelected &&
                                     styles.paperCodeChipTextSelected,
                                 ]}
@@ -1600,7 +1692,11 @@ export function AddItemModal({
                     </View>
                   </View>
                 )}
-                <Text style={styles.fieldLabel}>Book</Text>
+                <Text
+                  style={[styles.fieldLabel, { color: themeColors.subtitle }]}
+                >
+                  Book
+                </Text>
                 <View style={styles.ownedBooksSection}>
                   {ownedBooksLoading ? (
                     <Text style={styles.ownedBooksMessage}>
@@ -1617,6 +1713,10 @@ export function AddItemModal({
                             accessibilityState={{ selected: isSelected }}
                             style={[
                               styles.ownedBookItem,
+                              {
+                                backgroundColor: themeColors.white,
+                                borderColor: themeColors.border,
+                              },
                               isSelected && styles.ownedBookItemSelected,
                             ]}
                             onPress={() =>
@@ -1632,7 +1732,10 @@ export function AddItemModal({
                               style={styles.ownedBookCover}
                             />
                             <Text
-                              style={styles.ownedBookTitle}
+                              style={[
+                                styles.ownedBookTitle,
+                                { color: themeColors.text },
+                              ]}
                               numberOfLines={2}
                             >
                               {book.title}
@@ -1647,7 +1750,15 @@ export function AddItemModal({
                       })}
                     </View>
                   ) : (
-                    <View style={styles.noOwnedBooksState}>
+                    <View
+                      style={[
+                        styles.noOwnedBooksState,
+                        {
+                          backgroundColor: themeColors.lightBackground,
+                          borderColor: themeColors.border,
+                        },
+                      ]}
+                    >
                       <Text style={styles.ownedBooksMessage}>
                         You have not published a book yet.
                       </Text>
@@ -1669,9 +1780,20 @@ export function AddItemModal({
 
             {formType === "paper" && (
               <>
-                <Text style={styles.fieldLabel}>Title</Text>
+                <Text
+                  style={[styles.fieldLabel, { color: themeColors.subtitle }]}
+                >
+                  Title
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                      color: themeColors.text,
+                    },
+                  ]}
                   placeholder="Paper title"
                   value={formData.title}
                   onChangeText={(val) => updateField("title", val)}
@@ -1680,9 +1802,21 @@ export function AddItemModal({
                 <Text style={styles.titleCharacterCount}>
                   {formData.title.length}/{TITLE_MAX_LENGTH}
                 </Text>
-                <Text style={styles.fieldLabel}>Description</Text>
+                <Text
+                  style={[styles.fieldLabel, { color: themeColors.subtitle }]}
+                >
+                  Description
+                </Text>
                 <TextInput
-                  style={[styles.input, styles.textArea]}
+                  style={[
+                    styles.input,
+                    styles.textArea,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                      color: themeColors.text,
+                    },
+                  ]}
                   placeholder="Brief description of this paper"
                   value={formData.description}
                   onChangeText={(val) => updateField("description", val)}
@@ -1693,11 +1827,21 @@ export function AddItemModal({
                 <Text style={styles.titleCharacterCount}>
                   {formData.description.length}/{DESCRIPTION_MAX_LENGTH}
                 </Text>
-                <Text style={styles.fieldLabel}>Subject</Text>
+                <Text
+                  style={[styles.fieldLabel, { color: themeColors.subtitle }]}
+                >
+                  Subject
+                </Text>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Select subject"
-                  style={styles.dropdownTrigger}
+                  style={[
+                    styles.dropdownTrigger,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
                   onPress={() =>
                     openOptionPicker(
                       "Select subject",
@@ -1712,7 +1856,9 @@ export function AddItemModal({
                 >
                   <View style={styles.dropdownContent}>
                     <Icon name="book-open" size={16} color={colors.primary} />
-                    <Text style={styles.dropdownText}>
+                    <Text
+                      style={[styles.dropdownText, { color: themeColors.text }]}
+                    >
                       {formData.subject || "Select subject"}
                     </Text>
                   </View>
@@ -1720,11 +1866,24 @@ export function AddItemModal({
 
                 <View style={styles.twoColumnRow}>
                   <View style={styles.twoColumnField}>
-                    <Text style={styles.fieldLabel}>Type</Text>
+                    <Text
+                      style={[
+                        styles.fieldLabel,
+                        { color: themeColors.subtitle },
+                      ]}
+                    >
+                      Type
+                    </Text>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Select paper type"
-                      style={styles.dropdownTrigger}
+                      style={[
+                        styles.dropdownTrigger,
+                        {
+                          backgroundColor: themeColors.white,
+                          borderColor: themeColors.border,
+                        },
+                      ]}
                       onPress={() =>
                         openOptionPicker(
                           "Select type",
@@ -1739,7 +1898,12 @@ export function AddItemModal({
                     >
                       <View style={styles.dropdownContent}>
                         <Icon name="tag" size={16} color={colors.primary} />
-                        <Text style={styles.dropdownText}>
+                        <Text
+                          style={[
+                            styles.dropdownText,
+                            { color: themeColors.text },
+                          ]}
+                        >
                           {formData.author || "Select type"}
                         </Text>
                       </View>
@@ -1747,11 +1911,24 @@ export function AddItemModal({
                   </View>
 
                   <View style={styles.twoColumnField}>
-                    <Text style={styles.fieldLabel}>Level</Text>
+                    <Text
+                      style={[
+                        styles.fieldLabel,
+                        { color: themeColors.subtitle },
+                      ]}
+                    >
+                      Level
+                    </Text>
                     <Pressable
                       accessibilityRole="button"
                       accessibilityLabel="Select paper level"
-                      style={styles.dropdownTrigger}
+                      style={[
+                        styles.dropdownTrigger,
+                        {
+                          backgroundColor: themeColors.white,
+                          borderColor: themeColors.border,
+                        },
+                      ]}
                       onPress={() =>
                         openOptionPicker(
                           "Select level",
@@ -1763,7 +1940,12 @@ export function AddItemModal({
                     >
                       <View style={styles.dropdownContent}>
                         <Icon name="layers" size={16} color={colors.primary} />
-                        <Text style={styles.dropdownText}>
+                        <Text
+                          style={[
+                            styles.dropdownText,
+                            { color: themeColors.text },
+                          ]}
+                        >
                           {formData.level || "Select level"}
                         </Text>
                       </View>
@@ -1771,10 +1953,24 @@ export function AddItemModal({
                   </View>
 
                   <View style={styles.twoColumnField}>
-                    <Text style={styles.fieldLabel}>Year</Text>
+                    <Text
+                      style={[
+                        styles.fieldLabel,
+                        { color: themeColors.subtitle },
+                      ]}
+                    >
+                      Year
+                    </Text>
                     {Platform.OS === "web" ? (
                       <TextInput
-                        style={styles.input}
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: themeColors.white,
+                            borderColor: themeColors.border,
+                            color: themeColors.text,
+                          },
+                        ]}
                         placeholder="2026"
                         value={formData.extra}
                         onChangeText={(val) =>
@@ -1788,7 +1984,13 @@ export function AddItemModal({
                         <Pressable
                           accessibilityRole="button"
                           accessibilityLabel="Select paper year"
-                          style={styles.dropdownTrigger}
+                          style={[
+                            styles.dropdownTrigger,
+                            {
+                              backgroundColor: themeColors.white,
+                              borderColor: themeColors.border,
+                            },
+                          ]}
                           onPress={() => setShowYearPicker(true)}
                         >
                           <View style={styles.dropdownContent}>
@@ -1797,7 +1999,12 @@ export function AddItemModal({
                               size={16}
                               color={colors.primary}
                             />
-                            <Text style={styles.dropdownText}>
+                            <Text
+                              style={[
+                                styles.dropdownText,
+                                { color: themeColors.text },
+                              ]}
+                            >
                               {formData.extra || "Select year"}
                             </Text>
                           </View>
@@ -1830,7 +2037,14 @@ export function AddItemModal({
                     <View style={styles.paperCodeSection}>
                       <Text style={styles.fieldLabel}>Paper code</Text>
                       <TextInput
-                        style={styles.paperCodeInput}
+                        style={[
+                          styles.paperCodeInput,
+                          {
+                            backgroundColor: themeColors.white,
+                            borderColor: themeColors.border,
+                            color: themeColors.text,
+                          },
+                        ]}
                         value={formData.paperCode}
                         editable={false}
                         placeholder="Select a paper code"
@@ -1867,6 +2081,11 @@ export function AddItemModal({
                                   <Text
                                     style={[
                                       styles.paperCodeChipText,
+                                      {
+                                        color: isSelected
+                                          ? themeColors.white
+                                          : themeColors.primary,
+                                      },
                                       isSelected &&
                                         styles.paperCodeChipTextSelected,
                                     ]}
@@ -1909,6 +2128,13 @@ export function AddItemModal({
                               <Text
                                 style={[
                                   styles.paperCodeChipText,
+                                  {
+                                    color:
+                                      isSubjectSubsidiary ||
+                                      isSubsidiaryPaperSelected
+                                        ? themeColors.white
+                                        : themeColors.primary,
+                                  },
                                   (isSubjectSubsidiary ||
                                     isSubsidiaryPaperSelected) &&
                                     styles.paperCodeChipTextSelected,
@@ -1972,11 +2198,25 @@ export function AddItemModal({
               </>
             )}
 
-            <View style={styles.notifySection}>
+            <View
+              style={[
+                styles.notifySection,
+                { backgroundColor: themeColors.lightBackground },
+              ]}
+            >
               <View style={styles.notifySectionContent}>
                 <View>
-                  <Text style={styles.notifyLabel}>Notify Community</Text>
-                  <Text style={styles.notifyDescription}>
+                  <Text
+                    style={[styles.notifyLabel, { color: themeColors.text }]}
+                  >
+                    Notify Community
+                  </Text>
+                  <Text
+                    style={[
+                      styles.notifyDescription,
+                      { color: themeColors.subtitle },
+                    ]}
+                  >
                     Send notifications to users about this post
                   </Text>
                 </View>
@@ -1989,16 +2229,37 @@ export function AddItemModal({
               </View>
             </View>
 
-            <View style={styles.modalActions}>
+            <View
+              style={[
+                styles.modalActions,
+                { borderTopColor: themeColors.border },
+              ]}
+            >
               <Pressable
-                style={styles.secondaryButton}
+                style={[
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: themeColors.lightBackground,
+                    borderColor: themeColors.border,
+                  },
+                ]}
                 onPress={handleClose}
                 disabled={isSubmitting}
               >
-                <Text style={styles.secondaryButtonText}>Cancel</Text>
+                <Text
+                  style={[
+                    styles.secondaryButtonText,
+                    { color: themeColors.text },
+                  ]}
+                >
+                  Cancel
+                </Text>
               </Pressable>
               <Pressable
-                style={styles.primaryButton}
+                style={[
+                  styles.primaryButton,
+                  { backgroundColor: themeColors.primary },
+                ]}
                 onPress={handleAddItem}
                 disabled={isSubmitting}
               >
@@ -2013,7 +2274,7 @@ export function AddItemModal({
         <ActionDialog
           visible={visible}
           title="Publishing restricted"
-          message="Only teacher or admin users can publish books, pages, announcements, and past papers. Please switch to an approved account type to continue."
+          message="Only teacher can publish books, pages, announcements, and past papers. Please switch to an approved account type to continue."
           primaryText="Go back"
           onPrimary={handleClose}
           onClose={handleClose}
