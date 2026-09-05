@@ -1,10 +1,22 @@
-import { collection, getDocs } from "firebase/firestore";
+import {
+  DocumentSnapshot,
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  startAfter,
+} from "firebase/firestore";
 import { db } from "../../firebaseConfig";
 import {
   LOCAL_CACHE_KEYS,
   readLocalCache,
   writeLocalCache,
 } from "../utils/localCache";
+import {
+  PaginationResult,
+  processPaginationResults,
+} from "../utils/paginationUtils";
 import { getVideoThumbnailUrl } from "../utils/videoUtils";
 import { readThroughFirestoreCache } from "./firestoreReadCache";
 
@@ -107,4 +119,33 @@ export async function loadTrendingLessons(
     });
 
   return inFlight;
+}
+
+/**
+ * Load trending lessons with cursor-based pagination
+ * Reduces database reads by only fetching required records
+ */
+export async function loadTrendingLessonsPaginated(
+  pageSize: number = 20,
+  cursor?: DocumentSnapshot,
+): Promise<PaginationResult<TrendingLessonRecord>> {
+  const collectionRef = collection(db, "trendingLessons");
+
+  let q = query(collectionRef, orderBy("uploadedAt", "desc"));
+
+  if (cursor) {
+    q = query(collectionRef, orderBy("uploadedAt", "desc"), startAfter(cursor));
+  }
+
+  q = query(q, limit(pageSize + 1));
+
+  try {
+    const snapshot = await getDocs(q);
+    return processPaginationResults(snapshot.docs, pageSize, (doc, index) =>
+      normalizeLesson(doc.data(), doc.id, index),
+    );
+  } catch (error) {
+    console.error("Error loading paginated trending lessons:", error);
+    throw error;
+  }
 }
