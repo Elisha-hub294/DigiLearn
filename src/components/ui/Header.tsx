@@ -110,7 +110,11 @@ export const Header = ({
             accessibilityLabel="Publish content"
             onPress={() => router.push("/publish" as any)}
           >
-            <Icon name="plus" size={18} color={isDark ? "#FFFFFF" : colors.white} />
+            <Icon
+              name="plus"
+              size={18}
+              color={isDark ? "#FFFFFF" : colors.white}
+            />
           </Pressable>
         ) : null}
         <Pressable

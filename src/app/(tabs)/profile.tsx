@@ -74,7 +74,7 @@ export default function ProfileScreen() {
     ) => () => void;
 
     return addTabPressListener("tabPress", (event) => {
-      if (event.target !== route.key) return;
+      if (!navigation.isFocused() || event.target !== route.key) return;
 
       scrollRef.current?.scrollTo({ y: 0, animated: true });
       void onRefresh();

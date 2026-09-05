@@ -90,7 +90,8 @@ export default function LibraryScreen() {
     ) => () => void;
 
     return addTabPressListener("tabPress", (event) => {
-      if (event.target === route.key) handleTabPress();
+      if (navigation.isFocused() && event.target === route.key)
+        handleTabPress();
     });
   }, [handleTabPress, navigation, route.key]);
 

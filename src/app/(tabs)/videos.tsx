@@ -222,7 +222,7 @@ export default function VideosScreen() {
     ) => () => void;
 
     return addTabPressListener("tabPress", (event) => {
-      if (event.target !== route.key) return;
+      if (!navigation.isFocused() || event.target !== route.key) return;
 
       flashListRef.current?.scrollToOffset({ offset: 0, animated: true });
       onRefresh();
