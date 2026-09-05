@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = void 0;
 const genai_1 = require("@google/genai");
-const auth_1 = require("firebase-admin/auth");
 const app_1 = require("firebase-admin/app");
+const auth_1 = require("firebase-admin/auth");
 const firestore_1 = require("firebase-admin/firestore");
 const messaging_1 = require("firebase-admin/messaging");
 const storage_1 = require("firebase-admin/storage");
@@ -89,7 +89,9 @@ exports.deleteAccount = (0, https_1.onCall)(async (request) => {
         });
     }
     const bucket = storage.bucket();
-    const profileFiles = await bucket.getFiles({ prefix: `profile-pics/${userId}/` });
+    const profileFiles = await bucket.getFiles({
+        prefix: `profile-pics/${userId}/`,
+    });
     profileFiles[0].forEach((file) => paths.add(file.name));
     await Promise.all(Array.from(paths, async (path) => {
         try {
@@ -111,7 +113,10 @@ exports.deleteAccount = (0, https_1.onCall)(async (request) => {
         .collection("activityEvents")
         .where("userId", "==", userId)
         .get();
-    const reports = await db.collection("reports").where("userId", "==", userId).get();
+    const reports = await db
+        .collection("reports")
+        .where("userId", "==", userId)
+        .get();
     const applicationAudit = await db
         .collection("teacherApplicationAudit")
         .where("applicantId", "==", userId)
@@ -124,8 +129,8 @@ exports.deleteAccount = (0, https_1.onCall)(async (request) => {
         db.recursiveDelete(db.doc(`teachers/${userId}`)),
         db.recursiveDelete(db.doc(`teacherApplications/${userId}`)),
         usageRef.delete(),
-        adminAuth.deleteUser(userId),
     ]);
+    await adminAuth.deleteUser(userId);
     return { deleted: true };
 });
 const deletableCollections = new Set([

@@ -155,8 +155,9 @@ export const deleteAccount = onCall(async (request) => {
     db.recursiveDelete(db.doc(`teachers/${userId}`)),
     db.recursiveDelete(db.doc(`teacherApplications/${userId}`)),
     usageRef.delete(),
-    adminAuth.deleteUser(userId),
   ]);
+
+  await adminAuth.deleteUser(userId);
 
   return { deleted: true };
 });
