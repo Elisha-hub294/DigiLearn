@@ -72,7 +72,7 @@ export function SavedResources({
   signedIn: boolean;
 }) {
   const router = useRouter();
-  const { isDark } = useTheme();
+  const { isDark, colors: themeColors } = useTheme();
   const [filter, setFilter] = useState<Filter>("All");
   const [items, setItems] = useState<Entry[]>([]);
   const [resultsWidth, setResultsWidth] = useState(0);
@@ -145,12 +145,12 @@ export function SavedResources({
   );
   if (!signedIn)
     return (
-      <View style={s.card}>
+      <View style={[s.card, { backgroundColor: themeColors.white }]}>
         <View style={s.empty}>
-          <Text style={s.emptyTitle}>
+          <Text style={[s.emptyTitle, { color: themeColors.text }]}>
             Sign in to keep your learning organized
           </Text>
-          <Text style={s.emptyCopy}>
+          <Text style={[s.emptyCopy, { color: themeColors.subtitle }]}>
             Log in or create a DigiLearn account to save books, lessons, notes,
             and posts and keep your learning progress with you.
           </Text>
@@ -184,8 +184,8 @@ export function SavedResources({
       </View>
     );
   return (
-    <View style={s.card}>
-      <Text style={s.title}>Saved</Text>
+    <View style={[s.card, { backgroundColor: themeColors.white }]}>
+      <Text style={[s.title, { color: themeColors.text }]}>Saved</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -198,9 +198,24 @@ export function SavedResources({
             accessibilityRole="button"
             accessibilityLabel={`Show saved ${choice.toLowerCase()}`}
             accessibilityState={{ selected: filter === choice }}
-            style={[s.chip, filter === choice && s.chipActive]}
+            style={[
+              s.chip,
+              { borderColor: themeColors.border },
+              filter === choice && s.chipActive,
+            ]}
           >
-            <Text style={[s.chipText, filter === choice && s.chipTextActive]}>
+            <Text
+              style={[
+                s.chipText,
+                {
+                  color:
+                    filter === choice
+                      ? themeColors.white
+                      : themeColors.subtitle,
+                },
+                filter === choice && s.chipTextActive,
+              ]}
+            >
               {choice}
             </Text>
           </Pressable>
@@ -208,7 +223,15 @@ export function SavedResources({
       </ScrollView>
       {loading ? (
         <View style={s.loading} accessibilityLabel="Loading saved resources">
-          <View style={s.savedSkeletonCard}>
+          <View
+            style={[
+              s.savedSkeletonCard,
+              {
+                backgroundColor: themeColors.white,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
             <Skeleton style={s.savedSkeletonImage} />
             <View style={s.savedSkeletonCopy}>
               <Skeleton style={s.savedSkeletonTitle} />
@@ -216,7 +239,15 @@ export function SavedResources({
               <Skeleton style={s.savedSkeletonLineShort} />
             </View>
           </View>
-          <View style={s.savedSkeletonCard}>
+          <View
+            style={[
+              s.savedSkeletonCard,
+              {
+                backgroundColor: themeColors.white,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
             <Skeleton style={s.savedSkeletonImage} />
             <View style={s.savedSkeletonCopy}>
               <Skeleton style={s.savedSkeletonTitle} />
@@ -361,7 +392,6 @@ function renderItems(
 }
 const s = StyleSheet.create({
   card: {
-    backgroundColor: colors.white,
     borderRadius: 18,
     paddingVertical: spacing.lg,
     overflow: "hidden",
@@ -370,7 +400,6 @@ const s = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     fontSize: 19,
     fontWeight: "700",
-    color: "#171717",
     marginBottom: 12,
   },
   chips: { paddingHorizontal: spacing.lg, gap: 8, paddingBottom: 14 },
@@ -380,11 +409,10 @@ const s = StyleSheet.create({
     justifyContent: "center",
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: "#D8E2F3",
   },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { color: "#52709B", fontSize: 13, fontWeight: "700" },
-  chipTextActive: { color: "#fff" },
+  chipText: { fontSize: 13, fontWeight: "700" },
+  chipTextActive: {},
   results: { paddingHorizontal: spacing.lg },
   centeredItem: { width: "100%", alignItems: "center" },
   videoItem: { marginBottom: spacing.md },
@@ -395,9 +423,7 @@ const s = StyleSheet.create({
     minHeight: 112,
     padding: spacing.sm,
     borderRadius: 14,
-    backgroundColor: colors.white,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
     gap: spacing.sm,
   },
   savedSkeletonImage: {
@@ -416,13 +442,11 @@ const s = StyleSheet.create({
     gap: 8,
   },
   emptyTitle: {
-    color: colors.dark,
     fontSize: 15,
     fontWeight: "700",
     textAlign: "center",
   },
   emptyCopy: {
-    color: colors.subtitle,
     fontSize: 13,
     lineHeight: 19,
     textAlign: "center",
@@ -446,5 +470,5 @@ const s = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: colors.primary,
   },
-  signupText: { color: "#fff", fontWeight: "700" },
+  signupText: { color: colors.white, fontWeight: "700" },
 });

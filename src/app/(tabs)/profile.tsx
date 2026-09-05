@@ -32,12 +32,19 @@ const paddingFor = (width: number) =>
           ? 5
           : 3;
 function Skeleton() {
+  const { colors: themeColors } = useTheme();
   return (
     <View style={s.skeleton}>
-      <View style={s.skeletonHero} />
-      <View style={s.skeletonBlock} />
-      <View style={s.skeletonBlock} />
-      <View style={s.skeletonBlock} />
+      <View style={[s.skeletonHero, { backgroundColor: themeColors.border }]} />
+      <View
+        style={[s.skeletonBlock, { backgroundColor: themeColors.border }]}
+      />
+      <View
+        style={[s.skeletonBlock, { backgroundColor: themeColors.border }]}
+      />
+      <View
+        style={[s.skeletonBlock, { backgroundColor: themeColors.border }]}
+      />
     </View>
   );
 }
@@ -91,7 +98,7 @@ export default function ProfileScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.primary}
+            tintColor={themeColors.primary}
             accessibilityLabel="Refresh profile"
           />
         }
@@ -108,22 +115,41 @@ export default function ProfileScreen() {
           <Animated.View entering={FadeIn.duration(220)} style={s.sections}>
             <ProfileHeader profile={profile} photoURL={user.photoURL} />
             {profile.teacherApprovalStatus === "pending" && (
-              <View style={s.reviewBanner}>
-                <Text style={s.reviewEyebrow}>
+              <View
+                style={[
+                  s.reviewBanner,
+                  {
+                    backgroundColor: themeColors.primaryLight,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
+                <Text style={[s.reviewEyebrow, { color: themeColors.primary }]}>
                   TEACHER ACCOUNT UNDER REVIEW
                 </Text>
-                <Text style={s.reviewText}>
+                <Text style={[s.reviewText, { color: themeColors.text }]}>
                   DigiLearn is ready to use in student mode while we review your
                   teacher application.
                 </Text>
               </View>
             )}
             {profile.teacherApprovalStatus === "rejected" && (
-              <View style={[s.reviewBanner, s.rejectedBanner]}>
-                <Text style={s.rejectedEyebrow}>
+              <View
+                style={[
+                  s.reviewBanner,
+                  s.rejectedBanner,
+                  {
+                    backgroundColor: themeColors.lightBackground,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[s.rejectedEyebrow, { color: themeColors.primary }]}
+                >
                   TEACHER APPLICATION NEEDS UPDATES
                 </Text>
-                <Text style={s.reviewText}>
+                <Text style={[s.reviewText, { color: themeColors.text }]}>
                   {profile.teacherReviewReason ||
                     "We requested changes before approval."}
                 </Text>
@@ -133,7 +159,9 @@ export default function ProfileScreen() {
                     router.push("/teacher-account-quick-settings" as never)
                   }
                 >
-                  <Text style={s.resubmitText}>Update and resubmit</Text>
+                  <Text style={[s.resubmitText, { color: themeColors.white }]}>
+                    Update and resubmit
+                  </Text>
                 </Pressable>
               </View>
             )}
@@ -145,7 +173,9 @@ export default function ProfileScreen() {
                   onPress={() => router.push("/teacher-applications" as never)}
                 >
                   <View style={s.reviewLinkContent}>
-                    <Text style={s.reviewLinkText}>
+                    <Text
+                      style={[s.reviewLinkText, { color: themeColors.primary }]}
+                    >
                       Review teacher applications
                     </Text>
                     {pendingApplicationCount > 0 ? (
@@ -158,7 +188,9 @@ export default function ProfileScreen() {
                   onPress={() => router.push("/admin-reports" as never)}
                 >
                   <View style={s.reviewLinkContent}>
-                    <Text style={s.reviewLinkText}>
+                    <Text
+                      style={[s.reviewLinkText, { color: themeColors.primary }]}
+                    >
                       Review resource reports
                     </Text>
                     {newReportCount > 0 ? <View style={s.alertDot} /> : null}
@@ -173,8 +205,10 @@ export default function ProfileScreen() {
           </Animated.View>
         ) : (
           <View style={s.error}>
-            <Text style={s.errorTitle}>We couldn’t load your profile.</Text>
-            <Text style={s.errorCopy}>
+            <Text style={[s.errorTitle, { color: themeColors.text }]}>
+              We couldn’t load your profile.
+            </Text>
+            <Text style={[s.errorCopy, { color: themeColors.subtitle }]}>
               {error ?? "Check your connection and pull to try again."}
             </Text>
           </View>
@@ -184,13 +218,13 @@ export default function ProfileScreen() {
   );
 }
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.white },
+  safe: { flex: 1 },
   content: {
     width: "100%",
     alignSelf: "center",
     paddingBottom: spacing.xxl,
   },
-  rejectedBanner: { backgroundColor: "#FFF1F0", borderColor: "#F2B8B5" },
+  rejectedBanner: {},
   rejectedEyebrow: {
     color: "#B42318",
     fontSize: 11,
@@ -209,11 +243,11 @@ const s = StyleSheet.create({
   guestContent: { flexGrow: 1, justifyContent: "center" },
   sections: { gap: 20 },
   skeleton: { gap: 20 },
-  skeletonHero: { height: 280, borderRadius: 24, backgroundColor: "#EDF2F8" },
-  skeletonBlock: { height: 130, borderRadius: 18, backgroundColor: "#EDF2F8" },
+  skeletonHero: { height: 280, borderRadius: 24 },
+  skeletonBlock: { height: 130, borderRadius: 18 },
   error: { padding: 28, alignItems: "center" },
-  errorTitle: { color: colors.dark, fontWeight: "700", fontSize: 17 },
-  errorCopy: { color: colors.subtitle, marginTop: 8, textAlign: "center" },
+  errorTitle: { fontWeight: "700", fontSize: 17 },
+  errorCopy: { marginTop: 8, textAlign: "center" },
   reviewBanner: {
     marginHorizontal: 16,
     padding: 16,

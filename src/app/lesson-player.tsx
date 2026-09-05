@@ -263,13 +263,26 @@ export default function LessonPlayerScreen() {
         <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
           {/* Navigation Header */}
           <View
-            style={[styles.header, { paddingHorizontal: horizontalPadding }]}
+            style={[
+              styles.header,
+              {
+                borderBottomColor: themeColors.border,
+                backgroundColor: themeColors.background,
+                paddingHorizontal: horizontalPadding,
+              },
+            ]}
           >
             <Pressable
               accessibilityLabel="Back to videos"
               accessibilityRole="button"
               onPress={handleBack}
-              style={styles.iconButton}
+              style={[
+                styles.iconButton,
+                {
+                  backgroundColor: themeColors.lightBackground,
+                  borderColor: themeColors.border,
+                },
+              ]}
               hitSlop={8}
             >
               <Ionicons
@@ -337,7 +350,10 @@ export default function LessonPlayerScreen() {
             {/* Hero Video Card */}
             <Animated.View
               entering={FadeIn.duration(400)}
-              style={styles.heroCardContainer}
+              style={[
+                styles.heroCardContainer,
+                { backgroundColor: themeColors.dark },
+              ]}
             >
               <Pressable
                 onPress={openVideo}
@@ -360,8 +376,18 @@ export default function LessonPlayerScreen() {
                 <View style={styles.heroOverlay} />
 
                 {/* Subject Pill Badge */}
-                <View style={styles.subjectBadge}>
-                  <Text style={styles.subjectBadgeText}>
+                <View
+                  style={[
+                    styles.subjectBadge,
+                    { backgroundColor: themeColors.lightBackground },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.subjectBadgeText,
+                      { color: themeColors.primary },
+                    ]}
+                  >
                     {params.subject?.toUpperCase() ?? "GENERAL"}
                   </Text>
                 </View>
@@ -400,7 +426,7 @@ export default function LessonPlayerScreen() {
                 },
               ]}
             >
-              <Text style={styles.title}>
+              <Text style={[styles.title, { color: themeColors.text }]}>
                 {params.title ?? "Untitled Lesson"}
               </Text>
 
@@ -408,21 +434,36 @@ export default function LessonPlayerScreen() {
               <View style={styles.instructorRow}>
                 <Image
                   source={{ uri: getTeacherAvatar(params.teacher) }}
-                  style={styles.avatarImage}
+                  style={[
+                    styles.avatarImage,
+                    { borderColor: themeColors.border },
+                  ]}
                   contentFit="cover"
                 />
                 <View style={styles.instructorTextWrap}>
                   <View style={styles.instructorNameRow}>
-                    <Text style={styles.instructorName}>
+                    <Text
+                      style={[
+                        styles.instructorName,
+                        { color: themeColors.text },
+                      ]}
+                    >
                       {params.teacher ?? "Educator"}
                     </Text>
                     <Ionicons
                       name="checkmark-circle"
                       size={16}
-                      color="#3B82F6"
+                      color={themeColors.primary}
                     />
                   </View>
-                  <Text style={styles.instructorRole}>Verified Educator</Text>
+                  <Text
+                    style={[
+                      styles.instructorRole,
+                      { color: themeColors.subtitle },
+                    ]}
+                  >
+                    Verified Educator
+                  </Text>
                 </View>
               </View>
 
@@ -437,9 +478,13 @@ export default function LessonPlayerScreen() {
                     },
                   ]}
                 >
-                  <Ionicons name="time" size={18} color="#3B82F6" />
-                  <Text style={styles.specLabel}>Duration</Text>
-                  <Text style={styles.specValue}>
+                  <Ionicons name="time" size={18} color={themeColors.primary} />
+                  <Text
+                    style={[styles.specLabel, { color: themeColors.subtitle }]}
+                  >
+                    Duration
+                  </Text>
+                  <Text style={[styles.specValue, { color: themeColors.text }]}>
                     {params.duration ?? "00:00"}
                   </Text>
                 </View>
@@ -452,9 +497,20 @@ export default function LessonPlayerScreen() {
                     },
                   ]}
                 >
-                  <Ionicons name="calendar" size={18} color="#10B981" />
-                  <Text style={styles.specLabel}>Added</Text>
-                  <Text style={styles.specValue} numberOfLines={1}>
+                  <Ionicons
+                    name="calendar"
+                    size={18}
+                    color={themeColors.green}
+                  />
+                  <Text
+                    style={[styles.specLabel, { color: themeColors.subtitle }]}
+                  >
+                    Added
+                  </Text>
+                  <Text
+                    style={[styles.specValue, { color: themeColors.text }]}
+                    numberOfLines={1}
+                  >
                     {params.uploadedAt ?? "Recent"}
                   </Text>
                 </View>
@@ -467,9 +523,19 @@ export default function LessonPlayerScreen() {
                     },
                   ]}
                 >
-                  <Ionicons name="sparkles" size={18} color="#F59E0B" />
-                  <Text style={styles.specLabel}>Access</Text>
-                  <Text style={styles.specValue}>Free HD</Text>
+                  <Ionicons
+                    name="sparkles"
+                    size={18}
+                    color={themeColors.orange}
+                  />
+                  <Text
+                    style={[styles.specLabel, { color: themeColors.subtitle }]}
+                  >
+                    Access
+                  </Text>
+                  <Text style={[styles.specValue, { color: themeColors.text }]}>
+                    Free HD
+                  </Text>
                 </View>
               </View>
             </Animated.View>
@@ -548,7 +614,6 @@ export default function LessonPlayerScreen() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: "#FFFFFF",
     flex: 1,
   },
   page: {
@@ -561,8 +626,6 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    backgroundColor: "#fff",
-    borderBottomColor: "#F1F5F9",
     borderBottomWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -571,8 +634,6 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
-    borderColor: "#E2E8F0",
     borderRadius: 999,
     borderWidth: 1,
     height: 40,
@@ -580,7 +641,6 @@ const styles = StyleSheet.create({
     width: 40,
   },
   headerTitle: {
-    color: "#0F172A",
     fontSize: 18,
     fontWeight: "600",
     letterSpacing: -0.3,
@@ -601,7 +661,6 @@ const styles = StyleSheet.create({
   },
   heroCardContainer: {
     aspectRatio: 1.6,
-    backgroundColor: "#0F172A",
     elevation: 4,
     overflow: "hidden",
     width: "100%",
@@ -624,7 +683,6 @@ const styles = StyleSheet.create({
     top: 14,
   },
   subjectBadgeText: {
-    color: colors.primaryDark,
     fontSize: 11,
     fontWeight: "800",
     letterSpacing: 0.6,
@@ -668,15 +726,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   detailsCard: {
-    backgroundColor: "#F8FAFC",
-    borderColor: "#E2E8F0",
     borderRadius: 20,
     borderWidth: 1,
     marginTop: 18,
     padding: 18,
   },
   title: {
-    color: colors.primaryDark,
     fontSize: 22,
     fontWeight: "600",
     letterSpacing: -0.4,
@@ -690,7 +745,6 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   avatarImage: {
-    borderColor: "#E2E8F0",
     borderRadius: 22,
     borderWidth: 1,
     height: 44,
@@ -705,12 +759,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   instructorName: {
-    color: "#0F172A",
     fontSize: 15,
     fontWeight: "700",
   },
   instructorRole: {
-    color: "#64748B",
     fontSize: 13,
     marginTop: 2,
   },
@@ -721,8 +773,6 @@ const styles = StyleSheet.create({
   },
   specCard: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#F1F5F9",
     borderRadius: 14,
     borderWidth: 1,
     flex: 1,
@@ -730,42 +780,34 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   specLabel: {
-    color: "#64748B",
     fontSize: 11,
     fontWeight: "500",
     marginTop: 4,
   },
   specValue: {
-    color: "#0F172A",
     fontSize: 13,
     fontWeight: "700",
     marginTop: 2,
   },
   overviewCard: {
-    backgroundColor: "#F8FAFC",
-    borderColor: "#E2E8F0",
     borderRadius: 20,
     borderWidth: 1,
     marginTop: 16,
     padding: 18,
   },
   sectionHeaderTitle: {
-    color: "#0F172A",
     fontSize: 16,
     fontWeight: "700",
   },
   descriptionText: {
-    color: "#475569",
     fontSize: 14,
     lineHeight: 22,
     marginTop: 8,
   },
   boldText: {
-    color: "#0F172A",
     fontWeight: "700",
   },
   divider: {
-    backgroundColor: "#E2E8F0",
     height: 1,
     marginVertical: 16,
   },
@@ -779,7 +821,6 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   takeawayText: {
-    color: "#334155",
     flex: 1,
     fontSize: 14,
     fontWeight: "500",

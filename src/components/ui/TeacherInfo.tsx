@@ -1,7 +1,7 @@
-import { colors } from "@/constants/theme";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { getTeacherAvatar } from "../../constants/teacherAvatar";
+import { useTheme } from "../../contexts/ThemeContext";
 import { FirebaseImage } from "./FirebaseImage";
 // import { videoColors } from "./videoDesign";
 
@@ -14,6 +14,8 @@ export function TeacherInfo({
   uploadedAt: string;
   onPress?: () => void;
 }) {
+  const { colors } = useTheme();
+
   return (
     <Animated.View entering={FadeIn.duration(360)} style={styles.row}>
       <Pressable
@@ -25,7 +27,7 @@ export function TeacherInfo({
       >
         <FirebaseImage
           source={{ uri: getTeacherAvatar(name) }}
-          style={styles.avatar}
+          style={[styles.avatar, { backgroundColor: colors.lightBackground }]}
           contentFit="cover"
           transition={180}
         />
@@ -39,13 +41,18 @@ export function TeacherInfo({
             disabled={!onPress}
             hitSlop={8}
           >
-            <Text numberOfLines={1} style={styles.name}>
+            <Text
+              numberOfLines={1}
+              style={[styles.name, { color: colors.text }]}
+            >
               {name}
             </Text>
           </Pressable>
           {/* <Ionicons name="checkmark-circle" size={15} color="#3B82F6" /> */}
         </View>
-        <Text style={styles.time}>{uploadedAt}</Text>
+        <Text style={[styles.time, { color: colors.inactive }]}>
+          {uploadedAt}
+        </Text>
       </View>
       <Pressable
         accessibilityLabel={`More options for ${name}`}
@@ -57,15 +64,14 @@ export function TeacherInfo({
 }
 const styles = StyleSheet.create({
   row: { alignItems: "center", flexDirection: "row", marginTop: 13 },
-  avatar: { backgroundColor: "#eee", borderRadius: 24, height: 30, width: 30 },
+  avatar: { borderRadius: 24, height: 30, width: 30 },
   copy: { flex: 1, marginLeft: 11 },
   nameRow: { alignItems: "center", flexDirection: "row", gap: 4 },
   name: {
-    color: colors.dark,
     fontSize: 14,
     fontWeight: "500",
     maxWidth: 220,
   },
-  time: { color: colors.inactive, fontSize: 13 },
+  time: { fontSize: 13 },
   more: { paddingLeft: 12 },
 });

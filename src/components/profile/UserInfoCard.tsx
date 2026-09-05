@@ -25,7 +25,11 @@ function ProfileStat({
     <Text
       numberOfLines={1}
       ellipsizeMode="tail"
-      style={[styles.value, interactive && styles.interactiveValue]}
+      style={[
+        styles.value,
+        { color: interactive ? colors.primary : colors.text },
+        interactive && styles.interactiveValue,
+      ]}
     >
       {value}
     </Text>
@@ -109,7 +113,6 @@ const styles = StyleSheet.create({
   },
   label: {
     marginTop: 7,
-    color: "#777777",
     fontSize: 12,
     fontWeight: "600",
     lineHeight: 15,
@@ -124,11 +127,10 @@ const styles = StyleSheet.create({
   },
   value: {
     width: "100%",
-    color: "#8A8A8A",
     fontSize: 11,
     lineHeight: 15,
     textAlign: "center",
   },
-  interactiveValue: { color: "#3B82F6", fontWeight: "700" },
+  interactiveValue: { fontWeight: "700" },
   valuePressed: { opacity: 0.62, transform: [{ scale: 0.97 }] },
 });

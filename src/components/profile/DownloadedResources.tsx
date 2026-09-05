@@ -82,12 +82,23 @@ export function DownloadedResources({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.sectionTitle}>My Downloads</Text>
-          <View style={styles.countBadge}>
-            <Text style={styles.countText}>{files.length}</Text>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+            My Downloads
+          </Text>
+          <View
+            style={[
+              styles.countBadge,
+              { backgroundColor: themeColors.primaryLight },
+            ]}
+          >
+            <Text style={[styles.countText, { color: themeColors.primary }]}>
+              {files.length}
+            </Text>
           </View>
         </View>
-        <Text style={styles.sectionSubtitle}>Available offline anytime</Text>
+        <Text style={[styles.sectionSubtitle, { color: themeColors.subtitle }]}>
+          Available offline anytime
+        </Text>
       </View>
 
       {/* Content: Files List or Empty State */}
@@ -126,10 +137,10 @@ export function DownloadedResources({
               color={themeColors.inactive}
             />
           </View>
-          <Text style={styles.emptyTitle}>
+          <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
             Downloaded files will appear here
           </Text>
-          <Text style={styles.emptySubtitle}>
+          <Text style={[styles.emptySubtitle, { color: themeColors.subtitle }]}>
             Save PDFs and documents to access them offline anytime.
           </Text>
         </View>
@@ -162,15 +173,35 @@ export function DownloadedResources({
               </View>
 
               <View style={styles.fileDetails}>
-                <Text style={styles.fileTitle} numberOfLines={1}>
+                <Text
+                  style={[styles.fileTitle, { color: themeColors.text }]}
+                  numberOfLines={1}
+                >
                   {file.title}
                 </Text>
                 <View style={styles.metaRow}>
-                  <View style={styles.offlineBadge}>
-                    <Feather name="check-circle" size={10} color="#10B981" />
-                    <Text style={styles.offlineText}>Offline</Text>
+                  <View
+                    style={[
+                      styles.offlineBadge,
+                      { backgroundColor: themeColors.primaryLight },
+                    ]}
+                  >
+                    <Feather
+                      name="check-circle"
+                      size={10}
+                      color={themeColors.green}
+                    />
+                    <Text
+                      style={[styles.offlineText, { color: themeColors.green }]}
+                    >
+                      Offline
+                    </Text>
                   </View>
-                  <Text style={styles.metaDot}>•</Text>
+                  <Text
+                    style={[styles.metaDot, { color: themeColors.inactive }]}
+                  >
+                    •
+                  </Text>
                   <Text
                     style={[styles.fileDate, { color: themeColors.subtitle }]}
                   >
@@ -185,7 +216,11 @@ export function DownloadedResources({
                   onPress={() => handleOpenFile(file)}
                   accessibilityLabel="Open downloaded file"
                 >
-                  <Text style={styles.openBtnText}>Open</Text>
+                  <Text
+                    style={[styles.openBtnText, { color: themeColors.white }]}
+                  >
+                    Open
+                  </Text>
                 </Pressable>
 
                 <Pressable
@@ -256,7 +291,6 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   countBadge: {
-    backgroundColor: colors.primaryLight,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: radius.pill,
@@ -292,7 +326,6 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: colors.text,
     textAlign: "center",
   },
   emptySubtitle: {
@@ -325,7 +358,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: radius.sm,
-    backgroundColor: "#EEF2FF",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -336,7 +368,6 @@ const styles = StyleSheet.create({
   fileTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: colors.text,
   },
   metaRow: {
     flexDirection: "row",
@@ -347,7 +378,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 3,
-    backgroundColor: "#ECFDF5",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: radius.pill,
@@ -355,11 +385,9 @@ const styles = StyleSheet.create({
   offlineText: {
     fontSize: 10,
     fontWeight: "700",
-    color: "#059669",
   },
   metaDot: {
     fontSize: 12,
-    color: "#94A3B8",
   },
   fileDate: {
     fontSize: 11,
@@ -377,7 +405,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   openBtnText: {
-    color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "700",
   },

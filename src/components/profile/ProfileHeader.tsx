@@ -32,7 +32,7 @@ export function ProfileHeader({
   useEffect(() => setUri(requestedUri), [requestedUri]);
   return (
     <View style={[s.wrap, { backgroundColor: themeColors.white }]}>
-      <View style={s.banner}>
+      <View style={[s.banner, { backgroundColor: themeColors.primaryDark }]}>
         {profile.type === "admin" && (
           <LinearGradient
             colors={["rgba(255,255,255,0.18)", "transparent"]}
@@ -47,9 +47,9 @@ export function ProfileHeader({
           onPress={() => router.push("/settings")}
           accessibilityRole="button"
           accessibilityLabel="Open settings"
-          style={s.settings}
+          style={[s.settings, { backgroundColor: themeColors.dark }]}
         >
-          <Feather name="settings" size={20} color="#F8FAFC" />
+          <Feather name="settings" size={20} color={themeColors.white} />
         </Pressable>
       </View>
       <View style={[s.sheet, { backgroundColor: themeColors.white }]}>
@@ -73,16 +73,22 @@ export function ProfileHeader({
             accessibilityLabel="User profile picture"
           />
         </View>
-        <Text style={s.name}>{profile.name}</Text>
+        <Text style={[s.name, { color: themeColors.text }]}>
+          {profile.name}
+        </Text>
         {profile.bio ? (
-          <Text style={s.bio}>{profile.bio}</Text>
+          <Text style={[s.bio, { color: themeColors.subtitle }]}>
+            {profile.bio}
+          </Text>
         ) : (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Add your bio"
             hitSlop={8}
           >
-            <Text style={s.addBio}>✎ Talk about yourself</Text>
+            <Text style={[s.addBio, { color: themeColors.primary }]}>
+              ✎ Talk about yourself
+            </Text>
           </Pressable>
         )}
       </View>

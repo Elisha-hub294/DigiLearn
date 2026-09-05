@@ -40,7 +40,7 @@ export function VideoCard({
 }) {
   const router = useRouter();
   const { user, profile } = useProfile();
-  const { isDark } = useTheme();
+  const { colors, isDark } = useTheme();
   const [menuAnchor, setMenuAnchor] = useState<{
     x: number;
     y: number;
@@ -334,7 +334,7 @@ export function VideoCard({
           uploadedAt={item.uploadedAt}
           onPress={openTeacherProfile}
         />
-        <Text numberOfLines={2} style={styles.title}>
+        <Text numberOfLines={2} style={[styles.title, { color: colors.text }]}>
           {item.title}
         </Text>
       </Animated.View>
@@ -395,7 +395,6 @@ const styles = StyleSheet.create({
   card: { marginBottom: 48 },
   gridCard: { marginHorizontal: 8 },
   thumbnail: {
-    backgroundColor: "#ddd",
     borderRadius: radius.sm,
     height: 200,
     width: "100%",
@@ -441,7 +440,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   title: {
-    color: "#111",
     fontSize: 15,
     fontWeight: "500",
     marginTop: 5,
