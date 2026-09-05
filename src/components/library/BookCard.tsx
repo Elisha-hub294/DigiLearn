@@ -34,9 +34,11 @@ export function BookCard({
   return (
     <Pressable
       accessibilityRole="button"
-      style={[
+      style={({ pressed, hovered }) => [
         styles.card,
         { width, marginRight, backgroundColor: colors.white },
+        hovered && styles.hovered,
+        pressed && styles.pressed,
       ]}
       onPress={onPress}
     >
@@ -103,6 +105,14 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: spacing.md,
     position: "relative",
+  },
+  hovered: {
+    opacity: 0.98,
+    transform: [{ scale: 1.01 }],
+  },
+  pressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.995 }],
   },
   menu: { position: "absolute", top: 6, right: 6, zIndex: 2 },
   image: {

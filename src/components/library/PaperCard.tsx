@@ -105,9 +105,10 @@ export function PaperCard({
     >
       <Pressable
         accessibilityRole="button"
-        style={({ pressed, hovered }: any) => [
+        style={({ pressed, hovered }) => [
           styles.cardPressable,
-          (pressed || hovered) && styles.cardPressed,
+          hovered && styles.cardHovered,
+          pressed && styles.cardPressed,
         ]}
         onPress={openPreview}
       >
@@ -182,6 +183,11 @@ const styles = StyleSheet.create({
   },
   cardPressed: {
     opacity: 0.9,
+    transform: [{ scale: 0.995 }],
+  },
+  cardHovered: {
+    opacity: 0.98,
+    transform: [{ scale: 1.01 }],
   },
   previewContainer: {
     width: "100%",

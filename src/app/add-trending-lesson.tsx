@@ -269,9 +269,18 @@ export default function AddTrendingLessonScreen() {
     setPasteLoading(true);
     try {
       const pastedLink = (await Clipboard.getStringAsync()).trim();
-      if (pastedLink) {
-        await handleLinkChange(pastedLink);
+
+      if (!pastedLink) {
+        setLinkError("Clipboard is empty.");
+        return;
       }
+
+      if (!isValidYouTubeVideoUrl(pastedLink)) {
+        setLinkError("Clipboard does not contain a valid YouTube link.");
+        return;
+      }
+
+      await handleLinkChange(pastedLink);
     } catch {
       setLinkError("Unable to read a link from the clipboard.");
     } finally {

@@ -58,8 +58,9 @@ export function NotificationCard({
         accessibilityRole="button"
         accessibilityLabel={`Open notification: ${notification.message}`}
         onPress={() => onPress(notification)}
-        style={({ pressed }) => [
+        style={({ pressed, hovered }) => [
           styles.mainPressable,
+          hovered && styles.hovered,
           pressed && styles.pressed,
         ]}
       >
@@ -202,7 +203,12 @@ const styles = StyleSheet.create({
   readCard: {},
   adminCard: { borderLeftWidth: 4, borderLeftColor: "#B45309" },
   pressed: {
-    opacity: 0.96,
+    opacity: 0.94,
+    transform: [{ scale: 0.995 }],
+  },
+  hovered: {
+    opacity: 0.98,
+    transform: [{ scale: 1.01 }],
   },
   mainPressable: {
     flex: 1,

@@ -28,9 +28,10 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
+      style={({ pressed, hovered }) => [
         styles.cardContainer,
         { backgroundColor: colors.white, borderColor: colors.border },
+        hovered && styles.hovered,
         pressed && styles.pressed,
       ]}
       accessibilityRole="button"
@@ -74,6 +75,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: 10,
   },
+  hovered: { opacity: 0.98, transform: [{ scale: 1.01 }] },
   pressed: { opacity: 0.88, transform: [{ scale: 0.995 }] },
   iconPanel: {
     width: 80,
