@@ -58,7 +58,7 @@ export function BookCard({
               <View
                 style={[styles.badge, { backgroundColor: colors.primaryLight }]}
               >
-                <Text style={[styles.badgeText, { color: colors.primary }]}> 
+                <Text style={[styles.badgeText, { color: colors.primary }]}>
                   {item.badge}
                 </Text>
               </View>
@@ -70,16 +70,19 @@ export function BookCard({
                   { backgroundColor: colors.lightBackground },
                 ]}
               >
-                <Text style={[styles.progressText, { color: colors.primary }]}> 
+                <Text style={[styles.progressText, { color: colors.primary }]}>
                   {item.progress}%
                 </Text>
               </View>
             ) : null}
           </View>
-          <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+          <Text
+            style={[styles.title, { color: colors.text }]}
+            numberOfLines={2}
+          >
             {item.title}
           </Text>
-          <Text style={[styles.author, { color: colors.subtitle }]}> 
+          <Text style={[styles.author, { color: colors.subtitle }]}>
             {item.author}
           </Text>
           <Text

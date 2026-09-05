@@ -1,18 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = exports.deleteResource = exports.generateAssistantReply = void 0;
-const app_1 = require("firebase-admin/app");
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = void 0;
 const genai_1 = require("@google/genai");
+const auth_1 = require("firebase-admin/auth");
+const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const messaging_1 = require("firebase-admin/messaging");
 const storage_1 = require("firebase-admin/storage");
+const params_1 = require("firebase-functions/params");
 const firestore_2 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
-const params_1 = require("firebase-functions/params");
 (0, app_1.initializeApp)();
 const geminiApiKey = (0, params_1.defineSecret)("GEMINI_API_KEY");
 const db = (0, firestore_1.getFirestore)();
+const adminAuth = (0, auth_1.getAuth)();
 const messaging = (0, messaging_1.getMessaging)();
 const storage = (0, storage_1.getStorage)();
 exports.generateAssistantReply = (0, https_1.onCall)({ secrets: [geminiApiKey] }, async (request) => {
@@ -35,6 +37,21 @@ exports.generateAssistantReply = (0, https_1.onCall)({ secrets: [geminiApiKey] }
     if (!apiKey) {
         throw new https_1.HttpsError("unavailable", "The assistant is not configured.");
     }
+    const usageRef = db.doc(`assistantUsage/${request.auth.uid}`);
+    const today = new Date().toISOString().slice(0, 10);
+    await db.runTransaction(async (transaction) => {
+        const usageSnapshot = await transaction.get(usageRef);
+        const usage = usageSnapshot.data();
+        const requestCount = usage?.day === today ? Number(usage.count ?? 0) : 0;
+        if (requestCount >= 30) {
+            throw new https_1.HttpsError("resource-exhausted", "Daily assistant usage limit reached.");
+        }
+        transaction.set(usageRef, {
+            day: today,
+            count: requestCount + 1,
+            updatedAt: firestore_1.Timestamp.now(),
+        });
+    });
     try {
         const ai = new genai_1.GoogleGenAI({ apiKey });
         const response = await ai.models.generateContent({
@@ -47,6 +64,69 @@ exports.generateAssistantReply = (0, https_1.onCall)({ secrets: [geminiApiKey] }
         console.error("Failed to generate assistant reply:", error);
         throw new https_1.HttpsError("unavailable", "Unable to generate a response.");
     }
+});
+exports.deleteAccount = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
+    }
+    const userId = request.auth.uid;
+    const usageRef = db.doc(`assistantUsage/${userId}`);
+    const paths = new Set();
+    const ownedCollections = [
+        "books",
+        "pages",
+        "pastPaper",
+        "trendingLessons",
+        "teacherPosts",
+    ];
+    for (const collectionName of ownedCollections) {
+        const snapshot = await db
+            .collection(collectionName)
+            .where("owner", "==", userId)
+            .get();
+        snapshot.docs.forEach((document) => {
+            collectStoragePaths(document.data(), paths);
+        });
+    }
+    const bucket = storage.bucket();
+    const profileFiles = await bucket.getFiles({ prefix: `profile-pics/${userId}/` });
+    profileFiles[0].forEach((file) => paths.add(file.name));
+    await Promise.all(Array.from(paths, async (path) => {
+        try {
+            await bucket.file(path).delete();
+        }
+        catch (error) {
+            if (error?.code !== 404)
+                throw error;
+        }
+    }));
+    await Promise.all(ownedCollections.map(async (collectionName) => {
+        const snapshot = await db
+            .collection(collectionName)
+            .where("owner", "==", userId)
+            .get();
+        await Promise.all(snapshot.docs.map((document) => document.ref.delete()));
+    }));
+    const activity = await db
+        .collection("activityEvents")
+        .where("userId", "==", userId)
+        .get();
+    const reports = await db.collection("reports").where("userId", "==", userId).get();
+    const applicationAudit = await db
+        .collection("teacherApplicationAudit")
+        .where("applicantId", "==", userId)
+        .get();
+    await Promise.all([
+        ...activity.docs.map((document) => document.ref.delete()),
+        ...reports.docs.map((document) => document.ref.delete()),
+        ...applicationAudit.docs.map((document) => document.ref.delete()),
+        db.recursiveDelete(db.doc(`users/${userId}`)),
+        db.recursiveDelete(db.doc(`teachers/${userId}`)),
+        db.recursiveDelete(db.doc(`teacherApplications/${userId}`)),
+        usageRef.delete(),
+        adminAuth.deleteUser(userId),
+    ]);
+    return { deleted: true };
 });
 const deletableCollections = new Set([
     "pages",

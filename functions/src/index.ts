@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { getStorage } from "firebase-admin/storage";
@@ -14,6 +15,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 initializeApp();
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 const db = getFirestore();
+const adminAuth = getAuth();
 const messaging = getMessaging();
 const storage = getStorage();
 
@@ -49,6 +51,25 @@ export const generateAssistantReply = onCall(
       throw new HttpsError("unavailable", "The assistant is not configured.");
     }
 
+    const usageRef = db.doc(`assistantUsage/${request.auth.uid}`);
+    const today = new Date().toISOString().slice(0, 10);
+    await db.runTransaction(async (transaction) => {
+      const usageSnapshot = await transaction.get(usageRef);
+      const usage = usageSnapshot.data();
+      const requestCount = usage?.day === today ? Number(usage.count ?? 0) : 0;
+      if (requestCount >= 30) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "Daily assistant usage limit reached.",
+        );
+      }
+      transaction.set(usageRef, {
+        day: today,
+        count: requestCount + 1,
+        updatedAt: Timestamp.now(),
+      });
+    });
+
     try {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
@@ -62,6 +83,83 @@ export const generateAssistantReply = onCall(
     }
   },
 );
+
+export const deleteAccount = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+
+  const userId = request.auth.uid;
+  const usageRef = db.doc(`assistantUsage/${userId}`);
+  const paths = new Set<string>();
+  const ownedCollections = [
+    "books",
+    "pages",
+    "pastPaper",
+    "trendingLessons",
+    "teacherPosts",
+  ];
+
+  for (const collectionName of ownedCollections) {
+    const snapshot = await db
+      .collection(collectionName)
+      .where("owner", "==", userId)
+      .get();
+    snapshot.docs.forEach((document) => {
+      collectStoragePaths(document.data(), paths);
+    });
+  }
+
+  const bucket = storage.bucket();
+  const profileFiles = await bucket.getFiles({
+    prefix: `profile-pics/${userId}/`,
+  });
+  profileFiles[0].forEach((file) => paths.add(file.name));
+  await Promise.all(
+    Array.from(paths, async (path) => {
+      try {
+        await bucket.file(path).delete();
+      } catch (error: any) {
+        if (error?.code !== 404) throw error;
+      }
+    }),
+  );
+
+  await Promise.all(
+    ownedCollections.map(async (collectionName) => {
+      const snapshot = await db
+        .collection(collectionName)
+        .where("owner", "==", userId)
+        .get();
+      await Promise.all(snapshot.docs.map((document) => document.ref.delete()));
+    }),
+  );
+
+  const activity = await db
+    .collection("activityEvents")
+    .where("userId", "==", userId)
+    .get();
+  const reports = await db
+    .collection("reports")
+    .where("userId", "==", userId)
+    .get();
+  const applicationAudit = await db
+    .collection("teacherApplicationAudit")
+    .where("applicantId", "==", userId)
+    .get();
+  await Promise.all([
+    ...activity.docs.map((document) => document.ref.delete()),
+    ...reports.docs.map((document) => document.ref.delete()),
+    ...applicationAudit.docs.map((document) => document.ref.delete()),
+    db.recursiveDelete(db.doc(`users/${userId}`)),
+    db.recursiveDelete(db.doc(`teachers/${userId}`)),
+    db.recursiveDelete(db.doc(`teacherApplications/${userId}`)),
+    usageRef.delete(),
+    adminAuth.deleteUser(userId),
+  ]);
+
+  return { deleted: true };
+});
 
 const deletableCollections = new Set([
   "pages",

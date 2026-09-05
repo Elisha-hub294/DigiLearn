@@ -1,8 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { deleteUser } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -19,7 +19,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { auth, db } from "../../firebaseConfig";
+import { auth, db, functions } from "../../firebaseConfig";
 import WebProfilePictureCropper from "../components/profile/WebProfilePictureCropper";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
@@ -295,7 +295,8 @@ export default function MyProfileScreen() {
           if (!auth.currentUser) return;
           try {
             await clearGuestMode();
-            await deleteUser(auth.currentUser);
+            const deleteAccount = httpsCallable(functions, "deleteAccount");
+            await deleteAccount({});
             router.replace("/welcome" as never);
           } catch (reason) {
             setUpdateErrorMessage(

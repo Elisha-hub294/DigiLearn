@@ -16,10 +16,13 @@
       "firebaseAppId": "1:851245099108:web:fab0d172231b2a550a9771"
     },
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.digilearn.app",
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.digilearn.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/panda.png"
