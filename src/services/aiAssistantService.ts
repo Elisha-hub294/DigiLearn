@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -139,81 +138,9 @@ const extractKnowledgeValue = (
 };
 
 async function generateAIContentFromKnowledge(
-  geminiApiKey: string | null,
-  appOverview: string | null,
+  _geminiApiKey: string | null,
+  _appOverview: string | null,
 ): Promise<{ floatingMessages: string[]; suggestions: string[] }> {
-  if (!geminiApiKey) {
-    return {
-      floatingMessages: DEFAULT_FLOATING_MESSAGES,
-      suggestions: DEFAULT_SUGGESTIONS,
-    };
-  }
-
-  const prompt = [
-    "You are DigiLearn's AI Assistant for a mobile learning app.",
-    appOverview
-      ? `App Overview:\n${appOverview}`
-      : "DigiLearn is an interactive educational app offering study resources, revision, and academic support for students.",
-    "Generate content for the app's AI assistant feature:",
-    "1. Exactly 5 distinct, engaging, short messages (maximum 30 characters each) to display in a floating assistant speech bubble on the app's home screen.",
-    "2. Exactly 6 distinct study prompt chip suggestions (maximum 20 characters each), (actionable question/prompt ideas like 'Explain Osmosis' or 'Revise Quadratic Equations') for students to tap in the assistant chat screen.",
-    'Return ONLY a valid JSON object with keys "floatingMessages" (array of 5 strings) and "suggestions" (array of 6 strings).',
-    'Example format: {"floatingMessages": ["Message 1", "Message 2", "Message 3", "Message 4", "Message 5"], "suggestions": ["Prompt 1", "Prompt 2", "Prompt 3", "Prompt 4", "Prompt 5", "Prompt 6"]}',
-  ].join("\n\n");
-
-  try {
-    const ai = new GoogleGenAI({ apiKey: geminiApiKey });
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash-lite",
-      contents: prompt,
-    });
-
-    const text = response.text ? response.text.trim() : "";
-    const cleaned = text
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/, "")
-      .replace(/\s*```$/, "")
-      .trim();
-
-    const parsed = JSON.parse(cleaned);
-    if (parsed && typeof parsed === "object") {
-      let floatingMessages: string[] = DEFAULT_FLOATING_MESSAGES;
-      let suggestions: string[] = DEFAULT_SUGGESTIONS;
-
-      if (Array.isArray(parsed.floatingMessages)) {
-        const items = parsed.floatingMessages
-          .map((item: unknown) => (typeof item === "string" ? item.trim() : ""))
-          .filter((item: string) => item.length > 0);
-        if (items.length > 0) {
-          const filled = [...items];
-          for (const fallback of DEFAULT_FLOATING_MESSAGES) {
-            if (filled.length >= 5) break;
-            if (!filled.includes(fallback)) filled.push(fallback);
-          }
-          floatingMessages = filled.slice(0, 5);
-        }
-      }
-
-      if (Array.isArray(parsed.suggestions)) {
-        const items = parsed.suggestions
-          .map((item: unknown) => (typeof item === "string" ? item.trim() : ""))
-          .filter((item: string) => item.length > 0);
-        if (items.length > 0) {
-          const filled = [...items];
-          for (const fallback of DEFAULT_SUGGESTIONS) {
-            if (filled.length >= 6) break;
-            if (!filled.includes(fallback)) filled.push(fallback);
-          }
-          suggestions = filled.slice(0, 6);
-        }
-      }
-
-      return { floatingMessages, suggestions };
-    }
-  } catch (error) {
-    console.warn("Unable to generate AI assistant content:", error);
-  }
-
   return {
     floatingMessages: DEFAULT_FLOATING_MESSAGES,
     suggestions: DEFAULT_SUGGESTIONS,
@@ -232,12 +159,10 @@ export async function getAssistantContent(
   }
 
   assistantContentPromise = (async () => {
-    const [assistantSnapshot, configSnapshot, knowledgeContext] =
-      await Promise.all([
-        getDocs(collection(db, "ai assistant")),
-        getDocs(collection(db, "config")),
-        getDigiLearnKnowledgeContext(forceRefresh),
-      ]);
+    const [assistantSnapshot, knowledgeContext] = await Promise.all([
+      getDocs(collection(db, "ai assistant")),
+      getDigiLearnKnowledgeContext(forceRefresh),
+    ]);
 
     const assistantEntries = assistantSnapshot.docs
       .map((doc) => {
@@ -249,22 +174,14 @@ export async function getAssistantContent(
     const firstAvatar =
       assistantEntries.find((entry) => entry.avatar)?.avatar ?? null;
 
-    const geminiApiKey =
-      configSnapshot.docs
-        .map((doc) => (doc.data() as Record<string, unknown>).gemini_api_key)
-        .find(isNonEmptyString) ?? null;
-
     const { floatingMessages, suggestions } =
-      await generateAIContentFromKnowledge(
-        geminiApiKey,
-        knowledgeContext.appOverview,
-      );
+      await generateAIContentFromKnowledge(null, knowledgeContext.appOverview);
 
     const content = {
       avatar: firstAvatar,
       messages: floatingMessages,
       suggestions,
-      geminiApiKey,
+      geminiApiKey: null,
     };
 
     assistantContentCache = content;

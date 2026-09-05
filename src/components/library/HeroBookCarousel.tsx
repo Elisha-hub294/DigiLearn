@@ -89,64 +89,67 @@ export function HeroBookCarousel({ data }: HeroBookCarouselProps) {
           const isActive = index === normalizedIndex;
 
           return (
-            <Pressable
+            <View
               key={`${item.id}-${index}`}
-              accessibilityRole="button"
-              accessibilityLabel={`Open ${item.title}`}
-              onPress={() =>
-                router.push({
-                  pathname: "/book-preview",
-                  params: {
-                    id: item.id,
-                    source: "library",
-                    returnTo: "/library",
-                  },
-                } as any)
-              }
               style={[styles.slideWrapper, { width: itemWidth }]}
             >
-              <View
-                style={[
-                  styles.card,
-                  isActive ? styles.activeCard : styles.inactiveCard,
-                ]}
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${item.title}`}
+                onPress={() =>
+                  router.push({
+                    pathname: "/book-preview",
+                    params: {
+                      id: item.id,
+                      source: "library",
+                      returnTo: "/library",
+                    },
+                  } as any)
+                }
               >
-                <Image
-                  source={item.image}
-                  style={styles.image}
-                  contentFit="cover"
-                />
-                <LinearGradient
-                  colors={[
-                    "transparent",
-                    "rgba(3, 7, 18, 0.35)",
-                    "rgba(3, 7, 18, 0.85)",
+                <View
+                  style={[
+                    styles.card,
+                    isActive ? styles.activeCard : styles.inactiveCard,
                   ]}
-                  locations={[0, 0.45, 1]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0, y: 1 }}
-                  style={styles.overlay}
-                />
-                <View style={styles.menu}>
-                  <ResourceDeleteMenu
-                    collection="books"
-                    id={item.id}
-                    title={item.title}
-                    data={{ owner: item.owner, cover: item.image }}
-                    light
+                >
+                  <Image
+                    source={item.image}
+                    style={styles.image}
+                    contentFit="cover"
                   />
+                  <LinearGradient
+                    colors={[
+                      "transparent",
+                      "rgba(3, 7, 18, 0.35)",
+                      "rgba(3, 7, 18, 0.85)",
+                    ]}
+                    locations={[0, 0.45, 1]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={styles.overlay}
+                  />
+                  <View style={styles.content}>
+                    <Text style={styles.title} numberOfLines={2}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.author}>{item.author}</Text>
+                    {/* <Text style={styles.subtitle} numberOfLines={2}>
+                      {item.subtitle}
+                    </Text> */}
+                  </View>
                 </View>
-                <View style={styles.content}>
-                  <Text style={styles.title} numberOfLines={2}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.author}>{item.author}</Text>
-                  {/* <Text style={styles.subtitle} numberOfLines={2}>
-                    {item.subtitle}
-                  </Text> */}
-                </View>
+              </Pressable>
+              <View style={styles.menu}>
+                <ResourceDeleteMenu
+                  collection="books"
+                  id={item.id}
+                  title={item.title}
+                  data={{ owner: item.owner, cover: item.image }}
+                  light
+                />
               </View>
-            </Pressable>
+            </View>
           );
         })}
       </ScrollView>

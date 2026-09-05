@@ -32,21 +32,64 @@ export function BookCard({
   const { colors, isDark } = useTheme();
   const fallbackCover = getThemeAsset("bookCoverDefault", isDark);
   return (
-    <Pressable
-      accessibilityRole="button"
-      style={({ pressed, hovered }) => [
+    <View
+      style={[
         styles.card,
         { width, marginRight, backgroundColor: colors.white },
-        hovered && styles.hovered,
-        pressed && styles.pressed,
       ]}
-      onPress={onPress}
     >
-      <Image
-        source={item.image || fallbackCover}
-        style={styles.image}
-        contentFit="cover"
-      />
+      <Pressable
+        accessibilityRole="button"
+        style={({ pressed, hovered }) => [
+          styles.cardContent,
+          hovered && styles.hovered,
+          pressed && styles.pressed,
+        ]}
+        onPress={onPress}
+      >
+        <Image
+          source={item.image || fallbackCover}
+          style={styles.image}
+          contentFit="cover"
+        />
+        <View>
+          <View style={styles.badgeRow}>
+            {item.badge ? (
+              <View
+                style={[styles.badge, { backgroundColor: colors.primaryLight }]}
+              >
+                <Text style={[styles.badgeText, { color: colors.primary }]}> 
+                  {item.badge}
+                </Text>
+              </View>
+            ) : null}
+            {typeof item.progress === "number" ? (
+              <View
+                style={[
+                  styles.progressLabel,
+                  { backgroundColor: colors.lightBackground },
+                ]}
+              >
+                <Text style={[styles.progressText, { color: colors.primary }]}> 
+                  {item.progress}%
+                </Text>
+              </View>
+            ) : null}
+          </View>
+          <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
+            {item.title}
+          </Text>
+          <Text style={[styles.author, { color: colors.subtitle }]}> 
+            {item.author}
+          </Text>
+          <Text
+            style={[styles.description, { color: colors.subtitle }]}
+            numberOfLines={2}
+          >
+            {item.description}
+          </Text>
+        </View>
+      </Pressable>
       <View style={styles.menu}>
         <ResourceDeleteMenu
           collection="books"
@@ -56,55 +99,19 @@ export function BookCard({
           light
         />
       </View>
-      <View>
-        <View style={styles.badgeRow}>
-          {item.badge ? (
-            <View
-              style={[styles.badge, { backgroundColor: colors.primaryLight }]}
-            >
-              <Text style={[styles.badgeText, { color: colors.primary }]}>
-                {item.badge}
-              </Text>
-            </View>
-          ) : null}
-          {typeof item.progress === "number" ? (
-            <View
-              style={[
-                styles.progressLabel,
-                { backgroundColor: colors.lightBackground },
-              ]}
-            >
-              <Text style={[styles.progressText, { color: colors.primary }]}>
-                {item.progress}%
-              </Text>
-            </View>
-          ) : null}
-        </View>
-        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
-          {item.title}
-        </Text>
-        <Text style={[styles.author, { color: colors.subtitle }]}>
-          {item.author}
-        </Text>
-        <Text
-          style={[styles.description, { color: colors.subtitle }]}
-          numberOfLines={2}
-        >
-          {item.description}
-        </Text>
-      </View>
-    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    width: 200,
-    marginRight: spacing.md,
     borderRadius: radius.sm,
     overflow: "hidden",
     marginBottom: spacing.md,
     position: "relative",
+  },
+  cardContent: {
+    flex: 1,
   },
   hovered: {
     opacity: 0.98,

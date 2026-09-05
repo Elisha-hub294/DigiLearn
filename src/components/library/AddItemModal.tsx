@@ -68,7 +68,6 @@ import {
 } from "./add-item/pdfService";
 import {
   cleanFileNameForTitle,
-  getPastPaperStorageFolder,
   getTitleDocId,
   normalizeText,
   resolveUploadError,
@@ -946,7 +945,7 @@ export function AddItemModal({
             .slice(2, 9)}`;
           const ext = selectedImage.mimeType?.split("/")[1] || "jpg";
           coverUrl = await uploadAssetToStorage(
-            `book-covers/${itemId}.${ext}`,
+            `book-covers/${userId}/${itemId}.${ext}`,
             blob,
             "",
             updatePreviewProgress,
@@ -976,7 +975,7 @@ export function AddItemModal({
         if (selectedImage) {
           const blob = await uriToBlob(selectedImage.uri);
           coverUrl = await uploadAssetToStorage(
-            `post-covers/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
+            `post-covers/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
             blob,
             "",
             updatePreviewProgress,
@@ -987,7 +986,7 @@ export function AddItemModal({
           const blob = await uriToBlob(file.uri);
           const documentName = sanitizeFileName(file.name || "document");
           documentUrl = await uploadAssetToStorage(
-            `post-documents/${Date.now()}_${Math.random().toString(36).slice(2, 9)}_${documentName}`,
+            `post-documents/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}_${documentName}`,
             blob,
             "Uploading announcement document",
             updateUploadProgress,
@@ -1002,7 +1001,7 @@ export function AddItemModal({
           );
           const coverBlob = await uriToBlob(coverDataUrl);
           coverUrl = await uploadAssetToStorage(
-            `post-covers/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
+            `post-covers/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
             coverBlob,
             "",
             updatePreviewProgress,
@@ -1040,7 +1039,7 @@ export function AddItemModal({
           const blob = await uriToBlob(file.uri);
           const uniqueName = `${Date.now()}_${file.name || "document"}`;
           documentUrl = await uploadAssetToStorage(
-            `docs/${uniqueName}`,
+            `docs/${userId}/${uniqueName}`,
             blob,
             "Uploading page document",
             updateUploadProgress,
@@ -1058,7 +1057,7 @@ export function AddItemModal({
               .toString(36)
               .substring(2, 9)}.jpg`;
             coverUrl = await uploadAssetToStorage(
-              `page-covers/${uniqueCoverId}`,
+              `page-covers/${userId}/${uniqueCoverId}`,
               coverBlob,
               "",
               updatePreviewProgress,
@@ -1100,7 +1099,7 @@ export function AddItemModal({
           const blob = await uriToBlob(file.uri);
           const uniqueName = `${Date.now()}_${file.name || "past-paper"}`;
           documentUrl = await uploadAssetToStorage(
-            `${getPastPaperStorageFolder(formData.author)}/${uniqueName}`,
+            `past-papers/${userId}/${uniqueName}`,
             blob,
             "Uploading past paper",
             updateUploadProgress,
@@ -1121,7 +1120,7 @@ export function AddItemModal({
               .toString(36)
               .substring(2, 9)}_${sanitizedFileName}.jpg`;
             coverUrl = await uploadAssetToStorage(
-              `page-covers/${uniqueCoverId}`,
+              `page-covers/${userId}/${uniqueCoverId}`,
               coverBlob,
               "",
               updatePreviewProgress,

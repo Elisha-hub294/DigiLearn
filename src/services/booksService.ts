@@ -112,7 +112,7 @@ export async function loadBooksPaginated(
     const snapshot = await getDocs(q);
     return processPaginationResults(snapshot.docs, pageSize, (doc) => {
       const data = doc.data() as Record<string, unknown>;
-      const index = snapshot.docs.indexOf(doc);
+      const index = snapshot.docs.findIndex((item) => item.id === doc.id);
       return {
         id: doc.id || `book-${index}`,
         title: text(data.title ?? data.name ?? data.bookTitle, "Untitled book"),

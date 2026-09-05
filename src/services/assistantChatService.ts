@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   collection,
@@ -9,8 +8,9 @@ import {
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 
-import { auth, db } from "../../firebaseConfig";
+import { auth, db, functions } from "../../firebaseConfig";
 import {
   getAssistantContent,
   getDigiLearnKnowledgeContext,
@@ -198,15 +198,8 @@ export async function generateAssistantReply(
   previousMessages: ChatMessage[],
   userContext?: AssistantUserContext,
 ) {
-  const content = await getAssistantContent();
+  await getAssistantContent();
   const knowledge = await getDigiLearnKnowledgeContext();
-  const apiKey = content.geminiApiKey;
-
-  if (!apiKey) {
-    throw new Error(
-      "DigiLearn AI isn't available right now. Please try again later.",
-    );
-  }
 
   const history = previousMessages
     .slice(-8)
@@ -243,13 +236,16 @@ export async function generateAssistantReply(
   ].join(" ");
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash-lite",
-      contents: `${systemPrompt}\n\nConversation:\n${history}\n\nUser prompt:\n${prompt}`,
+    const callable = httpsCallable<
+      { prompt: string; conversation: string; systemPrompt: string },
+      { text?: string }
+    >(functions, "generateAssistantReply");
+    const response = await callable({
+      prompt,
+      conversation: history,
+      systemPrompt,
     });
-    const text = response.text ?? ASSISTANT_UNAVAILABLE_MESSAGE;
-    return text;
+    return response.data.text || ASSISTANT_UNAVAILABLE_MESSAGE;
   } catch (error) {
     throw new Error(getAssistantErrorMessage(error));
   }

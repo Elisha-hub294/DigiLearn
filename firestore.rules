@@ -10,6 +10,17 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
     }
 
+    function isPublisher() {
+      return isVerified()
+        && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin'
+          || (
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'teacher'
+            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teacherApprovalStatus == 'approved'
+          )
+        );
+    }
+
     match /users/{userId} {
       allow create: if isVerified() && request.auth.uid == userId;
       allow read: if isVerified() && request.auth.uid == userId;
@@ -53,12 +64,42 @@ service cloud.firestore {
     match /teachers/{teacherId} {
       allow create: if isVerified()
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
-      allow read: if isVerified() && request.auth.uid == teacherId;
+      allow read: if isVerified();
       allow update: if isVerified() && (
         request.auth.uid == teacherId
         || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin'
       ) && request.resource.data.type == 'teacher';
       allow delete: if false;
+    }
+
+    match /subject/{documentId} {
+      allow read: if isVerified();
+      allow write: if false;
+    }
+
+    match /pastPaperType/{documentId} {
+      allow read: if isVerified();
+      allow write: if false;
+    }
+
+    match /default/{documentId} {
+      allow read: if isVerified();
+      allow write: if false;
+    }
+
+    match /promotionalBanner/{documentId} {
+      allow read: if isVerified();
+      allow write: if false;
+    }
+
+    match /teacherPostsCards/{documentId} {
+      allow read: if isVerified();
+      allow write: if false;
+    }
+
+    match /teacherUpdates/{documentId} {
+      allow read: if isVerified();
+      allow write: if false;
     }
 
     match /teacherApplications/{applicationId} {
@@ -120,7 +161,7 @@ service cloud.firestore {
     }
 
     match /books/{bookId} {
-      allow create: if isVerified()
+      allow create: if isPublisher()
         && request.resource.data.owner == request.auth.uid
         && request.resource.data.keys().hasOnly([
           'title',
@@ -131,38 +172,38 @@ service cloud.firestore {
           'updatedAt'
         ]);
       allow read: if isVerified();
-      allow update: if isVerified()
-        && resource.data.owner == request.auth.uid
+      allow update: if isPublisher()
+        && (resource.data.owner == request.auth.uid || isAdmin())
         && request.resource.data.owner == resource.data.owner;
       allow delete: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
     }
 
     match /pages/{pageId} {
       allow read: if isVerified();
-      allow create: if isVerified() && request.resource.data.owner == request.auth.uid;
-      allow update: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
-      allow delete: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow create: if isPublisher() && request.resource.data.owner == request.auth.uid;
+      allow update: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow delete: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
     }
 
     match /pastPaper/{paperId} {
       allow read: if isVerified();
-      allow create: if isVerified() && request.resource.data.owner == request.auth.uid;
-      allow update: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
-      allow delete: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow create: if isPublisher() && request.resource.data.owner == request.auth.uid;
+      allow update: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow delete: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
     }
 
     match /trendingLessons/{lessonId} {
       allow read: if isVerified();
-      allow create: if isVerified() && request.resource.data.owner == request.auth.uid;
-      allow update: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
-      allow delete: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow create: if isPublisher() && request.resource.data.owner == request.auth.uid;
+      allow update: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow delete: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
     }
 
     match /teacherPosts/{postId} {
       allow read: if isVerified();
-      allow create: if isVerified() && request.resource.data.owner == request.auth.uid;
-      allow update: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
-      allow delete: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow create: if isPublisher() && request.resource.data.owner == request.auth.uid;
+      allow update: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow delete: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
     }
 
     match /config/{documentId} {

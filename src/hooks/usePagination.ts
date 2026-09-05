@@ -1,5 +1,5 @@
 import { DocumentSnapshot, Query } from "firebase/firestore";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   buildPaginationQuery,
   CursorPaginationOptions,
@@ -57,9 +57,15 @@ export function usePagination<T>(
   const [loading, setLoading] = useState(autoLoad);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<DocumentSnapshot | undefined>(
+    undefined,
+  );
+  const [prevCursor, setPrevCursor] = useState<DocumentSnapshot | undefined>(
+    undefined,
+  );
 
-  const cursorRef = useRef<DocumentSnapshot | undefined>();
-  const prevCursorRef = useRef<DocumentSnapshot | undefined>();
+  const cursorRef = useRef<DocumentSnapshot | undefined>(undefined);
+  const prevCursorRef = useRef<DocumentSnapshot | undefined>(undefined);
 
   const loadPage = useCallback(
     async (cursor?: DocumentSnapshot, reverse = false) => {
@@ -81,6 +87,8 @@ export function usePagination<T>(
 
         setItems(result.items);
         setHasMore(result.hasMore);
+        setNextCursor(result.nextCursor);
+        setPrevCursor(result.prevCursor);
         cursorRef.current = result.nextCursor;
         prevCursorRef.current = result.prevCursor;
 
@@ -119,29 +127,33 @@ export function usePagination<T>(
   const reset = useCallback(async () => {
     cursorRef.current = undefined;
     prevCursorRef.current = undefined;
+    setNextCursor(undefined);
+    setPrevCursor(undefined);
     await loadPage();
   }, [loadPage]);
 
   const refresh = useCallback(async () => {
     cursorRef.current = undefined;
     prevCursorRef.current = undefined;
+    setNextCursor(undefined);
+    setPrevCursor(undefined);
     await loadPage();
   }, [loadPage]);
 
   // Auto-load on mount
-  useState(() => {
+  useEffect(() => {
     if (autoLoad) {
-      loadPage();
+      queueMicrotask(() => void loadPage());
     }
-  });
+  }, [autoLoad, loadPage]);
 
   return {
     items,
     loading,
     error,
     hasMore,
-    nextCursor: cursorRef.current,
-    prevCursor: prevCursorRef.current,
+    nextCursor,
+    prevCursor,
     loadNext,
     loadPrevious,
     reset,

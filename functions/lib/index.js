@@ -1,17 +1,53 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = exports.deleteResource = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = exports.deleteResource = exports.generateAssistantReply = void 0;
 const app_1 = require("firebase-admin/app");
+const genai_1 = require("@google/genai");
 const firestore_1 = require("firebase-admin/firestore");
 const messaging_1 = require("firebase-admin/messaging");
 const storage_1 = require("firebase-admin/storage");
 const firestore_2 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
+const params_1 = require("firebase-functions/params");
 (0, app_1.initializeApp)();
+const geminiApiKey = (0, params_1.defineSecret)("GEMINI_API_KEY");
 const db = (0, firestore_1.getFirestore)();
 const messaging = (0, messaging_1.getMessaging)();
 const storage = (0, storage_1.getStorage)();
+exports.generateAssistantReply = (0, https_1.onCall)({ secrets: [geminiApiKey] }, async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
+    }
+    const prompt = typeof request.data?.prompt === "string"
+        ? request.data.prompt.trim()
+        : "";
+    const conversation = typeof request.data?.conversation === "string"
+        ? request.data.conversation.trim()
+        : "";
+    const systemPrompt = typeof request.data?.systemPrompt === "string"
+        ? request.data.systemPrompt.trim()
+        : "";
+    if (!prompt || prompt.length > 4000 || conversation.length > 12000) {
+        throw new https_1.HttpsError("invalid-argument", "The assistant request is invalid.");
+    }
+    const apiKey = geminiApiKey.value();
+    if (!apiKey) {
+        throw new https_1.HttpsError("unavailable", "The assistant is not configured.");
+    }
+    try {
+        const ai = new genai_1.GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({
+            model: "gemini-3.5-flash-lite",
+            contents: `${systemPrompt}\n\nConversation:\n${conversation}\n\nUser prompt:\n${prompt}`,
+        });
+        return { text: response.text ?? "" };
+    }
+    catch (error) {
+        console.error("Failed to generate assistant reply:", error);
+        throw new https_1.HttpsError("unavailable", "Unable to generate a response.");
+    }
+});
 const deletableCollections = new Set([
     "pages",
     "books",

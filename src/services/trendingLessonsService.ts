@@ -141,8 +141,12 @@ export async function loadTrendingLessonsPaginated(
 
   try {
     const snapshot = await getDocs(q);
-    return processPaginationResults(snapshot.docs, pageSize, (doc, index) =>
-      normalizeLesson(doc.data(), doc.id, index),
+    return processPaginationResults(snapshot.docs, pageSize, (doc) =>
+      normalizeLesson(
+        (doc.data() ?? {}) as FirestoreLesson,
+        doc.id,
+        snapshot.docs.findIndex((item) => item.id === doc.id),
+      ),
     );
   } catch (error) {
     console.error("Error loading paginated trending lessons:", error);

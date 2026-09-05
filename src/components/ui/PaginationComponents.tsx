@@ -14,6 +14,15 @@ import {
 } from "react-native";
 
 // ============================================================================
+// UTILITY HOOKS
+// ============================================================================
+
+/**
+ * Hook to handle pagination state transitions
+ */
+import { useCallback, useState } from "react";
+
+// ============================================================================
 // UI COMPONENTS
 // ============================================================================
 
@@ -137,15 +146,6 @@ export function LoadMoreButton({
     </Pressable>
   );
 }
-
-// ============================================================================
-// UTILITY HOOKS
-// ============================================================================
-
-/**
- * Hook to handle pagination state transitions
- */
-import { useCallback, useState } from "react";
 
 export function usePaginationState<T>(initialItems: T[] = []) {
   const [items, setItems] = useState<T[]>(initialItems);
@@ -291,7 +291,7 @@ export class PaginationCache<T> {
   set(key: string, items: T[]): void {
     if (this.cache.size >= this.maxSize) {
       const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
+      if (firstKey !== undefined) this.cache.delete(firstKey);
     }
     this.cache.set(key, items);
   }

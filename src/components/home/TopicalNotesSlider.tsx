@@ -38,7 +38,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 const AUTO_SCROLL_INTERVAL_MS = 2500;
 const RESUME_DELAY_MS = 3000;
-const CARD_GAP = spacing.lg; // marginRight on each card
+const CARD_GAP = 0; // marginRight on each card
 const MIN_LOOP_COPIES = 5;
 
 export function normalizeCarouselOffset(
@@ -60,7 +60,7 @@ export const TopicalNotesSlider = () => {
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
   const reducedMotion = useReducedMotion();
-  const cardWidth = width >= 900 ? 128 : 110;
+  const cardWidth = width >= 900 ? 96 : 88;
   const itemStep = cardWidth + CARD_GAP;
   const [subjects, setSubjects] = useState<
     { id: string; title: string; image: string | any }[]
@@ -299,6 +299,11 @@ export const TopicalNotesSlider = () => {
         data={data}
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item._key}
+        getItemLayout={(_, index) => ({
+          length: itemStep,
+          offset: itemStep * index,
+          index,
+        })}
         onLayout={onLayout}
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -307,7 +312,7 @@ export const TopicalNotesSlider = () => {
         onMomentumScrollEnd={onScrollEnd}
         renderItem={({ item }) => (
           <Pressable
-            style={styles.card}
+            style={[styles.card, { width: cardWidth }]}
             accessibilityRole="button"
             accessibilityLabel={item.title}
             onPress={() =>
@@ -367,8 +372,8 @@ const styles = StyleSheet.create({
   },
   list: {},
   card: {
-    marginRight: CARD_GAP,
     alignItems: "center",
+    marginRight: CARD_GAP,
   },
   imageWrap: {
     justifyContent: "center",

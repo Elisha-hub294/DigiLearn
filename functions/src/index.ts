@@ -1,7 +1,9 @@
+import { GoogleGenAI } from "@google/genai";
 import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { getStorage } from "firebase-admin/storage";
+import { defineSecret } from "firebase-functions/params";
 import {
   onDocumentCreated,
   onDocumentWritten,
@@ -10,9 +12,56 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 
 initializeApp();
+const geminiApiKey = defineSecret("GEMINI_API_KEY");
 const db = getFirestore();
 const messaging = getMessaging();
 const storage = getStorage();
+
+export const generateAssistantReply = onCall(
+  { secrets: [geminiApiKey] },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Sign in required.");
+    }
+
+    const prompt =
+      typeof request.data?.prompt === "string"
+        ? request.data.prompt.trim()
+        : "";
+    const conversation =
+      typeof request.data?.conversation === "string"
+        ? request.data.conversation.trim()
+        : "";
+    const systemPrompt =
+      typeof request.data?.systemPrompt === "string"
+        ? request.data.systemPrompt.trim()
+        : "";
+
+    if (!prompt || prompt.length > 4000 || conversation.length > 12000) {
+      throw new HttpsError(
+        "invalid-argument",
+        "The assistant request is invalid.",
+      );
+    }
+
+    const apiKey = geminiApiKey.value();
+    if (!apiKey) {
+      throw new HttpsError("unavailable", "The assistant is not configured.");
+    }
+
+    try {
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash-lite",
+        contents: `${systemPrompt}\n\nConversation:\n${conversation}\n\nUser prompt:\n${prompt}`,
+      });
+      return { text: response.text ?? "" };
+    } catch (error) {
+      console.error("Failed to generate assistant reply:", error);
+      throw new HttpsError("unavailable", "Unable to generate a response.");
+    }
+  },
+);
 
 const deletableCollections = new Set([
   "pages",
