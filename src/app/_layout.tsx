@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { NetworkStatusBanner } from "../components/ui/NetworkStatusBanner";
 import { ProfileProvider } from "../contexts/ProfileContext";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 
@@ -22,6 +23,7 @@ function AppShell() {
       <ProfileProvider>
         <Stack screenOptions={{ headerShown: false }} />
       </ProfileProvider>
+      <NetworkStatusBanner />
     </>
   );
 }

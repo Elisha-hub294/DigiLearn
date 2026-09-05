@@ -3,8 +3,10 @@ import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -19,11 +21,14 @@ import { colors, radius, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { PaperItem, useLibraryData } from "../hooks/useLibraryData";
 import {
+  useBooksPagination,
+  useTrendingLessonsPagination,
+} from "../hooks/useLibraryPagination";
+import {
   TrendingLesson,
   useTrendingLessons,
 } from "../hooks/useTrendingLessons";
 import { recordUserActivity } from "../services/activityService";
-import { loadBooks } from "../services/booksService";
 import { resolveVideoImageSource } from "../utils/videoUtils";
 
 type Book = { id: string; title: string; author: string; image: string };
@@ -67,13 +72,18 @@ export default function SeeAllScreen() {
   const pages = useMemo(() => parsePages(params.pages), [params.pages]);
   const columns = width >= 700 ? 3 : width >= 430 ? 2 : 1;
   const { paperCollections, loading: papersLoading } = useLibraryData();
+
+  // Pagination hooks
+  const booksPagination = useBooksPagination();
+  const lessonsPagination = useTrendingLessonsPagination();
+
+  // Legacy hook for fallback
   const {
-    lessons,
-    loading: coursesLoading,
+    lessons: legacyLessons,
+    loading: legacyCoursesLoading,
     error: coursesError,
   } = useTrendingLessons();
-  const [books, setBooks] = useState<Book[]>([]);
-  const [booksLoading, setBooksLoading] = useState(mode === "books");
+
   const [selectedPaperType, setSelectedPaperType] = useState(
     params.paperType?.trim() || "All",
   );
@@ -92,31 +102,6 @@ export default function SeeAllScreen() {
       setSelectedPaperYear(params.paperYear?.trim() || "All"),
     );
   }, [params.paperYear]);
-  useEffect(() => {
-    if (mode !== "books") return;
-    let mounted = true;
-    void loadBooks()
-      .then((loadedBooks) => {
-        if (!mounted) return;
-        setBooks(
-          loadedBooks.map((book) => {
-            return {
-              id: book.id,
-              title: book.title,
-              author: book.author,
-              image: book.image,
-            };
-          }),
-        );
-        setBooksLoading(false);
-      })
-      .catch(() => {
-        if (mounted) setBooksLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [mode]);
 
   const paperTypeOptions = useMemo(() => {
     const types = paperCollections
@@ -179,22 +164,55 @@ export default function SeeAllScreen() {
           : mode === "downloads"
             ? "My Downloads"
             : "Books";
+
   const data =
     mode === "books"
-      ? books
+      ? booksPagination.items
       : mode === "courses"
-        ? lessons
+        ? lessonsPagination.items
         : mode === "papers"
           ? papers
           : pages;
+
   const loading =
     mode === "books"
-      ? booksLoading
+      ? booksPagination.loading
       : mode === "courses"
-        ? coursesLoading
+        ? lessonsPagination.loading
         : mode === "papers"
           ? papersLoading
           : false;
+
+  const hasMore =
+    mode === "books"
+      ? booksPagination.hasMore
+      : mode === "courses"
+        ? lessonsPagination.hasMore
+        : false;
+
+  const handleLoadMore = () => {
+    if (
+      mode === "books" &&
+      booksPagination.hasMore &&
+      !booksPagination.loading
+    ) {
+      booksPagination.loadMore();
+    } else if (
+      mode === "courses" &&
+      lessonsPagination.hasMore &&
+      !lessonsPagination.loading
+    ) {
+      lessonsPagination.loadMore();
+    }
+  };
+
+  const handleRefresh = () => {
+    if (mode === "books") {
+      booksPagination.refresh();
+    } else if (mode === "courses") {
+      lessonsPagination.refresh();
+    }
+  };
 
   return (
     <View
@@ -356,6 +374,22 @@ export default function SeeAllScreen() {
               { paddingHorizontal: horizontalPadding },
             ]}
             columnWrapperStyle={columns > 1 ? styles.row : undefined}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            refreshControl={
+              <RefreshControl
+                refreshing={loading && data.length === 0}
+                onRefresh={handleRefresh}
+                tintColor={themeColors.primary}
+              />
+            }
+            ListFooterComponent={
+              loading && hasMore ? (
+                <View style={styles.footerLoader}>
+                  <ActivityIndicator size="small" color={themeColors.primary} />
+                </View>
+              ) : null
+            }
             renderItem={({ item }: { item: any }) => (
               <View style={[styles.cell, { width: `${100 / columns}%` }]}>
                 {mode === "books" ? (
@@ -753,5 +787,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: spacing.sm,
     textAlign: "center",
+  },
+  footerLoader: {
+    paddingVertical: spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
