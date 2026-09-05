@@ -27,6 +27,7 @@ import { auth, db } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { getTeacherAvatar } from "../constants/teacherAvatar";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   recordLessonVisit,
   recordUserActivity,
@@ -66,6 +67,7 @@ function resolveImageSource(source?: string) {
 }
 
 export default function LessonPlayerScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [isSaved, setIsSaved] = useState(false);
@@ -250,8 +252,12 @@ export default function LessonPlayerScreen() {
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
+      <StatusBar
+        style={themeColors.background === colors.background ? "dark" : "light"}
+      />
       <View style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
           {/* Navigation Header */}
@@ -265,7 +271,11 @@ export default function LessonPlayerScreen() {
               style={styles.iconButton}
               hitSlop={8}
             >
-              <Ionicons name="chevron-back" size={24} color="#0F172A" />
+              <Ionicons
+                name="chevron-back"
+                size={24}
+                color={themeColors.text}
+              />
             </Pressable>
             {/* <Text style={styles.headerTitle}>Lesson Preview</Text> */}
             <View style={styles.headerRightActions}>
@@ -278,23 +288,39 @@ export default function LessonPlayerScreen() {
                   selected: lessonIsSaved,
                   disabled: isSaving,
                 }}
-                style={styles.iconButton}
+                style={[
+                  styles.iconButton,
+                  {
+                    backgroundColor: themeColors.lightBackground,
+                    borderColor: themeColors.border,
+                  },
+                ]}
                 hitSlop={8}
               >
                 <Ionicons
                   name={lessonIsSaved ? "bookmark" : "bookmark-outline"}
                   size={20}
-                  color={lessonIsSaved ? "#3B82F6" : "#0F172A"}
+                  color={lessonIsSaved ? themeColors.primary : themeColors.text}
                 />
               </Pressable>
               <Pressable
                 accessibilityLabel="Share lesson"
                 accessibilityRole="button"
                 onPress={handleShare}
-                style={styles.iconButton}
+                style={[
+                  styles.iconButton,
+                  {
+                    backgroundColor: themeColors.lightBackground,
+                    borderColor: themeColors.border,
+                  },
+                ]}
                 hitSlop={8}
               >
-                <Ionicons name="share-outline" size={20} color="#0F172A" />
+                <Ionicons
+                  name="share-outline"
+                  size={20}
+                  color={themeColors.text}
+                />
               </Pressable>
             </View>
           </View>
@@ -365,7 +391,13 @@ export default function LessonPlayerScreen() {
             {/* Lesson Details & Educator Section */}
             <Animated.View
               entering={FadeInDown.delay(150).duration(400)}
-              style={styles.detailsCard}
+              style={[
+                styles.detailsCard,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                },
+              ]}
             >
               <Text style={styles.title}>
                 {params.title ?? "Untitled Lesson"}
@@ -395,21 +427,45 @@ export default function LessonPlayerScreen() {
 
               {/* Specs / Quick Info Grid */}
               <View style={styles.specsRow}>
-                <View style={styles.specCard}>
+                <View
+                  style={[
+                    styles.specCard,
+                    {
+                      backgroundColor: themeColors.background,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
+                >
                   <Ionicons name="time" size={18} color="#3B82F6" />
                   <Text style={styles.specLabel}>Duration</Text>
                   <Text style={styles.specValue}>
                     {params.duration ?? "00:00"}
                   </Text>
                 </View>
-                <View style={styles.specCard}>
+                <View
+                  style={[
+                    styles.specCard,
+                    {
+                      backgroundColor: themeColors.background,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
+                >
                   <Ionicons name="calendar" size={18} color="#10B981" />
                   <Text style={styles.specLabel}>Added</Text>
                   <Text style={styles.specValue} numberOfLines={1}>
                     {params.uploadedAt ?? "Recent"}
                   </Text>
                 </View>
-                <View style={styles.specCard}>
+                <View
+                  style={[
+                    styles.specCard,
+                    {
+                      backgroundColor: themeColors.background,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
+                >
                   <Ionicons name="sparkles" size={18} color="#F59E0B" />
                   <Text style={styles.specLabel}>Access</Text>
                   <Text style={styles.specValue}>Free HD</Text>
@@ -419,10 +475,25 @@ export default function LessonPlayerScreen() {
             {/* Lesson description */}
             <Animated.View
               entering={FadeInDown.delay(200).duration(400)}
-              style={styles.overviewCard}
+              style={[
+                styles.overviewCard,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                },
+              ]}
             >
-              <Text style={styles.sectionHeaderTitle}>Lesson Overview</Text>
-              <Text style={styles.descriptionText}>
+              <Text
+                style={[styles.sectionHeaderTitle, { color: themeColors.text }]}
+              >
+                Lesson Overview
+              </Text>
+              <Text
+                style={[
+                  styles.descriptionText,
+                  { color: themeColors.subtitle },
+                ]}
+              >
                 {params.description?.trim() ||
                   "No description is available for this lesson."}
               </Text>

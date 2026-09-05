@@ -1,8 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, { ZoomIn } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import { DEFAULT_SUBJECT_AVATAR } from "./pageTypes";
 
@@ -25,15 +25,20 @@ export function SubjectBadge({
   isRecentlyUpdated?: boolean;
   accentColor?: string;
 }) {
+  const { colors } = useTheme();
   const avatarSource = avatarUrl || DEFAULT_SUBJECT_AVATAR;
   const resolvedAvatarUrl = useFirebaseStorageUrl(avatarSource) || avatarSource;
-  const resolvedPlaceholderUrl = useFirebaseStorageUrl(DEFAULT_SUBJECT_AVATAR) || DEFAULT_SUBJECT_AVATAR;
-  const activeAccent = accentColor || "#000000";
+  const resolvedPlaceholderUrl =
+    useFirebaseStorageUrl(DEFAULT_SUBJECT_AVATAR) || DEFAULT_SUBJECT_AVATAR;
+  const activeAccent = accentColor === "#000000" ? colors.primary : accentColor;
 
   return (
     <View style={styles.headerContainer}>
       <View style={styles.topRow}>
-        <Animated.View entering={ZoomIn.duration(400)} style={styles.avatarWrap}>
+        <Animated.View
+          entering={ZoomIn.duration(400)}
+          style={styles.avatarWrap}
+        >
           <Image
             source={{ uri: resolvedAvatarUrl }}
             placeholder={{ uri: resolvedPlaceholderUrl }}
@@ -44,10 +49,16 @@ export function SubjectBadge({
         </Animated.View>
 
         <View style={styles.infoBlock}>
-          <Text style={[styles.title, { color: activeAccent }]} numberOfLines={2}>
+          <Text
+            style={[styles.title, { color: activeAccent }]}
+            numberOfLines={2}
+          >
             {title}
           </Text>
-          <Text style={styles.dateText} numberOfLines={1}>
+          <Text
+            style={[styles.dateText, { color: colors.subtitle }]}
+            numberOfLines={1}
+          >
             {dateText}
           </Text>
         </View>
@@ -56,7 +67,9 @@ export function SubjectBadge({
       {/* Badges and Subject Chips */}
       <View style={styles.badgesRow}>
         {pagesCount ? (
-          <View style={styles.pageBadge}>
+          <View
+            style={[styles.pageBadge, { backgroundColor: colors.primaryLight }]}
+          >
             <Feather name="file-text" size={13} color={activeAccent} />
             <Text style={[styles.pageBadgeText, { color: activeAccent }]}>
               {pagesCount} Pages
@@ -79,8 +92,11 @@ export function SubjectBadge({
         ) : null}
 
         {subjects.map((sub) => (
-          <View key={sub} style={styles.chip}>
-            <Text style={styles.chipText}>{sub}</Text>
+          <View
+            key={sub}
+            style={[styles.chip, { backgroundColor: colors.lightBackground }]}
+          >
+            <Text style={[styles.chipText, { color: colors.text }]}>{sub}</Text>
           </View>
         ))}
       </View>
@@ -101,8 +117,6 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 36,
     borderWidth: 1.5,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#FFFFFF",
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
@@ -130,7 +144,6 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#777777",
     marginTop: 4,
   },
   badgesRow: {

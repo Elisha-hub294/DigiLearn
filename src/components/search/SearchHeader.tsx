@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 type SearchHeaderProps = {
   value: string;
@@ -17,7 +17,7 @@ export function SearchHeader({
   onClear,
 }: SearchHeaderProps) {
   const router = useRouter();
-
+  const { colors } = useTheme();
   return (
     <View style={styles.container}>
       <Pressable
@@ -27,42 +27,44 @@ export function SearchHeader({
         onPress={() => router.back()}
         style={styles.backButton}
       >
-        <Feather name="arrow-left" size={22} color="#111111" />
+        <Feather name="arrow-left" size={22} color={colors.text} />
       </Pressable>
-
-      <View style={styles.searchBar}>
+      <View
+        style={[
+          styles.searchBar,
+          { borderColor: colors.border, backgroundColor: colors.white },
+        ]}
+      >
         <TextInput
           accessibilityLabel="Search pages, books, authors"
           value={value}
           onChangeText={onChangeText}
           onSubmitEditing={onSubmit}
           placeholder="Search pages, books, authors etc"
-          placeholderTextColor="#8B8B8B"
-          style={styles.input}
+          placeholderTextColor={colors.subtitle}
+          style={[styles.input, { color: colors.text }]}
           returnKeyType="search"
           autoCapitalize="none"
           autoCorrect={false}
-          autoFocus={true}
+          autoFocus
         />
-
-        {value.length > 0 && onClear && (
+        {value.length > 0 && onClear ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Clear search text"
             onPress={onClear}
             style={styles.clearButton}
           >
-            <Feather name="x" size={16} color="#8B8B8B" />
+            <Feather name="x" size={16} color={colors.subtitle} />
           </Pressable>
-        )}
-
+        ) : null}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Submit search"
           onPress={onSubmit}
-          style={styles.searchButton}
+          style={[styles.searchButton, { backgroundColor: colors.primary }]}
         >
-          <Feather name="search" size={20} color="#FFFFFF" />
+          <Feather name="search" size={20} color={colors.white} />
         </Pressable>
       </View>
     </View>
@@ -91,8 +93,6 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 28,
     borderWidth: 1.5,
-    borderColor: "#111111",
-    backgroundColor: "#FFFFFF",
     paddingLeft: 16,
     paddingRight: 4,
   },
@@ -101,18 +101,13 @@ const styles = StyleSheet.create({
     height: "100%",
     fontSize: 16,
     fontWeight: "500",
-    color: "#111111",
     paddingVertical: 0,
   },
-  clearButton: {
-    padding: 6,
-    marginRight: 4,
-  },
+  clearButton: { padding: 6, marginRight: 4 },
   searchButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#000000",
     alignItems: "center",
     justifyContent: "center",
   },

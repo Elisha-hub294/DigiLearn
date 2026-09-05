@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 import {
   formatRelativeNotificationTime,
   NOTIFICATION_TYPE_META,
@@ -21,6 +22,7 @@ export function NotificationCard({
   onPress,
   onMarkRead,
 }: NotificationCardProps) {
+  const { colors: themeColors } = useTheme();
   const meta = NOTIFICATION_TYPE_META[notification.type];
   const adminNotification = notification.storage === "admin";
   const resourceTitle = notification.resourceTitle?.trim();
@@ -35,7 +37,21 @@ export function NotificationCard({
       style={[
         styles.card,
         adminNotification && styles.adminCard,
-        notification.read ? styles.readCard : styles.unreadCard,
+        notification.read
+          ? [
+              styles.readCard,
+              {
+                backgroundColor: themeColors.lightBackground,
+                borderColor: themeColors.border,
+              },
+            ]
+          : [
+              styles.unreadCard,
+              {
+                backgroundColor: themeColors.primaryLight,
+                borderColor: themeColors.border,
+              },
+            ],
       ]}
     >
       <Pressable
@@ -75,7 +91,10 @@ export function NotificationCard({
               {formatRelativeNotificationTime(notification.createdAt)}
             </Text>
           </Text>
-          <Text style={styles.message} numberOfLines={1}>
+          <Text
+            style={[styles.message, { color: themeColors.text }]}
+            numberOfLines={1}
+          >
             {notification.message}
           </Text>
           {resourceTitle ? (
@@ -129,6 +148,7 @@ export function NotificationCard({
           onPress={() => onMarkRead(notification.id)}
           style={({ pressed }) => [
             styles.markReadButton,
+            { backgroundColor: themeColors.background },
             pressed && styles.markReadPressed,
           ]}
           accessibilityLabel="Mark as read"
@@ -142,7 +162,12 @@ export function NotificationCard({
 }
 
 export function NotificationSectionHeader({ label }: { label: string }) {
-  return <Text style={styles.sectionLabel}>{label}</Text>;
+  const { colors: themeColors } = useTheme();
+  return (
+    <Text style={[styles.sectionLabel, { color: themeColors.dark }]}>
+      {label}
+    </Text>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -157,14 +182,8 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
     marginBottom: 10,
   },
-  unreadCard: {
-    backgroundColor: "#DCE9FA",
-    borderColor: "#B8CBE7",
-  },
-  readCard: {
-    backgroundColor: "#f0f0f0",
-    borderColor: "#e0e0e0",
-  },
+  unreadCard: {},
+  readCard: {},
   adminCard: { borderLeftWidth: 4, borderLeftColor: "#B45309" },
   pressed: {
     opacity: 0.96,
@@ -252,11 +271,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
   },
-  markReadPressed: {
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
-  },
+  markReadPressed: {},
   sectionLabel: {
     fontSize: 13,
     fontWeight: "700",

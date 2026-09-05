@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { colors, spacing } from "../../../constants/theme";
+import { useTheme } from "../../../contexts/ThemeContext";
 
 export function InfoMessage({ children }: { children: string }) {
   return (
@@ -56,17 +57,35 @@ export function UploadStatusModal({
   message: string;
   progress: number;
 }) {
+  const { colors: themeColors } = useTheme();
   const safeProgress = Math.max(0, Math.min(progress, 100));
 
   return (
     <Modal animationType="fade" transparent visible={visible}>
       <View style={styles.uploadDialogBackdrop}>
-        <View style={styles.uploadDialogCard}>
+        <View
+          style={[
+            styles.uploadDialogCard,
+            {
+              backgroundColor: themeColors.white,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
           <View style={styles.uploadDialogIconWrap}>
             <ActivityIndicator size="small" color={colors.primary} />
           </View>
-          <Text style={styles.uploadDialogTitle}>{title}</Text>
-          <Text style={styles.uploadDialogMessage}>{message}</Text>
+          <Text style={[styles.uploadDialogTitle, { color: themeColors.text }]}>
+            {title}
+          </Text>
+          <Text
+            style={[
+              styles.uploadDialogMessage,
+              { color: themeColors.subtitle },
+            ]}
+          >
+            {message}
+          </Text>
 
           <View style={styles.uploadDialogBarWrap}>
             <View style={styles.progressTrack}>
@@ -74,7 +93,14 @@ export function UploadStatusModal({
                 style={[styles.progressFill, { width: `${safeProgress}%` }]}
               />
             </View>
-            <Text style={styles.uploadDialogPercent}>{safeProgress}%</Text>
+            <Text
+              style={[
+                styles.uploadDialogPercent,
+                { color: themeColors.primary },
+              ]}
+            >
+              {safeProgress}%
+            </Text>
           </View>
         </View>
       </View>
@@ -228,11 +254,9 @@ const styles = StyleSheet.create({
   uploadDialogCard: {
     width: "100%",
     maxWidth: 420,
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 22,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
     shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.12,
@@ -249,13 +273,11 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   uploadDialogTitle: {
-    color: "#0F172A",
     fontSize: 22,
     fontWeight: "700",
     marginBottom: 8,
   },
   uploadDialogMessage: {
-    color: "#475569",
     fontSize: 15,
     lineHeight: 22,
     marginBottom: 16,

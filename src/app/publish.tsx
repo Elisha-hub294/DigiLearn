@@ -12,6 +12,7 @@ import {
   type ViewStyle,
 } from "react-native";
 import { colors, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 const publishOptions = [
   {
@@ -52,6 +53,7 @@ const publishOptions = [
 ];
 
 export default function PublishScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
 
   const openComposer = (route: string) => {
@@ -78,7 +80,9 @@ export default function PublishScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: themeColors.background }]}
+    >
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}

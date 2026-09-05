@@ -16,6 +16,7 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   ActivityEvent,
   fetchActivityEvents,
@@ -29,6 +30,7 @@ const labelForType = (type: string) =>
   type.charAt(0).toUpperCase() + type.slice(1);
 
 export default function AdminActivityScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { profile } = useProfile();
   const { width } = useWindowDimensions();
@@ -161,7 +163,9 @@ export default function AdminActivityScreen() {
   if (profile?.type !== "admin") return null;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: themeColors.background }]}
+    >
       <View style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth }]}>
           <ScrollView

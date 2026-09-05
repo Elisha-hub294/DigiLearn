@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { colors, radius, spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 import { recordPageVisit } from "../../services/activityService";
 import {
   getDownloadedFiles,
@@ -67,6 +68,7 @@ function getFileExtension(uri: string | null): string {
 }
 
 export function PdfReaderScreen() {
+  const { colors: themeColors } = useTheme();
   const {
     uri,
     document: pdfDocument,
@@ -437,10 +439,23 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 
   if (isResolving) {
     return (
-      <View style={styles.screen}>
-        <View style={styles.header}>
+      <View
+        style={[styles.screen, { backgroundColor: themeColors.background }]}
+      >
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: themeColors.white,
+              borderBottomColor: themeColors.border,
+            },
+          ]}
+        >
           <Pressable
-            style={styles.headerBack}
+            style={[
+              styles.headerBack,
+              { backgroundColor: themeColors.lightBackground },
+            ]}
             onPress={goBack}
             accessibilityLabel="Close PDF"
           >
@@ -455,7 +470,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingCard}>
             <Feather name="file-text" size={36} color={colors.primary} />
-            <Text style={styles.loadingLabel}>Loading PDF…</Text>
+            <Text style={[styles.loadingLabel, { color: themeColors.text }]}>
+              Loading PDF…
+            </Text>
           </View>
         </View>
       </View>
@@ -479,7 +496,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
           onPrimary={goBack}
           onClose={goBack}
         />
-        <View style={styles.center}>
+        <View
+          style={[styles.center, { backgroundColor: themeColors.background }]}
+        >
           <Feather name="alert-circle" size={48} color="#CBD5E1" />
         </View>
       </>
@@ -526,11 +545,24 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
               }
         }
       />
-      <View style={styles.screen}>
+      <View
+        style={[styles.screen, { backgroundColor: themeColors.background }]}
+      >
         {/* ── Header ── */}
-        <View style={styles.header}>
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: themeColors.white,
+              borderBottomColor: themeColors.border,
+            },
+          ]}
+        >
           <Pressable
-            style={styles.headerBack}
+            style={[
+              styles.headerBack,
+              { backgroundColor: themeColors.lightBackground },
+            ]}
             onPress={goBack}
             accessibilityLabel="Close PDF"
           >
@@ -577,14 +609,32 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 
         {/* ── Active File Download Progress Banner & Bar ── */}
         {downloading && (
-          <View style={styles.downloadProgressBanner}>
+          <View
+            style={[
+              styles.downloadProgressBanner,
+              {
+                backgroundColor: themeColors.white,
+                borderBottomColor: themeColors.border,
+              },
+            ]}
+          >
             <View style={styles.downloadProgressInfo}>
               <Feather name="download-cloud" size={16} color="#006eff" />
-              <Text style={styles.downloadProgressLabel}>
+              <Text
+                style={[
+                  styles.downloadProgressLabel,
+                  { color: themeColors.text },
+                ]}
+              >
                 Downloading file… {Math.round(downloadProgress * 100)}%
               </Text>
             </View>
-            <View style={styles.downloadTrack}>
+            <View
+              style={[
+                styles.downloadTrack,
+                { backgroundColor: themeColors.border },
+              ]}
+            >
               <Animated.View
                 style={[styles.downloadFill, { width: downloadBarWidth }]}
               >
@@ -610,11 +660,28 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 
         {/* ── Loading overlay ── */}
         {!loaded && (
-          <View style={styles.loadingOverlay}>
-            <View style={styles.loadingCard}>
+          <View
+            style={[
+              styles.loadingOverlay,
+              { backgroundColor: themeColors.background },
+            ]}
+          >
+            <View
+              style={[
+                styles.loadingCard,
+                { backgroundColor: themeColors.white },
+              ]}
+            >
               <Feather name="file-text" size={36} color={colors.primary} />
-              <Text style={styles.loadingLabel}>Opening PDF…</Text>
-              <View style={styles.loadingTrack}>
+              <Text style={[styles.loadingLabel, { color: themeColors.text }]}>
+                Opening PDF…
+              </Text>
+              <View
+                style={[
+                  styles.loadingTrack,
+                  { backgroundColor: themeColors.border },
+                ]}
+              >
                 <Animated.View
                   style={[styles.loadingFill, { width: progressBarWidth }]}
                 />
@@ -625,7 +692,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 
         {/* ── Error state ── */}
         {loadError && (
-          <View style={styles.center}>
+          <View
+            style={[styles.center, { backgroundColor: themeColors.background }]}
+          >
             <Feather name="alert-triangle" size={52} color="#F59E0B" />
           </View>
         )}

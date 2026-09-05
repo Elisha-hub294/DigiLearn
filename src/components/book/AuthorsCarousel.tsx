@@ -1,14 +1,16 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 import { AuthorCard } from "./AuthorCard";
 
 type AuthorItem = string | { name: string; avatar?: string };
 
 export function AuthorsCarousel({ authors }: { authors: AuthorItem[] }) {
+  const { colors } = useTheme();
   const visibleAuthors = authors.length ? authors : ["Unknown author"];
 
   return (
     <View style={styles.section}>
-      <Text style={styles.heading}>Authors</Text>
+      <Text style={[styles.heading, { color: colors.text }]}>Authors</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -36,7 +38,6 @@ const styles = StyleSheet.create({
   section: { marginTop: 30 },
   heading: {
     fontSize: 21,
-    color: "#1B2730",
     fontWeight: "500",
     marginBottom: 14,
   },

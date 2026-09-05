@@ -1,4 +1,5 @@
 import { StyleSheet, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 import { BookmarkButton } from "./BookmarkButton";
 import { OpenButton } from "./OpenButton";
 import { ShareButton } from "./ShareButton";
@@ -16,8 +17,9 @@ export function BottomActionBar({
   onShare: () => void;
   accentColor?: string;
 }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.bar}>
+    <View style={[styles.bar, { backgroundColor: colors.white }]}>
       <ShareButton onPress={onShare} accentColor={accentColor} />
       <OpenButton onPress={onOpen} accentColor={accentColor} />
       <BookmarkButton
@@ -37,6 +39,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: "#FFFFFF",
   },
 });

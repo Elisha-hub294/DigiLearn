@@ -16,6 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 function getErrorMessage(error: unknown) {
   if (typeof error === "object" && error !== null && "code" in error) {
@@ -30,6 +31,7 @@ function getErrorMessage(error: unknown) {
 }
 
 export default function VerifyEmailScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { next } = useLocalSearchParams<{ next?: string }>();
   const { width } = useWindowDimensions();
@@ -101,7 +103,9 @@ export default function VerifyEmailScreen() {
   }, [router]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,

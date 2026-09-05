@@ -25,6 +25,7 @@ import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { clearGuestMode } from "../services/guestService";
 import { saveProfilePicture } from "../services/userProfile";
 import {
@@ -52,15 +53,18 @@ const fieldLabels: Record<Field, string> = {
 };
 
 function ProfileSettingRow({ icon, label, value, onPress, about }: RowProps) {
+  const { colors: themeColors } = useTheme();
   const hasValue = Boolean(value?.trim());
   const [expanded, setExpanded] = useState(false);
   return (
     <View style={styles.row}>
       <View style={styles.iconArea}>
-        <Feather name={icon} size={23} color="#666" />
+        <Feather name={icon} size={23} color={themeColors.inactive} />
       </View>
       <View style={styles.rowContent}>
-        <Text style={styles.rowLabel}>{label}</Text>
+        <Text style={[styles.rowLabel, { color: themeColors.text }]}>
+          {label}
+        </Text>
         <Pressable
           onPress={onPress}
           accessibilityRole="button"
@@ -131,6 +135,7 @@ const profilePictureError = (error: unknown) => {
 };
 
 export default function MyProfileScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, profile, loading } = useProfile();
@@ -249,7 +254,10 @@ export default function MyProfileScreen() {
     }
   };
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: themeColors.background }]}
+      edges={["top"]}
+    >
       <ActionDialog
         visible={Boolean(updateErrorMessage)}
         title="Update unavailable"
@@ -316,7 +324,9 @@ export default function MyProfileScreen() {
                 >
                   <Feather name="arrow-left" size={22} color={colors.dark} />
                 </Pressable>
-                <Text style={styles.title}>My Profile</Text>
+                <Text style={[styles.title, { color: themeColors.dark }]}>
+                  My Profile
+                </Text>
               </View>
               <Pressable
                 onPress={() => setMenuOpen((v) => !v)}
@@ -333,7 +343,9 @@ export default function MyProfileScreen() {
                   onPress={() => setMenuOpen(false)}
                   accessibilityLabel="Dismiss menu"
                 />
-                <View style={styles.menu}>
+                <View
+                  style={[styles.menu, { backgroundColor: themeColors.white }]}
+                >
                   <Pressable
                     onPress={confirmDelete}
                     style={styles.menuItem}
@@ -353,8 +365,12 @@ export default function MyProfileScreen() {
             ) : !user ? (
               <View style={styles.authPrompt}>
                 <Feather name="user" size={32} color={colors.primary} />
-                <Text style={styles.authTitle}>Log in or Sign up</Text>
-                <Text style={styles.authCopy}>
+                <Text style={[styles.authTitle, { color: themeColors.dark }]}>
+                  Log in or Sign up
+                </Text>
+                <Text
+                  style={[styles.authCopy, { color: themeColors.subtitle }]}
+                >
                   Sign in or create an account to manage your profile
                   information.
                 </Text>
@@ -456,9 +472,9 @@ export default function MyProfileScreen() {
           style={styles.modalBackdrop}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <View style={styles.sheet}>
+          <View style={[styles.sheet, { backgroundColor: themeColors.white }]}>
             <View style={styles.sheetHandle} />
-            <Text style={styles.sheetTitle}>
+            <Text style={[styles.sheetTitle, { color: themeColors.dark }]}>
               Set {field ? fieldLabels[field] : ""}
             </Text>
             {field === "level" ? (
@@ -521,7 +537,15 @@ export default function MyProfileScreen() {
                   placeholderTextColor="#9CA3AF"
                   multiline={field === "bio"}
                   maxLength={field === "bio" ? MAX_BIO_LENGTH : undefined}
-                  style={[styles.input, field === "bio" && styles.bioInput]}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                      color: themeColors.text,
+                    },
+                    field === "bio" && styles.bioInput,
+                  ]}
                   accessibilityLabel={`Enter ${field ? fieldLabels[field] : "value"}`}
                 />
                 {field === "bio" ? (

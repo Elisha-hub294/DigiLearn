@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export const ActivitySkeleton: React.FC = () => {
+  const { colors } = useTheme();
   const animatedValue = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
@@ -17,7 +19,7 @@ export const ActivitySkeleton: React.FC = () => {
           duration: 700,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     pulse.start();
     return () => pulse.stop();
@@ -26,22 +28,49 @@ export const ActivitySkeleton: React.FC = () => {
   return (
     <View style={styles.container}>
       {[1, 2, 3, 4, 5].map((key) => (
-        <View key={key} style={styles.cardSkeleton}>
+        <View
+          key={key}
+          style={[
+            styles.cardSkeleton,
+            { backgroundColor: colors.white, borderColor: colors.border },
+          ]}
+        >
           <Animated.View
-            style={[styles.leftPanelSkeleton, { opacity: animatedValue }]}
+            style={[
+              styles.leftPanelSkeleton,
+              { backgroundColor: colors.border, opacity: animatedValue },
+            ]}
           />
           <View style={styles.infoSkeleton}>
             <Animated.View
-              style={[styles.titleLine, { opacity: animatedValue }]}
+              style={[
+                styles.titleLine,
+                { backgroundColor: colors.border, opacity: animatedValue },
+              ]}
             />
             <Animated.View
-              style={[styles.descLine1, { opacity: animatedValue }]}
+              style={[
+                styles.descLine1,
+                {
+                  backgroundColor: colors.lightBackground,
+                  opacity: animatedValue,
+                },
+              ]}
             />
             <Animated.View
-              style={[styles.descLine2, { opacity: animatedValue }]}
+              style={[
+                styles.descLine2,
+                {
+                  backgroundColor: colors.lightBackground,
+                  opacity: animatedValue,
+                },
+              ]}
             />
             <Animated.View
-              style={[styles.dateLine, { opacity: animatedValue }]}
+              style={[
+                styles.dateLine,
+                { backgroundColor: colors.border, opacity: animatedValue },
+              ]}
             />
           </View>
         </View>
@@ -59,8 +88,6 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
     flexDirection: "row",
     overflow: "hidden",
     marginBottom: 10,
@@ -68,7 +95,6 @@ const styles = StyleSheet.create({
   leftPanelSkeleton: {
     width: 80,
     height: "100%",
-    backgroundColor: "#E2E8F0",
   },
   infoSkeleton: {
     flex: 1,
@@ -82,27 +108,23 @@ const styles = StyleSheet.create({
     width: "60%",
     height: 12,
     borderRadius: 4,
-    backgroundColor: "#E2E8F0",
     marginBottom: 6,
   },
   descLine1: {
     width: "90%",
     height: 10,
     borderRadius: 3,
-    backgroundColor: "#F1F5F9",
     marginBottom: 4,
   },
   descLine2: {
     width: "70%",
     height: 10,
     borderRadius: 3,
-    backgroundColor: "#F1F5F9",
   },
   dateLine: {
     width: "30%",
     height: 8,
     borderRadius: 3,
-    backgroundColor: "#E2E8F0",
     marginTop: 4,
   },
 });

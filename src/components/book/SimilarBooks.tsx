@@ -1,5 +1,5 @@
-import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 import { Book } from "./bookTypes";
 import { SimilarBookCard } from "./SimilarBookCard";
 
@@ -10,10 +10,13 @@ export function SimilarBooks({
   books: Book[];
   onSelect: (id: string) => void;
 }) {
+  const { colors } = useTheme();
   if (!books.length) return null;
   return (
     <View style={styles.section}>
-      <Text style={styles.heading}>Similar Books</Text>
+      <Text style={[styles.heading, { color: colors.text }]}>
+        Similar Books
+      </Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -35,7 +38,6 @@ const styles = StyleSheet.create({
   section: { marginTop: 30 },
   heading: {
     fontSize: 21,
-    color: "#1B2730",
     fontWeight: "500",
     marginBottom: 14,
   },

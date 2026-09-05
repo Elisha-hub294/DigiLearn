@@ -3,22 +3,23 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { useCallback, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -38,6 +39,7 @@ function mapResetError(code: string | undefined) {
 }
 
 export default function ForgotPasswordScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { from } = useLocalSearchParams<{ from?: string }>();
   const { width } = useWindowDimensions();
@@ -97,7 +99,9 @@ export default function ForgotPasswordScreen() {
   }, [router, from]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardArea}

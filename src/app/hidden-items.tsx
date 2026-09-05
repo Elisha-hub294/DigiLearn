@@ -15,6 +15,7 @@ import { db } from "../../firebaseConfig";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { getHiddenPageEntries } from "../services/userProfile";
 
 type HiddenNote = {
@@ -42,6 +43,7 @@ const paddingFor = (width: number) =>
           : 3;
 
 export default function HiddenItemsScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, profile } = useProfile();
@@ -156,7 +158,9 @@ export default function HiddenItemsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <View style={containerStyle}>
         <View style={styles.headerRow}>
           <Pressable

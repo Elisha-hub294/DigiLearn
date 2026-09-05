@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { colors, radius, spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 import {
   DownloadedFile,
   getDownloadedFiles,
@@ -18,6 +19,7 @@ export function DownloadedResources({
   showAll?: boolean;
 }) {
   const router = useRouter();
+  const { colors: themeColors } = useTheme();
   const [files, setFiles] = useState<DownloadedFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [fileToDelete, setFileToDelete] = useState<DownloadedFile | null>(null);
@@ -103,9 +105,26 @@ export function DownloadedResources({
           ))}
         </View>
       ) : files.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <View style={styles.emptyIconCircle}>
-            <Feather name="download-cloud" size={28} color="#94A3B8" />
+        <View
+          style={[
+            styles.emptyContainer,
+            {
+              backgroundColor: themeColors.lightBackground,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.emptyIconCircle,
+              { backgroundColor: themeColors.background },
+            ]}
+          >
+            <Feather
+              name="download-cloud"
+              size={28}
+              color={themeColors.inactive}
+            />
           </View>
           <Text style={styles.emptyTitle}>
             Downloaded files will appear here
@@ -121,12 +140,25 @@ export function DownloadedResources({
               key={file.id}
               style={({ pressed }) => [
                 styles.fileCard,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                },
                 pressed && styles.fileCardPressed,
               ]}
               onPress={() => handleOpenFile(file)}
             >
-              <View style={styles.fileIconWrapper}>
-                <Feather name="file-text" size={22} color="#006eff" />
+              <View
+                style={[
+                  styles.fileIconWrapper,
+                  { backgroundColor: themeColors.primaryLight },
+                ]}
+              >
+                <Feather
+                  name="file-text"
+                  size={22}
+                  color={themeColors.primary}
+                />
               </View>
 
               <View style={styles.fileDetails}>
@@ -139,7 +171,9 @@ export function DownloadedResources({
                     <Text style={styles.offlineText}>Offline</Text>
                   </View>
                   <Text style={styles.metaDot}>•</Text>
-                  <Text style={styles.fileDate}>
+                  <Text
+                    style={[styles.fileDate, { color: themeColors.subtitle }]}
+                  >
                     {formatDate(file.downloadedAt)}
                   </Text>
                 </View>
@@ -238,14 +272,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   emptyContainer: {
-    backgroundColor: "#F8FAFC",
     borderRadius: radius.md,
     padding: spacing.xl,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
     borderStyle: "dashed",
-    borderColor: "#CBD5E1",
     gap: 8,
     marginTop: spacing.xs,
   },
@@ -253,7 +285,6 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#F1F5F9",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
@@ -277,11 +308,9 @@ const styles = StyleSheet.create({
   fileCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
     borderRadius: radius.md,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
     shadowColor: "#0F172A",
     shadowOpacity: 0.04,
     shadowRadius: 8,
@@ -291,7 +320,6 @@ const styles = StyleSheet.create({
   },
   fileCardPressed: {
     opacity: 0.9,
-    backgroundColor: "#F8FAFC",
   },
   fileIconWrapper: {
     width: 44,

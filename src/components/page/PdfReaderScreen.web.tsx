@@ -12,6 +12,7 @@ import {
   saveDownloadedFile,
 } from "../../services/downloadService";
 
+import { useTheme } from "../../contexts/ThemeContext";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import { ActionDialog } from "../ui/ActionDialog";
 
@@ -44,6 +45,7 @@ function getFileExtension(uri: string | null): string {
 }
 
 export function PdfReaderScreen() {
+  const { colors: themeColors } = useTheme();
   const {
     uri,
     document: pdfDocument,
@@ -255,7 +257,7 @@ export function PdfReaderScreen() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: themeColors.background }]}>
       <ActionDialog
         visible={
           showReaderDialog ||
@@ -272,9 +274,20 @@ export function PdfReaderScreen() {
         onClose={missingDocument ? goBack : closeReaderDialog}
       />
       {/* ── Header ── */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: themeColors.white,
+            borderBottomColor: themeColors.border,
+          },
+        ]}
+      >
         <Pressable
-          style={styles.headerBack}
+          style={[
+            styles.headerBack,
+            { backgroundColor: themeColors.lightBackground },
+          ]}
           onPress={goBack}
           accessibilityLabel="Close PDF"
         >
@@ -291,7 +304,10 @@ export function PdfReaderScreen() {
           {/* Open in new tab button */}
           {decodedUri && (
             <Pressable
-              style={styles.headerAction}
+              style={[
+                styles.headerAction,
+                { backgroundColor: themeColors.lightBackground },
+              ]}
               accessibilityLabel="Open in new tab"
               onPress={() => window.open(decodedUri, "_blank")}
             >
@@ -332,14 +348,32 @@ export function PdfReaderScreen() {
 
       {/* ── Active File Download Progress Banner & Moving Bar ── */}
       {downloading && (
-        <View style={styles.downloadProgressBanner}>
+        <View
+          style={[
+            styles.downloadProgressBanner,
+            {
+              backgroundColor: themeColors.white,
+              borderBottomColor: themeColors.border,
+            },
+          ]}
+        >
           <View style={styles.downloadProgressInfo}>
             <Feather name="download-cloud" size={16} color="#006eff" />
-            <Text style={styles.downloadProgressLabel}>
+            <Text
+              style={[
+                styles.downloadProgressLabel,
+                { color: themeColors.text },
+              ]}
+            >
               Downloading file… {Math.round(downloadProgress * 100)}%
             </Text>
           </View>
-          <View style={styles.downloadTrack}>
+          <View
+            style={[
+              styles.downloadTrack,
+              { backgroundColor: themeColors.border },
+            ]}
+          >
             <View
               style={[
                 styles.downloadFill,
@@ -359,12 +393,16 @@ export function PdfReaderScreen() {
 
       {/* ── Content ── */}
       {isResolving ? (
-        <View style={styles.center}>
+        <View
+          style={[styles.center, { backgroundColor: themeColors.background }]}
+        >
           <Feather name="file-text" size={48} color={colors.primary} />
           <Text style={styles.errorTitle}>Loading PDF…</Text>
         </View>
       ) : !decodedUri || iframeError ? (
-        <View style={styles.center}>
+        <View
+          style={[styles.center, { backgroundColor: themeColors.background }]}
+        >
           <Feather name="alert-circle" size={48} color="#CBD5E1" />
         </View>
       ) : (

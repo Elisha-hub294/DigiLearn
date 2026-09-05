@@ -11,9 +11,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors, radius, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 import { setGuestMode } from "../services/guestService";
 
 export default function WelcomeScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { width, height } = useWindowDimensions();
 
@@ -36,7 +38,9 @@ export default function WelcomeScreen() {
   }, [router]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <View style={[styles.page, { paddingHorizontal: contentPadding }]}>
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
           <View style={styles.topSection}>

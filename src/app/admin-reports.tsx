@@ -15,6 +15,7 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   listReports,
   ReportRecord,
@@ -27,6 +28,7 @@ const dateLabel = (value?: { seconds?: number }) =>
     : "Unknown date";
 
 export default function AdminReportsScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { profile } = useProfile();
   const { width } = useWindowDimensions();
@@ -101,7 +103,9 @@ export default function AdminReportsScreen() {
   if (profile?.type !== "admin") return null;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: themeColors.background }]}
+    >
       <View style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth }]}>
           <ScrollView

@@ -1,12 +1,13 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 
 import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export function MessageComposer({
   value,
@@ -19,6 +20,7 @@ export function MessageComposer({
   onSend: () => void;
   disabled: boolean;
 }) {
+  const { colors: themeColors } = useTheme();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -27,13 +29,13 @@ export function MessageComposer({
 
   return (
     <View style={styles.wrapper}>
-      <View style={styles.composer}>
+      <View style={[styles.composer, { backgroundColor: themeColors.white }]}>
         <TextInput
           value={value}
           onChangeText={onChangeText}
           placeholder="Type here"
-          placeholderTextColor="#A0A0A0"
-          style={styles.input}
+          placeholderTextColor={themeColors.subtitle}
+          style={[styles.input, { color: themeColors.text }]}
           multiline
           maxLength={500}
           returnKeyType="default"
@@ -67,7 +69,11 @@ export function MessageComposer({
             }}
             onPress={onSend}
             disabled={disabled}
-            style={[styles.sendButton, disabled && styles.sendButtonDisabled]}
+            style={[
+              styles.sendButton,
+              { backgroundColor: themeColors.primary },
+              disabled && styles.sendButtonDisabled,
+            ]}
           >
             <Text style={styles.sendIcon}>➤</Text>
           </Pressable>
@@ -85,7 +91,6 @@ const styles = StyleSheet.create({
   composer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#ffffff",
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -94,7 +99,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     minHeight: 44,
-    color: colors.text,
     fontSize: 14,
     paddingVertical: 0,
     textAlignVertical: "center",
@@ -104,7 +108,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#3B82F6",
     alignItems: "center",
     justifyContent: "center",
   },

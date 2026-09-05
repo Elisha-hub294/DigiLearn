@@ -1,11 +1,11 @@
 import { Feather } from "@expo/vector-icons";
-import React from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 
 type RecentSearchChipProps = {
   term: string;
@@ -18,11 +18,11 @@ export function RecentSearchChip({
   onSelect,
   onRemove,
 }: RecentSearchChipProps) {
+  const { colors } = useTheme();
   const opacity = useSharedValue(1);
   const scale = useSharedValue(1);
 
-  const displayTerm =
-    term.length > 20 ? `${term.slice(0, 20)}...` : term;
+  const displayTerm = term.length > 20 ? `${term.slice(0, 20)}...` : term;
 
   const handleRemove = () => {
     opacity.value = withTiming(0, { duration: 200 });
@@ -39,14 +39,24 @@ export function RecentSearchChip({
   }));
 
   return (
-    <Animated.View style={[styles.chip, animatedStyle]}>
+    <Animated.View
+      style={[
+        styles.chip,
+        { backgroundColor: colors.white, borderColor: colors.border },
+        animatedStyle,
+      ]}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Search for ${term}`}
         onPress={() => onSelect(term)}
         style={styles.textArea}
       >
-        <Text style={styles.termText} numberOfLines={1} ellipsizeMode="tail">
+        <Text
+          style={[styles.termText, { color: colors.text }]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
           {displayTerm}
         </Text>
       </Pressable>
@@ -58,7 +68,7 @@ export function RecentSearchChip({
         onPress={handleRemove}
         style={styles.closeButton}
       >
-        <Feather name="x" size={14} color="#666666" />
+        <Feather name="x" size={14} color={colors.subtitle} />
       </Pressable>
     </Animated.View>
   );
@@ -68,9 +78,7 @@ const styles = StyleSheet.create({
   chip: {
     height: 34,
     borderRadius: 18,
-    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#BEBEBE",
     paddingLeft: 16,
     paddingRight: 10,
     flexDirection: "row",
@@ -87,7 +95,6 @@ const styles = StyleSheet.create({
   termText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#333333",
   },
   closeButton: {
     minWidth: 20,

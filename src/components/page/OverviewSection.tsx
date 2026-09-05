@@ -1,7 +1,8 @@
-import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export function OverviewSection({ description }: { description?: string }) {
+  const { colors } = useTheme();
   const text =
     description && description.trim()
       ? description
@@ -9,8 +10,10 @@ export function OverviewSection({ description }: { description?: string }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Overview</Text>
-      <Text style={styles.description}>{text}</Text>
+      <Text style={[styles.heading, { color: colors.text }]}>Overview</Text>
+      <Text style={[styles.description, { color: colors.subtitle }]}>
+        {text}
+      </Text>
     </View>
   );
 }
@@ -22,11 +25,9 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 21,
     fontWeight: "600",
-    color: "#1B2730",
     marginBottom: 12,
   },
   description: {
-    color: "#555555",
     fontSize: 16,
     lineHeight: 28,
   },

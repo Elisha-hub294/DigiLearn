@@ -1,7 +1,7 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { useRouter } from "expo-router";
-import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 type SearchEmptyStateProps = {
   title?: string;
@@ -13,6 +13,7 @@ export function SearchEmptyState({
   subtitle = "Try another keyword, subject, author or teacher.",
 }: SearchEmptyStateProps) {
   const router = useRouter();
+  const { colors } = useTheme();
 
   return (
     <View style={styles.container}>
@@ -23,14 +24,16 @@ export function SearchEmptyState({
         style={styles.illustration}
         contentFit="contain"
       />
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.subtitle}>{subtitle}</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+      <Text style={[styles.subtitle, { color: colors.subtitle }]}>
+        {subtitle}
+      </Text>
 
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Back to Home"
         onPress={() => router.push("/" as never)}
-        style={styles.homeBtn}
+        style={[styles.homeBtn, { backgroundColor: colors.primary }]}
       >
         <Text style={styles.homeBtnText}>Back to Home</Text>
       </Pressable>
@@ -54,14 +57,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#202020",
     textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
     fontWeight: "400",
-    color: "#777777",
     textAlign: "center",
     lineHeight: 20,
     maxWidth: 320,

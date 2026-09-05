@@ -24,6 +24,7 @@ import {
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import {
@@ -138,6 +139,7 @@ const mapPaperData = (
 });
 
 export function PaperPreviewScreen() {
+  const { colors: themeColors } = useTheme();
   const params = useLocalSearchParams<{
     id?: string;
     title?: string;
@@ -431,7 +433,12 @@ export function PaperPreviewScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: themeColors.background },
+        ]}
+      >
         <Skeleton style={styles.loadingHeroSkeleton} />
         <Skeleton style={styles.loadingTitleSkeleton} />
         <Skeleton style={styles.loadingLineSkeleton} />
@@ -442,14 +449,26 @@ export function PaperPreviewScreen() {
 
   if (!paper) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.title}>Paper unavailable</Text>
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: themeColors.background },
+        ]}
+      >
+        <Text style={[styles.title, { color: themeColors.text }]}>
+          Paper unavailable
+        </Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.screen, { alignItems: "center" }]}>
+    <View
+      style={[
+        styles.screen,
+        { alignItems: "center", backgroundColor: themeColors.background },
+      ]}
+    >
       <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
         <ScrollView
           style={styles.screen}
@@ -476,7 +495,15 @@ export function PaperPreviewScreen() {
             </View>
           </View>
 
-          <View style={styles.heroCard}>
+          <View
+            style={[
+              styles.heroCard,
+              {
+                backgroundColor: themeColors.white,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
             <View style={styles.heroImageWrap}>
               {paper.image ? (
                 <Image
@@ -496,7 +523,15 @@ export function PaperPreviewScreen() {
             </View>
 
             <View style={styles.heroContent}>
-              <Text style={styles.subjectBadge}>
+              <Text
+                style={[
+                  styles.subjectBadge,
+                  {
+                    backgroundColor: themeColors.primaryLight,
+                    color: themeColors.primary,
+                  },
+                ]}
+              >
                 {paper.subject || "General"}
               </Text>
               <Text style={styles.title}>{paper.title}</Text>
@@ -523,7 +558,13 @@ export function PaperPreviewScreen() {
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
-                  style={styles.secondaryButton}
+                  style={[
+                    styles.secondaryButton,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
                   onPress={sharePaper}
                 >
                   <View style={styles.buttonContent}>
@@ -538,6 +579,10 @@ export function PaperPreviewScreen() {
                   }
                   style={[
                     styles.secondaryButton,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      borderColor: themeColors.border,
+                    },
                     bookmarked && styles.savedButton,
                   ]}
                   onPress={toggleBookmark}

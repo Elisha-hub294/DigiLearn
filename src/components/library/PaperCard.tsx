@@ -2,6 +2,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 
 type PaperCardProps = {
@@ -39,6 +40,7 @@ export function PaperCard({
   onDeleted,
 }: PaperCardProps) {
   const router = useRouter();
+  const { colors: themeColors } = useTheme();
 
   const normalizedPaperCode = paperCode?.trim();
   const normalizedPaperNumber =
@@ -94,7 +96,13 @@ export function PaperCard({
   };
 
   return (
-    <View style={[styles.card, width !== undefined && { width }]}>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: themeColors.white, borderColor: themeColors.border },
+        width !== undefined && { width },
+      ]}
+    >
       <Pressable
         accessibilityRole="button"
         style={({ pressed, hovered }: any) => [
@@ -112,7 +120,13 @@ export function PaperCard({
               contentPosition="top left"
             />
           ) : (
-            <View style={[styles.preview, styles.previewFallback]} />
+            <View
+              style={[
+                styles.preview,
+                styles.previewFallback,
+                { backgroundColor: themeColors.border },
+              ]}
+            />
           )}
           <View style={styles.darkOverlay} />
         </View>

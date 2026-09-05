@@ -16,10 +16,12 @@ import { ActivitySkeleton } from "../components/ui/ActivitySkeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { fetchUserActivity } from "../services/activityService";
 import { ActivityItem } from "../types/activity";
 
 export default function ActivityScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const navigation = useNavigation();
   const { user } = useProfile();
@@ -211,7 +213,9 @@ export default function ActivityScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: themeColors.background }]}
+    >
       <View style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth }]}>
           {/* Header */}

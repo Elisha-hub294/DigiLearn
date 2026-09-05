@@ -30,6 +30,7 @@ import { db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import {
   getHiddenPageEntries,
   getMarkedReadItemIds,
@@ -230,6 +231,7 @@ const filterByAttachments = (note: PageNote, attachments: string) => {
 };
 
 export default function PagesScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { profile } = useProfile();
   const params = useLocalSearchParams<{ title?: string }>();
@@ -538,12 +540,14 @@ export default function PagesScreen() {
           onPress={() => updateFilter(key, option)}
           style={[
             styles.filterOption,
+            { backgroundColor: themeColors.lightBackground },
             isSelected && { backgroundColor: subjectAccent },
           ]}
         >
           <Text
             style={[
               styles.filterOptionText,
+              { color: themeColors.text },
               isSelected && styles.filterOptionTextSelected,
             ]}
           >
@@ -656,7 +660,10 @@ export default function PagesScreen() {
             ) : visibleNotes.length === 0 ? (
               <Animated.View
                 entering={FadeIn.duration(240)}
-                style={styles.emptyState}
+                style={[
+                  styles.emptyState,
+                  { backgroundColor: themeColors.lightBackground },
+                ]}
               >
                 <Text style={[styles.emptyTitle, { color: subjectAccent }]}>
                   No matching notes found
@@ -671,7 +678,14 @@ export default function PagesScreen() {
                     { backgroundColor: subjectAccent },
                   ]}
                 >
-                  <Text style={styles.emptyButtonText}>Clear Filters</Text>
+                  <Text
+                    style={[
+                      styles.emptyButtonText,
+                      { color: themeColors.white },
+                    ]}
+                  >
+                    Clear Filters
+                  </Text>
                 </Pressable>
                 {hasMoreNotes && (
                   <Pressable
@@ -742,38 +756,60 @@ export default function PagesScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.sheetContent}
               >
-                <Text style={styles.sheetTitle}>Filter notes</Text>
+                <Text style={[styles.sheetTitle, { color: themeColors.dark }]}>
+                  Filter notes
+                </Text>
 
                 <View style={styles.filterGroup}>
-                  <Text style={styles.filterLabel}>Sort By</Text>
+                  <Text
+                    style={[styles.filterLabel, { color: themeColors.dark }]}
+                  >
+                    Sort By
+                  </Text>
                   <View style={styles.filterOptionGrid}>
                     {renderFilterOptions("sortBy")}
                   </View>
                 </View>
 
                 <View style={styles.filterGroup}>
-                  <Text style={styles.filterLabel}>Reading Status</Text>
+                  <Text
+                    style={[styles.filterLabel, { color: themeColors.dark }]}
+                  >
+                    Reading Status
+                  </Text>
                   <View style={styles.filterOptionGrid}>
                     {renderFilterOptions("readingStatus")}
                   </View>
                 </View>
 
                 <View style={styles.filterGroup}>
-                  <Text style={styles.filterLabel}>Level</Text>
+                  <Text
+                    style={[styles.filterLabel, { color: themeColors.dark }]}
+                  >
+                    Level
+                  </Text>
                   <View style={styles.filterOptionGrid}>
                     {renderFilterOptions("level")}
                   </View>
                 </View>
 
                 <View style={styles.filterGroup}>
-                  <Text style={styles.filterLabel}>Class</Text>
+                  <Text
+                    style={[styles.filterLabel, { color: themeColors.dark }]}
+                  >
+                    Class
+                  </Text>
                   <View style={styles.filterOptionGrid}>
                     {renderFilterOptions("schoolClass")}
                   </View>
                 </View>
 
                 <View style={styles.filterGroup}>
-                  <Text style={styles.filterLabel}>Attachments</Text>
+                  <Text
+                    style={[styles.filterLabel, { color: themeColors.dark }]}
+                  >
+                    Attachments
+                  </Text>
                   <View style={styles.filterOptionGrid}>
                     {renderFilterOptions("attachments")}
                   </View>
@@ -783,7 +819,14 @@ export default function PagesScreen() {
                   <Text style={styles.filterLabel}>More resources</Text>
                   <View style={styles.toggleRow}>
                     <View style={styles.toggleCopy}>
-                      <Text style={styles.toggleTitle}>Show hidden items</Text>
+                      <Text
+                        style={[
+                          styles.toggleTitle,
+                          { color: themeColors.dark },
+                        ]}
+                      >
+                        Show hidden items
+                      </Text>
                       <Text style={styles.toggleSubtitle}>
                         Include pages you previously hid.
                       </Text>
@@ -801,7 +844,12 @@ export default function PagesScreen() {
                   </View>
                   <View style={styles.toggleRow}>
                     <View style={styles.toggleCopy}>
-                      <Text style={styles.toggleTitle}>
+                      <Text
+                        style={[
+                          styles.toggleTitle,
+                          { color: themeColors.dark },
+                        ]}
+                      >
                         Follow set preferences
                       </Text>
                       <Text style={styles.toggleSubtitle}>
@@ -824,7 +872,10 @@ export default function PagesScreen() {
                 <View style={styles.sheetActions}>
                   <Pressable
                     onPress={resetFilters}
-                    style={styles.secondaryAction}
+                    style={[
+                      styles.secondaryAction,
+                      { borderColor: themeColors.border },
+                    ]}
                   >
                     <Text
                       style={[

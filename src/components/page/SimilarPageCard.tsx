@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 import { TopicalNote } from "./pageTypes";
 
 export function SimilarPageCard({
@@ -14,6 +15,7 @@ export function SimilarPageCard({
   onPress: () => void;
   index: number;
 }) {
+  const { colors } = useTheme();
   const [imageFailed, setImageFailed] = useState(false);
   const previewUri = page.cover?.trim();
   const showFallback = !previewUri || imageFailed;
@@ -36,12 +38,18 @@ export function SimilarPageCard({
               onError={() => setImageFailed(true)}
             />
           ) : (
-            <View style={[styles.preview, styles.previewFallback]}>
+            <View
+              style={[
+                styles.preview,
+                styles.previewFallback,
+                { backgroundColor: colors.border },
+              ]}
+            >
               <Feather name="file-text" size={20} color="#FFFFFF" />
             </View>
           )}
         </View>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
           {page.title || "Untitled Page"}
         </Text>
       </Pressable>
@@ -60,7 +68,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: "hidden",
     position: "relative",
-    backgroundColor: "#E2E8F0",
     shadowColor: "#0F172A",
     shadowOpacity: 0.12,
     shadowRadius: 5,
@@ -77,7 +84,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   title: {
-    color: "#344054",
     fontSize: 12,
     lineHeight: 16,
     fontWeight: "500",

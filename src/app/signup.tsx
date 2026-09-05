@@ -22,6 +22,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   parseAuthError,
   signInWithFacebook,
@@ -55,6 +56,7 @@ function mapAuthError(code: string | undefined) {
 }
 
 export default function SignUpScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { from } = useLocalSearchParams<{ from?: string }>();
   const { width } = useWindowDimensions();
@@ -247,7 +249,9 @@ export default function SignUpScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardArea}

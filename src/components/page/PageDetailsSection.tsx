@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 import type { TopicalNote } from "./pageTypes";
 
 type PageDetailsSectionProps = {
@@ -16,11 +17,12 @@ function DetailRow({
   label: string;
   value: string;
 }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.row}>
-      <Feather name={icon} size={16} color="#64748B" />
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{value}</Text>
+      <Feather name={icon} size={16} color={colors.inactive} />
+      <Text style={[styles.label, { color: colors.subtitle }]}>{label}</Text>
+      <Text style={[styles.value, { color: colors.text }]}>{value}</Text>
     </View>
   );
 }
@@ -34,12 +36,13 @@ export function PageDetailsSection({
   note,
   dateText,
 }: PageDetailsSectionProps) {
+  const { colors } = useTheme();
   const sourceBooks = formatList(note.book);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Page details</Text>
-      <View style={styles.details}>
+      <Text style={[styles.heading, { color: colors.text }]}>Page details</Text>
+      <View style={[styles.details, { borderTopColor: colors.border }]}>
         <DetailRow
           icon="book-open"
           label="Subject"
@@ -82,31 +85,26 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   heading: {
-    color: "#1B2730",
     fontSize: 21,
     fontWeight: "600",
     marginBottom: 12,
   },
   details: {
     borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
   },
   row: {
     minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
     gap: 10,
   },
   label: {
     width: 100,
-    color: "#64748B",
     fontSize: 14,
   },
   value: {
     flex: 1,
-    color: "#1B2730",
     fontSize: 14,
     fontWeight: "500",
     textAlign: "right",

@@ -20,6 +20,7 @@ import { auth } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   parseAuthError,
   signInWithFacebook,
@@ -51,6 +52,7 @@ function mapAuthError(code: string | undefined) {
 }
 
 export default function LoginScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { from } = useLocalSearchParams<{ from?: string }>();
   const { width } = useWindowDimensions();
@@ -219,7 +221,9 @@ export default function LoginScreen() {
 
   if (currentUser) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
         <ActionDialog
           visible={showLogoutDialog}
           title="Unable to sign out"
@@ -246,7 +250,7 @@ export default function LoginScreen() {
             <Text style={styles.title}>You're already signed in</Text>
           </View>
 
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
             You're already signed in to DigiLearn. You can continue learning or
             log out to switch accounts.
           </Text>
@@ -283,7 +287,9 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardArea}
@@ -307,10 +313,12 @@ export default function LoginScreen() {
               >
                 <Feather name="arrow-left" size={22} color="#111" />
               </Pressable>
-              <Text style={styles.title}>Log In</Text>
+              <Text style={[styles.title, { color: themeColors.dark }]}>
+                Log In
+              </Text>
             </View>
 
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
               Fill your information or continue with your{"\n"}social accounts
             </Text>
 
@@ -325,8 +333,16 @@ export default function LoginScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   placeholder="your@email.com"
-                  placeholderTextColor="#9CA3AF"
-                  style={[styles.input, emailError ? styles.inputError : null]}
+                  placeholderTextColor={themeColors.subtitle}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                      color: themeColors.text,
+                    },
+                    emailError ? styles.inputError : null,
+                  ]}
                   textContentType="emailAddress"
                   accessibilityLabel="Email"
                   accessibilityHint="Enter your email address"
@@ -341,6 +357,10 @@ export default function LoginScreen() {
                 <View
                   style={[
                     styles.passwordRow,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                    },
                     passwordError ? styles.inputError : null,
                   ]}
                 >
@@ -349,8 +369,8 @@ export default function LoginScreen() {
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
                     placeholder="Enter password"
-                    placeholderTextColor="#9CA3AF"
-                    style={styles.passwordInput}
+                    placeholderTextColor={themeColors.subtitle}
+                    style={[styles.passwordInput, { color: themeColors.text }]}
                     autoCapitalize="none"
                     autoCorrect={false}
                     textContentType="password"

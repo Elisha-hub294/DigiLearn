@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export function AdminPublishHeader({
   title,
@@ -11,6 +12,7 @@ export function AdminPublishHeader({
   onBack: () => void;
   disabled?: boolean;
 }) {
+  const { colors: themeColors } = useTheme();
   return (
     <View style={styles.header}>
       <Pressable
@@ -21,18 +23,22 @@ export function AdminPublishHeader({
         disabled={disabled}
         style={({ pressed }) => [
           styles.backButton,
-          disabled && styles.backButtonDisabled,
+          {
+            backgroundColor: themeColors.white,
+            borderColor: themeColors.border,
+          },
+          disabled && { backgroundColor: themeColors.lightBackground },
           pressed && styles.backButtonPressed,
         ]}
       >
         <Feather
           name="arrow-left"
           size={21}
-          color={disabled ? "#9CA3AF" : colors.text}
+          color={disabled ? themeColors.inactive : themeColors.text}
         />
       </Pressable>
       <View style={styles.copy}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: themeColors.text }]}>{title}</Text>
       </View>
     </View>
   );

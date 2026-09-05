@@ -20,6 +20,7 @@ import WebView from "react-native-webview";
 import { auth, db } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import PdfPreview from "../home/PdfPreview";
 import { ActionDialog } from "../ui/ActionDialog";
 import { AdminPublishHeader } from "./AdminPublishHeader";
@@ -110,6 +111,7 @@ function OptionPickerModal({
   onClose: () => void;
   onSelect: (value: string) => void;
 }) {
+  const { colors: themeColors } = useTheme();
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
 
   return (
@@ -121,10 +123,18 @@ function OptionPickerModal({
     >
       <Pressable style={styles.optionPickerBackdrop} onPress={onClose}>
         <Pressable
-          style={styles.optionPickerCard}
+          style={[
+            styles.optionPickerCard,
+            {
+              backgroundColor: themeColors.white,
+              borderColor: themeColors.border,
+            },
+          ]}
           onPress={(event) => event.stopPropagation()}
         >
-          <Text style={styles.optionPickerTitle}>{title}</Text>
+          <Text style={[styles.optionPickerTitle, { color: themeColors.dark }]}>
+            {title}
+          </Text>
           <ScrollView
             style={styles.optionPickerScrollView}
             contentContainerStyle={styles.optionPickerList}
@@ -147,6 +157,10 @@ function OptionPickerModal({
                   }
                   style={[
                     styles.optionPickerItem,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      borderColor: themeColors.border,
+                    },
                     isSelected && styles.optionPickerItemSelected,
                     isHovered && styles.optionPickerItemHovered,
                   ]}
@@ -158,13 +172,14 @@ function OptionPickerModal({
                   <Text
                     style={[
                       styles.optionPickerItemText,
+                      { color: themeColors.text },
                       isSelected && styles.optionPickerItemTextSelected,
                     ]}
                   >
                     {option.label}
                   </Text>
                   {isSelected && (
-                    <Icon name="check" size={16} color={colors.primary} />
+                    <Icon name="check" size={16} color={themeColors.primary} />
                   )}
                 </Pressable>
               );
@@ -193,6 +208,7 @@ export function AddItemModal({
 }: AddItemModalProps) {
   const router = useRouter();
   const { profile, user } = useProfile();
+  const { colors: themeColors } = useTheme();
   const webViewRef = useRef<any>(null);
 
   // Use custom hooks for state management
@@ -1203,7 +1219,12 @@ export function AddItemModal({
   const composerContent = (
     <View style={screen ? styles.screenContainer : styles.modalBackdrop}>
       {isAuthorizedPublisher ? (
-        <View style={screen ? styles.screenCard : styles.modalCard}>
+        <View
+          style={[
+            screen ? styles.screenCard : styles.modalCard,
+            { backgroundColor: themeColors.white },
+          ]}
+        >
           {screen && (
             <AdminPublishHeader
               onBack={handleClose}

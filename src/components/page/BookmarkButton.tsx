@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export function BookmarkButton({
   selected,
@@ -11,7 +11,8 @@ export function BookmarkButton({
   onPress: () => void;
   accentColor?: string;
 }) {
-  const activeAccent = accentColor || "#000000";
+  const { colors } = useTheme();
+  const activeAccent = accentColor === "#000000" ? colors.primary : accentColor;
 
   return (
     <Pressable
@@ -25,13 +26,19 @@ export function BookmarkButton({
           styles.button,
           selected
             ? [styles.selectedButton, { borderColor: `${activeAccent}44` }]
-            : styles.unselectedButton,
+            : [
+                styles.unselectedButton,
+                {
+                  backgroundColor: colors.lightBackground,
+                  borderColor: colors.border,
+                },
+              ],
         ]}
       >
         <Ionicons
           name={selected ? "bookmark" : "bookmark-outline"}
           size={22}
-          color={selected ? activeAccent : "#475569"}
+          color={selected ? activeAccent : colors.inactive}
         />
       </View>
     </Pressable>
@@ -47,12 +54,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   unselectedButton: {
-    backgroundColor: "#F8FAFC",
     borderWidth: 1,
-    borderColor: "#E2E8F0",
   },
   selectedButton: {
-    backgroundColor: "#F8FAFC",
     borderWidth: 1,
   },
 });

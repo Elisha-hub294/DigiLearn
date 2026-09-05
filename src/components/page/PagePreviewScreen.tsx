@@ -11,6 +11,7 @@ import {
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
+import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { toggleSavedItem } from "../../services/userProfile";
@@ -110,6 +111,7 @@ const extractAccentColor = (rawAccent: unknown): string => {
 };
 
 export function PagePreviewScreen() {
+  const { colors: themeColors } = useTheme();
   const { id, source, returnTo, title } = useLocalSearchParams<{
     id: string;
     source?: "home" | "library" | "pages" | "activity";
@@ -380,7 +382,10 @@ export function PagePreviewScreen() {
   if (loading || !note) {
     return (
       <View
-        style={[styles.loadingContainer, { alignItems: "center" }]}
+        style={[
+          styles.loadingContainer,
+          { alignItems: "center", backgroundColor: themeColors.background },
+        ]}
         accessibilityLabel="Loading page preview"
       >
         <View
@@ -485,7 +490,10 @@ export function PagePreviewScreen() {
     <Animated.View
       key={id}
       entering={FadeIn.duration(260)}
-      style={[styles.screen, { alignItems: "center" }]}
+      style={[
+        styles.screen,
+        { alignItems: "center", backgroundColor: themeColors.background },
+      ]}
     >
       <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
         <ScrollView
@@ -501,7 +509,10 @@ export function PagePreviewScreen() {
           {/* White Information Sheet */}
           <Animated.View
             entering={FadeInUp.duration(430)}
-            style={[styles.sheet, { paddingHorizontal: 24 }]}
+            style={[
+              styles.sheet,
+              { paddingHorizontal: 24, backgroundColor: themeColors.white },
+            ]}
           >
             {/* Header with Avatar & Page Information */}
             <SubjectBadge
@@ -635,7 +646,6 @@ export function PagePreviewScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
   },
   scrollContent: {
     flexGrow: 1,
@@ -650,7 +660,6 @@ const styles = StyleSheet.create({
     paddingTop: 25,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    backgroundColor: "#FFFFFF",
     minHeight: 520,
     width: "100%",
   },
@@ -671,7 +680,6 @@ const styles = StyleSheet.create({
   },
   skeletonHero: {
     height: "45%",
-    backgroundColor: "#E2E8F0",
   },
   skeletonSheet: {
     flex: 1,
@@ -690,7 +698,6 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: "#CBD5E1",
     marginRight: 18,
   },
   skeletonHeaderCopy: {
@@ -700,26 +707,22 @@ const styles = StyleSheet.create({
     width: "70%",
     height: 22,
     borderRadius: 6,
-    backgroundColor: "#CBD5E1",
     marginBottom: 10,
   },
   skeletonSub: {
     width: "40%",
     height: 14,
     borderRadius: 4,
-    backgroundColor: "#E2E8F0",
   },
   skeletonLine: {
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#F1F5F9",
     marginBottom: 12,
   },
   skeletonLineShort: {
     width: "60%",
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#F1F5F9",
   },
   loader: {
     position: "absolute",

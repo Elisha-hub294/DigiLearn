@@ -12,6 +12,7 @@ import {
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
+import { useTheme } from "../../contexts/ThemeContext";
 import {
   recordBookVisit,
   recordUserActivity,
@@ -86,6 +87,7 @@ function mapBook(id: string, d: Record<string, unknown>): Book {
 }
 
 export function BookPreviewScreen() {
+  const { colors: themeColors } = useTheme();
   const { id, source, returnTo, teacherName } = useLocalSearchParams<{
     id: string;
     source?: string;
@@ -248,7 +250,10 @@ export function BookPreviewScreen() {
 
   if (loading || !book)
     return (
-      <View style={styles.loading} accessibilityLabel="Loading book preview">
+      <View
+        style={[styles.loading, { backgroundColor: themeColors.background }]}
+        accessibilityLabel="Loading book preview"
+      >
         <View
           style={[
             styles.contentContainer,
@@ -322,7 +327,10 @@ export function BookPreviewScreen() {
     <Animated.View
       key={id}
       entering={FadeIn.duration(260)}
-      style={[styles.screen, { alignItems: "center" }]}
+      style={[
+        styles.screen,
+        { alignItems: "center", backgroundColor: themeColors.background },
+      ]}
     >
       <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
         <ScrollView
@@ -335,7 +343,10 @@ export function BookPreviewScreen() {
           <BookHero book={book} onBack={goBack} />
           <Animated.View
             entering={FadeInUp.duration(430)}
-            style={[styles.sheet, { paddingHorizontal: 10 }]}
+            style={[
+              styles.sheet,
+              { paddingHorizontal: 10, backgroundColor: themeColors.white },
+            ]}
           >
             <BookOverview book={book} />
             <AuthorsCarousel authors={authorsWithAvatars} />
@@ -360,7 +371,7 @@ export function BookPreviewScreen() {
           </Animated.View>
         </ScrollView>
       </View>
-      <View style={styles.action}>
+      <View style={[styles.action, { backgroundColor: themeColors.white }]}>
         <View
           style={[
             styles.actionContent,

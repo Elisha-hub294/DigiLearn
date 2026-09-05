@@ -1,5 +1,5 @@
-import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 import { SourceBook } from "./pageTypes";
 import { SourceBookCard } from "./SourceBookCard";
 
@@ -10,11 +10,12 @@ export function SourceBooks({
   books: SourceBook[];
   onSelectBook: (id: string) => void;
 }) {
+  const { colors } = useTheme();
   if (!books || books.length === 0) return null;
 
   return (
     <View style={styles.section}>
-      <Text style={styles.heading}>Source</Text>
+      <Text style={[styles.heading, { color: colors.text }]}>Source</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -39,7 +40,6 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 21,
-    color: "#1B2730",
     fontWeight: "600",
     marginBottom: 14,
   },

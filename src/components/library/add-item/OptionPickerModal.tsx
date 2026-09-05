@@ -2,6 +2,7 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text } from "react-native";
 import { colors } from "../../../constants/theme";
+import { useTheme } from "../../../contexts/ThemeContext";
 
 const IS_WEB = typeof window !== "undefined" && typeof document !== "undefined";
 
@@ -27,6 +28,7 @@ export function OptionPickerModal({
   onClose,
   onSelect,
 }: OptionPickerModalProps) {
+  const { colors: themeColors } = useTheme();
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
 
   return (
@@ -38,10 +40,18 @@ export function OptionPickerModal({
     >
       <Pressable style={styles.optionPickerBackdrop} onPress={onClose}>
         <Pressable
-          style={styles.optionPickerCard}
+          style={[
+            styles.optionPickerCard,
+            {
+              backgroundColor: themeColors.white,
+              borderColor: themeColors.border,
+            },
+          ]}
           onPress={(event) => event.stopPropagation()}
         >
-          <Text style={styles.optionPickerTitle}>{title}</Text>
+          <Text style={[styles.optionPickerTitle, { color: themeColors.dark }]}>
+            {title}
+          </Text>
           <ScrollView
             style={styles.optionPickerScrollView}
             contentContainerStyle={styles.optionPickerList}
@@ -64,6 +74,10 @@ export function OptionPickerModal({
                   }
                   style={[
                     styles.optionPickerItem,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      borderColor: themeColors.border,
+                    },
                     isSelected && styles.optionPickerItemSelected,
                     isHovered && styles.optionPickerItemHovered,
                   ]}
@@ -75,6 +89,7 @@ export function OptionPickerModal({
                   <Text
                     style={[
                       styles.optionPickerItemText,
+                      { color: themeColors.text },
                       isSelected && styles.optionPickerItemTextSelected,
                       isHovered && styles.optionPickerItemTextHovered,
                     ]}
@@ -82,7 +97,7 @@ export function OptionPickerModal({
                     {option.label}
                   </Text>
                   {isSelected && (
-                    <Icon name="check" size={16} color={colors.primary} />
+                    <Icon name="check" size={16} color={themeColors.primary} />
                   )}
                 </Pressable>
               );
@@ -106,11 +121,9 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 420,
     maxHeight: "80%",
-    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
     shadowColor: "#0F172A",
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.12,
@@ -136,8 +149,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#F8FAFC",
+    backgroundColor: "transparent",
     paddingHorizontal: 14,
     paddingVertical: 12,
     ...(IS_WEB
@@ -156,7 +168,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(37, 99, 235, 0.3)",
   },
   optionPickerItemText: {
-    color: colors.text,
     fontSize: 14,
     fontWeight: "600",
   },

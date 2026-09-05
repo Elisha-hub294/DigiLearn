@@ -30,6 +30,7 @@ import { ActionDialog } from "../components/ui/ActionDialog";
 import { Skeleton } from "../components/ui/Skeleton";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   getAssistantContent,
   isAssistantEnabled,
@@ -52,6 +53,7 @@ function createLocalConversationId() {
 }
 
 export default function AssistantScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const navigation = useNavigation();
   const { user, profile } = useProfile();
@@ -293,7 +295,9 @@ export default function AssistantScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.container}

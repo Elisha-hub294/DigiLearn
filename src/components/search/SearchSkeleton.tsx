@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -6,16 +6,14 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export function SearchSkeleton() {
+  const { colors } = useTheme();
   const opacity = useSharedValue(0.4);
 
   useEffect(() => {
-    opacity.value = withRepeat(
-      withTiming(0.9, { duration: 750 }),
-      -1,
-      true
-    );
+    opacity.value = withRepeat(withTiming(0.9, { duration: 750 }), -1, true);
   }, [opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -26,10 +24,19 @@ export function SearchSkeleton() {
     <View style={styles.container}>
       {[1, 2, 3, 4, 5].map((key) => (
         <Animated.View key={key} style={[styles.card, animatedStyle]}>
-          <View style={styles.imageSkeleton} />
+          <View
+            style={[styles.imageSkeleton, { backgroundColor: colors.border }]}
+          />
           <View style={styles.textSkeletonContainer}>
-            <View style={styles.titleSkeleton} />
-            <View style={styles.descSkeleton} />
+            <View
+              style={[styles.titleSkeleton, { backgroundColor: colors.border }]}
+            />
+            <View
+              style={[
+                styles.descSkeleton,
+                { backgroundColor: colors.lightBackground },
+              ]}
+            />
           </View>
         </Animated.View>
       ))}
@@ -52,7 +59,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 60,
     borderRadius: 8,
-    backgroundColor: "#E2E8F0",
   },
   textSkeletonContainer: {
     flex: 1,
@@ -62,12 +68,10 @@ const styles = StyleSheet.create({
     width: "70%",
     height: 18,
     borderRadius: 4,
-    backgroundColor: "#E2E8F0",
   },
   descSkeleton: {
     width: "90%",
     height: 14,
     borderRadius: 4,
-    backgroundColor: "#F1F5F9",
   },
 });

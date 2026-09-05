@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { colors } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 import type { UserProfile } from "../../services/userProfile";
 
 const fallbackAvatar = require("../../../assets/images/user-default.png");
@@ -22,13 +23,14 @@ export function ProfileHeader({
   photoURL?: string | null;
 }) {
   const router = useRouter();
+  const { colors: themeColors } = useTheme();
   const { width } = useWindowDimensions();
   const requestedUri = photoURL || profile.photoURL;
   const [uri, setUri] = useState(requestedUri);
   const avatarSize = Math.min(150, Math.max(104, width * 0.32));
   useEffect(() => setUri(requestedUri), [requestedUri]);
   return (
-    <View style={s.wrap}>
+    <View style={[s.wrap, { backgroundColor: themeColors.white }]}>
       <View style={s.banner}>
         {profile.type === "admin" && (
           <LinearGradient
@@ -49,10 +51,11 @@ export function ProfileHeader({
           <Feather name="settings" size={20} color="#F8FAFC" />
         </Pressable>
       </View>
-      <View style={s.sheet}>
+      <View style={[s.sheet, { backgroundColor: themeColors.white }]}>
         <View
           style={[
             s.avatarWrap,
+            { backgroundColor: themeColors.white },
             {
               width: avatarSize,
               height: avatarSize,
@@ -130,7 +133,6 @@ const s = StyleSheet.create({
   },
   avatarWrap: {
     borderRadius: 999,
-    backgroundColor: "#fff",
     padding: 4,
     marginBottom: 10,
   },

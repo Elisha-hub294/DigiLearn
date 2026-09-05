@@ -17,6 +17,7 @@ import { NotifyToggle } from "../components/library/add-item/SharedFormControls"
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { loadSubjects as loadCachedSubjects } from "../services/subjectsService";
 
 type Subject = { id: string; name: string };
@@ -30,6 +31,7 @@ function PreferenceChip({
   selected: boolean;
   onPress: () => void;
 }) {
+  const { colors: themeColors } = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -42,7 +44,13 @@ function PreferenceChip({
       accessibilityState={{ checked: selected }}
       accessibilityLabel={`${name}, ${selected ? "selected" : "not selected"}`}
     >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+      <Text
+        style={[
+          styles.chipText,
+          { color: selected ? themeColors.white : themeColors.text },
+          selected && styles.chipTextSelected,
+        ]}
+      >
         {name}
       </Text>
     </Pressable>
@@ -51,11 +59,14 @@ function PreferenceChip({
 
 function AuthPrompt() {
   const router = useRouter();
+  const { colors: themeColors } = useTheme();
   return (
     <View style={styles.authPrompt}>
       <Feather name="sliders" size={32} color={colors.primary} />
-      <Text style={styles.authTitle}>Personalize your learning</Text>
-      <Text style={styles.authCopy}>
+      <Text style={[styles.authTitle, { color: themeColors.dark }]}>
+        Personalize your learning
+      </Text>
+      <Text style={[styles.authCopy, { color: themeColors.subtitle }]}>
         Sign in or create a DigiLearn account to choose your subjects and get a
         more personalized learning experience.
       </Text>
@@ -83,6 +94,7 @@ function AuthPrompt() {
 }
 
 export default function PreferencesScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, profile, loading: profileLoading } = useProfile();
@@ -194,7 +206,9 @@ export default function PreferencesScreen() {
   const isLoading = profileLoading || loadingSubjects;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView
+      style={[styles.safe, { backgroundColor: themeColors.background }]}
+    >
       <View style={styles.page}>
         <View style={[styles.contentContainer, { maxWidth }]}>
           <ScrollView
@@ -213,7 +227,9 @@ export default function PreferencesScreen() {
                 >
                   <Feather name="chevron-left" size={22} color={colors.dark} />
                 </Pressable>
-                <Text style={styles.title}>Preferences</Text>
+                <Text style={[styles.title, { color: themeColors.dark }]}>
+                  Preferences
+                </Text>
               </View>
               {user ? (
                 <Pressable
@@ -226,7 +242,11 @@ export default function PreferencesScreen() {
                     <ActivityIndicator size="small" color="#3B82F6" />
                   ) : (
                     <Text
-                      style={[styles.saveText, isLoading && styles.disabled]}
+                      style={[
+                        styles.saveText,
+                        { color: themeColors.primary },
+                        isLoading && styles.disabled,
+                      ]}
                     >
                       Save
                     </Text>
@@ -259,12 +279,16 @@ export default function PreferencesScreen() {
               </View>
             ) : (
               <>
-                <Text style={styles.helper}>
+                <Text style={[styles.helper, { color: themeColors.subtitle }]}>
                   Choose the subjects you&apos;re interested in to personalize
                   your home feed, recommendations, and learning resources.
                 </Text>
 
-                <Text style={styles.sectionTitle}>My Subjects</Text>
+                <Text
+                  style={[styles.sectionTitle, { color: themeColors.dark }]}
+                >
+                  My Subjects
+                </Text>
                 {subjects.length ? (
                   <View style={styles.chips}>
                     {subjects.map((subject) => (
