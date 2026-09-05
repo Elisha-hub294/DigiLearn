@@ -34,7 +34,7 @@ export const Header = ({
   const { width } = useWindowDimensions();
   const { notifications } = useNotifications();
   const { profile } = useProfile();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const canPublish =
     showPublishButton &&
     (profile?.type === "teacher" || profile?.type === "admin");
@@ -110,7 +110,7 @@ export const Header = ({
             accessibilityLabel="Publish content"
             onPress={() => router.push("/publish" as any)}
           >
-            <Icon name="plus" size={18} color={colors.white} />
+            <Icon name="plus" size={18} color={isDark ? "#FFFFFF" : colors.white} />
           </Pressable>
         ) : null}
         <Pressable

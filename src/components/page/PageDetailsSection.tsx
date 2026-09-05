@@ -28,8 +28,11 @@ function DetailRow({
 }
 
 const formatList = (value?: string | string[]) => {
-  if (Array.isArray(value)) return value.filter(Boolean).join(", ");
-  return value?.trim() || "Not provided";
+  if (Array.isArray(value)) {
+    const formatted = value.filter((item) => item.trim()).join(", ");
+    return formatted || undefined;
+  }
+  return value?.trim() || undefined;
 };
 
 export function PageDetailsSection({
@@ -43,38 +46,36 @@ export function PageDetailsSection({
     <View style={styles.container}>
       <Text style={[styles.heading, { color: colors.text }]}>Page details</Text>
       <View style={[styles.details, { borderTopColor: colors.border }]}>
-        <DetailRow
-          icon="book-open"
-          label="Subject"
-          value={formatList(note.subject)}
-        />
-        <DetailRow
-          icon="layers"
-          label="Level"
-          value={note.level?.trim() || "Not provided"}
-        />
-        <DetailRow
-          icon="users"
-          label="Class"
-          value={note.schoolClass?.trim() || "Not provided"}
-        />
-        <DetailRow
-          icon="file-text"
-          label="Pages"
-          value={note.pages ? String(note.pages) : "Not provided"}
-        />
-        <DetailRow icon="book" label="Source books" value={sourceBooks} />
-        <DetailRow
-          icon="image"
-          label="Cover"
-          value={note.cover || note.preview ? "Available" : "Not provided"}
-        />
-        <DetailRow
-          icon="file"
-          label="Document"
-          value={note.document ? "Available" : "Not provided"}
-        />
-        <DetailRow icon="clock" label="Last updated" value={dateText} />
+        {formatList(note.subject) && (
+          <DetailRow
+            icon="book-open"
+            label="Subject"
+            value={formatList(note.subject)!}
+          />
+        )}
+        {note.level?.trim() && (
+          <DetailRow icon="layers" label="Level" value={note.level.trim()} />
+        )}
+        {note.schoolClass?.trim() && (
+          <DetailRow
+            icon="users"
+            label="Class"
+            value={note.schoolClass.trim()}
+          />
+        )}
+        {note.pages !== undefined && String(note.pages).trim() && (
+          <DetailRow
+            icon="file-text"
+            label="Pages"
+            value={String(note.pages)}
+          />
+        )}
+        {sourceBooks && (
+          <DetailRow icon="book" label="Source books" value={sourceBooks} />
+        )}
+        {dateText && (
+          <DetailRow icon="clock" label="Last updated" value={dateText} />
+        )}
       </View>
     </View>
   );

@@ -17,7 +17,7 @@ const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
 const MAX_RECENT_ITEMS = 10;
 const FALLBACK_TEACHER_AVATAR = "TeacherProfile/tr-default.png";
 const SEARCH_CACHE_KEY = LOCAL_CACHE_KEYS.search;
-const SEARCH_CACHE_VERSION = 1;
+const SEARCH_CACHE_VERSION = 2;
 const SEARCH_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
 type SearchCache = {
@@ -36,6 +36,33 @@ function getSuggestionScore(value: string): number {
     hash = (hash * 31 + value.charCodeAt(index)) | 0;
   }
   return Math.abs(hash);
+}
+
+function getSearchableText(value: unknown, seen = new Set<object>()): string {
+  if (value === null || value === undefined) return "";
+
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value);
+  }
+
+  if (typeof value === "boolean") return value ? "true" : "false";
+
+  if (typeof value !== "object") return "";
+  if (seen.has(value)) return "";
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => getSearchableText(entry, seen))
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  const record = value as Record<string, unknown>;
+  return Object.values(record)
+    .map((entry) => getSearchableText(entry, seen))
+    .filter(Boolean)
+    .join(" ");
 }
 
 export type SearchCategory =
@@ -397,6 +424,10 @@ export function useGlobalSearch(
       const lowerTitle = title.toLowerCase();
       const lowerAuthor = author.toLowerCase();
       const lowerTeacher = teacher.toLowerCase();
+      const searchableText = getSearchableText({
+        id: rawItem.id,
+        ...rawItem,
+      }).toLowerCase();
 
       const rawSub = subjectProp;
       const subjects: string[] = Array.isArray(rawSub)
@@ -435,6 +466,7 @@ export function useGlobalSearch(
         if (lowerTitle.includes(q) && score < 500) score += 150;
         // 8. Description match
         if (description.toLowerCase().includes(q)) score += 50;
+        if (searchableText.includes(q)) score += 35;
       }
 
       if (isSuggestionMode || score > 0) {

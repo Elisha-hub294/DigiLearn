@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, StyleSheet } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export function ShareButton({
   onPress,
@@ -9,7 +10,8 @@ export function ShareButton({
   onPress: () => void;
   accentColor?: string;
 }) {
-  const activeAccent = accentColor || "#000000";
+  const { colors } = useTheme();
+  const activeAccent = accentColor === "#000000" ? colors.primary : accentColor;
 
   return (
     <Pressable
@@ -18,7 +20,10 @@ export function ShareButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        { borderColor: `${activeAccent}22` },
+        {
+          backgroundColor: colors.lightBackground,
+          borderColor: colors.border,
+        },
         pressed && styles.pressed,
       ]}
       hitSlop={8}

@@ -20,7 +20,7 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
-import { radius, spacing, colors as themeColors } from "../../constants/theme";
+import { radius, spacing, colors as staticColors } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { toggleSavedItem } from "../../services/userProfile";
@@ -69,7 +69,7 @@ const GradientTitle = ({
     >
       <LinearGradient
         style={styles.gradientTitleGradient}
-        colors={[themeColors.primary, "#c224f0", "#ff002b"]}
+        colors={[staticColors.primary, "#c224f0", "#ff002b"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
@@ -395,6 +395,7 @@ const TeacherPostItem = ({
   isVisible: boolean;
 }) => {
   const { user, profile } = useProfile();
+  const { colors } = useTheme();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
@@ -462,8 +463,9 @@ const TeacherPostItem = ({
         } as any)}
         style={({ pressed, hovered }: any) => [
           styles.card,
+          { backgroundColor: colors.white },
           (pressed || hovered || isHovered) && {
-            backgroundColor: "#f0f0f0",
+            backgroundColor: colors.lightBackground,
           },
         ]}
       >
@@ -519,7 +521,7 @@ const TeacherPostItem = ({
               style={styles.closePreviewButton}
               onPress={() => setShowImagePreview(false)}
             >
-              <Icon name="x" size={24} color={themeColors.white} />
+              <Icon name="x" size={24} color={staticColors.white} />
             </Pressable>
             <Pressable
               style={styles.fullImagePreviewFrame}
@@ -564,8 +566,10 @@ const TeacherPostItem = ({
                 }
               >
                 <View>
-                  <Text style={styles.name}>{teacherName}</Text>
-                  <Text style={styles.time}>
+                  <Text style={[styles.name, { color: colors.text }]}>
+                    {teacherName}
+                  </Text>
+                  <Text style={[styles.time, { color: colors.subtitle }]}>
                     {getRelativeTime(postItem.createdAt)}
                   </Text>
                 </View>
@@ -575,28 +579,31 @@ const TeacherPostItem = ({
         </View>
 
         {postItem.hasCover ? (
-          <Text style={styles.title}>{title}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
         ) : (
           <GradientTitle text={title} style={styles.title} />
         )}
-        <Text style={styles.caption}>{description}</Text>
+        <Text style={[styles.caption, { color: colors.text }]}>
+          {description}
+        </Text>
 
         <View style={styles.actions}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={isSaved ? "Remove bookmark" : "Save post"}
-            style={styles.actionItem}
+            style={[styles.actionItem, { backgroundColor: colors.background }]}
             onPress={handleToggleSave}
           >
             <Ionicons
               name={isSaved ? "bookmark" : "bookmark-outline"}
               size={15}
-              color={isSaved ? themeColors.primary : themeColors.subtitle}
+              color={isSaved ? colors.primary : colors.subtitle}
             />
             <Text
               style={[
                 styles.actionLabel,
-                isSaved && { color: themeColors.primary, fontWeight: "700" },
+                { color: colors.subtitle },
+                isSaved && { color: colors.primary, fontWeight: "700" },
               ]}
             >
               {isSaved ? "Saved" : "Save"}
@@ -731,12 +738,18 @@ const SkeletonTeacherPostCard = () => {
   );
 };
 
-const Action = ({ icon, label }: { icon: any; label: string }) => (
-  <View style={styles.actionItem}>
-    <Icon name={icon} size={15} color={themeColors.subtitle} />
-    <Text style={styles.actionLabel}>{label}</Text>
-  </View>
-);
+const Action = ({ icon, label }: { icon: any; label: string }) => {
+  const { colors } = useTheme();
+
+  return (
+    <View style={[styles.actionItem, { backgroundColor: colors.background }]}>
+      <Icon name={icon} size={15} color={colors.subtitle} />
+      <Text style={[styles.actionLabel, { color: colors.subtitle }]}>
+        {label}
+      </Text>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   list: {
@@ -745,7 +758,7 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     alignSelf: "center",
-    backgroundColor: themeColors.white,
+    backgroundColor: "transparent",
     marginBottom: spacing.xl,
     position: "relative",
   },
@@ -763,16 +776,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     marginRight: spacing.sm,
   },
-  name: { color: themeColors.text, fontSize: 14, fontWeight: "500" },
-  time: { color: themeColors.subtitle, fontSize: 12, marginTop: 2 },
+  name: { fontSize: 14, fontWeight: "500" },
+  time: { fontSize: 12, marginTop: 2 },
 
   caption: {
-    color: themeColors.text,
     fontSize: 14,
     marginBottom: spacing.sm,
   },
   title: {
-    color: themeColors.text,
     fontSize: 17,
     fontWeight: "700",
     marginBottom: 4,
@@ -804,7 +815,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.1)",
   },
-  previewFallback: { backgroundColor: "#D1D5DB" },
+  previewFallback: {},
   imagePreviewBackdrop: {
     flex: 1,
     alignItems: "center",
@@ -839,9 +850,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     borderRadius: 999,
-    backgroundColor: themeColors.background,
   },
-  actionLabel: { color: themeColors.subtitle, fontSize: 12, fontWeight: "500" },
+  actionLabel: { fontSize: 12, fontWeight: "500" },
   skeletonBox: { borderRadius: radius.sm },
   skeletonPreview: {
     height: 250,

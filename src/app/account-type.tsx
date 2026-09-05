@@ -316,20 +316,22 @@ export default function AccountTypeScreen() {
             )}
           </Pressable>
 
-          <View style={styles.skipRow}>
-            <Pressable
-              onPress={handleSkip}
-              disabled={isSubmitting}
-              style={({ pressed }) => [
-                styles.skipButton,
-                pressed && !isSubmitting && styles.skipButtonPressed,
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Skip account type selection"
-            >
-              <Text style={styles.skipText}>Skip →</Text>
-            </Pressable>
-          </View>
+          {!openedFromSettings ? (
+            <View style={styles.skipRow}>
+              <Pressable
+                onPress={handleSkip}
+                disabled={isSubmitting}
+                style={({ pressed }) => [
+                  styles.skipButton,
+                  pressed && !isSubmitting && styles.skipButtonPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Skip account type selection"
+              >
+                <Text style={styles.skipText}>Skip →</Text>
+              </Pressable>
+            </View>
+          ) : null}
         </View>
       </View>
     </SafeAreaView>
