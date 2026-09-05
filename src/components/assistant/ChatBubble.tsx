@@ -1,8 +1,9 @@
 import { Image } from "expo-image";
 import { Platform, StyleSheet, Text, View } from "react-native";
 
-import fallbackAvatar from "../../../assets/images/panda.png";
 import { colors, radius, spacing } from "../../constants/theme";
+import { getThemeAsset } from "../../constants/themeAssets";
+import { useTheme } from "../../contexts/ThemeContext";
 
 // ─── Math & Equation Formatting Helper ──────────────────────────────────────
 
@@ -634,6 +635,8 @@ export function ChatBubble({
   avatar?: string | null;
 }) {
   const isUser = role === "user";
+  const { isDark } = useTheme();
+  const fallbackAvatar = getThemeAsset("panda", isDark);
 
   return (
     <View style={[styles.row, isUser ? styles.rowUser : styles.rowAssistant]}>

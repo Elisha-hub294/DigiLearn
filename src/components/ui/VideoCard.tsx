@@ -12,6 +12,7 @@ import { Pressable, Share, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { auth } from "../../../firebaseConfig";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import {
   getReportErrorMessage,
@@ -39,6 +40,7 @@ export function VideoCard({
 }) {
   const router = useRouter();
   const { user, profile } = useProfile();
+  const { isDark } = useTheme();
   const [menuAnchor, setMenuAnchor] = useState<{
     x: number;
     y: number;
@@ -295,7 +297,11 @@ export function VideoCard({
         <View style={styles.thumbnail}>
           <Pressable style={StyleSheet.absoluteFill} onPress={openLesson}>
             <Image
-              source={resolveVideoImageSource(item.thumbnail, item.link)}
+              source={resolveVideoImageSource(
+                item.thumbnail,
+                item.link,
+                isDark,
+              )}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
               transition={250}

@@ -1,7 +1,8 @@
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
-import { Book, FALLBACK_COVER } from "./bookTypes";
+import { useTheme } from "../../contexts/ThemeContext";
+import { Book, getFallbackCover } from "./bookTypes";
 
 export function SimilarBookCard({
   book,
@@ -12,6 +13,8 @@ export function SimilarBookCard({
   onPress: () => void;
   index: number;
 }) {
+  const { isDark } = useTheme();
+
   return (
     <Animated.View entering={FadeIn.delay(index * 70).duration(300)}>
       <Pressable
@@ -22,7 +25,7 @@ export function SimilarBookCard({
       >
         <Image
           source={book.cover}
-          placeholder={FALLBACK_COVER}
+          placeholder={getFallbackCover(isDark)}
           style={styles.cover}
           contentFit="cover"
           transition={180}

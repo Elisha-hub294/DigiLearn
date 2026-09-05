@@ -27,6 +27,7 @@ import { auth, db } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { getTeacherAvatar } from "../constants/teacherAvatar";
+import { getThemeAsset } from "../constants/themeAssets";
 import { useTheme } from "../contexts/ThemeContext";
 import {
   recordLessonVisit,
@@ -53,9 +54,9 @@ function getYoutubeEmbedUrl(rawUrl?: string) {
   return `https://www.youtube.com/embed/${id}`;
 }
 
-function resolveImageSource(source?: string) {
+function resolveImageSource(source: string | undefined, isDark: boolean) {
   if (!source) {
-    return require("../../assets/images/thumb-default.png");
+    return getThemeAsset("thumbDefault", isDark);
   }
   if (
     typeof source === "string" &&
@@ -63,11 +64,11 @@ function resolveImageSource(source?: string) {
   ) {
     return { uri: source };
   }
-  return require("../../assets/images/thumb-default.png");
+  return getThemeAsset("thumbDefault", isDark);
 }
 
 export default function LessonPlayerScreen() {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [isSaved, setIsSaved] = useState(false);
@@ -351,7 +352,7 @@ export default function LessonPlayerScreen() {
                 accessibilityRole="button"
               >
                 <Image
-                  source={resolveImageSource(params.thumbnail)}
+                  source={resolveImageSource(params.thumbnail, isDark)}
                   style={StyleSheet.absoluteFill}
                   contentFit="cover"
                   transition={300}

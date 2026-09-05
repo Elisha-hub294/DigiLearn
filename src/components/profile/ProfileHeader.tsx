@@ -11,10 +11,10 @@ import {
   View,
 } from "react-native";
 import { colors } from "../../constants/theme";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { UserProfile } from "../../services/userProfile";
 
-const fallbackAvatar = require("../../../assets/images/user-default.png");
 export function ProfileHeader({
   profile,
   photoURL,
@@ -23,7 +23,8 @@ export function ProfileHeader({
   photoURL?: string | null;
 }) {
   const router = useRouter();
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
+  const fallbackAvatar = getThemeAsset("userDefault", isDark);
   const { width } = useWindowDimensions();
   const requestedUri = photoURL || profile.photoURL;
   const [uri, setUri] = useState(requestedUri);

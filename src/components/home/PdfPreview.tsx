@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import { NativeModules, StyleSheet, UIManager, View } from "react-native";
 
@@ -22,6 +23,8 @@ try {
   PdfComponent = null;
 }
 
+import { getThemeAsset } from "../../constants/themeAssets";
+import { useTheme } from "../../contexts/ThemeContext";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 
 export default function PdfPreview({
@@ -31,6 +34,7 @@ export default function PdfPreview({
   onError,
   showLoadingIndicator = true,
 }: PdfPreviewProps) {
+  const { isDark } = useTheme();
   const [error, setError] = useState(false);
   const resolvedUri = useFirebaseStorageUrl(uri) || uri;
 
@@ -51,7 +55,13 @@ export default function PdfPreview({
   }, [error, onError, isValidUrl]);
 
   if (!PdfComponent || error || !isValidUrl) {
-    return <View style={[style, styles.fallback]} />;
+    return (
+      <Image
+        source={getThemeAsset("pdfPreview", isDark)}
+        style={[style, styles.fallback]}
+        contentFit="cover"
+      />
+    );
   }
 
   const source = { uri: resolvedUri, cache: true };

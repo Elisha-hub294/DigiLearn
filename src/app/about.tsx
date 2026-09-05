@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { getThemeAsset } from "../constants/themeAssets";
 import { useTheme } from "../contexts/ThemeContext";
 import { formatAppVersion, getAppVersion } from "../services/appInfoService";
 
@@ -92,7 +93,7 @@ function AboutRow({
 }
 
 export default function AboutScreen() {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const router = useRouter();
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
@@ -181,7 +182,7 @@ export default function AboutScreen() {
           >
             <View style={styles.branding}>
               <Image
-                source={require("@/assets/images/panda.png")}
+                source={getThemeAsset("panda", isDark)}
                 style={{ width: pandaSize, height: pandaSize }}
                 contentFit="contain"
                 accessible

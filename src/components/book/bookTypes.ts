@@ -1,3 +1,5 @@
+import { getThemeAsset } from "../../constants/themeAssets";
+
 export type Book = {
   id: string;
   title: string;
@@ -12,7 +14,9 @@ export type Book = {
   saves?: number;
 };
 
-export const FALLBACK_COVER = require("../../../assets/images/bookcover-default.png");
+export function getFallbackCover(isDark: boolean) {
+  return getThemeAsset("bookCoverDefault", isDark);
+}
 
 /**
  * Normalizes strings to lower case and trims whitespace for case-insensitive comparisons

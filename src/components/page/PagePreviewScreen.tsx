@@ -16,7 +16,6 @@ import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { toggleSavedItem } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
-import { FALLBACK_COVER } from "../book/bookTypes";
 import { ActionDialog } from "../ui/ActionDialog";
 import { Skeleton } from "../ui/Skeleton";
 import { BottomActionBar } from "./BottomActionBar";
@@ -278,7 +277,7 @@ export function PagePreviewScreen() {
                     ? bData.cover
                     : typeof bData.image === "string"
                       ? bData.image
-                      : FALLBACK_COVER,
+                      : "",
                 author:
                   typeof bData.author === "string" ? bData.author : undefined,
               });

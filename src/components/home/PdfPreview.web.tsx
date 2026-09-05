@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Skeleton } from "../ui/Skeleton";
@@ -30,6 +31,8 @@ const loadPdfJs = () => {
   });
 };
 
+import { getThemeAsset } from "../../constants/themeAssets";
+import { useTheme } from "../../contexts/ThemeContext";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 
 export default function PdfPreview({
@@ -39,6 +42,7 @@ export default function PdfPreview({
   onError,
   showLoadingIndicator = true,
 }: PdfPreviewProps) {
+  const { isDark } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -113,7 +117,13 @@ export default function PdfPreview({
   }, [resolvedUri]);
 
   if (error) {
-    return <View style={[style, styles.fallback]} />;
+    return (
+      <Image
+        source={getThemeAsset("pdfPreview", isDark)}
+        style={[style, styles.fallback]}
+        contentFit="cover"
+      />
+    );
   }
 
   return (

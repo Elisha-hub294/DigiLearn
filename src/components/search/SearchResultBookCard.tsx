@@ -5,6 +5,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import { SearchResult } from "../../hooks/useGlobalSearch";
 
@@ -14,15 +15,14 @@ type SearchResultBookCardProps = {
   onPress: (item: SearchResult) => void;
 };
 
-const DEFAULT_BOOK_COVER = require("../../../assets/images/bookcover-default.png");
-
 export function SearchResultBookCard({
   item,
   query,
   onPress,
 }: SearchResultBookCardProps) {
   const scale = useSharedValue(1);
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const defaultBookCover = getThemeAsset("bookCoverDefault", isDark);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -120,7 +120,7 @@ export function SearchResultBookCard({
                         item.rawItem?.image ||
                         item.rawItem?.avatar,
                     }
-                  : DEFAULT_BOOK_COVER
+                  : defaultBookCover
               }
               style={styles.coverImage}
               contentFit="cover"

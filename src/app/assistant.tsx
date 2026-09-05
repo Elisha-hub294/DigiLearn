@@ -18,7 +18,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import fallbackAvatar from "../../assets/images/panda.png";
 import { auth } from "../../firebaseConfig";
 import { AssistantHeader } from "../components/assistant/AssistantHeader";
 import { ChatBubble } from "../components/assistant/ChatBubble";
@@ -29,6 +28,7 @@ import { TypingIndicator } from "../components/assistant/TypingIndicator";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { Skeleton } from "../components/ui/Skeleton";
 import { colors, radius, spacing } from "../constants/theme";
+import { getThemeAsset } from "../constants/themeAssets";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
 import {
@@ -53,7 +53,8 @@ function createLocalConversationId() {
 }
 
 export default function AssistantScreen() {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
+  const fallbackAvatar = getThemeAsset("panda", isDark);
   const router = useRouter();
   const navigation = useNavigation();
   const { user, profile } = useProfile();

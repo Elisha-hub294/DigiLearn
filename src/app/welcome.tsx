@@ -11,11 +11,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors, radius, spacing } from "../constants/theme";
+import { getThemeAsset } from "../constants/themeAssets";
 import { useTheme } from "../contexts/ThemeContext";
 import { setGuestMode } from "../services/guestService";
 
 export default function WelcomeScreen() {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const router = useRouter();
   const { width, height } = useWindowDimensions();
 
@@ -45,7 +46,7 @@ export default function WelcomeScreen() {
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
           <View style={styles.topSection}>
             <Image
-              source={require("@/assets/images/welcome.png")}
+              source={getThemeAsset("welcome", isDark)}
               style={[
                 styles.illustration,
                 { width: illustrationWidth, height: illustrationHeight },

@@ -1,5 +1,5 @@
-import { Feather } from "@expo/vector-icons";
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
+import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Pressable,
@@ -9,9 +9,13 @@ import {
   useWindowDimensions,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
-import { Book, FALLBACK_COVER } from "./bookTypes";
+import { getThemeAsset } from "../../constants/themeAssets";
+import { useTheme } from "../../contexts/ThemeContext";
+import { Book } from "./bookTypes";
 
 export function BookHero({ book, onBack }: { book: Book; onBack: () => void }) {
+  const { isDark } = useTheme();
+  const fallbackCover = getThemeAsset("bookCoverDefault", isDark);
   const { height } = useWindowDimensions();
   const heroHeight = Math.min(Math.max(height * 0.5, 330), 520);
   const hasCover = Boolean(book.cover && book.cover.trim());
@@ -25,7 +29,7 @@ export function BookHero({ book, onBack }: { book: Book; onBack: () => void }) {
       <View style={styles.fallbackBackground} />
 
       <Image
-        source={hasCover ? { uri: book.cover } : FALLBACK_COVER}
+        source={hasCover ? { uri: book.cover } : fallbackCover}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         transition={250}

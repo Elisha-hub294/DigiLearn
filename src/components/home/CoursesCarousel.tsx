@@ -15,7 +15,9 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { colors, radius, spacing } from "../../constants/theme";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { useTrendingLessons } from "../../hooks/useTrendingLessons";
 import {
   matchesUserInterests,
@@ -37,9 +39,10 @@ const CourseCardImage = ({
   thumbnail?: string;
   link?: string;
 }) => {
+  const { isDark } = useTheme();
   const primarySource = useMemo(
-    () => resolveVideoImageSource(thumbnail, link),
-    [thumbnail, link],
+    () => resolveVideoImageSource(thumbnail, link, isDark),
+    [thumbnail, link, isDark],
   );
   const [source, setSource] = useState(primarySource);
 
@@ -53,7 +56,7 @@ const CourseCardImage = ({
       style={styles.image}
       contentFit="cover"
       onError={() => {
-        setSource(require("../../../assets/images/thumb-default.png"));
+        setSource(getThemeAsset("thumbDefault", isDark));
       }}
     />
   );

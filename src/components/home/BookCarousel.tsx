@@ -12,7 +12,9 @@ import {
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { auth } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { loadBooks } from "../../services/booksService";
 import {
@@ -42,6 +44,7 @@ const pickImage = (value: unknown, fallback: any) => {
 export const BookCarousel = () => {
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
+  const { isDark } = useTheme();
   const [books, setBooks] = useState<BookItem[]>([]);
   const [loading, setLoading] = useState(true);
   const cardWidth = width >= 900 ? 300 : 250;
@@ -61,7 +64,7 @@ export const BookCarousel = () => {
           ...book,
           image: pickImage(
             book.image,
-            require("../../../assets/images/bookcover-default.png"),
+            getThemeAsset("bookCoverDefault", isDark),
           ),
         })) satisfies BookItem[];
 

@@ -6,6 +6,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import { formatUploadedAt, SearchResult } from "../../hooks/useGlobalSearch";
 
@@ -15,14 +16,13 @@ type SearchResultVideoCardProps = {
   onPress: (item: SearchResult) => void;
 };
 
-const DEFAULT_VIDEO_THUMB = require("../../../assets/images/thumb-default.png");
-
 export function SearchResultVideoCard({
   item,
   query,
   onPress,
 }: SearchResultVideoCardProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const defaultVideoThumb = getThemeAsset("thumbDefault", isDark);
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -109,9 +109,7 @@ export function SearchResultVideoCard({
         <View style={styles.thumbWrapper}>
           <Image
             source={
-              item.previewImage
-                ? { uri: item.previewImage }
-                : DEFAULT_VIDEO_THUMB
+              item.previewImage ? { uri: item.previewImage } : defaultVideoThumb
             }
             style={styles.thumbnail}
             contentFit="cover"

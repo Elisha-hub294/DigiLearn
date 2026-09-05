@@ -16,6 +16,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { auth } from "../../../firebaseConfig";
+import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { ActionDialog } from "./ActionDialog";
 import { DurationBadge } from "./DurationBadge";
@@ -49,6 +50,7 @@ export function TrendingVideoCard({
   marginRight?: number;
 }) {
   const router = useRouter();
+  const { isDark } = useTheme();
   const scale = useSharedValue(1);
   const [checkingVideo, setCheckingVideo] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -110,7 +112,7 @@ export function TrendingVideoCard({
       >
         <View style={styles.thumbnail}>
           <Image
-            source={resolveVideoImageSource(item.thumbnail, item.link)}
+            source={resolveVideoImageSource(item.thumbnail, item.link, isDark)}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             transition={250}

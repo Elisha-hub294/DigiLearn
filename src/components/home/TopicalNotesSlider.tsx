@@ -17,6 +17,7 @@ import {
 import Animated, { FadeInUp, useReducedMotion } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { getFirebaseStorageUrl } from "../../utils/firebaseStorage";
@@ -24,8 +25,6 @@ import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
-
-const defaultSubjectAvatar = require("../../../assets/images/subject-default.png");
 
 /** Fisher-Yates shuffle runs once per app mount */
 function shuffle<T>(arr: T[]): T[] {
@@ -56,7 +55,8 @@ export function normalizeCarouselOffset(
 
 export const TopicalNotesSlider = () => {
   const router = useRouter();
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
+  const defaultSubjectAvatar = getThemeAsset("subjectDefault", isDark);
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
   const reducedMotion = useReducedMotion();

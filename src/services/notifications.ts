@@ -8,6 +8,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../../firebaseConfig";
+import { getThemeAsset } from "../constants/themeAssets";
 
 export type NotificationType =
   | "book"
@@ -71,10 +72,6 @@ export const NOTIFICATION_TYPE_META: Record<
     icon: "megaphone",
     background: "#4B5563",
   },
-};
-
-const NOTIFICATION_ASSET_MAP: Record<string, any> = {
-  "@/assets/images/panda.png": require("../../assets/images/panda.png"),
 };
 
 function stripUndefinedFields<T>(value: T): T {
@@ -171,9 +168,12 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
   return stripUndefinedFields(normalized) as NotificationRecord;
 }
 
-export function resolveNotificationAvatarSource(avatar?: string) {
+export function resolveNotificationAvatarSource(
+  avatar?: string,
+  isDark = false,
+) {
   if (!avatar) {
-    return NOTIFICATION_ASSET_MAP["@/assets/images/panda.png"];
+    return getThemeAsset("panda", isDark);
   }
 
   if (avatar.startsWith("http") || avatar.startsWith("data:")) {
@@ -181,10 +181,7 @@ export function resolveNotificationAvatarSource(avatar?: string) {
   }
 
   if (avatar.startsWith("@/assets/")) {
-    return (
-      NOTIFICATION_ASSET_MAP[avatar] ??
-      NOTIFICATION_ASSET_MAP["@/assets/images/panda.png"]
-    );
+    return getThemeAsset("panda", isDark);
   }
 
   return { uri: avatar };

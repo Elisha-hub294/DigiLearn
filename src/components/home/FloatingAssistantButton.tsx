@@ -22,8 +22,9 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import fallbackAvatar from "../../../assets/images/panda.png";
 import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { getThemeAsset } from "../../constants/themeAssets";
+import { useTheme } from "../../contexts/ThemeContext";
 import {
   getAssistantContent,
   getCachedAssistantMessage,
@@ -42,6 +43,8 @@ const getBubbleWidth = (width: number) =>
 
 export function FloatingAssistantButton() {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const fallbackAvatar = getThemeAsset("panda", isDark);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [isEnabled, setIsEnabled] = useState(true);

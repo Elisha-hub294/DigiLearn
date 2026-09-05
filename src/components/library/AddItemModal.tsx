@@ -19,6 +19,7 @@ import {
 import WebView from "react-native-webview";
 import { auth, db } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import PdfPreview from "../home/PdfPreview";
@@ -74,9 +75,6 @@ import {
   uriToBlob,
 } from "./add-item/utils";
 export type { FormState, FormType };
-
-const DEFAULT_USER_AVATAR = require("../../../assets/images/user-default.png");
-const DEFAULT_BOOK_COVER = require("../../../assets/images/bookcover-default.png");
 
 type OwnedBook = {
   id: string;
@@ -209,7 +207,9 @@ export function AddItemModal({
 }: AddItemModalProps) {
   const router = useRouter();
   const { profile, user } = useProfile();
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
+  const defaultUserAvatar = getThemeAsset("userDefault", isDark);
+  const defaultBookCover = getThemeAsset("bookCoverDefault", isDark);
   const webViewRef = useRef<any>(null);
 
   // Use custom hooks for state management
@@ -1323,7 +1323,7 @@ export function AddItemModal({
                     : auth.currentUser?.photoURL &&
                         auth.currentUser.photoURL.trim()
                       ? { uri: auth.currentUser.photoURL }
-                      : DEFAULT_USER_AVATAR
+                      : defaultUserAvatar
                 }
                 getWebDropHandlers={getWebDropHandlers}
                 styles={styles}
@@ -1727,7 +1727,7 @@ export function AddItemModal({
                               source={
                                 book.cover
                                   ? { uri: book.cover }
-                                  : DEFAULT_BOOK_COVER
+                                  : defaultBookCover
                               }
                               style={styles.ownedBookCover}
                             />

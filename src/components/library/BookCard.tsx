@@ -1,8 +1,8 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
-import { FALLBACK_COVER } from "../book/bookTypes";
 import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 
 type BookCardItem = {
@@ -29,7 +29,8 @@ export function BookCard({
   width = 200,
   marginRight = spacing.md,
 }: BookCardProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const fallbackCover = getThemeAsset("bookCoverDefault", isDark);
   return (
     <Pressable
       accessibilityRole="button"
@@ -40,7 +41,7 @@ export function BookCard({
       onPress={onPress}
     >
       <Image
-        source={item.image || FALLBACK_COVER}
+        source={item.image || fallbackCover}
         style={styles.image}
         contentFit="cover"
       />

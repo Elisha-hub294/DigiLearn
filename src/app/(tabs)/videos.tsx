@@ -20,6 +20,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import { loadTrendingLessons } from "../../services/trendingLessonsService";
 
@@ -142,7 +143,7 @@ function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
 }
 
 export default function VideosScreen() {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const navigation = useNavigation<any>();
   const route = useRoute();
   const { width } = useWindowDimensions();
@@ -296,7 +297,7 @@ export default function VideosScreen() {
             <View style={styles.emptyHeader}>{header}</View>
             <View style={styles.emptyState}>
               <Image
-                source={require("@/assets/images/empty.png")}
+                source={getThemeAsset("empty", isDark)}
                 style={styles.emptyImage}
                 contentFit="contain"
               />

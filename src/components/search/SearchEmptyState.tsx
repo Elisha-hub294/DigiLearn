@@ -1,6 +1,7 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 
 type SearchEmptyStateProps = {
@@ -13,14 +14,12 @@ export function SearchEmptyState({
   subtitle = "Try another keyword, subject, author or teacher.",
 }: SearchEmptyStateProps) {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <View style={styles.container}>
       <Image
-        source={{
-          uri: "images/empty.png",
-        }}
+        source={getThemeAsset("empty", isDark)}
         style={styles.illustration}
         contentFit="contain"
       />

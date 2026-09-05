@@ -22,7 +22,7 @@ export function NotificationCard({
   onPress,
   onMarkRead,
 }: NotificationCardProps) {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const meta = NOTIFICATION_TYPE_META[notification.type];
   const adminNotification = notification.storage === "admin";
   const resourceTitle = notification.resourceTitle?.trim();
@@ -76,6 +76,7 @@ export function NotificationCard({
             <Image
               source={resolveNotificationAvatarSource(
                 notification.publisherAvatar,
+                isDark,
               )}
               style={styles.avatar}
               contentFit="cover"

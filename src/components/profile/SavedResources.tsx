@@ -17,6 +17,8 @@ import {
   VideoLesson,
 } from "../../components/ui/TrendingVideoCard";
 import { colors, radius, spacing } from "../../constants/theme";
+import { getThemeAsset } from "../../constants/themeAssets";
+import { useTheme } from "../../contexts/ThemeContext";
 import type { UserProfile } from "../../services/userProfile";
 type Filter = "All" | "Pages" | "Books" | "Papers" | "Lessons" | "Posts";
 type Entry = {
@@ -70,6 +72,7 @@ export function SavedResources({
   signedIn: boolean;
 }) {
   const router = useRouter();
+  const { isDark } = useTheme();
   const [filter, setFilter] = useState<Filter>("All");
   const [items, setItems] = useState<Entry[]>([]);
   const [resultsWidth, setResultsWidth] = useState(0);
@@ -234,6 +237,7 @@ export function SavedResources({
                 router,
                 (resultsWidth - spacing.lg * 2) * 0.8,
                 resultsWidth,
+                isDark,
               )
             : null}
         </Animated.View>
@@ -263,6 +267,7 @@ function renderItems(
   router: any,
   itemWidth: number,
   resultsWidth: number,
+  isDark: boolean,
 ) {
   const pages = items.filter((x) => x.type === "Pages");
   return (
@@ -288,7 +293,7 @@ function renderItems(
                 image:
                   x.data.image ??
                   x.data.cover ??
-                  require("../../../assets/images/bookcover-default.png"),
+                  getThemeAsset("bookCoverDefault", isDark),
               }}
               onPress={() =>
                 router.push({

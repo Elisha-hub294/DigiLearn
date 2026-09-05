@@ -1,6 +1,7 @@
 import { ImageSourcePropType } from "react-native";
+import { getThemeAsset } from "../constants/themeAssets";
 
-const FALLBACK_THUMBNAIL = require("../../assets/images/thumb-default.png");
+const FALLBACK_THUMBNAIL = getThemeAsset("thumbDefault", false);
 
 type FirestoreTimestampLike = {
   seconds?: unknown;
@@ -180,6 +181,7 @@ export function getVideoThumbnailUrl(
 export function resolveVideoImageSource(
   thumbnail?: string | number,
   link?: string,
+  isDark = false,
 ): ImageSourcePropType {
   if (typeof thumbnail === "number") {
     return thumbnail;
@@ -194,5 +196,5 @@ export function resolveVideoImageSource(
     return { uri: url };
   }
 
-  return FALLBACK_THUMBNAIL;
+  return isDark ? getThemeAsset("thumbDefault", true) : FALLBACK_THUMBNAIL;
 }

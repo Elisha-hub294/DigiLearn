@@ -16,6 +16,7 @@ import { DownloadedResources } from "../components/profile/DownloadedResources";
 import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 import { PaperItem, useLibraryData } from "../hooks/useLibraryData";
 import {
   TrendingLesson,
@@ -46,6 +47,7 @@ const parsePages = (value: string | string[] | undefined): TopicalNote[] => {
 
 export default function SeeAllScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
@@ -335,6 +337,7 @@ export default function SeeAllScreen() {
                 ) : mode === "courses" ? (
                   <CourseTile
                     item={item}
+                    isDark={isDark}
                     onPress={() =>
                       router.push({
                         pathname: "/lesson-player",
@@ -417,9 +420,11 @@ function BookTile({ item, onPress }: { item: Book; onPress: () => void }) {
 
 function CourseTile({
   item,
+  isDark,
   onPress,
 }: {
   item: TrendingLesson;
+  isDark: boolean;
   onPress: () => void;
 }) {
   return (
@@ -431,7 +436,7 @@ function CourseTile({
     >
       <View style={styles.courseImageWrap}>
         <Image
-          source={resolveVideoImageSource(item.thumbnail, item.link)}
+          source={resolveVideoImageSource(item.thumbnail, item.link, isDark)}
           style={styles.courseImage}
           contentFit="cover"
         />

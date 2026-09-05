@@ -24,6 +24,7 @@ import WebProfilePictureCropper from "../components/profile/WebProfilePictureCro
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { getThemeAsset } from "../constants/themeAssets";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { clearGuestMode } from "../services/guestService";
@@ -135,7 +136,8 @@ const profilePictureError = (error: unknown) => {
 };
 
 export default function MyProfileScreen() {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
+  const defaultUserAvatar = getThemeAsset("userDefault", isDark);
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, profile, loading } = useProfile();
@@ -398,9 +400,7 @@ export default function MyProfileScreen() {
               <>
                 <Image
                   source={
-                    user.photoURL
-                      ? { uri: user.photoURL }
-                      : require("../../assets/images/user-default.png")
+                    user.photoURL ? { uri: user.photoURL } : defaultUserAvatar
                   }
                   style={styles.avatar}
                   resizeMode="cover"

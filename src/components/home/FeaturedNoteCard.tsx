@@ -346,7 +346,7 @@ const SkeletonNoteCard = ({ isWide }: { isWide: boolean }) => {
         />
         <View style={styles.content}>
           <RNAnimated.View
-            style={[styles.avatar, styles.skeletonBox, { opacity: pulseAnim }]}
+            style={[styles.skeletonBox, { opacity: pulseAnim }]}
           />
           <View style={styles.contentData}>
             <RNAnimated.View
@@ -628,7 +628,7 @@ const FeaturedNoteItem = ({
               setDialogState({
                 title: "Delete this resource?",
                 message:
-                  "This will permanently delete the resource and all of its stored files. This action cannot be undone.",
+                  "This will permanently delete the resource. This action cannot be undone.",
                 primaryText: "Delete",
                 secondaryText: "Cancel",
                 onPrimary: handleDelete,
@@ -707,25 +707,6 @@ const FeaturedNoteItem = ({
           </Pressable>
 
           <View style={styles.content}>
-            {/* {!hideAvatar && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Open ${subjectName} profile`}
-              onPress={() =>
-                router.push({
-                  pathname: "/subject-profile",
-                  params: { subject: subjectName },
-                } as any)
-              }
-              style={styles.avatarPressable}
-            >
-              <Image
-                source={avatarUri ? { uri: avatarUri } : undefined}
-                style={[styles.avatar, { backgroundColor: themeColors.lightBackground }]}
-                contentFit="cover"
-              />
-            </Pressable>
-          )} */}
             <View
               style={[
                 styles.contentData,
@@ -861,6 +842,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     marginBottom: spacing.xl,
     borderRadius: 10,
+    overflow: "hidden",
   },
   cardHovered: {
     backgroundColor: "#e8efffff",
@@ -872,15 +854,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#f6f8fb",
-  },
-  avatarPressable: {
-    marginRight: spacing.sm,
-  },
-  avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "#E8EDF0",
   },
   previewWrap: {
     overflow: "hidden",
@@ -947,7 +920,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
-  skeletonBox: { backgroundColor: "#EFEFEF", borderRadius: radius.sm },
+  skeletonBox: {
+    backgroundColor: "#EFEFEF",
+    borderRadius: radius.sm,
+    overflow: "hidden",
+  },
   skeletonPreview: { height: 250, marginBottom: spacing.sm },
   skeletonTitle: { height: 16, width: "60%", marginBottom: 8 },
   skeletonDesc: { height: 12, width: "90%", marginBottom: 6 },
