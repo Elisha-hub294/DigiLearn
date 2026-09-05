@@ -1,6 +1,6 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius, spacing } from "../../constants/theme";
+import { radius, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
@@ -57,8 +57,12 @@ export function BookCard({
       <View>
         <View style={styles.badgeRow}>
           {item.badge ? (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{item.badge}</Text>
+            <View
+              style={[styles.badge, { backgroundColor: colors.primaryLight }]}
+            >
+              <Text style={[styles.badgeText, { color: colors.primary }]}>
+                {item.badge}
+              </Text>
             </View>
           ) : null}
           {typeof item.progress === "number" ? (
@@ -112,13 +116,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   badge: {
-    backgroundColor: colors.primaryLight,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.sm,
     paddingVertical: 4,
   },
   badgeText: {
-    color: colors.primary,
     fontSize: 10,
     fontWeight: "700",
   },
@@ -132,18 +134,15 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   title: {
-    color: colors.text,
     fontSize: 13,
     fontWeight: "700",
     marginBottom: 4,
   },
   author: {
-    color: colors.subtitle,
     fontSize: 12,
     marginBottom: 6,
   },
   description: {
-    color: colors.subtitle,
     fontSize: 11,
     lineHeight: 16,
   },

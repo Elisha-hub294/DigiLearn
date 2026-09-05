@@ -13,7 +13,7 @@ export function SimilarBookCard({
   onPress: () => void;
   index: number;
 }) {
-  const { isDark } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <Animated.View entering={FadeIn.delay(index * 70).duration(300)}>
@@ -26,11 +26,11 @@ export function SimilarBookCard({
         <Image
           source={book.cover}
           placeholder={getFallbackCover(isDark)}
-          style={styles.cover}
+          style={[styles.cover, { backgroundColor: colors.lightBackground }]}
           contentFit="cover"
           transition={180}
         />
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
           {book.title}
         </Text>
       </Pressable>
@@ -43,10 +43,8 @@ const styles = StyleSheet.create({
     width: 80,
     height: 110,
     borderRadius: 5,
-    backgroundColor: "#E9EDF0",
   },
   title: {
-    color: "#344054",
     fontSize: 12,
     lineHeight: 16,
     fontWeight: "500",

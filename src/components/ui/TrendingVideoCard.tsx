@@ -1,4 +1,4 @@
-import { colors, radius } from "@/constants/theme";
+import { radius } from "@/constants/theme";
 import {
   formatVideoUploadedAt,
   resolveVideoImageSource,
@@ -50,7 +50,7 @@ export function TrendingVideoCard({
   marginRight?: number;
 }) {
   const router = useRouter();
-  const { isDark } = useTheme();
+  const { colors, isDark } = useTheme();
   const scale = useSharedValue(1);
   const [checkingVideo, setCheckingVideo] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -119,7 +119,9 @@ export function TrendingVideoCard({
           />
           <View pointerEvents="none" style={styles.overlay} />
           <View pointerEvents="none" style={styles.play}>
-            <View style={styles.playIcon}>
+            <View
+              style={[styles.playIcon, { backgroundColor: colors.primary }]}
+            >
               <Ionicons
                 name="play"
                 size={25}
@@ -144,14 +146,14 @@ export function TrendingVideoCard({
         <Text
           numberOfLines={1}
           ellipsizeMode="tail"
-          style={[styles.title, styles.truncateText]}
+          style={[styles.title, styles.truncateText, { color: colors.text }]}
         >
           {item.title}
         </Text>
         <Text
           numberOfLines={1}
           ellipsizeMode="tail"
-          style={[styles.meta, styles.truncateText]}
+          style={[styles.meta, styles.truncateText, { color: colors.subtitle }]}
         >
           {item.teacher} • {item.uploadedAt}
         </Text>
@@ -173,7 +175,6 @@ const styles = StyleSheet.create({
   thumbnail: {
     width: "100%", // Explicit width so aspectRatio calculates correctly
     aspectRatio: 1.5,
-    backgroundColor: "#ddd",
     borderRadius: radius.sm,
     overflow: "hidden",
   },
@@ -189,7 +190,6 @@ const styles = StyleSheet.create({
   },
   playIcon: {
     alignItems: "center",
-    backgroundColor: colors.primary,
     borderRadius: 32,
     elevation: 5,
     height: 50,
@@ -203,12 +203,11 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   title: {
-    color: "#111",
     fontSize: 17,
     fontWeight: "500",
     lineHeight: 22,
     marginTop: 5,
     textTransform: "capitalize",
   },
-  meta: { color: "#6E6E73", fontSize: 13, marginTop: 5 },
+  meta: { fontSize: 13, marginTop: 5 },
 });

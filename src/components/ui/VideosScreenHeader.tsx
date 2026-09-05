@@ -9,6 +9,7 @@ import React from "react";
 import { LayoutChangeEvent, StyleSheet, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 type VideosScreenHeaderProps = {
   subject: string;
@@ -29,6 +30,7 @@ export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
   cardWidth,
   onTrendingSectionLayout,
 }) => {
+  const { colors } = useTheme();
   const handleTrendingLayout = (event: LayoutChangeEvent) => {
     onTrendingSectionLayout?.(event.nativeEvent.layout.y);
   };
@@ -69,7 +71,10 @@ export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
             {[0, 1, 2].map((item) => (
               <View
                 key={item}
-                style={[styles.skeletonCard, { width: cardWidth }]}
+                style={[
+                  styles.skeletonCard,
+                  { backgroundColor: colors.white, width: cardWidth },
+                ]}
               >
                 <Skeleton style={styles.skeletonImage} />
                 <Skeleton style={styles.skeletonTitle} />

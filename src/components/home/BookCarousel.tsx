@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { auth } from "../../../firebaseConfig";
-import { colors, spacing } from "../../constants/theme";
+import { spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -44,7 +44,7 @@ const pickImage = (value: unknown, fallback: any) => {
 export const BookCarousel = () => {
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
-  const { isDark } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const [books, setBooks] = useState<BookItem[]>([]);
   const [loading, setLoading] = useState(true);
   const cardWidth = width >= 900 ? 300 : 250;
@@ -111,7 +111,12 @@ export const BookCarousel = () => {
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => `book-skeleton-${item}`}
           renderItem={() => (
-            <View style={[styles.card, { width: cardWidth }]}>
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: themeColors.white, width: cardWidth },
+              ]}
+            >
               <Skeleton style={styles.image} />
               <View style={styles.body}>
                 <Skeleton style={styles.titleSkeleton} />
@@ -143,7 +148,10 @@ export const BookCarousel = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Pressable
-            style={[styles.card, { width: cardWidth }]}
+            style={[
+              styles.card,
+              { backgroundColor: themeColors.white, width: cardWidth },
+            ]}
             accessibilityRole="button"
             accessibilityLabel={`Open ${item.title}`}
             onPress={() => {
@@ -176,7 +184,9 @@ export const BookCarousel = () => {
               contentFit="contain"
             />
             <View style={styles.body}>
-              <Text style={styles.title}>{item.title}</Text>
+              <Text style={[styles.title, { color: themeColors.text }]}>
+                {item.title}
+              </Text>
               <Pressable
                 accessibilityLabel={`Open teacher profile: ${item.author}`}
                 onPress={(event) => {
@@ -187,7 +197,9 @@ export const BookCarousel = () => {
                   } as never);
                 }}
               >
-                <Text style={styles.author}>{item.author}</Text>
+                <Text style={[styles.author, { color: themeColors.subtitle }]}>
+                  {item.author}
+                </Text>
               </Pressable>
             </View>
           </Pressable>
@@ -203,7 +215,6 @@ const styles = StyleSheet.create({
   list: { paddingRight: spacing.md },
   card: {
     marginRight: spacing.md,
-    backgroundColor: colors.white,
     borderRadius: 5,
     overflow: "hidden",
     position: "relative",
@@ -212,11 +223,10 @@ const styles = StyleSheet.create({
   image: { width: "100%", height: 200 },
   body: { paddingVertical: spacing.xs },
   title: {
-    color: colors.text,
     fontSize: 14,
     fontWeight: "600",
   },
   titleSkeleton: { width: "78%", height: 14, marginBottom: 8 },
   authorSkeleton: { width: "46%", height: 12 },
-  author: { color: colors.subtitle, fontSize: 12, marginBottom: spacing.sm },
+  author: { fontSize: 12, marginBottom: spacing.sm },
 });
