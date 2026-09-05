@@ -47,7 +47,7 @@ const parsePages = (value: string | string[] | undefined): TopicalNote[] => {
 
 export default function SeeAllScreen() {
   const router = useRouter();
-  const { isDark } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
@@ -197,25 +197,51 @@ export default function SeeAllScreen() {
           : false;
 
   return (
-    <View style={styles.screen}>
+    <View
+      style={[styles.screen, { backgroundColor: themeColors.lightBackground }]}
+    >
       <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
-        <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
+        <View
+          style={[
+            styles.header,
+            {
+              paddingHorizontal: horizontalPadding,
+              backgroundColor: themeColors.white,
+            },
+          ]}
+        >
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Go back"
             onPress={() => router.back()}
           >
-            <Feather name="chevron-left" size={22} color={colors.text} />
+            <Feather name="chevron-left" size={22} color={themeColors.text} />
           </Pressable>
           <View>
-            <Text style={styles.eyebrow}>Explore library</Text>
-            <Text style={styles.heading}>{title}</Text>
+            <Text style={[styles.eyebrow, { color: themeColors.primary }]}>
+              Explore library
+            </Text>
+            <Text style={[styles.heading, { color: themeColors.text }]}>
+              {title}
+            </Text>
           </View>
         </View>
         {mode === "papers" && (
-          <View style={styles.filterBar}>
+          <View
+            style={[
+              styles.filterBar,
+              {
+                backgroundColor: themeColors.white,
+                borderBottomColor: themeColors.border,
+              },
+            ]}
+          >
             <View style={styles.filterGroup}>
-              <Text style={styles.filterLabel}>Type</Text>
+              <Text
+                style={[styles.filterLabel, { color: themeColors.subtitle }]}
+              >
+                Type
+              </Text>
               <FlatList
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -227,15 +253,21 @@ export default function SeeAllScreen() {
                     accessibilityRole="button"
                     style={[
                       styles.filterChip,
-                      selectedPaperType === item && styles.filterChipActive,
+                      { backgroundColor: themeColors.lightBackground },
+                      selectedPaperType === item && {
+                        backgroundColor: themeColors.primaryLight,
+                        borderColor: themeColors.primary,
+                      },
                     ]}
                     onPress={() => setSelectedPaperType(item)}
                   >
                     <Text
                       style={[
                         styles.filterChipText,
-                        selectedPaperType === item &&
-                          styles.filterChipTextActive,
+                        { color: themeColors.text },
+                        selectedPaperType === item && {
+                          color: themeColors.primary,
+                        },
                       ]}
                     >
                       {item}
@@ -246,7 +278,11 @@ export default function SeeAllScreen() {
             </View>
 
             <View style={styles.filterGroup}>
-              <Text style={styles.filterLabel}>Year</Text>
+              <Text
+                style={[styles.filterLabel, { color: themeColors.subtitle }]}
+              >
+                Year
+              </Text>
               <FlatList
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -258,15 +294,21 @@ export default function SeeAllScreen() {
                     accessibilityRole="button"
                     style={[
                       styles.filterChip,
-                      selectedPaperYear === item && styles.filterChipActive,
+                      { backgroundColor: themeColors.lightBackground },
+                      selectedPaperYear === item && {
+                        backgroundColor: themeColors.primaryLight,
+                        borderColor: themeColors.primary,
+                      },
                     ]}
                     onPress={() => setSelectedPaperYear(item)}
                   >
                     <Text
                       style={[
                         styles.filterChipText,
-                        selectedPaperYear === item &&
-                          styles.filterChipTextActive,
+                        { color: themeColors.text },
+                        selectedPaperYear === item && {
+                          color: themeColors.primary,
+                        },
                       ]}
                     >
                       {item}
@@ -295,8 +337,10 @@ export default function SeeAllScreen() {
           </View>
         ) : data.length === 0 || (mode === "courses" && coursesError) ? (
           <View style={styles.state}>
-            <Text style={styles.stateTitle}>Nothing here yet</Text>
-            <Text style={styles.stateText}>
+            <Text style={[styles.stateTitle, { color: themeColors.text }]}>
+              Nothing here yet
+            </Text>
+            <Text style={[styles.stateText, { color: themeColors.subtitle }]}>
               Check back soon for more {title.toLowerCase()}.
             </Text>
           </View>
@@ -400,18 +444,25 @@ export default function SeeAllScreen() {
 }
 
 function BookTile({ item, onPress }: { item: Book; onPress: () => void }) {
+  const { colors: themeColors } = useTheme();
   return (
     <Pressable
-      style={styles.card}
+      style={[styles.card, { backgroundColor: themeColors.white }]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Open ${item.title}`}
     >
       <Image source={item.image} style={styles.bookImage} contentFit="cover" />
-      <Text style={styles.cardTitle} numberOfLines={2}>
+      <Text
+        style={[styles.cardTitle, { color: themeColors.text }]}
+        numberOfLines={2}
+      >
         {item.title}
       </Text>
-      <Text style={styles.cardMeta} numberOfLines={1}>
+      <Text
+        style={[styles.cardMeta, { color: themeColors.subtitle }]}
+        numberOfLines={1}
+      >
         {item.author}
       </Text>
     </Pressable>
@@ -427,9 +478,10 @@ function CourseTile({
   isDark: boolean;
   onPress: () => void;
 }) {
+  const { colors: themeColors } = useTheme();
   return (
     <Pressable
-      style={styles.card}
+      style={[styles.card, { backgroundColor: themeColors.white }]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Open lesson: ${item.title}`}
@@ -445,10 +497,16 @@ function CourseTile({
         </View>
         <Text style={styles.duration}>{item.duration}</Text>
       </View>
-      <Text style={styles.cardTitle} numberOfLines={2}>
+      <Text
+        style={[styles.cardTitle, { color: themeColors.text }]}
+        numberOfLines={2}
+      >
         {item.title}
       </Text>
-      <Text style={styles.cardMeta} numberOfLines={1}>
+      <Text
+        style={[styles.cardMeta, { color: themeColors.subtitle }]}
+        numberOfLines={1}
+      >
         {item.teacher}
       </Text>
     </Pressable>
@@ -462,12 +520,13 @@ function PageTile({
   item: TopicalNote;
   onPress: () => void;
 }) {
+  const { colors: themeColors } = useTheme();
   const [imageFailed, setImageFailed] = useState(false);
   const cover = item.cover?.trim();
 
   return (
     <Pressable
-      style={styles.card}
+      style={[styles.card, { backgroundColor: themeColors.white }]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Open ${item.title || "Untitled page"}`}
@@ -480,14 +539,26 @@ function PageTile({
           onError={() => setImageFailed(true)}
         />
       ) : (
-        <View style={[styles.pageImage, styles.pageImageFallback]}>
+        <View
+          style={[
+            styles.pageImage,
+            styles.pageImageFallback,
+            { backgroundColor: themeColors.border },
+          ]}
+        >
           <Feather name="file-text" size={28} color={colors.white} />
         </View>
       )}
-      <Text style={styles.cardTitle} numberOfLines={2}>
+      <Text
+        style={[styles.cardTitle, { color: themeColors.text }]}
+        numberOfLines={2}
+      >
         {item.title || "Untitled page"}
       </Text>
-      <Text style={styles.cardMeta} numberOfLines={1}>
+      <Text
+        style={[styles.cardMeta, { color: themeColors.subtitle }]}
+        numberOfLines={1}
+      >
         {Array.isArray(item.subject)
           ? item.subject.join(", ")
           : item.subject || "Study note"}
@@ -503,19 +574,25 @@ function PaperTile({
   item: PaperItem;
   onPress: () => void;
 }) {
+  const { colors: themeColors } = useTheme();
   return (
     <Pressable
-      style={styles.card}
+      style={[styles.card, { backgroundColor: themeColors.white }]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Open ${item.title}`}
     >
       <Image source={item.image} style={styles.paperImage} contentFit="cover" />
-      <Text style={styles.subject}>{item.subject}</Text>
-      <Text style={styles.cardTitle} numberOfLines={2}>
+      <Text style={[styles.subject, { color: themeColors.primary }]}>
+        {item.subject}
+      </Text>
+      <Text
+        style={[styles.cardTitle, { color: themeColors.text }]}
+        numberOfLines={2}
+      >
         {item.title}
       </Text>
-      <Text style={styles.cardMeta}>
+      <Text style={[styles.cardMeta, { color: themeColors.subtitle }]}>
         {item.year} • {item.pages}
       </Text>
     </Pressable>

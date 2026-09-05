@@ -22,6 +22,7 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { radius, spacing, colors as themeColors } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { toggleSavedItem } from "../../services/userProfile";
 import {
   matchesUserInterests,
@@ -619,6 +620,7 @@ const TeacherPostItem = ({
 };
 
 const SkeletonTeacherPostCard = () => {
+  const { colors } = useTheme();
   const [pulseAnim] = useState(() => new RNAnimated.Value(0.3));
 
   useEffect(() => {
@@ -641,10 +643,16 @@ const SkeletonTeacherPostCard = () => {
   }, [pulseAnim]);
 
   return (
-    <View style={[styles.card, { marginBottom: spacing.xl }]}>
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: colors.white, marginBottom: spacing.xl },
+      ]}
+    >
       <RNAnimated.View
         style={[
           styles.skeletonBox,
+          { backgroundColor: colors.border },
           styles.skeletonPreview,
           { opacity: pulseAnim },
         ]}
@@ -655,6 +663,7 @@ const SkeletonTeacherPostCard = () => {
           <RNAnimated.View
             style={[
               styles.skeletonBox,
+              { backgroundColor: colors.border },
               styles.skeletonAvatar,
               { opacity: pulseAnim },
             ]}
@@ -663,6 +672,7 @@ const SkeletonTeacherPostCard = () => {
             <RNAnimated.View
               style={[
                 styles.skeletonBox,
+                { backgroundColor: colors.border },
                 styles.skeletonName,
                 { opacity: pulseAnim },
               ]}
@@ -670,6 +680,7 @@ const SkeletonTeacherPostCard = () => {
             <RNAnimated.View
               style={[
                 styles.skeletonBox,
+                { backgroundColor: colors.border },
                 styles.skeletonTime,
                 { opacity: pulseAnim },
               ]}
@@ -679,6 +690,7 @@ const SkeletonTeacherPostCard = () => {
         <RNAnimated.View
           style={[
             styles.skeletonBox,
+            { backgroundColor: colors.border },
             styles.skeletonBadge,
             { opacity: pulseAnim },
           ]}
@@ -688,6 +700,7 @@ const SkeletonTeacherPostCard = () => {
       <RNAnimated.View
         style={[
           styles.skeletonBox,
+          { backgroundColor: colors.border },
           styles.skeletonCaption,
           { opacity: pulseAnim },
         ]}
@@ -695,6 +708,7 @@ const SkeletonTeacherPostCard = () => {
       <RNAnimated.View
         style={[
           styles.skeletonBox,
+          { backgroundColor: colors.border },
           styles.skeletonCaptionShort,
           { opacity: pulseAnim },
         ]}
@@ -706,6 +720,7 @@ const SkeletonTeacherPostCard = () => {
             key={i}
             style={[
               styles.skeletonBox,
+              { backgroundColor: colors.border },
               styles.skeletonAction,
               { opacity: pulseAnim },
             ]}
@@ -827,7 +842,7 @@ const styles = StyleSheet.create({
     backgroundColor: themeColors.background,
   },
   actionLabel: { color: themeColors.subtitle, fontSize: 12, fontWeight: "500" },
-  skeletonBox: { backgroundColor: "#EFEFEF", borderRadius: radius.sm },
+  skeletonBox: { borderRadius: radius.sm },
   skeletonPreview: {
     height: 250,
     marginBottom: spacing.xs,

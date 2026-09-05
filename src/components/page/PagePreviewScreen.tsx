@@ -396,18 +396,58 @@ export function PagePreviewScreen() {
             },
           ]}
         >
-          <Skeleton style={styles.skeletonHero} />
-          <View style={styles.skeletonSheet}>
+          <Skeleton
+            style={[
+              styles.skeletonHero,
+              { backgroundColor: themeColors.border },
+            ]}
+          />
+          <View
+            style={[
+              styles.skeletonSheet,
+              { backgroundColor: themeColors.white },
+            ]}
+          >
             <View style={styles.skeletonAvatarRow}>
-              <Skeleton style={styles.skeletonAvatar} />
+              <Skeleton
+                style={[
+                  styles.skeletonAvatar,
+                  { backgroundColor: themeColors.border },
+                ]}
+              />
               <View style={styles.skeletonHeaderCopy}>
-                <Skeleton style={styles.skeletonTitle} />
-                <Skeleton style={styles.skeletonSub} />
+                <Skeleton
+                  style={[
+                    styles.skeletonTitle,
+                    { backgroundColor: themeColors.lightBackground },
+                  ]}
+                />
+                <Skeleton
+                  style={[
+                    styles.skeletonSub,
+                    { backgroundColor: themeColors.lightBackground },
+                  ]}
+                />
               </View>
             </View>
-            <Skeleton style={styles.skeletonLine} />
-            <Skeleton style={styles.skeletonLine} />
-            <Skeleton style={styles.skeletonLineShort} />
+            <Skeleton
+              style={[
+                styles.skeletonLine,
+                { backgroundColor: themeColors.lightBackground },
+              ]}
+            />
+            <Skeleton
+              style={[
+                styles.skeletonLine,
+                { backgroundColor: themeColors.lightBackground },
+              ]}
+            />
+            <Skeleton
+              style={[
+                styles.skeletonLineShort,
+                { backgroundColor: themeColors.lightBackground },
+              ]}
+            />
           </View>
         </View>
       </View>

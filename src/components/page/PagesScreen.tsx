@@ -250,6 +250,8 @@ export default function PagesScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const lastPageDocument = useRef<DocumentSnapshot | null>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const accentColor =
+    subjectAccent === "#000000" ? themeColors.primary : subjectAccent;
 
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
@@ -541,7 +543,7 @@ export default function PagesScreen() {
           style={[
             styles.filterOption,
             { backgroundColor: themeColors.lightBackground },
-            isSelected && { backgroundColor: subjectAccent },
+            isSelected && { backgroundColor: accentColor },
           ]}
         >
           <Text
@@ -560,8 +562,15 @@ export default function PagesScreen() {
 
   if (!isPageDataReady) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.skeletonPage}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
+        <View
+          style={[
+            styles.skeletonPage,
+            { backgroundColor: themeColors.background },
+          ]}
+        >
           <View
             style={[
               styles.skeletonInner,
@@ -572,23 +581,78 @@ export default function PagesScreen() {
             ]}
           >
             <View style={styles.skeletonHeaderRow}>
-              <View style={styles.skeletonBackButton} />
-              <View style={styles.skeletonHeaderTitle} />
+              <View
+                style={[
+                  styles.skeletonBackButton,
+                  { backgroundColor: themeColors.border },
+                ]}
+              />
+              <View
+                style={[
+                  styles.skeletonHeaderTitle,
+                  { backgroundColor: themeColors.border },
+                ]}
+              />
             </View>
             <View style={styles.skeletonSearchSection}>
-              <View style={styles.skeletonSearchRow} />
-              <View style={styles.skeletonFilterButton} />
+              <View
+                style={[
+                  styles.skeletonSearchRow,
+                  { backgroundColor: themeColors.lightBackground },
+                ]}
+              />
+              <View
+                style={[
+                  styles.skeletonFilterButton,
+                  { backgroundColor: themeColors.border },
+                ]}
+              />
             </View>
             <View style={styles.skeletonListSection}>
-              <View style={styles.skeletonItemsCount} />
-              <View style={styles.skeletonCard}>
-                <View style={styles.skeletonPreview} />
+              <View
+                style={[
+                  styles.skeletonItemsCount,
+                  { backgroundColor: themeColors.border },
+                ]}
+              />
+              <View
+                style={[
+                  styles.skeletonCard,
+                  { backgroundColor: themeColors.white },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.skeletonPreview,
+                    { backgroundColor: themeColors.lightBackground },
+                  ]}
+                />
                 <View style={styles.skeletonCardContent}>
-                  <View style={styles.skeletonAvatar} />
+                  <View
+                    style={[
+                      styles.skeletonAvatar,
+                      { backgroundColor: themeColors.border },
+                    ]}
+                  />
                   <View style={styles.skeletonCardCopy}>
-                    <View style={styles.skeletonCardTitle} />
-                    <View style={styles.skeletonCardDescription} />
-                    <View style={styles.skeletonCardDescriptionShort} />
+                    <View
+                      style={[
+                        styles.skeletonCardTitle,
+                        { backgroundColor: themeColors.lightBackground },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.skeletonCardDescription,
+                        { backgroundColor: themeColors.lightBackground },
+                      ]}
+                    />
+                    <View
+                      style={[
+                        styles.skeletonCardDescriptionShort,
+                        { backgroundColor: themeColors.lightBackground },
+                      ]}
+                    />
                   </View>
                 </View>
               </View>
@@ -600,8 +664,13 @@ export default function PagesScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Animated.View entering={FadeInUp.duration(420)} style={styles.page}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
+      <Animated.View
+        entering={FadeInUp.duration(420)}
+        style={[styles.page, { backgroundColor: themeColors.background }]}
+      >
         <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
           <View
             style={[styles.headerRow, { paddingHorizontal: horizontalPadding }]}
@@ -612,10 +681,10 @@ export default function PagesScreen() {
               onPress={() => router.back()}
               style={styles.backButton}
             >
-              <Icon name="chevron-left" size={26} color="#111111" />
+              <Icon name="chevron-left" size={26} color={themeColors.text} />
             </Pressable>
 
-            <Text style={[styles.pageTitle, { color: subjectAccent }]}>
+            <Text style={[styles.pageTitle, { color: accentColor }]}>
               {pageTitle}
             </Text>
           </View>
@@ -642,10 +711,14 @@ export default function PagesScreen() {
               accessibilityRole="button"
               accessibilityLabel="Open filters"
               onPress={() => setShowFilters(true)}
-              style={[styles.filterButton, { backgroundColor: subjectAccent }]}
+              style={[styles.filterButton, { backgroundColor: accentColor }]}
             >
-              <Icon name="sliders" size={18} color="#FFFFFF" />
-              {activeFilterCount > 0 && <View style={styles.badge} />}
+              <Icon name="sliders" size={18} color={themeColors.white} />
+              {activeFilterCount > 0 && (
+                <View
+                  style={[styles.badge, { borderColor: themeColors.white }]}
+                />
+              )}
             </Pressable>
           </View>
 
@@ -665,18 +738,20 @@ export default function PagesScreen() {
                   { backgroundColor: themeColors.lightBackground },
                 ]}
               >
-                <Text style={[styles.emptyTitle, { color: subjectAccent }]}>
+                <Text style={[styles.emptyTitle, { color: accentColor }]}>
                   No matching notes found
                 </Text>
-                <Text style={styles.emptySubtitle}>
+                <Text
+                  style={[
+                    styles.emptySubtitle,
+                    { color: themeColors.subtitle },
+                  ]}
+                >
                   Try a different keyword or adjust your filters.
                 </Text>
                 <Pressable
                   onPress={resetFilters}
-                  style={[
-                    styles.emptyButton,
-                    { backgroundColor: subjectAccent },
-                  ]}
+                  style={[styles.emptyButton, { backgroundColor: accentColor }]}
                 >
                   <Text
                     style={[
@@ -691,9 +766,17 @@ export default function PagesScreen() {
                   <Pressable
                     onPress={loadMoreNotes}
                     disabled={loadingMore}
-                    style={styles.loadMoreEmptyButton}
+                    style={[
+                      styles.loadMoreEmptyButton,
+                      { borderColor: themeColors.border },
+                    ]}
                   >
-                    <Text style={styles.loadMoreEmptyText}>
+                    <Text
+                      style={[
+                        styles.loadMoreEmptyText,
+                        { color: themeColors.text },
+                      ]}
+                    >
                       {loadingMore ? "Loading..." : "Load more resources"}
                     </Text>
                   </Pressable>
@@ -704,7 +787,9 @@ export default function PagesScreen() {
                 entering={FadeIn.duration(260)}
                 style={styles.notesWrap}
               >
-                <Text style={styles.itemsCount}>
+                <Text
+                  style={[styles.itemsCount, { color: themeColors.subtitle }]}
+                >
                   {visibleNotes.length} items
                 </Text>
                 <FeaturedNoteCard
@@ -749,20 +834,22 @@ export default function PagesScreen() {
             />
             <Animated.View
               entering={SlideInDown.duration(280)}
-              style={styles.sheet}
+              style={[styles.sheet, { backgroundColor: themeColors.white }]}
             >
-              <View style={styles.handle} />
+              <View
+                style={[styles.handle, { backgroundColor: themeColors.border }]}
+              />
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.sheetContent}
               >
-                <Text style={[styles.sheetTitle, { color: themeColors.dark }]}>
+                <Text style={[styles.sheetTitle, { color: themeColors.text }]}>
                   Filter notes
                 </Text>
 
                 <View style={styles.filterGroup}>
                   <Text
-                    style={[styles.filterLabel, { color: themeColors.dark }]}
+                    style={[styles.filterLabel, { color: themeColors.text }]}
                   >
                     Sort By
                   </Text>
@@ -773,7 +860,7 @@ export default function PagesScreen() {
 
                 <View style={styles.filterGroup}>
                   <Text
-                    style={[styles.filterLabel, { color: themeColors.dark }]}
+                    style={[styles.filterLabel, { color: themeColors.text }]}
                   >
                     Reading Status
                   </Text>
@@ -784,7 +871,7 @@ export default function PagesScreen() {
 
                 <View style={styles.filterGroup}>
                   <Text
-                    style={[styles.filterLabel, { color: themeColors.dark }]}
+                    style={[styles.filterLabel, { color: themeColors.text }]}
                   >
                     Level
                   </Text>
@@ -795,7 +882,7 @@ export default function PagesScreen() {
 
                 <View style={styles.filterGroup}>
                   <Text
-                    style={[styles.filterLabel, { color: themeColors.dark }]}
+                    style={[styles.filterLabel, { color: themeColors.text }]}
                   >
                     Class
                   </Text>
@@ -806,7 +893,7 @@ export default function PagesScreen() {
 
                 <View style={styles.filterGroup}>
                   <Text
-                    style={[styles.filterLabel, { color: themeColors.dark }]}
+                    style={[styles.filterLabel, { color: themeColors.text }]}
                   >
                     Attachments
                   </Text>
@@ -816,18 +903,27 @@ export default function PagesScreen() {
                 </View>
 
                 <View style={styles.filterGroup}>
-                  <Text style={styles.filterLabel}>More resources</Text>
+                  <Text
+                    style={[styles.filterLabel, { color: themeColors.text }]}
+                  >
+                    More resources
+                  </Text>
                   <View style={styles.toggleRow}>
                     <View style={styles.toggleCopy}>
                       <Text
                         style={[
                           styles.toggleTitle,
-                          { color: themeColors.dark },
+                          { color: themeColors.text },
                         ]}
                       >
                         Show hidden items
                       </Text>
-                      <Text style={styles.toggleSubtitle}>
+                      <Text
+                        style={[
+                          styles.toggleSubtitle,
+                          { color: themeColors.subtitle },
+                        ]}
+                      >
                         Include pages you previously hid.
                       </Text>
                     </View>
@@ -847,12 +943,17 @@ export default function PagesScreen() {
                       <Text
                         style={[
                           styles.toggleTitle,
-                          { color: themeColors.dark },
+                          { color: themeColors.text },
                         ]}
                       >
                         Follow set preferences
                       </Text>
-                      <Text style={styles.toggleSubtitle}>
+                      <Text
+                        style={[
+                          styles.toggleSubtitle,
+                          { color: themeColors.subtitle },
+                        ]}
+                      >
                         Only show resources matching your selected subjects.
                       </Text>
                     </View>
@@ -880,7 +981,7 @@ export default function PagesScreen() {
                     <Text
                       style={[
                         styles.secondaryActionText,
-                        { color: subjectAccent },
+                        { color: accentColor },
                       ]}
                     >
                       Reset Filters
@@ -890,7 +991,7 @@ export default function PagesScreen() {
                     onPress={applyFilters}
                     style={[
                       styles.primaryAction,
-                      { backgroundColor: subjectAccent },
+                      { backgroundColor: accentColor },
                     ]}
                   >
                     <Text style={styles.primaryActionText}>Apply</Text>

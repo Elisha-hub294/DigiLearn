@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../../contexts/ThemeContext";
 import { FirebaseImage } from "../ui/FirebaseImage";
 import { TopicalNote } from "./pageTypes";
 
@@ -21,6 +22,7 @@ export function PageHero({
   dateText: string;
   onBack: () => void;
 }) {
+  const { colors } = useTheme();
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
@@ -41,7 +43,13 @@ export function PageHero({
           transition={250}
         />
       ) : (
-        <View style={[StyleSheet.absoluteFill, styles.previewFallback]} />
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            styles.previewFallback,
+            { backgroundColor: colors.lightBackground },
+          ]}
+        />
       )}
 
       <LinearGradient
@@ -57,7 +65,11 @@ export function PageHero({
           onPress={onBack}
           accessibilityRole="button"
           accessibilityLabel="Go back"
-          style={({ pressed }) => [styles.back, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.back,
+            { backgroundColor: `${colors.white}B8` },
+            pressed && styles.pressed,
+          ]}
           hitSlop={8}
         >
           <Feather name="chevron-left" color="#FFFFFF" size={28} />
