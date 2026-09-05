@@ -276,7 +276,11 @@ export default function LibraryScreen() {
           </Animated.View>
           <Animated.View
             entering={FadeInUp.duration(440)}
-            style={[styles.filterSection, styles.stickyFilter]}
+            style={[
+              styles.filterSection,
+              styles.stickyFilter,
+              { backgroundColor: themeColors.background },
+            ]}
           >
             <ScrollView
               horizontal
@@ -294,6 +298,10 @@ export default function LibraryScreen() {
                     onPress={() => setSelectedCategory(category.key)}
                     style={({ pressed }) => [
                       styles.categoryChip,
+                      {
+                        backgroundColor: themeColors.white,
+                        borderColor: themeColors.border,
+                      },
                       isSelected && styles.categoryChipSelected,
                       pressed && styles.categoryChipPressed,
                     ]}

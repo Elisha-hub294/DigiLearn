@@ -16,6 +16,7 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 import { type TeacherPost } from "../constants/homeData";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { toggleSavedItem } from "../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../utils/nativeToast";
 import { ActionDialog } from "./ui/ActionDialog";
@@ -55,6 +56,7 @@ export const TeacherPostCard = ({
 }) => {
   const router = useRouter();
   const { user, profile } = useProfile();
+  const { colors: themeColors } = useTheme();
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const contentStyle = [
@@ -101,7 +103,10 @@ export const TeacherPostCard = ({
 
   return (
     <>
-      <Animated.View entering={FadeInUp.duration(500)} style={styles.card}>
+      <Animated.View
+        entering={FadeInUp.duration(500)}
+        style={[styles.card, { backgroundColor: themeColors.white }]}
+      >
         <View style={styles.header}>
           {!hideOwner && (
             <View style={styles.profileRow}>
@@ -112,16 +117,20 @@ export const TeacherPostCard = ({
               />
               <View style={styles.profileMeta}>
                 <View style={styles.nameRow}>
-                  <Text style={styles.name}>{post.teacherName}</Text>
+                  <Text style={[styles.name, { color: themeColors.text }]}>
+                    {post.teacherName}
+                  </Text>
                   {post.verified ? (
                     <Icon
                       name="check-circle"
                       size={14}
-                      color={colors.primary}
+                      color={themeColors.primary}
                     />
                   ) : null}
                 </View>
-                <Text style={styles.time}>{post.time}</Text>
+                <Text style={[styles.time, { color: themeColors.subtitle }]}>
+                  {post.time}
+                </Text>
               </View>
             </View>
           )}
@@ -129,9 +138,13 @@ export const TeacherPostCard = ({
         {hasNoCover ? (
           <GradientTitle text={title} style={styles.title} />
         ) : (
-          <Text style={styles.title}>{title}</Text>
+          <Text style={[styles.title, { color: themeColors.text }]}>
+            {title}
+          </Text>
         )}
-        <Text style={contentStyle}>{post.content}</Text>
+        <Text style={[contentStyle, { color: themeColors.text }]}>
+          {post.content}
+        </Text>
         {!hidePreview && (
           <Pressable
             style={styles.previewWrap}
@@ -171,14 +184,17 @@ export const TeacherPostCard = ({
         {!hideActions && (
           <View style={styles.footer}>
             <Pressable
-              style={styles.action}
+              style={[
+                styles.action,
+                { backgroundColor: themeColors.lightBackground },
+              ]}
               accessibilityLabel={isSaved ? "Remove bookmark" : "Save post"}
               onPress={handleToggleSave}
             >
               <Ionicons
                 name={isSaved ? "bookmark" : "bookmark-outline"}
                 size={16}
-                color={isSaved ? colors.primary : colors.subtitle}
+                color={isSaved ? themeColors.primary : themeColors.subtitle}
               />
             </Pressable>
           </View>

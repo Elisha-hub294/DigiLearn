@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SystemUI from "expo-system-ui";
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { Appearance } from "react-native";
 import { colors as lightColors } from "../constants/theme";
 
 const THEME_STORAGE_KEY = "digilearn-theme";
@@ -41,11 +42,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const loadTheme = async () => {
       try {
         const storedMode = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-        if (!cancelled && (storedMode === "light" || storedMode === "dark")) {
+        if (cancelled) return;
+
+        if (storedMode === "light" || storedMode === "dark") {
           setMode(storedMode);
+        } else {
+          setMode(Appearance.getColorScheme() === "dark" ? "dark" : "light");
         }
       } catch (error) {
         console.error("Unable to load theme preference:", error);
+        if (!cancelled) {
+          setMode(Appearance.getColorScheme() === "dark" ? "dark" : "light");
+        }
       } finally {
         if (!cancelled) setIsHydrated(true);
       }

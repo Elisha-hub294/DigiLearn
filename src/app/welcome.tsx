@@ -57,8 +57,14 @@ export default function WelcomeScreen() {
               alt="Welcome to DigiLearn illustration"
             />
             <Text style={styles.brand} accessibilityRole="header">
-              <Text style={styles.brandBlack}>Digi</Text>
-              <Text style={styles.brandAccent}>Learn</Text>
+              <Text style={[styles.brandBlack, { color: themeColors.dark }]}>
+                Digi
+              </Text>
+              <Text
+                style={[styles.brandAccent, { color: themeColors.primary }]}
+              >
+                Learn
+              </Text>
             </Text>
           </View>
 
@@ -96,7 +102,9 @@ export default function WelcomeScreen() {
               accessibilityRole="button"
               accessibilityLabel="Continue as guest"
             >
-              <Text style={styles.guestText}>Continue as Guest</Text>
+              <Text style={[styles.guestText, { color: themeColors.subtitle }]}>
+                Continue as Guest
+              </Text>
             </Pressable>
           </View>
         </View>

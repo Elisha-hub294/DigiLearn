@@ -66,6 +66,7 @@ export const CoursesCarousel = () => {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
+  const { colors: themeColors } = useTheme();
   const { lessons, loading, error } = useTrendingLessons();
   const cardWidth = width >= 900 ? 240 : 220;
   const itemStep = cardWidth + CARD_GAP;
@@ -189,7 +190,12 @@ export const CoursesCarousel = () => {
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => `course-skeleton-${item}`}
           renderItem={() => (
-            <View style={[styles.card, { width: cardWidth }]}>
+            <View
+              style={[
+                styles.card,
+                { width: cardWidth, backgroundColor: themeColors.white },
+              ]}
+            >
               <Skeleton style={styles.imageWrap} />
               <View style={styles.body}>
                 <Skeleton style={styles.titleSkeleton} />
@@ -233,7 +239,10 @@ export const CoursesCarousel = () => {
 
           return (
             <View
-              style={[styles.card, { width: cardWidth }]}
+              style={[
+                styles.card,
+                { width: cardWidth, backgroundColor: themeColors.white },
+              ]}
               {...(Platform.OS !== "web"
                 ? {
                     accessibilityRole: "button",
@@ -282,7 +291,14 @@ export const CoursesCarousel = () => {
                 </View>
                 {!!item.duration && (
                   <View style={styles.durationBadge}>
-                    <Text style={styles.durationText}>{item.duration}</Text>
+                    <Text
+                      style={[
+                        styles.durationText,
+                        { color: themeColors.white },
+                      ]}
+                    >
+                      {item.duration}
+                    </Text>
                   </View>
                 )}
                 <View style={styles.menu}>
@@ -296,7 +312,10 @@ export const CoursesCarousel = () => {
                 </View>
               </View>
               <View style={styles.body}>
-                <Text style={styles.title} numberOfLines={2}>
+                <Text
+                  style={[styles.title, { color: themeColors.text }]}
+                  numberOfLines={2}
+                >
                   {displayTitle}
                 </Text>
                 <Pressable
@@ -310,7 +329,10 @@ export const CoursesCarousel = () => {
                     } as never);
                   }}
                 >
-                  <Text style={styles.teacher} numberOfLines={1}>
+                  <Text
+                    style={[styles.teacher, { color: themeColors.subtitle }]}
+                    numberOfLines={1}
+                  >
                     {item.teacher}
                   </Text>
                 </Pressable>
