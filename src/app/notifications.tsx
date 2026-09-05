@@ -22,6 +22,7 @@ import { NotificationEmptyState } from "../components/ui/NotificationEmptyState"
 import { NotificationSkeleton } from "../components/ui/NotificationSkeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 import { useNotifications } from "../hooks/useNotifications";
 import {
   NotificationRecord,
@@ -39,6 +40,7 @@ const notificationTypes = new Set<NotificationType>([
 ]);
 
 export default function NotificationsScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { types } = useLocalSearchParams<{ types?: string }>();
   const { width } = useWindowDimensions();
@@ -351,7 +353,9 @@ export default function NotificationsScreen() {
 
   if (!user && !loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
         <View style={[styles.page, { maxWidth }]}>
           <View
             style={[styles.content, { paddingHorizontal: horizontalPadding }]}
@@ -359,12 +363,20 @@ export default function NotificationsScreen() {
             <View style={styles.headerRow}>
               <Pressable
                 onPress={handleBack}
-                style={styles.backButton}
+                style={[
+                  styles.backButton,
+                  {
+                    backgroundColor: themeColors.lightBackground,
+                    borderColor: themeColors.border,
+                  },
+                ]}
                 accessibilityLabel="Back"
               >
-                <Icon name="arrow-left" size={22} color={colors.dark} />
+                <Icon name="arrow-left" size={22} color={themeColors.dark} />
               </Pressable>
-              <Text style={styles.title}>Notifications</Text>
+              <Text style={[styles.title, { color: themeColors.dark }]}>
+                Notifications
+              </Text>
             </View>
             <View style={styles.emptyContainer}>
               <NotificationEmptyState
@@ -381,7 +393,9 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <ActionDialog
         visible={unavailableDialog.visible}
         title="Unavailable"
@@ -409,19 +423,34 @@ export default function NotificationsScreen() {
           <View style={styles.headerRow}>
             <Pressable
               onPress={handleBack}
-              style={styles.backButton}
+              style={[
+                styles.backButton,
+                {
+                  backgroundColor: themeColors.lightBackground,
+                  borderColor: themeColors.border,
+                },
+              ]}
               accessibilityLabel="Back"
             >
-              <Icon name="arrow-left" size={22} color={colors.dark} />
+              <Icon name="arrow-left" size={22} color={themeColors.dark} />
             </Pressable>
-            <Text style={styles.title}>Notifications</Text>
+            <Text style={[styles.title, { color: themeColors.dark }]}>
+              Notifications
+            </Text>
             {notifications.some((notification) => !notification.read) ? (
               <Pressable
                 onPress={() => void markAllRead()}
                 accessibilityLabel="Mark all notifications as read"
-                style={styles.markAllButton}
+                style={[
+                  styles.markAllButton,
+                  { backgroundColor: themeColors.lightBackground },
+                ]}
               >
-                <Text style={styles.markAllText}>Mark all read</Text>
+                <Text
+                  style={[styles.markAllText, { color: themeColors.primary }]}
+                >
+                  Mark all read
+                </Text>
               </Pressable>
             ) : null}
           </View>
@@ -517,6 +546,8 @@ const styles = StyleSheet.create({
   backButton: {
     marginRight: spacing.md,
     padding: 6,
+    borderRadius: 20,
+    borderWidth: 1,
   },
   title: {
     fontSize: 30,

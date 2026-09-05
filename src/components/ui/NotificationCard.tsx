@@ -84,10 +84,18 @@ export function NotificationCard({
         </View>
 
         <View style={styles.content}>
-          <Text style={styles.heading} numberOfLines={1}>
-            <Text style={styles.publisher}>{notification.publisherName}</Text>
-            <Text style={styles.separator}> · </Text>
-            <Text style={styles.time}>
+          <Text
+            style={[styles.heading, { color: themeColors.dark }]}
+            numberOfLines={1}
+          >
+            <Text style={[styles.publisher, { color: themeColors.dark }]}>
+              {notification.publisherName}
+            </Text>
+            <Text style={[styles.separator, { color: themeColors.subtitle }]}>
+              {" "}
+              ·{" "}
+            </Text>
+            <Text style={[styles.time, { color: themeColors.subtitle }]}>
               {formatRelativeNotificationTime(notification.createdAt)}
             </Text>
           </Text>
@@ -98,7 +106,10 @@ export function NotificationCard({
             {notification.message}
           </Text>
           {resourceTitle ? (
-            <Text style={styles.resourceTitle} numberOfLines={1}>
+            <Text
+              style={[styles.resourceTitle, { color: themeColors.primary }]}
+              numberOfLines={1}
+            >
               {resourceTitle}
             </Text>
           ) : null}
@@ -154,7 +165,11 @@ export function NotificationCard({
           accessibilityLabel="Mark as read"
           accessibilityRole="button"
         >
-          <MaterialCommunityIcons name="check" size={20} color={colors.dark} />
+          <MaterialCommunityIcons
+            name="check"
+            size={20}
+            color={themeColors.dark}
+          />
         </Pressable>
       ) : null}
     </View>

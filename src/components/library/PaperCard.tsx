@@ -132,13 +132,21 @@ export function PaperCard({
         </View>
         <View style={styles.content}>
           {subject?.trim() ? (
-            <Text style={styles.subject}>{subject.trim()}</Text>
+            <Text style={[styles.subject, { color: themeColors.primary }]}>
+              {subject.trim()}
+            </Text>
           ) : null}
-          <Text style={styles.title} numberOfLines={2}>
+          <Text
+            style={[styles.title, { color: themeColors.text }]}
+            numberOfLines={2}
+          >
             {title}
           </Text>
           {metaParts.length > 0 && (
-            <Text style={styles.meta} numberOfLines={2}>
+            <Text
+              style={[styles.meta, { color: themeColors.subtitle }]}
+              numberOfLines={2}
+            >
               {metaParts.join(" • ")}
             </Text>
           )}

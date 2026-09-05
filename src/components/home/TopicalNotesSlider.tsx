@@ -18,6 +18,7 @@ import Animated, { FadeInUp, useReducedMotion } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { getFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import {
   matchesUserInterests,
@@ -55,6 +56,7 @@ export function normalizeCarouselOffset(
 
 export const TopicalNotesSlider = () => {
   const router = useRouter();
+  const { colors: themeColors } = useTheme();
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
   const reducedMotion = useReducedMotion();
@@ -330,7 +332,9 @@ export const TopicalNotesSlider = () => {
                 );
               })()}
             </View>
-            <Text style={styles.title}>{item.title}</Text>
+            <Text style={[styles.title, { color: themeColors.dark }]}>
+              {item.title}
+            </Text>
           </Pressable>
         )}
         contentContainerStyle={styles.list}

@@ -16,6 +16,7 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import {
   getReportErrorMessage,
@@ -301,6 +302,7 @@ export const FeaturedNoteCard = ({
 };
 
 const SkeletonNoteCard = ({ isWide }: { isWide: boolean }) => {
+  const { colors: themeColors } = useTheme();
   const [pulseAnim] = useState(() => new RNAnimated.Value(0.3));
 
   useEffect(() => {
@@ -324,11 +326,20 @@ const SkeletonNoteCard = ({ isWide }: { isWide: boolean }) => {
 
   return (
     <View style={[styles.itemWrapper, isWide && styles.itemWrapperWide]}>
-      <View style={styles.card}>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: themeColors.white,
+            borderColor: themeColors.border,
+          },
+        ]}
+      >
         <RNAnimated.View
           style={[
             styles.previewWrap,
             styles.skeletonBox,
+            { backgroundColor: themeColors.border },
             styles.skeletonPreview,
             { opacity: pulseAnim },
           ]}
@@ -341,6 +352,7 @@ const SkeletonNoteCard = ({ isWide }: { isWide: boolean }) => {
             <RNAnimated.View
               style={[
                 styles.skeletonBox,
+                { backgroundColor: themeColors.border },
                 styles.skeletonTitle,
                 { opacity: pulseAnim },
               ]}
@@ -348,6 +360,7 @@ const SkeletonNoteCard = ({ isWide }: { isWide: boolean }) => {
             <RNAnimated.View
               style={[
                 styles.skeletonBox,
+                { backgroundColor: themeColors.lightBackground },
                 styles.skeletonDesc,
                 { opacity: pulseAnim },
               ]}
@@ -355,6 +368,7 @@ const SkeletonNoteCard = ({ isWide }: { isWide: boolean }) => {
             <RNAnimated.View
               style={[
                 styles.skeletonBox,
+                { backgroundColor: themeColors.lightBackground },
                 styles.skeletonDescShort,
                 { opacity: pulseAnim },
               ]}
@@ -388,6 +402,7 @@ const FeaturedNoteItem = ({
   isVisible: boolean;
 }) => {
   const { user, profile } = useProfile();
+  const { colors: themeColors, isDark } = useTheme();
   const [hovered, setHovered] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState<{
     x: number;
@@ -632,7 +647,17 @@ const FeaturedNoteItem = ({
         <View
           onPointerEnter={() => setHovered(true)}
           onPointerLeave={() => setHovered(false)}
-          style={[styles.card, hovered && styles.cardHovered]}
+          style={[
+            styles.card,
+            { backgroundColor: themeColors.white },
+            isDark && {
+              borderTopLeftRadius: 10,
+              borderTopRightRadius: 10,
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+            },
+            hovered && { backgroundColor: themeColors.lightBackground },
+          ]}
         >
           <Pressable
             style={styles.previewWrap}
@@ -660,7 +685,13 @@ const FeaturedNoteItem = ({
                 contentFit="cover"
               />
             ) : (
-              <View style={[styles.preview, styles.previewFallback]} />
+              <View
+                style={[
+                  styles.preview,
+                  styles.previewFallback,
+                  { backgroundColor: themeColors.border },
+                ]}
+              />
             )}
             <View style={styles.overlay} />
             {isRead ? (
@@ -690,7 +721,7 @@ const FeaturedNoteItem = ({
             >
               <Image
                 source={avatarUri ? { uri: avatarUri } : undefined}
-                style={styles.avatar}
+                style={[styles.avatar, { backgroundColor: themeColors.lightBackground }]}
                 contentFit="cover"
               />
             </Pressable>
@@ -701,17 +732,30 @@ const FeaturedNoteItem = ({
                 hideAvatar && styles.contentDataNoAvatar,
               ]}
             >
-              <Text style={styles.title}>{title}</Text>
-              <Text style={styles.description}>{description}</Text>
+              <Text style={[styles.title, { color: themeColors.text }]}>
+                {title}
+              </Text>
+              <Text
+                style={[styles.description, { color: themeColors.subtitle }]}
+              >
+                {description}
+              </Text>
             </View>
             <Pressable
               ref={menuButtonRef}
               accessibilityRole="button"
               accessibilityLabel="More options"
-              style={styles.menuButton}
+              style={[
+                styles.menuButton,
+                { backgroundColor: themeColors.lightBackground },
+              ]}
               onPress={handleOpenMenu}
             >
-              <Icon name="more-vertical" size={18} color={colors.subtitle} />
+              <Icon
+                name="more-vertical"
+                size={18}
+                color={themeColors.subtitle}
+              />
             </Pressable>
             <CardActionMenu
               visible={activeMenuId === note.id && !!menuAnchor}
@@ -734,7 +778,7 @@ const FeaturedNoteItem = ({
               <Ionicons
                 name={isSaved ? "bookmark" : "bookmark-outline"}
                 size={25}
-                color={isSaved ? colors.primary : colors.subtitle}
+                color={isSaved ? themeColors.primary : themeColors.subtitle}
               />
             </Pressable>
             <Action icon="share-2" label="Share" />
@@ -781,11 +825,14 @@ const FeaturedNoteItem = ({
   );
 };
 
-const Action = ({ icon, label }: { icon: any; label: string }) => (
-  <View style={styles.actionItem}>
-    <Icon name={icon} size={20} color={colors.subtitle} />
-  </View>
-);
+const Action = ({ icon }: { icon: any; label: string }) => {
+  const { colors: themeColors } = useTheme();
+  return (
+    <View style={styles.actionItem}>
+      <Icon name={icon} size={20} color={themeColors.subtitle} />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   list: { width: "100%" },

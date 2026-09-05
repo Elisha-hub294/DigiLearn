@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native";
 import { colors, spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 import { PrimaryButton } from "../PrimaryButton";
 
 type NotificationEmptyStateProps = {
@@ -15,10 +16,15 @@ export function NotificationEmptyState({
   actionLabel,
   onPressAction,
 }: NotificationEmptyStateProps) {
+  const { colors: themeColors } = useTheme();
   return (
     <View style={styles.emptyState}>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
+      <Text style={[styles.title, { color: themeColors.primary }]}>
+        {title}
+      </Text>
+      <Text style={[styles.description, { color: themeColors.subtitle }]}>
+        {description}
+      </Text>
       {actionLabel && onPressAction ? (
         <PrimaryButton title={actionLabel} onPress={onPressAction} />
       ) : null}

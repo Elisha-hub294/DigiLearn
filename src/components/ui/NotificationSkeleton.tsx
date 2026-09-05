@@ -1,8 +1,10 @@
 import { memo, useEffect, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import { spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export const NotificationSkeleton = memo(() => {
+  const { colors } = useTheme();
   const pulse = useRef(new Animated.Value(0.35)).current;
 
   useEffect(() => {
@@ -28,17 +30,44 @@ export const NotificationSkeleton = memo(() => {
   return (
     <View style={styles.wrapper}>
       {[0, 1, 2].map((index) => (
-        <View key={index} style={styles.card}>
-          <Animated.View style={[styles.avatar, { opacity: pulse }]} />
+        <View
+          key={index}
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.lightBackground,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <Animated.View
+            style={[
+              styles.avatar,
+              { backgroundColor: colors.border, opacity: pulse },
+            ]}
+          />
           <View style={styles.content}>
             <Animated.View
-              style={[styles.line, styles.lineShort, { opacity: pulse }]}
+              style={[
+                styles.line,
+                styles.lineShort,
+                { backgroundColor: colors.border, opacity: pulse },
+              ]}
             />
             <Animated.View
-              style={[styles.line, styles.lineLong, { opacity: pulse }]}
+              style={[
+                styles.line,
+                styles.lineLong,
+                { backgroundColor: colors.border, opacity: pulse },
+              ]}
             />
           </View>
-          <Animated.View style={[styles.icon, { opacity: pulse }]} />
+          <Animated.View
+            style={[
+              styles.icon,
+              { backgroundColor: colors.border, opacity: pulse },
+            ]}
+          />
         </View>
       ))}
     </View>

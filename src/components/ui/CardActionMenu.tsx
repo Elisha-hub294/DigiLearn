@@ -1,13 +1,14 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import {
-    Dimensions,
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
+  Dimensions,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import { colors, radius } from "../../constants/theme";
+import { radius } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export type CardActionMenuItem = {
   label: string;
@@ -39,6 +40,7 @@ export function CardActionMenu({
   actions,
   onClose,
 }: CardActionMenuProps) {
+  const { colors: themeColors } = useTheme();
   if (!visible || !anchor) {
     return null;
   }
@@ -73,7 +75,14 @@ export function CardActionMenu({
       <View
         style={[
           styles.menu,
-          { left, top, width: menuWidth, maxHeight: menuHeight },
+          {
+            left,
+            top,
+            width: menuWidth,
+            maxHeight: menuHeight,
+            backgroundColor: themeColors.white,
+            borderColor: themeColors.border,
+          },
         ]}
       >
         {actions.map((action, index) => (
@@ -87,18 +96,19 @@ export function CardActionMenu({
             }}
             style={({ pressed }) => [
               styles.menuItem,
-              pressed && styles.menuItemPressed,
+              pressed && { backgroundColor: themeColors.lightBackground },
               index === actions.length - 1 && styles.menuItemLast,
             ]}
           >
             <Icon
               name={action.icon as any}
               size={15}
-              color={action.destructive ? "#d14343" : colors.dark}
+              color={action.destructive ? "#d14343" : themeColors.dark}
             />
             <Text
               style={[
                 styles.menuLabel,
+                { color: themeColors.text },
                 action.destructive && styles.menuLabelDestructive,
               ]}
             >
@@ -118,8 +128,8 @@ const styles = StyleSheet.create({
   },
   menu: {
     position: "absolute",
-    backgroundColor: colors.white,
     borderRadius: radius.sm,
+    borderWidth: 1,
     paddingVertical: 4,
     shadowColor: "#0F172A",
     shadowOpacity: 0.12,
@@ -136,14 +146,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 8,
   },
-  menuItemPressed: {
-    backgroundColor: "#F4F7FA",
-  },
+  menuItemPressed: {},
   menuItemLast: {
     marginBottom: 0,
   },
   menuLabel: {
-    color: "#222222",
     fontSize: 12,
     fontWeight: "500",
     letterSpacing: 0.1,
