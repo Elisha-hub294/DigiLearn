@@ -1,4 +1,5 @@
-import { Stack } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -9,14 +10,25 @@ import { NetworkStatusBanner } from "../components/ui/NetworkStatusBanner";
 import { ProfileProvider } from "../contexts/ProfileContext";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 
+const ONBOARDING_KEY = "onboarding_complete";
+
 void SplashScreen.preventAutoHideAsync();
 
 function AppShell() {
   const { isDark, isHydrated } = useTheme();
+  const router = useRouter();
 
   useEffect(() => {
-    if (isHydrated) void SplashScreen.hideAsync();
-  }, [isHydrated]);
+    if (!isHydrated) return;
+
+    void (async () => {
+      await SplashScreen.hideAsync();
+      const seen = await AsyncStorage.getItem(ONBOARDING_KEY);
+      if (!seen) {
+        router.replace("/onboarding" as any);
+      }
+    })();
+  }, [isHydrated, router]);
 
   return (
     <ErrorBoundary>
@@ -67,6 +79,7 @@ function AppShell() {
           <Stack.Screen name="teacher-profile" />
           <Stack.Screen name="terms-and-policies" />
           <Stack.Screen name="verify-email" />
+          <Stack.Screen name="onboarding" options={{ animation: "fade" }} />
           <Stack.Screen name="welcome" />
         </Stack>
       </ProfileProvider>
