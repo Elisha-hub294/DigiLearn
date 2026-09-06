@@ -27,7 +27,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
 import { BookCard } from "../components/library/BookCard";
-import { TeacherPostCard } from "../components/TeacherPostCard";
+import { TeacherPostItem } from "../components/home/TeacherPostCard";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { SearchBar } from "../components/ui/SearchBar";
 import { VideoCard } from "../components/ui/VideoCard";
@@ -950,32 +950,34 @@ export default function TeacherProfileScreen() {
         item.type === "pdf"
       ) {
         return (
-          <TeacherPostCard
-            post={{
+          <TeacherPostItem
+            postItem={{
               id: item.id,
               title: item.title,
-              hasCover: item.hasCover,
+              teacher: item.teacher || teacher?.name || teacherName,
+              owner: item.teacher || teacher?.name || teacherName,
               ownerType: item.ownerType,
-              fileType: item.fileType,
-              teacherName: teacher?.name || teacherName,
-              teacherImage: {
-                uri: teacher?.avatar || "TeacherProfile/user-default.png",
-              },
-              verified: teacher?.verified ?? false,
-              time: formatResourceTime(item.createdAt),
-              content: item.description || item.title,
-              previewImage: {
-                uri:
-                  item.image ||
-                  teacher?.avatar ||
-                  "TeacherProfile/user-default.png",
-              },
+              subject: item.subject,
+              description: item.description,
+              hasCover:
+                typeof item.hasCover === "boolean"
+                  ? item.hasCover
+                  : item.hasCover === "true",
+              cover: item.image,
               document: item.document,
-              type: "announcement",
-              subject: (item.subject as any) || "English",
+              fileType: item.fileType,
+              createdAt:
+                typeof item.createdAt === "number"
+                  ? new Date(item.createdAt)
+                  : typeof item.createdAt === "string"
+                    ? new Date(item.createdAt)
+                    : null,
             }}
-            hidePreview={true}
-            hideActions={true}
+            teacherAvatars={
+              teacher?.avatar && teacher?.name
+                ? { [teacher.name]: teacher.avatar }
+                : {}
+            }
           />
         );
       }
