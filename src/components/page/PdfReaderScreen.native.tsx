@@ -22,6 +22,10 @@ import {
   getDownloadedFiles,
   saveDownloadedFile,
 } from "../../services/downloadService";
+import {
+  getPageReadingProgress,
+  savePageReadingProgress,
+} from "../../services/readingProgressService";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import { ActionDialog } from "../ui/ActionDialog";
 
@@ -74,12 +78,21 @@ export function PdfReaderScreen() {
     document: pdfDocument,
     pageId,
     title,
+    initialPage,
   } = useLocalSearchParams<{
     uri?: string;
     document?: string;
     pageId?: string;
     title?: string;
+    initialPage?: string;
   }>();
+
+  const [startPage, setStartPage] = useState<number>(() => {
+    const p = parseInt(initialPage ?? "", 10);
+    return isNaN(p) || p < 1 ? 1 : p;
+  });
+  const [currentPageNum, setCurrentPageNum] = useState<number>(startPage);
+  const [totalPagesCount, setTotalPagesCount] = useState<number>(0);
 
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -118,6 +131,23 @@ export function PdfReaderScreen() {
   useEffect(() => {
     if (pageId) void recordPageVisit(pageId);
   }, [pageId]);
+
+  useEffect(() => {
+    let active = true;
+    if (pageId && !initialPage) {
+      getPageReadingProgress(pageId).then((prog) => {
+        if (!active) return;
+        if (prog && prog.lastPage > 1) {
+          setStartPage(prog.lastPage);
+          setCurrentPageNum(prog.lastPage);
+          if (prog.totalPages) setTotalPagesCount(prog.totalPages);
+        }
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [pageId, initialPage]);
 
   // Check if file is already downloaded in storage
   useEffect(() => {
@@ -192,16 +222,35 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     }
     const pdf=await pdfjsLib.getDocument({data: uint8Array}).promise;
     const c=document.getElementById('container');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const p = parseInt(entry.target.getAttribute('data-page'), 10);
+          if (p) {
+            window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({type:'pageChange',page:p,totalPages:pdf.numPages}));
+          }
+        }
+      });
+    }, { threshold: 0.3 });
     for(let i=1;i<=pdf.numPages;i++){
       const pg=await pdf.getPage(i);
       const s=window.innerWidth/pg.getViewport({scale:1}).width;
       const vp=pg.getViewport({scale:s});
       const cv=document.createElement('canvas');
+      cv.setAttribute('data-page', i);
       cv.width=vp.width;cv.height=vp.height;
       c.appendChild(cv);
       await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+      observer.observe(cv);
     }
     window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'loaded',pages:pdf.numPages}));
+    const targetP = ${startPage};
+    if (targetP > 1) {
+      setTimeout(() => {
+        const el = document.querySelector('canvas[data-page="' + targetP + '"]');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 350);
+    }
   }catch(e){
     document.getElementById('error').style.display='block';
     document.getElementById('error').textContent='Failed to load PDF: '+e.message;
@@ -236,16 +285,35 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
   try{
     const pdf=await pdfjsLib.getDocument('${escapedUrl}').promise;
     const c=document.getElementById('container');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const p = parseInt(entry.target.getAttribute('data-page'), 10);
+          if (p) {
+            window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({type:'pageChange',page:p,totalPages:pdf.numPages}));
+          }
+        }
+      });
+    }, { threshold: 0.3 });
     for(let i=1;i<=pdf.numPages;i++){
       const pg=await pdf.getPage(i);
       const s=window.innerWidth/pg.getViewport({scale:1}).width;
       const vp=pg.getViewport({scale:s});
       const cv=document.createElement('canvas');
+      cv.setAttribute('data-page', i);
       cv.width=vp.width;cv.height=vp.height;
       c.appendChild(cv);
       await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+      observer.observe(cv);
     }
     window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'loaded',pages:pdf.numPages}));
+    const targetP = ${startPage};
+    if (targetP > 1) {
+      setTimeout(() => {
+        const el = document.querySelector('canvas[data-page="' + targetP + '"]');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 350);
+    }
   }catch(e){
     document.getElementById('error').style.display='block';
     document.getElementById('error').textContent='Failed to load PDF: '+e.message;
@@ -310,9 +378,31 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     try {
       const message = JSON.parse(event.nativeEvent.data) as {
         type?: string;
+        page?: number;
+        pages?: number;
+        totalPages?: number;
       };
       if (message.type === "loaded") {
         handleLoadEnd();
+        if (typeof message.pages === "number" && message.pages > 0) {
+          setTotalPagesCount(message.pages);
+        }
+      } else if (
+        message.type === "pageChange" &&
+        typeof message.page === "number"
+      ) {
+        const p = message.page;
+        const total = message.totalPages ?? message.pages;
+        setCurrentPageNum(p);
+        if (typeof total === "number" && total > 0) {
+          setTotalPagesCount(total);
+        }
+        if (pageId) {
+          void savePageReadingProgress(pageId, p, total, {
+            title: title || "PDF",
+            documentUri: decodedUri || rawUri || undefined,
+          });
+        }
       } else if (message.type === "error") {
         handleError();
       }
@@ -573,6 +663,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
             <Text style={styles.headerTitle} numberOfLines={1}>
               {title || `${isOfficeFile ? "Office" : "PDF"} Reader`}
             </Text>
+            {currentPageNum > 0 ? (
+              <Text style={styles.headerSubTitle} numberOfLines={1}>
+                Page {currentPageNum}
+                {totalPagesCount > 0 ? ` of ${totalPagesCount}` : ""}
+              </Text>
+            ) : null}
           </View>
 
           {/* ── Download button with gradient (only for online files) ── */}
@@ -703,8 +799,22 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
         {!loadError && useNativePdf && decodedUri && (
           <NativePdfComponent
             source={{ uri: decodedUri, cache: true }}
+            page={startPage}
             style={styles.webview}
-            onLoadComplete={handleLoadEnd}
+            onLoadComplete={(numberOfPages: number) => {
+              setTotalPagesCount(numberOfPages);
+              handleLoadEnd();
+            }}
+            onPageChanged={(page: number, numberOfPages: number) => {
+              setCurrentPageNum(page);
+              setTotalPagesCount(numberOfPages);
+              if (pageId) {
+                void savePageReadingProgress(pageId, page, numberOfPages, {
+                  title: title || "PDF",
+                  documentUri: decodedUri || rawUri || undefined,
+                });
+              }
+            }}
             onError={handleError}
             enablePaging={false}
             fitPolicy={0}
@@ -776,6 +886,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     color: colors.primary,
+  },
+  headerSubTitle: {
+    fontSize: 11,
+    color: colors.subtitle,
+    marginTop: 1,
   },
 
   // Download button

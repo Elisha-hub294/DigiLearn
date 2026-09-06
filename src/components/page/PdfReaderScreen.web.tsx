@@ -11,6 +11,10 @@ import {
   getWebDownloadedFileUrl,
   saveDownloadedFile,
 } from "../../services/downloadService";
+import {
+  getPageReadingProgress,
+  savePageReadingProgress,
+} from "../../services/readingProgressService";
 
 import { useTheme } from "../../contexts/ThemeContext";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
@@ -51,12 +55,18 @@ export function PdfReaderScreen() {
     document: pdfDocument,
     pageId,
     title,
+    initialPage,
   } = useLocalSearchParams<{
     uri?: string;
     document?: string;
     pageId?: string;
     title?: string;
+    initialPage?: string;
   }>();
+  const [startPage, setStartPage] = useState<number>(() => {
+    const p = parseInt(initialPage ?? "", 10);
+    return isNaN(p) || p < 1 ? 1 : p;
+  });
   const [iframeError, setIframeError] = useState(false);
   const [offlineNoticeVisible, setOfflineNoticeVisible] = useState(false);
   const [offlineNoticeDismissed, setOfflineNoticeDismissed] = useState(false);
@@ -99,13 +109,43 @@ export function PdfReaderScreen() {
     networkState.isInternetReachable === false;
   const fileExtension = getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
+
   useEffect(() => {
     if (pageId) void recordPageVisit(pageId);
   }, [pageId]);
+
+  useEffect(() => {
+    let active = true;
+    if (pageId && !initialPage) {
+      getPageReadingProgress(pageId).then((prog) => {
+        if (!active) return;
+        if (prog && prog.lastPage > 1) {
+          setStartPage(prog.lastPage);
+        }
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [pageId, initialPage]);
+
+  useEffect(() => {
+    if (pageId && decodedUri) {
+      void savePageReadingProgress(pageId, startPage, undefined, {
+        title: title || "PDF",
+        documentUri: decodedUri,
+      });
+    }
+  }, [decodedUri, pageId, startPage, title]);
+
   const readerLabel = isOfficeFile ? "Office Reader" : "PDF Reader";
   const viewerUri = isOfficeFile
     ? `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(decodedUri || "")}`
-    : decodedUri;
+    : decodedUri
+      ? startPage > 1 && !decodedUri.includes("#page=")
+        ? `${decodedUri}#page=${startPage}`
+        : decodedUri
+      : null;
   const missingDocument = !isResolving && !decodedUri;
   const showReaderDialog =
     offlineNoticeVisible || iframeError || missingDocument;

@@ -1,5 +1,5 @@
 import { Feather as Icon, Ionicons } from "@expo/vector-icons";
-import { usePathname, useRouter } from "expo-router";
+import { useFocusEffect, usePathname, useRouter } from "expo-router";
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -17,6 +17,10 @@ import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
+import {
+  getPageReadingProgress,
+  ReadingProgress,
+} from "../../services/readingProgressService";
 import {
   getReportErrorMessage,
   submitReport,
@@ -372,12 +376,27 @@ export const FeaturedNoteItem = ({
   const { user, profile } = useProfile();
   const { colors: themeColors, isDark } = useTheme();
   const [hovered, setHovered] = useState(false);
+  const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(
+    null,
+  );
   const [menuAnchor, setMenuAnchor] = useState<{
     x: number;
     y: number;
     width: number;
     height: number;
   } | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      getPageReadingProgress(note.id).then((prog) => {
+        if (active) setReadingProgress(prog);
+      });
+      return () => {
+        active = false;
+      };
+    }, [note.id]),
+  );
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const menuButtonRef = useRef<View>(null);
   const router = useRouter();
@@ -662,7 +681,17 @@ export const FeaturedNoteItem = ({
               />
             )}
             <View style={styles.overlay} />
-            {isRead ? (
+            {readingProgress && readingProgress.lastPage > 0 ? (
+              <View style={styles.continueBadge}>
+                <Ionicons name="book" size={11} color={colors.white} />
+                <Text style={styles.continueBadgeText}>
+                  p. {readingProgress.lastPage}
+                  {readingProgress.totalPages
+                    ? `/${readingProgress.totalPages}`
+                    : ""}
+                </Text>
+              </View>
+            ) : isRead ? (
               <View style={styles.readBadge}>
                 <Ionicons
                   name="checkmark-done"
@@ -689,6 +718,51 @@ export const FeaturedNoteItem = ({
               >
                 {description}
               </Text>
+              {readingProgress && readingProgress.lastPage > 0 ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Continue reading from page ${readingProgress.lastPage}`}
+                  style={[
+                    styles.continueButton,
+                    { backgroundColor: themeColors.primary },
+                  ]}
+                  onPress={() => {
+                    if (auth.currentUser?.uid) {
+                      recordUserActivity(auth.currentUser.uid, "page", note.id);
+                    }
+                    if (note.document) {
+                      router.push({
+                        pathname: "/pdf-reader",
+                        params: {
+                          pageId: note.id,
+                          uri: encodeURIComponent(note.document),
+                          title: routeTitle,
+                          initialPage: String(readingProgress.lastPage),
+                        },
+                      } as any);
+                    } else {
+                      router.push({
+                        pathname: "/page-preview",
+                        params: {
+                          id: note.id,
+                          source: previewSource,
+                          returnTo: pathname,
+                          title: routeTitle,
+                        },
+                      } as any);
+                    }
+                  }}
+                >
+                  <Ionicons name="play-circle" size={14} color="#FFFFFF" />
+                  <Text style={styles.continueButtonText}>
+                    Continue reading (Page {readingProgress.lastPage}
+                    {readingProgress.totalPages
+                      ? ` of ${readingProgress.totalPages}`
+                      : ""}
+                    )
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
             <Pressable
               ref={menuButtonRef}
@@ -859,6 +933,38 @@ const styles = StyleSheet.create({
   readBadgeText: {
     color: colors.white,
     fontSize: 10,
+    fontWeight: "600",
+  },
+  continueBadge: {
+    position: "absolute",
+    right: 10,
+    bottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: "rgba(0, 110, 255, 0.92)",
+    borderRadius: 999,
+  },
+  continueBadgeText: {
+    color: colors.white,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  continueButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    gap: 6,
+  },
+  continueButtonText: {
+    color: "#FFFFFF",
+    fontSize: 12,
     fontWeight: "600",
   },
   content: {

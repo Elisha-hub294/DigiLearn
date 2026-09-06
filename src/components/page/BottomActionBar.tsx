@@ -10,18 +10,20 @@ export function BottomActionBar({
   onOpen,
   onShare,
   accentColor = "#000000",
+  openLabel = "Open",
 }: {
   bookmarked: boolean;
   onBookmark: () => void;
   onOpen: () => void;
   onShare: () => void;
   accentColor?: string;
+  openLabel?: string;
 }) {
   const { colors } = useTheme();
   return (
     <View style={[styles.bar, { backgroundColor: colors.white }]}>
       <ShareButton onPress={onShare} accentColor={accentColor} />
-      <OpenButton onPress={onOpen} accentColor={accentColor} />
+      <OpenButton onPress={onOpen} accentColor={accentColor} label={openLabel} />
       <BookmarkButton
         selected={bookmarked}
         onPress={onBookmark}

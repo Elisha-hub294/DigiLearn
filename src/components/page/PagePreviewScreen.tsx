@@ -14,6 +14,10 @@ import { getHorizontalPadding } from "../../constants/layout";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
+import {
+  getPageReadingProgress,
+  ReadingProgress,
+} from "../../services/readingProgressService";
 import { toggleSavedItem } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
@@ -128,6 +132,7 @@ export function PagePreviewScreen() {
   const [loading, setLoading] = useState(true);
   const [currentTime] = useState(() => Date.now());
   const [bookmarked, setBookmarked] = useState(false);
+  const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
   const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
   const [noticeDialog, setNoticeDialog] = useState<{
     title: string;
@@ -137,6 +142,18 @@ export function PagePreviewScreen() {
   const { width } = useWindowDimensions();
   const horizontalPadding = width < 600 ? 0 : getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
+
+  useEffect(() => {
+    let active = true;
+    if (id) {
+      getPageReadingProgress(id).then((prog) => {
+        if (active) setReadingProgress(prog);
+      });
+    }
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   useEffect(() => {
     let active = true;
@@ -517,6 +534,9 @@ export function PagePreviewScreen() {
         pageId: id,
         uri: encodeURIComponent(note.document),
         title: note.title ?? "PDF",
+        ...(readingProgress && readingProgress.lastPage > 1
+          ? { initialPage: String(readingProgress.lastPage) }
+          : {}),
       },
     } as any);
   };
@@ -653,6 +673,11 @@ export function PagePreviewScreen() {
             onOpen={handleOpenPdf}
             onShare={handleShare}
             accentColor={subjectAccent}
+            openLabel={
+              readingProgress && readingProgress.lastPage > 1
+                ? `Continue (p. ${readingProgress.lastPage})`
+                : "Open"
+            }
           />
         </View>
       </View>

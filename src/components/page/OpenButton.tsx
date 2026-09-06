@@ -9,9 +9,11 @@ import Animated, {
 export function OpenButton({
   onPress,
   accentColor = "#000000",
+  label = "Open",
 }: {
   onPress: () => void;
   accentColor?: string;
+  label?: string;
 }) {
   const scale = useSharedValue(1);
   const activeAccent = accentColor || "#000000";
@@ -23,7 +25,7 @@ export function OpenButton({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="Open document PDF"
+      accessibilityLabel={label}
       onPress={onPress}
       onPressIn={() => {
         scale.value = withSpring(0.96);
@@ -43,8 +45,8 @@ export function OpenButton({
           animatedStyle,
         ]}
       >
-        <Text allowFontScaling style={styles.text}>
-          Open
+        <Text allowFontScaling style={styles.text} numberOfLines={1}>
+          {label}
         </Text>
       </Animated.View>
     </Pressable>
