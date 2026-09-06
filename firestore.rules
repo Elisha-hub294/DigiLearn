@@ -211,13 +211,8 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /ai assistant/{documentId} {
-      allow read: if isVerified();
-      allow write: if false;
-    }
-
-    match /ai knowledge/{documentId} {
-      allow read: if isVerified();
+    match /{aiCollection}/{documentId} {
+      allow read: if isVerified() && (aiCollection == 'ai assistant' || aiCollection == 'ai knowledge');
       allow write: if false;
     }
 
