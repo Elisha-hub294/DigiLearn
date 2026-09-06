@@ -81,7 +81,7 @@
       ],
       "expo-status-bar",
       "expo-web-browser",
-      "@react-native-google-signin/google-signin",
+      "@react-native-google-signin/google-signin/app.plugin.js",
       "@react-native-community/datetimepicker"
     ],
     "experiments": {
