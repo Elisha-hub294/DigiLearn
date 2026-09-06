@@ -1,13 +1,14 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { collection, getDocs } from "firebase/firestore";
+import * as SecureStore from 'expo-secure-store';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { collection, getDocs, limit, query } from "firebase/firestore";
 
 import { db } from "../../firebaseConfig";
 
-const ASSISTANT_ENABLED_KEY = "digilearn.assistant.enabled";
+const ASSISTANT_ENABLED_KEY = "digilearn.assistant.enabled"; // retained for backward compatibility
 
 export async function isAssistantEnabled(): Promise<boolean> {
   try {
-    const value = await AsyncStorage.getItem(ASSISTANT_ENABLED_KEY);
+    const value = await SecureStore.getItemAsync(ASSISTANT_ENABLED_KEY);
     if (value === null) {
       return true; // Enabled by default
     }
@@ -19,10 +20,7 @@ export async function isAssistantEnabled(): Promise<boolean> {
 
 export async function setAssistantEnabled(enabled: boolean): Promise<void> {
   try {
-    await AsyncStorage.setItem(
-      ASSISTANT_ENABLED_KEY,
-      enabled ? "true" : "false",
-    );
+    await SecureStore.setItemAsync(ASSISTANT_ENABLED_KEY, enabled ? "true" : "false");
   } catch (error) {
     console.warn("Unable to save assistant enabled state", error);
   }
@@ -141,6 +139,27 @@ async function generateAIContentFromKnowledge(
   _geminiApiKey: string | null,
   _appOverview: string | null,
 ): Promise<{ floatingMessages: string[]; suggestions: string[] }> {
+  // Attempt to call the backend Gemini function to generate dynamic content.
+  try {
+    const functions = getFunctions();
+    const generate = httpsCallable(functions, "generateAssistantReply");
+    const prompt = `Generate two JSON arrays named 'floatingMessages' and 'suggestions' based on the following app overview: ${_appOverview ?? ""}`;
+    const response = await generate({ prompt, conversation: "", systemPrompt: "" });
+    const text = (response?.data as any)?.text as string | undefined;
+    if (text) {
+      // Expecting the assistant to return a JSON string.
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed.floatingMessages) && Array.isArray(parsed.suggestions)) {
+        return {
+          floatingMessages: parsed.floatingMessages,
+          suggestions: parsed.suggestions,
+        };
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to generate AI content via Gemini", e);
+  }
+  // Fallback to static defaults.
   return {
     floatingMessages: DEFAULT_FLOATING_MESSAGES,
     suggestions: DEFAULT_SUGGESTIONS,
@@ -160,7 +179,7 @@ export async function getAssistantContent(
 
   assistantContentPromise = (async () => {
     const [assistantSnapshot, knowledgeContext] = await Promise.all([
-      getDocs(collection(db, "ai assistant")),
+      getDocs(query(collection(db, "ai assistant"), limit(5))),
       getDigiLearnKnowledgeContext(forceRefresh),
     ]);
 
@@ -211,7 +230,7 @@ export async function getDigiLearnKnowledgeContext(
   }
 
   appKnowledgePromise = (async () => {
-    const snapshot = await getDocs(collection(db, "ai knowledge"));
+    const snapshot = await getDocs(query(collection(db, "ai knowledge"), limit(20)));
 
     const knowledge: Record<string, string> = {};
     snapshot.docs.forEach((doc) => {
