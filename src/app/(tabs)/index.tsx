@@ -19,6 +19,7 @@ import { auth } from "../../../firebaseConfig";
 import { BookCarousel } from "../../components/home/BookCarousel";
 import { ContinueLearningShelf } from "../../components/home/ContinueLearningShelf";
 import { CoursesCarousel } from "../../components/home/CoursesCarousel";
+import { StreakCard } from "../../components/home/StreakCard";
 import {
   FeaturedNoteItem,
   loadFeaturedNotes,
@@ -480,6 +481,9 @@ export default function HomeScreen() {
           >
             <Header showPublishButton />
             <SearchBar placeholder="Search DigiLearn..." />
+
+            {/* Daily Learning Streak Card */}
+            <StreakCard />
 
             {/* Continue Learning Shelf when user has active lesson progress */}
             <ContinueLearningShelf />

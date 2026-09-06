@@ -219,6 +219,15 @@ export async function generateAssistantReply(
   previousMessages: ChatMessage[],
   userContext?: AssistantUserContext,
 ) {
+  // Check daily quota and cooldown guardrail
+  const { checkCanSendAiPrompt, recordAiPromptSent } = await import(
+    "./aiUsageGuardrailsService"
+  );
+  const guard = await checkCanSendAiPrompt();
+  if (!guard.allowed) {
+    throw new Error(guard.errorMessage || "Daily AI request limit reached.");
+  }
+
   await getAssistantContent();
   const knowledge = await getDigiLearnKnowledgeContext();
 
@@ -268,6 +277,7 @@ export async function generateAssistantReply(
         systemPrompt,
       }),
     );
+    await recordAiPromptSent();
     return response.data.text || ASSISTANT_UNAVAILABLE_MESSAGE;
   } catch (error) {
     throw new Error(getAssistantErrorMessage(error));

@@ -386,6 +386,7 @@ export default function LibraryScreen() {
             <Header
               title="Library"
               rightIconName="book-open"
+              showDownloadsButton
               notificationTypes={["book", "page", "paper"]}
             />
           </Animated.View>

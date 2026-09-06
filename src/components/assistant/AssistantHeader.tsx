@@ -13,10 +13,12 @@ import { colors, radius, spacing } from "../../constants/theme";
 export function AssistantHeader({
   title,
   subtitle,
+  quotaBadge,
   onBack,
 }: {
   title: string;
   subtitle: string;
+  quotaBadge?: string;
   onBack?: () => void;
 }) {
   const router = useRouter();
@@ -65,7 +67,14 @@ export function AssistantHeader({
       </Animated.View>
 
       <View style={styles.headerTextWrap}>
-        <Text style={styles.headerTitle}>{title}</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.headerTitle}>{title}</Text>
+          {quotaBadge && (
+            <View style={styles.quotaPill}>
+              <Text style={styles.quotaText}>{quotaBadge}</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.headerSubtitle}>{subtitle}</Text>
       </View>
     </View>
@@ -98,6 +107,24 @@ const styles = StyleSheet.create({
   headerTextWrap: {
     flex: 1,
     alignItems: "flex-end",
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  quotaPill: {
+    backgroundColor: "rgba(22, 101, 52, 0.12)",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: "rgba(34, 197, 94, 0.3)",
+  },
+  quotaText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#16A34A",
   },
   headerTitle: {
     color: colors.text,

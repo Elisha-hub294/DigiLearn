@@ -21,6 +21,7 @@ type HeaderProps = {
   rightIconName?: string;
   showBadge?: boolean;
   showPublishButton?: boolean;
+  showDownloadsButton?: boolean;
   notificationTypes?: readonly NotificationType[];
 };
 
@@ -29,6 +30,7 @@ export const Header = ({
   rightIconName = "bell",
   showBadge = true,
   showPublishButton = false,
+  showDownloadsButton = false,
   notificationTypes,
 }: HeaderProps) => {
   const { width } = useWindowDimensions();
@@ -117,6 +119,15 @@ export const Header = ({
             />
           </Pressable>
         ) : null}
+        {showDownloadsButton && (
+          <Pressable
+            style={styles.notificationButton}
+            accessibilityLabel="Open offline downloads"
+            onPress={() => router.push("/downloads" as any)}
+          >
+            <Icon name="download-cloud" size={20} color={colors.dark} />
+          </Pressable>
+        )}
         <Pressable
           style={styles.notificationButton}
           accessibilityLabel="Open notifications"

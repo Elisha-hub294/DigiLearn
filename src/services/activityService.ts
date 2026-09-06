@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../../firebaseConfig";
 import { ActivityItem, ActivityRecord, ActivityType } from "../types/activity";
+import { recordStudyActivity } from "./streakService";
 
 const MAX_ACTIVITY_ITEMS = 50;
 const ACTIVITY_FETCH_TIMEOUT_MS = 15000;
@@ -151,6 +152,9 @@ export async function recordUserActivity(
       resourceId: docId,
       openedAt: new Date().toISOString(),
     });
+
+    // Automatically record daily streak progress
+    void recordStudyActivity(5);
   } catch (error) {
     console.warn(
       `Failed to record ${type} activity for user ${userId}:`,

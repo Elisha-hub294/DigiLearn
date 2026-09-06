@@ -239,7 +239,7 @@ export function DownloadedResources({
       {!showAll && files.length > 4 && (
         <Pressable
           style={styles.moreButton}
-          onPress={() => router.push("/see-all?type=downloads" as never)}
+          onPress={() => router.push("/downloads" as never)}
           accessibilityRole="button"
           accessibilityLabel="View all downloaded files"
         >

@@ -75,6 +75,7 @@ export default function AssistantScreen() {
   >(null);
   const [assistantAvatar, setAssistantAvatar] = useState<string | null>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [quota, setQuota] = useState<{ remaining: number; limit: number } | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -102,6 +103,11 @@ export default function AssistantScreen() {
         const history = await loadConversationHistory();
         if (active) {
           setConversations(history);
+        }
+        const { getAiQuotaStatus } = await import("../services/aiUsageGuardrailsService");
+        const quotaStatus = await getAiQuotaStatus();
+        if (active) {
+          setQuota(quotaStatus);
         }
       } catch {
         if (active) {
@@ -219,6 +225,9 @@ export default function AssistantScreen() {
         savedConversation,
         ...previous.filter((item) => item.id !== savedConversation.id),
       ]);
+      const { getAiQuotaStatus } = await import("../services/aiUsageGuardrailsService");
+      const updatedQuota = await getAiQuotaStatus();
+      setQuota(updatedQuota);
     } catch (error) {
       setIsTyping(false);
       const message =
@@ -312,6 +321,7 @@ export default function AssistantScreen() {
           <AssistantHeader
             title="DigiLearn AI"
             subtitle="Study support"
+            quotaBadge={quota ? `${quota.remaining}/${quota.limit} left` : undefined}
             onBack={handleBackToMain}
           />
 
