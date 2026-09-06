@@ -1,7 +1,14 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Feather as Icon } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+} from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
@@ -122,6 +129,7 @@ export default function TeacherProfileScreen() {
   const router = useRouter();
   const { user, profile } = useProfile();
   const params = useLocalSearchParams<{
+    id?: string;
     name?: string;
     openedFromAccount?: string;
   }>();
@@ -152,16 +160,53 @@ export default function TeacherProfileScreen() {
   const accentColor = teacher?.accent || colors.primaryDark;
   const teacherFirstName =
     (teacher?.name || teacherName).split(" ")[0] || "Teacher";
-  const isOwnProfile = teacher?.id === user?.uid;
+  const isOwnProfile =
+    (teacher?.id && user?.uid && teacher.id === user.uid) ||
+    (user?.uid && params.id === user.uid) ||
+    Boolean(
+      profile?.type === "teacher" &&
+        teacher &&
+        normalizeKey(profile.name) === normalizeKey(teacher.name),
+    );
+  const viewerRole: "own" | "teacher" | "student" = isOwnProfile
+    ? "own"
+    : profile?.type === "teacher"
+      ? "teacher"
+      : "student";
 
   const fetchTeacherProfile = useCallback(async () => {
     try {
+      if (params.id) {
+        const teacherDocRef = doc(db, "teachers", params.id);
+        const docSnap = await getDoc(teacherDocRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data() as Record<string, unknown>;
+          setTeacher({
+            id: docSnap.id,
+            name: pickString(data.name, teacherName),
+            avatar: pickString(data.avatar || data.photoURL),
+            bio: pickString(data.bio, "Teacher at DigiLearn"),
+            accent: pickString(data.accent, colors.primary),
+            phone: pickString(data.phone),
+            email: pickString(data.email),
+            youtube: pickString(data.youtube),
+            verified: Boolean(data.verified),
+            subjects: pickArray(data.subjects),
+            createdAt: data.createdAt,
+          });
+          return;
+        }
+      }
+
       const teachersRef = collection(db, "teachers");
       const snapshot = await getDocs(teachersRef);
-      const matched = snapshot.docs.find((doc) => {
-        const data = doc.data() as Record<string, unknown>;
+      const matched = snapshot.docs.find((d) => {
+        const data = d.data() as Record<string, unknown>;
         const name = pickString(data.name);
-        return normalizeKey(name) === normalizedTeacherName;
+        return (
+          (params.id && d.id === params.id) ||
+          normalizeKey(name) === normalizedTeacherName
+        );
       });
 
       if (!matched) {
@@ -173,7 +218,7 @@ export default function TeacherProfileScreen() {
       setTeacher({
         id: matched.id,
         name: pickString(data.name, teacherName),
-        avatar: pickString(data.avatar),
+        avatar: pickString(data.avatar || data.photoURL),
         bio: pickString(data.bio, "Teacher at DigiLearn"),
         accent: pickString(data.accent, colors.primary),
         phone: pickString(data.phone),
@@ -187,7 +232,7 @@ export default function TeacherProfileScreen() {
       console.error("Failed to load teacher profile:", err);
       setTeacher(null);
     }
-  }, [normalizedTeacherName, teacherName]);
+  }, [normalizedTeacherName, params.id, teacherName]);
 
   const fetchTeacherResources = useCallback(async () => {
     if (!teacherName) return;
@@ -567,11 +612,53 @@ export default function TeacherProfileScreen() {
             <Text style={[styles.nameText, { color: accentColor }]}>
               {teacher?.name || teacherName}
             </Text>
+            {teacher?.verified ? (
+              <View
+                style={[styles.verifiedBadge, { backgroundColor: accentColor }]}
+              >
+                <Icon name="check" size={11} color="#ffffff" />
+              </View>
+            ) : null}
           </View>
 
           <Text style={styles.bioText} numberOfLines={3}>
             {teacher?.bio || "Teacher at DigiLearn."}
           </Text>
+
+          {teacher?.subjects && teacher.subjects.length > 0 ? (
+            <View style={styles.subjectRowWrap}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.subjectChipsContainer}
+              >
+                {teacher.subjects.map((subj, idx) => (
+                  <View
+                    key={`${subj}-${idx}`}
+                    style={[
+                      styles.subjectPill,
+                      {
+                        backgroundColor: `${accentColor}14`,
+                        borderColor: `${accentColor}30`,
+                      },
+                    ]}
+                  >
+                    <Icon
+                      name="book-open"
+                      size={11}
+                      color={accentColor}
+                      style={{ marginRight: 5 }}
+                    />
+                    <Text
+                      style={[styles.subjectPillText, { color: accentColor }]}
+                    >
+                      {subj}
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          ) : null}
 
           {isOwnProfile && profile?.teacherApprovalStatus === "pending" && (
             <View style={styles.reviewNotice}>
@@ -611,52 +698,129 @@ export default function TeacherProfileScreen() {
           </View>
 
           <View style={[styles.contactRow, { gap: actionRowGap }]}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={isOwnProfile ? "Publish" : "Contact teacher"}
-              style={[styles.contactButton, { backgroundColor: accentColor }]}
-              onPress={openContactSheet}
-            >
-              <Text style={styles.contactButtonText}>
-                {isOwnProfile ? "Publish" : "Contact"}
-              </Text>
-            </Pressable>
+            {viewerRole === "own" ? (
+              <>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Edit your profile"
+                  style={[
+                    styles.contactButton,
+                    { backgroundColor: accentColor },
+                  ]}
+                  onPress={() => router.push("/teacher-account-quick-settings")}
+                >
+                  <Icon
+                    name="edit-2"
+                    size={16}
+                    color={colors.white}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={styles.contactButtonText}>Edit Profile</Text>
+                </Pressable>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Visit teacher YouTube"
-              style={[
-                styles.iconButton,
-                { width: actionIconSize, height: actionIconSize },
-              ]}
-              onPress={openYoutubePrompt}
-            >
-              <Icon name="youtube" size={22} color={accentColor} />
-            </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Publish resource"
+                  style={[
+                    styles.contactSecondaryButton,
+                    {
+                      borderColor: accentColor,
+                      backgroundColor: `${accentColor}12`,
+                    },
+                  ]}
+                  onPress={() => router.push("/publish")}
+                >
+                  <Icon
+                    name="plus-circle"
+                    size={16}
+                    color={accentColor}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    style={[
+                      styles.contactSecondaryButtonText,
+                      { color: accentColor },
+                    ]}
+                  >
+                    Publish
+                  </Text>
+                </Pressable>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Email teacher"
-              style={[
-                styles.iconButton,
-                { width: actionIconSize, height: actionIconSize },
-              ]}
-              onPress={openEmailPrompt}
-            >
-              <Icon name="mail" size={22} color={accentColor} />
-            </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Account settings"
+                  style={[
+                    styles.iconButton,
+                    { width: actionIconSize, height: actionIconSize },
+                  ]}
+                  onPress={() => router.push("/settings")}
+                >
+                  <Icon name="settings" size={20} color={accentColor} />
+                </Pressable>
+              </>
+            ) : (
+              <>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    viewerRole === "teacher"
+                      ? "Message teacher colleague"
+                      : "Contact teacher"
+                  }
+                  style={[
+                    styles.contactButton,
+                    { backgroundColor: accentColor },
+                  ]}
+                  onPress={openContactSheet}
+                >
+                  <Icon
+                    name="message-circle"
+                    size={16}
+                    color={colors.white}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={styles.contactButtonText}>
+                    {viewerRole === "teacher" ? "Message Colleague" : "Contact"}
+                  </Text>
+                </Pressable>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Open teacher community"
-              style={[
-                styles.iconButton,
-                { width: actionIconSize, height: actionIconSize },
-              ]}
-              onPress={openCommunityDialog}
-            >
-              <Icon name="users" size={22} color={accentColor} />
-            </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Visit teacher YouTube"
+                  style={[
+                    styles.iconButton,
+                    { width: actionIconSize, height: actionIconSize },
+                  ]}
+                  onPress={openYoutubePrompt}
+                >
+                  <Icon name="youtube" size={22} color={accentColor} />
+                </Pressable>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Email teacher"
+                  style={[
+                    styles.iconButton,
+                    { width: actionIconSize, height: actionIconSize },
+                  ]}
+                  onPress={openEmailPrompt}
+                >
+                  <Icon name="mail" size={22} color={accentColor} />
+                </Pressable>
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Open teacher community"
+                  style={[
+                    styles.iconButton,
+                    { width: actionIconSize, height: actionIconSize },
+                  ]}
+                  onPress={openCommunityDialog}
+                >
+                  <Icon name="users" size={22} color={accentColor} />
+                </Pressable>
+              </>
+            )}
           </View>
 
           <Text style={styles.sectionTitle}>Resources</Text>
@@ -725,6 +889,7 @@ export default function TeacherProfileScreen() {
       actionIconSize,
       actionRowGap,
       isOwnProfile,
+      viewerRole,
       profile?.teacherApprovalStatus,
       openCommunityDialog,
     ],
@@ -1017,7 +1182,17 @@ export default function TeacherProfileScreen() {
           message={`You're about to leave DigiLearn and open ${teacherFirstName}'s WhatsApp community channel. Would you like to continue?`}
           primaryText="Continue"
           secondaryText="Cancel"
-          onPrimary={() => undefined}
+          onPrimary={() => {
+            setCommunityDialogVisible(false);
+            if (teacher?.phone) {
+              const message = `Hello Teacher ${teacherFirstName}, I would like to join your DigiLearn learning community.`;
+              Linking.openURL(
+                `https://wa.me/${teacher.phone}?text=${encodeURIComponent(message)}`,
+              );
+            } else if (teacher?.youtube) {
+              Linking.openURL(teacher.youtube);
+            }
+          }}
           onSecondary={() => setCommunityDialogVisible(false)}
           onClose={() => setCommunityDialogVisible(false)}
         />
@@ -1100,6 +1275,13 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
   },
+  verifiedBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   bioText: {
     marginTop: spacing.sm,
     color: "#6B7280",
@@ -1107,6 +1289,29 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
     paddingHorizontal: spacing.xl,
+  },
+  subjectRowWrap: {
+    marginTop: spacing.sm,
+    width: "100%",
+  },
+  subjectChipsContainer: {
+    paddingHorizontal: spacing.md,
+    gap: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  subjectPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+  },
+  subjectPillText: {
+    fontSize: 12,
+    fontWeight: "700",
   },
   reviewNotice: {
     flexDirection: "row",
@@ -1159,6 +1364,7 @@ const styles = StyleSheet.create({
   contactButton: {
     flex: 1,
     height: 52,
+    flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 10,
@@ -1166,7 +1372,20 @@ const styles = StyleSheet.create({
   contactButtonText: {
     color: colors.white,
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: "600",
+  },
+  contactSecondaryButton: {
+    flex: 1,
+    height: 52,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    borderWidth: 1.5,
+  },
+  contactSecondaryButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
   },
   iconButton: {
     width: 54,

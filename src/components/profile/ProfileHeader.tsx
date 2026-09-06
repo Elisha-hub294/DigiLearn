@@ -33,7 +33,7 @@ export function ProfileHeader({
   return (
     <View style={[s.wrap, { backgroundColor: themeColors.white }]}>
       <View style={[s.banner, { backgroundColor: themeColors.primaryDark }]}>
-        {profile.type === "admin" && (
+        {profile.type === "admin" ? (
           <LinearGradient
             colors={["rgba(255,255,255,0.18)", "transparent"]}
             start={{ x: 0, y: 0 }}
@@ -42,7 +42,17 @@ export function ProfileHeader({
           >
             <Text style={s.adminText}>ADMIN</Text>
           </LinearGradient>
-        )}
+        ) : profile.type === "teacher" ? (
+          <LinearGradient
+            colors={["rgba(255,255,255,0.22)", "rgba(255,255,255,0.06)"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={s.teacherBadge}
+          >
+            <Feather name="award" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
+            <Text style={s.adminText}>TEACHER</Text>
+          </LinearGradient>
+        ) : null}
         <Pressable
           onPress={() => router.push("/settings")}
           accessibilityRole="button"
@@ -85,9 +95,37 @@ export function ProfileHeader({
             accessibilityRole="button"
             accessibilityLabel="Add your bio"
             hitSlop={8}
+            onPress={() => router.push("/my-profile")}
           >
             <Text style={[s.addBio, { color: themeColors.primary }]}>
               ✎ Talk about yourself
+            </Text>
+          </Pressable>
+        )}
+
+        {profile.type === "teacher" && (
+          <Pressable
+            onPress={() => {
+              router.push({
+                pathname: "/teacher-profile",
+                params: {
+                  name: profile.name,
+                  openedFromAccount: "true",
+                },
+              } as any);
+            }}
+            style={[s.publicProfileButton, { borderColor: themeColors.primary }]}
+            accessibilityRole="button"
+            accessibilityLabel="View public teacher profile"
+          >
+            <Feather name="external-link" size={14} color={themeColors.primary} />
+            <Text
+              style={[
+                s.publicProfileButtonText,
+                { color: themeColors.primary },
+              ]}
+            >
+              View Public Channel & Resources
             </Text>
           </Pressable>
         )}
@@ -114,6 +152,17 @@ const s = StyleSheet.create({
     borderBottomRightRadius: 14,
     opacity: 0.72,
   },
+  teacherBadge: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderBottomRightRadius: 14,
+    backgroundColor: "rgba(0,0,0,0.2)",
+  },
   adminText: {
     color: "#FFFFFF",
     fontSize: 11,
@@ -135,7 +184,7 @@ const s = StyleSheet.create({
   sheet: {
     alignItems: "center",
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 20,
     minHeight: 130,
   },
   avatarWrap: {
@@ -162,5 +211,20 @@ const s = StyleSheet.create({
     fontSize: 14,
     marginTop: 8,
     fontWeight: "600",
+  },
+  publicProfileButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    backgroundColor: "transparent",
+  },
+  publicProfileButtonText: {
+    fontSize: 13,
+    fontWeight: "700",
   },
 });

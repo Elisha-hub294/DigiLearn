@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import type { ComponentProps } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -67,6 +68,7 @@ function joinedDate(value: unknown) {
 }
 
 export function UserInfoCard({ profile }: { profile: UserProfile }) {
+  const router = useRouter();
   const hasLevel = Boolean(profile.level?.trim());
   const hasSchool = Boolean(profile.school?.trim());
   return (
@@ -80,15 +82,15 @@ export function UserInfoCard({ profile }: { profile: UserProfile }) {
         icon="award"
         label="Level"
         value={hasLevel ? profile.level : "Set Level"}
-        interactive={!hasLevel}
-        onPress={() => undefined}
+        interactive={true}
+        onPress={() => router.push("/my-profile")}
       />
       <ProfileStat
         icon="home"
         label="School"
         value={hasSchool ? profile.school : "Add School"}
-        interactive={!hasSchool}
-        onPress={() => undefined}
+        interactive={true}
+        onPress={() => router.push("/my-profile")}
       />
     </View>
   );

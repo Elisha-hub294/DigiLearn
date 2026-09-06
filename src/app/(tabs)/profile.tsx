@@ -174,9 +174,14 @@ export default function ProfileScreen() {
                 </Pressable>
               </View>
             )}
+            {(profile.type === "admin" ||
+              (profile.type === "teacher" &&
+                profile.teacherApprovalStatus !== "pending" &&
+                profile.teacherApprovalStatus !== "rejected")) && (
+              <PublishButton onPress={() => router.push("/publish")} />
+            )}
             {profile.type === "admin" && (
               <>
-                <PublishButton onPress={() => router.push("/publish")} />
                 <Pressable
                   style={s.reviewLink}
                   onPress={() => router.push("/teacher-applications" as never)}
