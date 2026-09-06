@@ -104,6 +104,9 @@ export function PdfReaderScreen() {
   const [offlineNoticeDismissed, setOfflineNoticeDismissed] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [localBase64, setLocalBase64] = useState<string | null>(null);
+  // For Android remote PDFs: pre-fetched base64 to avoid CORS inside WebView
+  const [remoteBase64, setRemoteBase64] = useState<string | null>(null);
+  const [remoteFetchError, setRemoteFetchError] = useState(false);
   const [noticeDialog, setNoticeDialog] = useState<{
     title: string;
     message: string;
@@ -184,22 +187,58 @@ export function PdfReaderScreen() {
     }
   }, [isLocalFile, decodedUri]);
 
-  // iOS WebView renders PDFs natively; Android needs pdf.js
-  const webViewSource = (() => {
-    if (!decodedUri) return null;
-    if (isOfficeFile) {
-      if (isLocalFile) return null;
-      return {
-        uri: `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(decodedUri)}`,
-      };
-    }
-    if (Platform.OS === "ios") return { uri: decodedUri };
+  // Android remote PDF: download to a temp file and read as base64 to avoid
+  // CORS errors when pdf.js tries to fetch() the Firebase Storage URL from
+  // inside a WebView (the native-layer download has no CORS restrictions).
+  useEffect(() => {
+    if (
+      Platform.OS !== "android" ||
+      isLocalFile ||
+      isOfficeFile ||
+      !decodedUri ||
+      useNativePdf
+    )
+      return;
 
-    // Android: self-contained pdf.js HTML viewer
-    if (isLocalFile) {
-      if (!localBase64) return null;
-      return {
-        html: `<!DOCTYPE html>
+    let active = true;
+    setRemoteBase64(null);
+    setRemoteFetchError(false);
+
+    const tmpPath = `${FileSystem.cacheDirectory}pdf_tmp_${Date.now()}.pdf`;
+
+    FileSystem.downloadAsync(decodedUri, tmpPath)
+      .then(async (result) => {
+        if (!active) return;
+        if (!result || result.status < 200 || result.status >= 300) {
+          console.warn("PDF remote download failed, status:", result?.status);
+          if (active) setRemoteFetchError(true);
+          return;
+        }
+        const b64 = await FileSystem.readAsStringAsync(result.uri, {
+          encoding: FileSystem.EncodingType?.Base64 ?? "base64",
+        });
+        if (active) setRemoteBase64(b64);
+        // Clean up temp file (fire-and-forget)
+        FileSystem.deleteAsync(result.uri, { idempotent: true }).catch(() => {});
+      })
+      .catch((err) => {
+        console.warn("Failed to pre-fetch remote PDF for Android:", err);
+        if (active) setRemoteFetchError(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [decodedUri, isLocalFile, isOfficeFile, useNativePdf]);
+
+  // The base64 payload used by the pdf.js HTML template
+  // – for local files it's read directly; for Android remote PDFs it's pre-fetched
+  //   at the native layer to avoid CORS restrictions inside the WebView.
+  const pdfBase64 = isLocalFile ? localBase64 : remoteBase64;
+
+  // Shared pdf.js HTML template that loads a PDF from a base64 buffer
+  function buildBase64PdfHtml(b64: string, page: number): string {
+    return `<!DOCTYPE html>
 <html><head>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=3">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -215,7 +254,7 @@ canvas{display:block;margin:4px auto;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 (async()=>{
   try{
-    const rawData = atob('${localBase64}');
+    const rawData = atob('${b64}');
     const uint8Array = new Uint8Array(rawData.length);
     for (let i = 0; i < rawData.length; i++) {
       uint8Array[i] = rawData.charCodeAt(i);
@@ -232,19 +271,25 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
         }
       });
     }, { threshold: 0.3 });
+    const dpr = window.devicePixelRatio || 1;
     for(let i=1;i<=pdf.numPages;i++){
       const pg=await pdf.getPage(i);
-      const s=window.innerWidth/pg.getViewport({scale:1}).width;
-      const vp=pg.getViewport({scale:s});
+      const baseVp=pg.getViewport({scale:1});
+      const cssWidth=window.innerWidth;
+      const scale=cssWidth/baseVp.width;
+      const vp=pg.getViewport({scale: scale * dpr});
       const cv=document.createElement('canvas');
       cv.setAttribute('data-page', i);
-      cv.width=vp.width;cv.height=vp.height;
+      cv.width=vp.width;
+      cv.height=vp.height;
+      cv.style.width=cssWidth+'px';
+      cv.style.height=(vp.height/dpr)+'px';
       c.appendChild(cv);
       await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
       observer.observe(cv);
     }
     window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'loaded',pages:pdf.numPages}));
-    const targetP = ${startPage};
+    const targetP = ${page};
     if (targetP > 1) {
       setTimeout(() => {
         const el = document.querySelector('canvas[data-page="' + targetP + '"]');
@@ -257,70 +302,27 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'error',message:e.message}));
   }
 })();
-</script></body></html>`,
-        baseUrl: "https://cdnjs.cloudflare.com",
+</script></body></html>`;
+  }
+
+  // iOS WebView renders PDFs natively; Android needs pdf.js
+  const webViewSource = (() => {
+    if (!decodedUri) return null;
+    if (isOfficeFile) {
+      if (isLocalFile) return null;
+      return {
+        uri: `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(decodedUri)}`,
       };
     }
+    if (Platform.OS === "ios") return { uri: decodedUri };
 
-    const escapedUrl = decodedUri
-      .replace(/\\/g, "\\\\")
-      .replace(/'/g, "\\'")
-      .replace(/\n/g, "");
+    // Android: self-contained pdf.js HTML viewer using a base64 buffer.
+    // Both local and remote PDFs go through this path — the native-layer
+    // download (FileSystem.downloadAsync) is CORS-free, so we never rely on
+    // pdf.js fetch() hitting the network from inside the WebView.
+    if (!pdfBase64) return null; // still loading / fetch error
     return {
-      html: `<!DOCTYPE html>
-<html><head>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=3">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#525659;overflow-x:hidden}
-canvas{display:block;margin:4px auto;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-#error{color:#fff;text-align:center;padding:40px;font-family:sans-serif;display:none}
-</style></head><body>
-<div id="container"></div>
-<div id="error"></div>
-<script>
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-(async()=>{
-  try{
-    const pdf=await pdfjsLib.getDocument('${escapedUrl}').promise;
-    const c=document.getElementById('container');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const p = parseInt(entry.target.getAttribute('data-page'), 10);
-          if (p) {
-            window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({type:'pageChange',page:p,totalPages:pdf.numPages}));
-          }
-        }
-      });
-    }, { threshold: 0.3 });
-    for(let i=1;i<=pdf.numPages;i++){
-      const pg=await pdf.getPage(i);
-      const s=window.innerWidth/pg.getViewport({scale:1}).width;
-      const vp=pg.getViewport({scale:s});
-      const cv=document.createElement('canvas');
-      cv.setAttribute('data-page', i);
-      cv.width=vp.width;cv.height=vp.height;
-      c.appendChild(cv);
-      await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-      observer.observe(cv);
-    }
-    window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'loaded',pages:pdf.numPages}));
-    const targetP = ${startPage};
-    if (targetP > 1) {
-      setTimeout(() => {
-        const el = document.querySelector('canvas[data-page="' + targetP + '"]');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 350);
-    }
-  }catch(e){
-    document.getElementById('error').style.display='block';
-    document.getElementById('error').textContent='Failed to load PDF: '+e.message;
-    window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(JSON.stringify({type:'error',message:e.message}));
-  }
-})();
-</script></body></html>`,
+      html: buildBase64PdfHtml(pdfBase64, startPage),
       baseUrl: "https://cdnjs.cloudflare.com",
     };
   })();
@@ -527,7 +529,17 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     outputRange: ["0%", "100%"],
   });
 
-  if (isResolving) {
+  // Also wait while we're pre-fetching the remote PDF bytes on Android
+  const isPreFetching =
+    Platform.OS === "android" &&
+    !isLocalFile &&
+    !isOfficeFile &&
+    !useNativePdf &&
+    decodedUri != null &&
+    remoteBase64 == null &&
+    !remoteFetchError;
+
+  if (isResolving || isPreFetching) {
     return (
       <View
         style={[styles.screen, { backgroundColor: themeColors.background }]}
