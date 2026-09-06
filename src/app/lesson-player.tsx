@@ -33,11 +33,17 @@ import {
   recordLessonVisit,
   recordUserActivity,
 } from "../services/activityService";
+import {
+  formatPlaybackTime,
+  getLessonProgress,
+  saveLessonProgress,
+  type PlaybackProgress,
+} from "../services/playbackProgressService";
 import { toggleSavedItem } from "../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../utils/nativeToast";
 import { validateVideoLink } from "../utils/videoUtils";
 
-function getYoutubeEmbedUrl(rawUrl?: string) {
+function getYoutubeEmbedUrl(rawUrl?: string, startSeconds?: number) {
   if (!rawUrl) {
     return "";
   }
@@ -51,7 +57,11 @@ function getYoutubeEmbedUrl(rawUrl?: string) {
     return trimmed;
   }
 
-  return `https://www.youtube.com/embed/${id}`;
+  const base = `https://www.youtube.com/embed/${id}`;
+  if (startSeconds && startSeconds > 0) {
+    return `${base}?start=${Math.floor(startSeconds)}`;
+  }
+  return base;
 }
 
 function resolveImageSource(source: string | undefined, isDark: boolean) {
@@ -75,6 +85,7 @@ export default function LessonPlayerScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [showExternalVideoDialog, setShowExternalVideoDialog] = useState(false);
+  const [savedProgress, setSavedProgress] = useState<PlaybackProgress | null>(null);
   const [noticeDialog, setNoticeDialog] = useState<{
     title: string;
     message: string;
@@ -109,6 +120,16 @@ export default function LessonPlayerScreen() {
 
     return search ? `/lesson-player?${search}` : "/lesson-player";
   })();
+
+  useEffect(() => {
+    if (lessonId) {
+      void getLessonProgress(lessonId).then((progress) => {
+        if (progress && progress.positionSeconds > 10) {
+          setSavedProgress(progress);
+        }
+      });
+    }
+  }, [lessonId]);
 
   useEffect(() => {
     const lessonId = params.id || params.title;
@@ -156,11 +177,24 @@ export default function LessonPlayerScreen() {
     [params.link],
   );
 
-  async function launchVideo() {
-    if (!embedUrl) {
+  async function launchVideo(resume: boolean = false) {
+    setShowExternalVideoDialog(false);
+    const startSec = resume && savedProgress ? savedProgress.positionSeconds : undefined;
+    const targetUrl = getYoutubeEmbedUrl(params.link, startSec);
+    if (!targetUrl) {
       return;
     }
-    await WebBrowser.openBrowserAsync(embedUrl, {
+
+    if (resume && savedProgress) {
+      showNativeToast(`Resuming from ${formatPlaybackTime(savedProgress.positionSeconds)}`);
+    }
+
+    if (lessonId) {
+      // Mark an initial progress checkpoint if none existed
+      void saveLessonProgress(lessonId, startSec || 15);
+    }
+
+    await WebBrowser.openBrowserAsync(targetUrl, {
       presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
       controlsColor: "#3B82F6",
     });
@@ -600,12 +634,28 @@ export default function LessonPlayerScreen() {
       <ActionDialog
         visible={showExternalVideoDialog}
         icon={<Ionicons name="play" size={24} color="#2563EB" />}
-        title="Open video externally?"
-        message="You are about to leave DigiLearn to watch this lesson in an external browser."
-        primaryText="Continue"
-        secondaryText="Cancel"
-        onPrimary={launchVideo}
-        onSecondary={() => setShowExternalVideoDialog(false)}
+        title={savedProgress ? "Resume Lesson?" : "Open Video"}
+        message={
+          savedProgress
+            ? `You previously watched up to ${formatPlaybackTime(
+                savedProgress.positionSeconds,
+              )}. Would you like to resume from where you left off?`
+            : "You are about to watch this lesson in an external player."
+        }
+        primaryText={
+          savedProgress
+            ? `Resume (${formatPlaybackTime(savedProgress.positionSeconds)})`
+            : "Watch Now"
+        }
+        secondaryText={savedProgress ? "Start Over" : "Cancel"}
+        onPrimary={() => launchVideo(Boolean(savedProgress))}
+        onSecondary={() => {
+          if (savedProgress) {
+            launchVideo(false);
+          } else {
+            setShowExternalVideoDialog(false);
+          }
+        }}
         onClose={() => setShowExternalVideoDialog(false)}
       />
     </SafeAreaView>

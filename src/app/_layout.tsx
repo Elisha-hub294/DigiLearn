@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 import { NetworkStatusBanner } from "../components/ui/NetworkStatusBanner";
 import { ProfileProvider } from "../contexts/ProfileContext";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
@@ -18,7 +19,7 @@ function AppShell() {
   }, [isHydrated]);
 
   return (
-    <>
+    <ErrorBoundary>
       <StatusBar style={isDark ? "light" : "dark"} />
       <ProfileProvider>
         <Stack
@@ -69,7 +70,7 @@ function AppShell() {
         </Stack>
       </ProfileProvider>
       <NetworkStatusBanner />
-    </>
+    </ErrorBoundary>
   );
 }
 

@@ -551,10 +551,16 @@ export const TeacherPostItem = ({
                 }
               >
                 <View>
-                  <Text style={[styles.name, { color: colors.text }]}>
+                  <Text
+                    style={[styles.name, { color: colors.text }]}
+                    maxFontSizeMultiplier={1.3}
+                  >
                     {teacherName}
                   </Text>
-                  <Text style={[styles.time, { color: colors.subtitle }]}>
+                  <Text
+                    style={[styles.time, { color: colors.subtitle }]}
+                    maxFontSizeMultiplier={1.3}
+                  >
                     {getRelativeTime(postItem.createdAt)}
                   </Text>
                 </View>
@@ -564,11 +570,19 @@ export const TeacherPostItem = ({
         </View>
 
         {postItem.hasCover ? (
-          <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+          <Text
+            style={[styles.title, { color: colors.text }]}
+            maxFontSizeMultiplier={1.3}
+          >
+            {title}
+          </Text>
         ) : (
           <GradientTitle text={title} style={styles.title} />
         )}
-        <Text style={[styles.caption, { color: colors.text }]}>
+        <Text
+          style={[styles.caption, { color: colors.text }]}
+          maxFontSizeMultiplier={1.3}
+        >
           {description}
         </Text>
 
@@ -590,6 +604,7 @@ export const TeacherPostItem = ({
                 { color: colors.subtitle },
                 isSaved && { color: colors.primary, fontWeight: "700" },
               ]}
+              maxFontSizeMultiplier={1.3}
             >
               {isSaved ? "Saved" : "Save"}
             </Text>

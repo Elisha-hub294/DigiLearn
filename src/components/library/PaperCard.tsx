@@ -111,6 +111,8 @@ export function PaperCard({
     >
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel={`Open past paper: ${title}`}
+        accessibilityHint="Opens past paper details and PDF reader"
         style={({ pressed, hovered }) => [
           styles.cardPressable,
           hovered && styles.cardHovered,
@@ -139,13 +141,17 @@ export function PaperCard({
         </View>
         <View style={styles.content}>
           {subject?.trim() ? (
-            <Text style={[styles.subject, { color: themeColors.primary }]}>
+            <Text
+              style={[styles.subject, { color: themeColors.primary }]}
+              maxFontSizeMultiplier={1.3}
+            >
               {subject.trim()}
             </Text>
           ) : null}
           <Text
             style={[styles.title, { color: themeColors.text }]}
             numberOfLines={2}
+            maxFontSizeMultiplier={1.3}
           >
             {title}
           </Text>
@@ -153,6 +159,7 @@ export function PaperCard({
             <Text
               style={[styles.meta, { color: themeColors.subtitle }]}
               numberOfLines={2}
+              maxFontSizeMultiplier={1.3}
             >
               {metaParts.join(" • ")}
             </Text>
