@@ -13,13 +13,16 @@ import {
   Text,
   View,
   ViewToken,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getHorizontalPadding } from "../constants/layout";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const ONBOARDING_KEY = "onboarding_complete";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const VIEWABILITY_CONFIG = { viewAreaCoveragePercentThreshold: 50 };
 
 // ─── Slide Data ────────────────────────────────────────────────────────────────
 
@@ -29,7 +32,7 @@ const SLIDES = [
     headline: "Learn Without\nLimits",
     subtitle:
       "Access thousands of lessons, books and past papers — all in one place.",
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+
     animation: require("../../assets/animations/onboarding1.json"),
     accentColor: "#4F8EF7",
   },
@@ -38,7 +41,7 @@ const SLIDES = [
     headline: "Study Smarter\nwith AI",
     subtitle:
       "Our AI assistant answers questions, summarises notes and helps you master any topic.",
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+
     animation: require("../../assets/animations/onboarding2.json"),
     accentColor: "#A78BFA",
   },
@@ -47,7 +50,7 @@ const SLIDES = [
     headline: "Achieve Your\nGoals",
     subtitle:
       "Track your progress, earn achievements and become the best version of yourself.",
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+
     animation: require("../../assets/animations/onboarding3.json"),
     accentColor: "#34D399",
   },
@@ -110,6 +113,8 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const flatListRef = useRef<FlatList<Slide>>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { width } = useWindowDimensions();
+  const horizontalPadding = getHorizontalPadding(width);
 
   const currentSlide = SLIDES[currentIndex];
   const isLast = currentIndex === SLIDES.length - 1;
@@ -133,28 +138,35 @@ export default function OnboardingScreen() {
   }, [isLast, currentIndex, finish]);
 
   // ── Viewable items tracking ────────────────────────────────────────────────
-  const onViewableItemsChanged = useRef(
+  const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length > 0 && viewableItems[0].index !== null) {
         setCurrentIndex(viewableItems[0].index);
       }
-    }
-  ).current;
-
-  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 })
-    .current;
+    },
+    [],
+  );
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
 
       {/* Gradient background layers */}
       <View style={styles.bgBase} />
-      <View style={[styles.bgGlow, { backgroundColor: currentSlide.accentColor + "22" }]} />
+      <View
+        style={[
+          styles.bgGlow,
+          { backgroundColor: currentSlide.accentColor + "22" },
+        ]}
+      />
 
       <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
         {/* Skip button */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
           <Pressable
             onPress={() => void finish()}
             style={({ pressed }) => [
@@ -174,18 +186,23 @@ export default function OnboardingScreen() {
           data={SLIDES}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <SlideItem item={item} />}
+          getItemLayout={(_, index) => ({
+            length: SCREEN_WIDTH,
+            offset: SCREEN_WIDTH * index,
+            index,
+          })}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig}
+          viewabilityConfig={VIEWABILITY_CONFIG}
           scrollEventThrottle={16}
           bounces={false}
           style={styles.flatList}
         />
 
         {/* Bottom section */}
-        <View style={styles.bottom}>
+        <View style={[styles.bottom, { paddingHorizontal: horizontalPadding }]}>
           {/* Text */}
           <View style={styles.textBlock}>
             <Text style={[styles.headline, { color: "#FFFFFF" }]}>
@@ -210,7 +227,9 @@ export default function OnboardingScreen() {
               pressed && styles.ctaPressed,
             ]}
             accessibilityRole="button"
-            accessibilityLabel={isLast ? "Get started with DigiLearn" : "Next slide"}
+            accessibilityLabel={
+              isLast ? "Get started with DigiLearn" : "Next slide"
+            }
           >
             <Text style={styles.ctaText}>
               {isLast ? "Get Started" : "Next"}
@@ -252,7 +271,8 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) + 8 : 8,
+    paddingTop:
+      Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) + 8 : 8,
     alignItems: "flex-end",
   },
   skipBtn: {

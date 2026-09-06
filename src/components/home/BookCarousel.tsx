@@ -147,23 +147,26 @@ export const BookCarousel = () => {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <Pressable
+          <View
             style={[
               styles.card,
               { backgroundColor: themeColors.white, width: cardWidth },
             ]}
-            accessibilityRole="button"
-            accessibilityLabel={`Open ${item.title}`}
-            onPress={() => {
-              if (auth.currentUser?.uid) {
-                recordUserActivity(auth.currentUser.uid, "book", item.id);
-              }
-              router.push({
-                pathname: "/book-preview",
-                params: { id: item.id, source: "home", returnTo: "/" },
-              } as any);
-            }}
           >
+            <Pressable
+              style={styles.cardAction}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${item.title}`}
+              onPress={() => {
+                if (auth.currentUser?.uid) {
+                  recordUserActivity(auth.currentUser.uid, "book", item.id);
+                }
+                router.push({
+                  pathname: "/book-preview",
+                  params: { id: item.id, source: "home", returnTo: "/" },
+                } as any);
+              }}
+            />
             <View style={styles.menu}>
               <ResourceDeleteMenu
                 collection="books"
@@ -187,22 +190,22 @@ export const BookCarousel = () => {
               <Text style={[styles.title, { color: themeColors.text }]}>
                 {item.title}
               </Text>
-              <Text
-                style={[styles.author, { color: themeColors.subtitle }]}
+              <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={`Open teacher profile: ${item.author}`}
-                onPress={(event) => {
-                  event.stopPropagation?.();
+                onPress={() => {
                   router.push({
                     pathname: "/teacher-profile",
                     params: { name: item.author },
                   } as never);
                 }}
               >
-                {item.author}
-              </Text>
+                <Text style={[styles.author, { color: themeColors.subtitle }]}>
+                  {item.author}
+                </Text>
+              </Pressable>
             </View>
-          </Pressable>
+          </View>
         )}
         contentContainerStyle={styles.list}
       />
@@ -218,6 +221,10 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     overflow: "hidden",
     position: "relative",
+  },
+  cardAction: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 0,
   },
   menu: { position: "absolute", top: 6, right: 6, zIndex: 2 },
   image: { width: "100%", height: 200 },

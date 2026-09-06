@@ -19,7 +19,6 @@ import { auth } from "../../../firebaseConfig";
 import { BookCarousel } from "../../components/home/BookCarousel";
 import { ContinueLearningShelf } from "../../components/home/ContinueLearningShelf";
 import { CoursesCarousel } from "../../components/home/CoursesCarousel";
-import { StreakCard } from "../../components/home/StreakCard";
 import {
   FeaturedNoteItem,
   loadFeaturedNotes,
@@ -47,7 +46,11 @@ import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { PaperItem, PaperSection, useLibraryData } from "../../hooks/useLibraryData";
+import {
+  PaperItem,
+  PaperSection,
+  useLibraryData,
+} from "../../hooks/useLibraryData";
 import { recordUserActivity } from "../../services/activityService";
 import { BookRecord, loadBooks } from "../../services/booksService";
 import { clearGuestMode, isGuestMode } from "../../services/guestService";
@@ -158,14 +161,7 @@ export default function HomeScreen() {
   // Fetch all pool data
   const loadAllFeedPools = useCallback(async (force = false) => {
     try {
-      const [
-        posts,
-        tMeta,
-        lessons,
-        notes,
-        nMeta,
-        bks,
-      ] = await Promise.all([
+      const [posts, tMeta, lessons, notes, nMeta, bks] = await Promise.all([
         loadTeacherPosts(),
         loadTeacherMetadata(),
         loadTrendingLessons(force),
@@ -415,7 +411,8 @@ export default function HomeScreen() {
       ],
       seed: shuffleSeed,
       getItemType: (item) => item.kind,
-      getItemSubject: (item) => (item.kind !== "break" ? item.subject : undefined),
+      getItemSubject: (item) =>
+        item.kind !== "break" ? item.subject : undefined,
       breakItems: breakModules,
       breakInterval: 6,
     });
@@ -483,7 +480,7 @@ export default function HomeScreen() {
             <SearchBar placeholder="Search DigiLearn..." />
 
             {/* Daily Learning Streak Card */}
-            <StreakCard />
+            {/* <StreakCard /> */}
 
             {/* Continue Learning Shelf when user has active lesson progress */}
             <ContinueLearningShelf />
@@ -536,8 +533,14 @@ export default function HomeScreen() {
                 return (
                   <View key={item.id} style={styles.feedCardWrapper}>
                     <View style={styles.itemHeaderBadge}>
-                      <Text style={[styles.itemBadgeText, { color: themeColors.primary }]}>
-                        📖 Featured Textbook {item.data.subject ? `• ${item.data.subject}` : ""}
+                      <Text
+                        style={[
+                          styles.itemBadgeText,
+                          { color: themeColors.primary },
+                        ]}
+                      >
+                        📖 Featured Textbook{" "}
+                        {item.data.subject ? `• ${item.data.subject}` : ""}
                       </Text>
                     </View>
                     <BookCard
@@ -553,11 +556,19 @@ export default function HomeScreen() {
                       marginRight={0}
                       onPress={() => {
                         if (auth.currentUser?.uid) {
-                          recordUserActivity(auth.currentUser.uid, "book", item.data.id);
+                          recordUserActivity(
+                            auth.currentUser.uid,
+                            "book",
+                            item.data.id,
+                          );
                         }
                         router.push({
                           pathname: "/book-preview",
-                          params: { id: item.data.id, source: "home", returnTo: "/" },
+                          params: {
+                            id: item.data.id,
+                            source: "home",
+                            returnTo: "/",
+                          },
                         } as any);
                       }}
                     />
@@ -569,8 +580,14 @@ export default function HomeScreen() {
                 return (
                   <View key={item.id} style={styles.feedCardWrapper}>
                     <View style={styles.itemHeaderBadge}>
-                      <Text style={[styles.itemBadgeText, { color: themeColors.primary }]}>
-                        📝 Past Exam Paper {item.data.year ? `• ${item.data.year}` : ""}
+                      <Text
+                        style={[
+                          styles.itemBadgeText,
+                          { color: themeColors.primary },
+                        ]}
+                      >
+                        📝 Past Exam Paper{" "}
+                        {item.data.year ? `• ${item.data.year}` : ""}
                       </Text>
                     </View>
                     <PaperCard

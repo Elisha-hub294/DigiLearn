@@ -34,7 +34,7 @@ const FAQ_DATA: Record<string, FaqDetail> = {
   "Offline file access": {
     title: "Offline file access",
     message:
-      "You can read all your downloaded books and papers anytime, anywhere—even without an active internet connection. Access them directly under the Downloads section in your Library.",
+      "You can read all your downloaded books and papers anytime, anywhere, even without an active internet connection. Access them directly under the Downloads section in your Library.",
   },
   "Report a problem": {
     title: "Report a problem",
@@ -80,13 +80,7 @@ type HelpSectionProps = {
   onSelectItem: (item: string) => void;
 };
 
-function HelpItem({
-  title,
-  onPress,
-}: {
-  title: string;
-  onPress?: () => void;
-}) {
+function HelpItem({ title, onPress }: { title: string; onPress?: () => void }) {
   const { colors: themeColors } = useTheme();
   return (
     <Pressable
@@ -99,7 +93,9 @@ function HelpItem({
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <Text style={[styles.itemText, { color: themeColors.text }]}>{title}</Text>
+      <Text style={[styles.itemText, { color: themeColors.text }]}>
+        {title}
+      </Text>
       <Feather name="chevron-right" size={20} color={themeColors.subtitle} />
     </Pressable>
   );
@@ -350,7 +346,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   itemPressed: { opacity: 0.65 },
-  itemText: { fontSize: 15, fontWeight: "500", flexShrink: 1, paddingRight: 16 },
+  itemText: {
+    fontSize: 15,
+    fontWeight: "500",
+    flexShrink: 1,
+    paddingRight: 16,
+  },
   footerContainer: {
     paddingBottom: spacing.md,
     width: "100%",
