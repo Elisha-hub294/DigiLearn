@@ -40,42 +40,35 @@ export function PageDetailsSection({
   dateText,
 }: PageDetailsSectionProps) {
   const { colors } = useTheme();
+  const subject = formatList(note.subject);
+  const level = note.level?.trim();
+  const schoolClass = note.schoolClass?.trim();
   const sourceBooks = formatList(note.book);
 
   return (
     <View style={styles.container}>
       <Text style={[styles.heading, { color: colors.text }]}>Page details</Text>
       <View style={[styles.details, { borderTopColor: colors.border }]}>
-        {formatList(note.subject) && (
-          <DetailRow
-            icon="book-open"
-            label="Subject"
-            value={formatList(note.subject)!}
-          />
-        )}
-        {note.level?.trim() && (
-          <DetailRow icon="layers" label="Level" value={note.level.trim()} />
-        )}
-        {note.schoolClass?.trim() && (
-          <DetailRow
-            icon="users"
-            label="Class"
-            value={note.schoolClass.trim()}
-          />
-        )}
-        {note.pages !== undefined && String(note.pages).trim() && (
+        {subject ? (
+          <DetailRow icon="book-open" label="Subject" value={subject} />
+        ) : null}
+        {level ? <DetailRow icon="layers" label="Level" value={level} /> : null}
+        {schoolClass ? (
+          <DetailRow icon="users" label="Class" value={schoolClass} />
+        ) : null}
+        {note.pages !== undefined && Boolean(String(note.pages).trim()) ? (
           <DetailRow
             icon="file-text"
             label="Pages"
             value={String(note.pages)}
           />
-        )}
-        {sourceBooks && (
+        ) : null}
+        {sourceBooks ? (
           <DetailRow icon="book" label="Source books" value={sourceBooks} />
-        )}
-        {dateText && (
+        ) : null}
+        {dateText ? (
           <DetailRow icon="clock" label="Last updated" value={dateText} />
-        )}
+        ) : null}
       </View>
     </View>
   );

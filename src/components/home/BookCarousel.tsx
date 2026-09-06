@@ -187,7 +187,9 @@ export const BookCarousel = () => {
               <Text style={[styles.title, { color: themeColors.text }]}>
                 {item.title}
               </Text>
-              <Pressable
+              <Text
+                style={[styles.author, { color: themeColors.subtitle }]}
+                accessibilityRole="button"
                 accessibilityLabel={`Open teacher profile: ${item.author}`}
                 onPress={(event) => {
                   event.stopPropagation?.();
@@ -197,10 +199,8 @@ export const BookCarousel = () => {
                   } as never);
                 }}
               >
-                <Text style={[styles.author, { color: themeColors.subtitle }]}>
-                  {item.author}
-                </Text>
-              </Pressable>
+                {item.author}
+              </Text>
             </View>
           </Pressable>
         )}

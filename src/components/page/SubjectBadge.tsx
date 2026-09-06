@@ -9,7 +9,6 @@ import { DEFAULT_SUBJECT_AVATAR } from "./pageTypes";
 export function SubjectBadge({
   avatarUrl,
   title,
-  dateText,
   subjects = [],
   pagesCount,
   isRecommended,
@@ -18,7 +17,6 @@ export function SubjectBadge({
 }: {
   avatarUrl?: string;
   title: string;
-  dateText: string;
   subjects?: string[];
   pagesCount?: string | number;
   isRecommended?: boolean;
@@ -54,12 +52,6 @@ export function SubjectBadge({
             numberOfLines={2}
           >
             {title}
-          </Text>
-          <Text
-            style={[styles.dateText, { color: colors.subtitle }]}
-            numberOfLines={1}
-          >
-            {dateText}
           </Text>
         </View>
       </View>
@@ -140,11 +132,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     lineHeight: 28,
-  },
-  dateText: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginTop: 4,
   },
   badgesRow: {
     flexDirection: "row",

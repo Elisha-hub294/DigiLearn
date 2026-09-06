@@ -483,15 +483,27 @@ export function PaperPreviewScreen() {
               accessibilityRole="button"
               accessibilityLabel="Go back"
               onPress={() => router.back()}
-              style={styles.backButton}
+              style={[
+                styles.backButton,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                },
+              ]}
             >
-              <Text style={styles.backButtonText}>←</Text>
+              <Text
+                style={[styles.backButtonText, { color: themeColors.text }]}
+              >
+                ←
+              </Text>
             </Pressable>
             <View style={styles.headerMeta}>
-              <Text style={styles.eyebrow}>
+              <Text style={[styles.eyebrow, { color: themeColors.primary }]}>
                 {paper.type?.toUpperCase() || "PAST PAPER"}
               </Text>
-              <Text style={styles.headerTitle}>Paper preview</Text>
+              <Text style={[styles.headerTitle, { color: themeColors.text }]}>
+                Paper preview
+              </Text>
             </View>
           </View>
 
@@ -513,8 +525,18 @@ export function PaperPreviewScreen() {
                   contentPosition="top left"
                 />
               ) : (
-                <View style={styles.placeholderCover}>
-                  <Text style={styles.placeholderText}>
+                <View
+                  style={[
+                    styles.placeholderCover,
+                    { backgroundColor: themeColors.primary },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.placeholderText,
+                      { color: themeColors.white },
+                    ]}
+                  >
                     {paper.title.slice(0, 2).toUpperCase()}
                   </Text>
                 </View>
@@ -534,8 +556,10 @@ export function PaperPreviewScreen() {
               >
                 {paper.subject || "General"}
               </Text>
-              <Text style={styles.title}>{paper.title}</Text>
-              <Text style={styles.metaLine}>
+              <Text style={[styles.title, { color: themeColors.text }]}>
+                {paper.title}
+              </Text>
+              <Text style={[styles.metaLine, { color: themeColors.subtitle }]}>
                 {paper.year || "Recent paper"} • {paperRef}
               </Text>
 
@@ -583,7 +607,10 @@ export function PaperPreviewScreen() {
                       backgroundColor: themeColors.lightBackground,
                       borderColor: themeColors.border,
                     },
-                    bookmarked && styles.savedButton,
+                    bookmarked && {
+                      backgroundColor: themeColors.primaryLight,
+                      borderColor: themeColors.primary,
+                    },
                   ]}
                   onPress={toggleBookmark}
                 >
@@ -604,22 +631,57 @@ export function PaperPreviewScreen() {
 
           <View style={styles.statsWrap}>
             {stats.map((stat) => (
-              <View key={stat.label} style={styles.statCard}>
-                <Text style={styles.statLabel}>{stat.label}</Text>
-                <Text style={styles.statValue}>{stat.value}</Text>
+              <View
+                key={stat.label}
+                style={[
+                  styles.statCard,
+                  {
+                    backgroundColor: themeColors.white,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[styles.statLabel, { color: themeColors.subtitle }]}
+                >
+                  {stat.label}
+                </Text>
+                <Text style={[styles.statValue, { color: themeColors.text }]}>
+                  {stat.value}
+                </Text>
               </View>
             ))}
           </View>
 
-          <View style={styles.detailsCard}>
-            <Text style={styles.sectionTitle}>Overview</Text>
-            <Text style={styles.description}>
+          <View
+            style={[
+              styles.detailsCard,
+              {
+                backgroundColor: themeColors.white,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+              Overview
+            </Text>
+            <Text style={[styles.description, { color: themeColors.text }]}>
               {paper.description || "No description provided for this paper."}
             </Text>
           </View>
 
-          <View style={styles.detailsCard}>
-            <Text style={styles.sectionTitle}>Paper details</Text>
+          <View
+            style={[
+              styles.detailsCard,
+              {
+                backgroundColor: themeColors.white,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+              Paper details
+            </Text>
             <View style={styles.detailList}>
               <DetailRow
                 label="Subject"
@@ -646,11 +708,21 @@ export function PaperPreviewScreen() {
           </View>
 
           {relatedPapers.length > 0 && (
-            <View style={styles.relatedCard}>
-              <Text style={styles.sectionTitle}>
+            <View
+              style={[
+                styles.relatedCard,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
                 {`More of ${paper?.subject || "this"}`}
               </Text>
-              <Text style={styles.relatedHint}>
+              <Text
+                style={[styles.relatedHint, { color: themeColors.subtitle }]}
+              >
                 Similar papers to build comprehensive coverage
               </Text>
               <FlatList
@@ -678,7 +750,13 @@ export function PaperPreviewScreen() {
                         },
                       } as any)
                     }
-                    style={styles.relatedItem}
+                    style={[
+                      styles.relatedItem,
+                      {
+                        backgroundColor: themeColors.lightBackground,
+                        borderColor: themeColors.border,
+                      },
+                    ]}
                   >
                     <View style={styles.relatedImageWrap}>
                       {relatedPaper.image ? (
@@ -689,21 +767,47 @@ export function PaperPreviewScreen() {
                           contentPosition="top left"
                         />
                       ) : (
-                        <View style={styles.relatedPlaceholder}>
-                          <Text style={styles.relatedPlaceholderText}>
+                        <View
+                          style={[
+                            styles.relatedPlaceholder,
+                            { backgroundColor: themeColors.primary },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.relatedPlaceholderText,
+                              { color: themeColors.white },
+                            ]}
+                          >
                             {relatedPaper.title.slice(0, 2).toUpperCase()}
                           </Text>
                         </View>
                       )}
                     </View>
                     <View style={styles.relatedContent}>
-                      <Text style={styles.relatedYear}>
+                      <Text
+                        style={[
+                          styles.relatedYear,
+                          { color: themeColors.primary },
+                        ]}
+                      >
                         {relatedPaper.year || "Recent"}
                       </Text>
-                      <Text style={styles.relatedTitle} numberOfLines={2}>
+                      <Text
+                        style={[
+                          styles.relatedTitle,
+                          { color: themeColors.text },
+                        ]}
+                        numberOfLines={2}
+                      >
                         {relatedPaper.title}
                       </Text>
-                      <Text style={styles.relatedMeta}>
+                      <Text
+                        style={[
+                          styles.relatedMeta,
+                          { color: themeColors.subtitle },
+                        ]}
+                      >
                         {relatedPaper.type || "Paper"}
                       </Text>
                     </View>
@@ -748,13 +852,19 @@ function DetailRow({
   value: string;
   icon: keyof typeof Feather.glyphMap;
 }) {
+  const { colors: themeColors } = useTheme();
+
   return (
-    <View style={styles.detailRow}>
+    <View style={[styles.detailRow, { borderTopColor: themeColors.border }]}>
       <View style={styles.detailLabelWrap}>
-        <Feather name={icon} size={14} color={colors.subtitle} />
-        <Text style={styles.detailLabel}>{label}</Text>
+        <Feather name={icon} size={14} color={themeColors.subtitle} />
+        <Text style={[styles.detailLabel, { color: themeColors.subtitle }]}>
+          {label}
+        </Text>
       </View>
-      <Text style={styles.detailValue}>{value}</Text>
+      <Text style={[styles.detailValue, { color: themeColors.text }]}>
+        {value}
+      </Text>
     </View>
   );
 }

@@ -557,7 +557,6 @@ export function PagePreviewScreen() {
             <SubjectBadge
               avatarUrl={subjectAvatar}
               title={note.title || "Untitled Note"}
-              dateText={dateFormatted}
               subjects={subjectsList}
               pagesCount={note.pages}
               isRecommended={note.isRecommended}
