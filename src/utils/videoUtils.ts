@@ -198,3 +198,278 @@ export function resolveVideoImageSource(
 
   return isDark ? getThemeAsset("thumbDefault", true) : FALLBACK_THUMBNAIL;
 }
+
+/**
+ * Parses ISO 8601 duration (e.g. PT1H2M30S, PT15M33S, PT45S) into total seconds.
+ */
+export function parseIsoDuration(durationStr?: string): number | null {
+  if (!durationStr || typeof durationStr !== "string") return null;
+  const match = durationStr.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/i);
+  if (!match) return null;
+  const hours = Number(match[1] || 0);
+  const minutes = Number(match[2] || 0);
+  const seconds = Number(match[3] || 0);
+  const total = hours * 3600 + minutes * 60 + seconds;
+  return total > 0 ? total : null;
+}
+
+/**
+ * Formats a duration in seconds to MM:SS or HH:MM:SS.
+ */
+export function formatDurationFromSeconds(totalSeconds: number): string {
+  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
+    return "00:00";
+  }
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+
+  if (hours > 0) {
+    return [hours, minutes, seconds]
+      .map((value) => String(value).padStart(2, "0"))
+      .join(":");
+  }
+
+  return [minutes, seconds]
+    .map((value) => String(value).padStart(2, "0"))
+    .join(":");
+}
+
+/**
+ * Attempts to fetch a YouTube video's duration directly from multiple reliable endpoints.
+ */
+export async function fetchYoutubeDurationDirectly(
+  videoId: string,
+): Promise<string | null> {
+  if (!videoId || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+    return null;
+  }
+
+  // Strategy 1: YouTube InnerTube API (TVHTML5 and WEB clients)
+  const innertubeClients = [
+    { clientName: "TVHTML5", clientVersion: "7.20250101.08.00" },
+    { clientName: "WEB", clientVersion: "2.20250101.00.00" },
+  ];
+
+  for (const client of innertubeClients) {
+    try {
+      const playerResponse = await fetch(
+        "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            videoId,
+            context: { client },
+          }),
+        },
+      );
+      if (playerResponse.ok) {
+        const playerData = (await playerResponse.json()) as {
+          videoDetails?: { lengthSeconds?: string };
+        };
+        const playerSeconds = Number(
+          playerData.videoDetails?.lengthSeconds ?? 0,
+        );
+        if (Number.isFinite(playerSeconds) && playerSeconds > 0) {
+          return formatDurationFromSeconds(playerSeconds);
+        }
+      }
+    } catch {}
+  }
+
+  // Strategy 2: Direct YouTube watch page scrape
+  try {
+    const watchResponse = await fetch(
+      `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`,
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+      },
+    );
+    if (watchResponse.ok) {
+      const html = await watchResponse.text();
+
+      // Check Schema.org itemprop="duration" content="PT...S"
+      const itempropMatch = html.match(
+        /itemprop="duration"\s+content="([^"]+)"/i,
+      );
+      if (itempropMatch?.[1]) {
+        const seconds = parseIsoDuration(itempropMatch[1]);
+        if (seconds && seconds > 0) {
+          return formatDurationFromSeconds(seconds);
+        }
+      }
+
+      // Check approxDurationMs
+      const approxMatch = html.match(/"approxDurationMs"\s*:\s*"(\d+)"/);
+      if (approxMatch?.[1]) {
+        const ms = Number(approxMatch[1]);
+        if (Number.isFinite(ms) && ms > 0) {
+          return formatDurationFromSeconds(Math.round(ms / 1000));
+        }
+      }
+
+      // Check lengthSeconds
+      const lengthMatch =
+        html.match(/"lengthSeconds"\s*:\s*"(\d+)"/) ||
+        html.match(/\\?"lengthSeconds\\?"\s*:\s*\\?"(\d+)\\?"/) ||
+        html.match(/&quot;lengthSeconds&quot;\s*:\s*&quot;(\d+)&quot;/);
+      if (lengthMatch?.[1]) {
+        const sec = Number(lengthMatch[1]);
+        if (Number.isFinite(sec) && sec > 0) {
+          return formatDurationFromSeconds(sec);
+        }
+      }
+    }
+  } catch {}
+
+  return null;
+}
+
+export type YoutubeVideoMeta = {
+  title: string;
+  description: string;
+  duration: string;
+  thumbnail: string;
+};
+
+/**
+ * Fetches comprehensive metadata for a YouTube video using multiple resilient strategies.
+ */
+export async function fetchYoutubeVideoMeta(
+  videoUrl: string,
+  functionsCaller?: (videoId: string) => Promise<string | null>,
+): Promise<YoutubeVideoMeta> {
+  const fallbackThumb = "https://img.youtube.com/vi/unknown/hqdefault.jpg";
+  const videoId = extractYoutubeId(videoUrl);
+  if (!videoId) {
+    return { title: "", description: "", duration: "", thumbnail: fallbackThumb };
+  }
+
+  const defaultThumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  let title = "";
+  let description = "";
+  let duration = "";
+  let thumbnail = defaultThumbnail;
+
+  // 1. Try YouTube Data API v3 if API key is provided
+  const apiKey =
+    process.env.EXPO_PUBLIC_YOUTUBE_API_KEY ||
+    process.env.YOUTUBE_API_KEY ||
+    "";
+
+  if (apiKey) {
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${apiKey}`,
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const item = data.items?.[0];
+        if (item) {
+          title = item.snippet?.title || "";
+          description = item.snippet?.description || "";
+          const durationISO = item.contentDetails?.duration;
+          if (durationISO) {
+            const seconds = parseIsoDuration(durationISO);
+            if (seconds) {
+              duration = formatDurationFromSeconds(seconds);
+            }
+          }
+          if (title && duration) {
+            return { title, description, duration, thumbnail };
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // 2. Try fetching duration directly from YouTube InnerTube / watch page
+  try {
+    const directDuration = await fetchYoutubeDurationDirectly(videoId);
+    if (directDuration && directDuration !== "00:00") {
+      duration = directDuration;
+    }
+  } catch {}
+
+  // 3. If direct fetch didn't obtain duration, try Cloud Function if caller passed
+  if ((!duration || duration === "00:00") && functionsCaller) {
+    try {
+      const serverDur = await functionsCaller(videoId);
+      if (serverDur && serverDur !== "00:00") {
+        duration = serverDur;
+      }
+    } catch {}
+  }
+
+  // 4. Fetch oEmbed for title and best thumbnail if title isn't known yet
+  if (!title) {
+    try {
+      const oEmbedResponse = await fetch(
+        `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`,
+      );
+      if (oEmbedResponse.ok) {
+        const data = await oEmbedResponse.json();
+        if (typeof data.title === "string") {
+          title = data.title;
+        }
+        if (typeof data.thumbnail_url === "string") {
+          thumbnail = data.thumbnail_url;
+        }
+      }
+    } catch {}
+  }
+
+  // 5. If title is still empty, try InnerTube WEB player info for title and description
+  if (!title) {
+    try {
+      const playerResponse = await fetch(
+        "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            videoId,
+            context: {
+              client: { clientName: "WEB", clientVersion: "2.20250101.00.00" },
+            },
+          }),
+        },
+      );
+      if (playerResponse.ok) {
+        const playerData = (await playerResponse.json()) as {
+          videoDetails?: {
+            title?: string;
+            shortDescription?: string;
+            lengthSeconds?: string;
+          };
+        };
+        if (playerData.videoDetails?.title) {
+          title = playerData.videoDetails.title;
+        }
+        if (playerData.videoDetails?.shortDescription) {
+          description = playerData.videoDetails.shortDescription;
+        }
+        if (!duration && playerData.videoDetails?.lengthSeconds) {
+          const s = Number(playerData.videoDetails.lengthSeconds);
+          if (Number.isFinite(s) && s > 0) {
+            duration = formatDurationFromSeconds(s);
+          }
+        }
+      }
+    } catch {}
+  }
+
+  return {
+    title,
+    description,
+    duration,
+    thumbnail: thumbnail || defaultThumbnail,
+  };
+}
+

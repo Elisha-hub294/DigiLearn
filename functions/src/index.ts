@@ -570,54 +570,87 @@ export const getYoutubeVideoDuration = onCall(async (request) => {
     );
   }
   try {
-    const playerResponse = await fetch(
-      "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          videoId,
-          context: {
-            client: {
-              clientName: "WEB",
-              clientVersion: "2.20250101.00.00",
-            },
+    const clients = [
+      { clientName: "TVHTML5", clientVersion: "7.20250101.08.00" },
+      { clientName: "WEB", clientVersion: "2.20250101.00.00" },
+    ];
+
+    for (const client of clients) {
+      try {
+        const playerResponse = await fetch(
+          "https://www.youtube.com/youtubei/v1/player?prettyPrint=false",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              videoId,
+              context: { client },
+            }),
           },
-        }),
-      },
-    );
-    if (playerResponse.ok) {
-      const playerData = (await playerResponse.json()) as {
-        videoDetails?: { lengthSeconds?: string };
-      };
-      const playerSeconds = Number(playerData.videoDetails?.lengthSeconds ?? 0);
-      if (Number.isFinite(playerSeconds) && playerSeconds > 0) {
-        return { duration: playerSeconds };
-      }
+        );
+        if (playerResponse.ok) {
+          const playerData = (await playerResponse.json()) as {
+            videoDetails?: { lengthSeconds?: string };
+          };
+          const playerSeconds = Number(
+            playerData.videoDetails?.lengthSeconds ?? 0,
+          );
+          if (Number.isFinite(playerSeconds) && playerSeconds > 0) {
+            return { duration: playerSeconds };
+          }
+        }
+      } catch {}
     }
 
     const response = await fetch(
       `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`,
-      { headers: { "User-Agent": "Mozilla/5.0" } },
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+      },
     );
-    if (!response.ok) {
-      throw new Error(`YouTube returned ${response.status}`);
+    if (response.ok) {
+      const html = await response.text();
+
+      const itempropMatch = html.match(
+        /itemprop="duration"\s+content="PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?"/i,
+      );
+      if (itempropMatch) {
+        const hours = Number(itempropMatch[1] || 0);
+        const minutes = Number(itempropMatch[2] || 0);
+        const seconds = Number(itempropMatch[3] || 0);
+        const total = hours * 3600 + minutes * 60 + seconds;
+        if (total > 0) {
+          return { duration: total };
+        }
+      }
+
+      const approxMatch = html.match(/"approxDurationMs"\s*:\s*"(\d+)"/);
+      if (approxMatch?.[1]) {
+        const ms = Number(approxMatch[1]);
+        if (Number.isFinite(ms) && ms > 0) {
+          return { duration: Math.round(ms / 1000) };
+        }
+      }
+
+      const durationMatch =
+        html.match(/"lengthSeconds"\s*:\s*"(\d+)"/) ||
+        html.match(/\\?"lengthSeconds\\?"\s*:\s*\\?"(\d+)\\?"/) ||
+        html.match(/&quot;lengthSeconds&quot;\s*:\s*&quot;(\d+)&quot;/);
+      const totalSeconds = Number(durationMatch?.[1] ?? 0);
+
+      if (Number.isFinite(totalSeconds) && totalSeconds > 0) {
+        return { duration: totalSeconds };
+      }
     }
 
-    const html = await response.text();
-    const durationMatch =
-      html.match(/"lengthSeconds"\s*:\s*"(\d+)"/) ||
-      html.match(/\\?"lengthSeconds\\?"\s*:\s*\\?"(\d+)\\?"/) ||
-      html.match(/&quot;lengthSeconds&quot;\s*:\s*&quot;(\d+)&quot;/);
-    const totalSeconds = Number(durationMatch?.[1] ?? 0);
-
-    return {
-      duration:
-        Number.isFinite(totalSeconds) && totalSeconds > 0 ? totalSeconds : null,
-    };
+    return { duration: null };
   } catch (error) {
     console.error("Failed to fetch YouTube duration:", error);
-    throw new HttpsError("unavailable", "Unable to fetch video duration.");
+    return { duration: null };
   }
 });
 

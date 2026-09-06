@@ -1,4 +1,10 @@
-import { extractYoutubeId, getVideoThumbnailUrl } from "@/utils/videoUtils";
+import {
+  extractYoutubeId,
+  fetchYoutubeDurationDirectly,
+  fetchYoutubeVideoMeta,
+  formatDurationFromSeconds,
+  getVideoThumbnailUrl,
+} from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
@@ -31,26 +37,6 @@ import {
 } from "../services/notifications";
 import { invalidateLocalCaches, LOCAL_CACHE_KEYS } from "../utils/localCache";
 
-function formatDurationFromSeconds(totalSeconds: number): string {
-  if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
-    return "00:00";
-  }
-
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) {
-    return [hours, minutes, seconds]
-      .map((value) => String(value).padStart(2, "0"))
-      .join(":");
-  }
-
-  return [minutes, seconds]
-    .map((value) => String(value).padStart(2, "0"))
-    .join(":");
-}
-
 function isValidYouTubeVideoUrl(url: string): boolean {
   const trimmed = url.trim();
   if (!trimmed) {
@@ -82,107 +68,6 @@ function isValidYouTubeVideoUrl(url: string): boolean {
 
 function formatLessonTitle(value: string): string {
   return value.replace(/[^\p{L}\p{N}\s\/]/gu, "").replace(/\s+/g, " ");
-}
-
-async function fetchYoutubeVideoMeta(videoUrl: string) {
-  const videoId = extractYoutubeId(videoUrl);
-  if (!videoId) {
-    return { title: "", description: "", duration: "", thumbnail: "" };
-  }
-
-  const apiKey =
-    process.env.EXPO_PUBLIC_YOUTUBE_API_KEY ||
-    process.env.YOUTUBE_API_KEY ||
-    "";
-
-  try {
-    let serverDuration = "";
-    try {
-      const getYoutubeVideoDuration = httpsCallable<
-        { videoId: string },
-        { duration?: number | null }
-      >(functions, "getYoutubeVideoDuration");
-      const durationResult = await getYoutubeVideoDuration({ videoId });
-      const totalSeconds = durationResult.data.duration;
-      if (typeof totalSeconds === "number") {
-        serverDuration = formatDurationFromSeconds(totalSeconds);
-      }
-    } catch {}
-
-    if (apiKey) {
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${apiKey}`,
-      );
-      if (response.ok) {
-        const data = await response.json();
-        const item = data.items?.[0];
-        const title = item?.snippet?.title || "";
-        const description = item?.snippet?.description || "";
-        const durationISO = item?.contentDetails?.duration;
-
-        if (durationISO) {
-          const match = durationISO.match(
-            /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/,
-          );
-          if (match) {
-            const hours = Number(match[1] || 0);
-            const minutes = Number(match[2] || 0);
-            const seconds = Number(match[3] || 0);
-            const totalSeconds = hours * 3600 + minutes * 60 + seconds;
-
-            return {
-              title,
-              description,
-              duration:
-                formatDurationFromSeconds(totalSeconds) || serverDuration,
-              thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-            };
-          }
-        }
-
-        if (title) {
-          return {
-            title,
-            description,
-            duration: serverDuration,
-            thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-          };
-        }
-      }
-    }
-
-    const oEmbedResponse = await fetch(
-      `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`,
-    );
-
-    if (oEmbedResponse.ok) {
-      const data = await oEmbedResponse.json();
-
-      return {
-        title: typeof data.title === "string" ? data.title : "",
-        description: "",
-        duration: serverDuration,
-        thumbnail:
-          typeof data.thumbnail_url === "string"
-            ? data.thumbnail_url
-            : `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-      };
-    }
-
-    return {
-      title: "",
-      description: "",
-      duration: "",
-      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-    };
-  } catch {
-    return {
-      title: "",
-      description: "",
-      duration: "",
-      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-    };
-  }
 }
 
 export default function AddTrendingLessonScreen() {
@@ -219,6 +104,21 @@ export default function AddTrendingLessonScreen() {
         ? auth.currentUser.photoURL
         : "";
 
+  const callServerDuration = async (ytId: string): Promise<string | null> => {
+    try {
+      const getYoutubeVideoDuration = httpsCallable<
+        { videoId: string },
+        { duration?: number | null }
+      >(functions, "getYoutubeVideoDuration");
+      const durationResult = await getYoutubeVideoDuration({ videoId: ytId });
+      const totalSeconds = durationResult.data?.duration;
+      if (typeof totalSeconds === "number" && totalSeconds > 0) {
+        return formatDurationFromSeconds(totalSeconds);
+      }
+    } catch {}
+    return null;
+  };
+
   const handleTitleChange = (value: string) => {
     setTitle(formatLessonTitle(value));
   };
@@ -248,7 +148,7 @@ export default function AddTrendingLessonScreen() {
     setLinkError("");
     setMetaLoading(true);
     try {
-      const meta = await fetchYoutubeVideoMeta(value.trim());
+      const meta = await fetchYoutubeVideoMeta(value.trim(), callServerDuration);
       setDuration(meta.duration || "");
       setThumbnail(meta.thumbnail || "");
       setDescription(meta.description || "");
@@ -301,7 +201,26 @@ export default function AddTrendingLessonScreen() {
         thumbnail.trim(),
         link.trim(),
       );
-      const finalDuration = duration.trim() || "00:00";
+
+      let finalDuration = duration.trim();
+      if (!finalDuration || finalDuration === "00:00") {
+        const videoId = extractYoutubeId(link.trim());
+        if (videoId) {
+          const directDur = await fetchYoutubeDurationDirectly(videoId);
+          if (directDur && directDur !== "00:00") {
+            finalDuration = directDur;
+          } else {
+            const serverDur = await callServerDuration(videoId);
+            if (serverDur && serverDur !== "00:00") {
+              finalDuration = serverDur;
+            }
+          }
+        }
+      }
+      if (!finalDuration) {
+        finalDuration = "00:00";
+      }
+
       const teacherValue = teacherName.trim() || "Teacher";
       const avatarValue = teacherAvatar.trim();
       const subjectsToSave = [
@@ -465,6 +384,31 @@ export default function AddTrendingLessonScreen() {
               </View>
             </View>
           )}
+
+          <View style={styles.fieldHeaderRow}>
+            <Text style={[styles.label, { color: themeColors.subtitle }]}>
+              Duration
+            </Text>
+            {duration && duration !== "00:00" ? (
+              <Text style={[styles.detectedBadge, { color: colors.primary }]}>
+                Auto-detected
+              </Text>
+            ) : null}
+          </View>
+          <TextInput
+            value={duration}
+            onChangeText={setDuration}
+            placeholder="e.g. 10:30 (Auto-detected from link)"
+            style={[
+              styles.input,
+              {
+                backgroundColor: themeColors.white,
+                borderColor: themeColors.border,
+                color: themeColors.text,
+              },
+            ]}
+            placeholderTextColor={themeColors.subtitle}
+          />
 
           <Text style={[styles.label, { color: themeColors.subtitle }]}>
             Title
@@ -758,6 +702,17 @@ const styles = StyleSheet.create({
   label: {
     color: colors.subtitle,
     fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 8,
+    marginTop: spacing.md,
+  },
+  fieldHeaderRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  detectedBadge: {
+    fontSize: 12,
     fontWeight: "600",
     marginBottom: 8,
     marginTop: spacing.md,
