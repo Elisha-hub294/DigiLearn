@@ -40,7 +40,7 @@ import { FirebaseImage } from "../ui/FirebaseImage";
 import { ReportDialog } from "../ui/ReportDialog";
 import { Skeleton } from "../ui/Skeleton";
 
-type TopicalNote = {
+export type TopicalNote = {
   id: string;
   owner?: string;
   title?: string;
@@ -53,6 +53,7 @@ type TopicalNote = {
   document?: string;
   book?: string | string[];
   updatedAt?: any;
+  createdAt?: any;
   level?: string;
   readStatus?: string;
   isRead?: boolean;
@@ -90,6 +91,79 @@ type FeaturedNoteCardProps = {
 };
 
 const normalizeKey = (str: string) => str.trim().toLowerCase();
+
+export async function loadFeaturedNotesMetadata(): Promise<{
+  subjectAvatars: Record<string, string>;
+  defaultAvatar: string;
+}> {
+  let defaultAvatar = "";
+  const subjectAvatars: Record<string, string> = {};
+
+  try {
+    const [subjectsSnap, defaultSnap] = await Promise.all([
+      getDocs(collection(db, "subject")),
+      getDocs(collection(db, "default")),
+    ]);
+
+    defaultSnap.docs.forEach((d) => {
+      const data = d.data();
+      if (
+        typeof data.name === "string" &&
+        normalizeKey(data.name) === "user" &&
+        typeof data.icon === "string"
+      ) {
+        defaultAvatar = data.icon.trim();
+      }
+    });
+
+    subjectsSnap.docs.forEach((d) => {
+      const data = d.data();
+      if (typeof data.name === "string" && typeof data.avatar === "string") {
+        subjectAvatars[normalizeKey(data.name)] = data.avatar.trim();
+      }
+    });
+  } catch (e) {
+    console.warn("Could not fetch featured note metadata", e);
+  }
+
+  return { subjectAvatars, defaultAvatar };
+}
+
+export async function loadFeaturedNotes(
+  subject?: string,
+): Promise<TopicalNote[]> {
+  try {
+    const notesSnap = await getDocs(
+      query(collection(db, "pages"), orderBy("updatedAt", "desc")),
+    );
+    const allNotes = notesSnap.docs.map((d) => {
+      const data = d.data() as Record<string, unknown>;
+      return {
+        id: d.id,
+        ...data,
+        document:
+          [data.doc, data.document, data.pdf, data.url].find(
+            (v): v is string => typeof v === "string" && v.length > 0,
+          ) ?? undefined,
+      } as TopicalNote;
+    });
+
+    if (subject) {
+      return allNotes.filter((note) => {
+        const noteSubjects = Array.isArray(note.subject)
+          ? note.subject
+          : [note.subject ?? ""];
+        return noteSubjects.some(
+          (entry) => normalizeKey(entry) === normalizeKey(subject),
+        );
+      });
+    }
+    return allNotes;
+  } catch (e) {
+    console.error("Error loading featured notes:", e);
+    return [];
+  }
+}
 
 export const FeaturedNoteCard = ({
   subject,
@@ -144,85 +218,27 @@ export const FeaturedNoteCard = ({
   useEffect(() => {
     let active = true;
 
-    const loadMetadata = async () => {
-      const [notesSnap, subjectsSnap, defaultSnap] = await Promise.all([
-        providedNotes
-          ? Promise.resolve(null)
-          : getDocs(
-              query(collection(db, "pages"), orderBy("updatedAt", "desc")),
-            ),
-        getDocs(collection(db, "subject")),
-        getDocs(collection(db, "default")),
-      ]);
+    const loadAll = async () => {
+      try {
+        const metadata = await loadFeaturedNotesMetadata();
+        if (!active) return;
+        setDefaultAvatar(metadata.defaultAvatar);
+        setSubjectAvatars(metadata.subjectAvatars);
 
-      if (!active) return;
-
-      let userDefaultIcon = "";
-      defaultSnap.docs.forEach((d) => {
-        const data = d.data();
-        if (
-          typeof data.name === "string" &&
-          normalizeKey(data.name) === "user" &&
-          typeof data.icon === "string"
-        ) {
-          userDefaultIcon = data.icon.trim();
+        if (!providedNotes) {
+          const loadedNotes = await loadFeaturedNotes(subject);
+          if (!active) return;
+          setNotes(loadedNotes);
         }
-      });
-      setDefaultAvatar(userDefaultIcon);
-
-      const subjectMap: Record<string, string> = {};
-      subjectsSnap.docs.forEach((d) => {
-        const data = d.data();
-        if (typeof data.name === "string" && typeof data.avatar === "string") {
-          subjectMap[normalizeKey(data.name)] = data.avatar.trim();
-        }
-      });
-      setSubjectAvatars(subjectMap);
-
-      const allNotes =
-        notesSnap?.docs.map((d) => {
-          const data = d.data() as Record<string, unknown>;
-          return {
-            id: d.id,
-            ...data,
-            document:
-              [data.doc, data.document, data.pdf, data.url].find(
-                (v): v is string => typeof v === "string" && v.length > 0,
-              ) ?? undefined,
-          } as TopicalNote;
-        }) ?? [];
-      const filteredNotes = subject
-        ? allNotes.filter((note) => {
-            const noteSubjects = Array.isArray(note.subject)
-              ? note.subject
-              : [note.subject ?? ""];
-            return noteSubjects.some(
-              (entry) => normalizeKey(entry) === normalizeKey(subject),
-            );
-          })
-        : allNotes;
-
-      if (!providedNotes) {
-        setNotes(filteredNotes);
+      } catch (e) {
+        console.error("Error loading featured notes:", e);
+        if (active) setNotes([]);
+      } finally {
+        if (active) setLoading(false);
       }
     };
 
-    if (providedNotes) {
-      loadMetadata().catch((e) => {
-        console.error("Error loading featured note metadata:", e);
-        if (active) setNotes([]);
-      });
-      return () => {
-        active = false;
-      };
-    }
-
-    loadMetadata()
-      .catch((e) => {
-        console.error("Error loading featured notes:", e);
-        if (active) setNotes([]);
-      })
-      .finally(() => active && setLoading(false));
+    loadAll();
 
     return () => {
       active = false;
@@ -332,26 +348,26 @@ const SkeletonNoteCard = ({ isWide }: { isWide: boolean }) => {
   );
 };
 
-const FeaturedNoteItem = ({
+export const FeaturedNoteItem = ({
   note,
-  subjectAvatars,
-  defaultAvatar,
-  isWide,
-  source,
+  subjectAvatars = {},
+  defaultAvatar = "",
+  isWide = false,
+  source = "home",
   subject,
-  hideAvatar,
-  includeHiddenItems,
-  isVisible,
+  hideAvatar = false,
+  includeHiddenItems = false,
+  isVisible = true,
 }: {
   note: TopicalNote;
-  subjectAvatars: Record<string, string>;
-  defaultAvatar: string;
-  isWide: boolean;
-  source: "home" | "library" | "pages";
+  subjectAvatars?: Record<string, string>;
+  defaultAvatar?: string;
+  isWide?: boolean;
+  source?: "home" | "library" | "pages";
   subject?: string;
   hideAvatar?: boolean;
   includeHiddenItems?: boolean;
-  isVisible: boolean;
+  isVisible?: boolean;
 }) => {
   const { user, profile } = useProfile();
   const { colors: themeColors, isDark } = useTheme();

@@ -23,6 +23,7 @@ import { colors, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import { loadTrendingLessons } from "../../services/trendingLessonsService";
+import { alternateByProperty, shuffleWithSeed } from "../../utils/feedAlgorithm";
 
 type FirestoreLesson = {
   id?: string;
@@ -154,6 +155,7 @@ export default function VideosScreen() {
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
+  const [shuffleSeed, setShuffleSeed] = useState(() => Date.now());
   const flashListRef = useRef<FlashListRef<LessonRecord>>(null);
   const trendingSectionY = useRef<number>(0);
   const isTablet = width >= 768;
@@ -212,6 +214,7 @@ export default function VideosScreen() {
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    setShuffleSeed(Date.now());
     setRefreshToken((current) => current + 1);
   }, []);
 
@@ -229,7 +232,7 @@ export default function VideosScreen() {
     });
   }, [navigation, onRefresh, route.key]);
 
-  const visibleLatest = useMemo(() => {
+  const filteredLessons = useMemo(() => {
     if (subject === "All") {
       return lessons;
     }
@@ -240,16 +243,28 @@ export default function VideosScreen() {
     );
   }, [lessons, subject]);
 
+  const visibleLatest = useMemo(() => {
+    if (filteredLessons.length <= 1) return filteredLessons;
+    if (subject === "All") {
+      return alternateByProperty(
+        filteredLessons,
+        (lesson) => lesson.subject,
+        shuffleSeed,
+      );
+    }
+    return shuffleWithSeed(filteredLessons, shuffleSeed);
+  }, [filteredLessons, subject, shuffleSeed]);
+
   const trendingLessons = useMemo(() => {
     if (subject === "All") {
       return [...lessons]
         .sort((left, right) => Number(right.visits) - Number(left.visits))
         .slice(0, 3);
     }
-    return [...visibleLatest]
+    return [...filteredLessons]
       .sort((left, right) => Number(right.visits) - Number(left.visits))
       .slice(0, 3);
-  }, [lessons, subject, visibleLatest]);
+  }, [lessons, subject, filteredLessons]);
 
   const showEmptyState = !loading && !isOffline && visibleLatest.length === 0;
   const onlineEmptyTitle = isOffline

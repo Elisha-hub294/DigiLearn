@@ -182,6 +182,71 @@ const teacherPostCollections = [
   "teacherUpdates",
 ];
 
+export async function loadTeacherMetadata(): Promise<{
+  teacherAvatars: Record<string, string>;
+  ownerProfiles: Record<string, { name: string; avatar?: string }>;
+  defaultUserAvatar: string | null;
+}> {
+  let defaultUserAvatar: string | null = null;
+  const avatarMap: Record<string, string> = {};
+  const profiles: Record<string, { name: string; avatar?: string }> = {};
+
+  try {
+    const [defaultSnap, teachersSnap] = await Promise.all([
+      getDocs(collection(db, "default")),
+      getDocs(collection(db, "teachers")),
+    ]);
+
+    defaultSnap.docs.forEach((doc) => {
+      const data = doc.data();
+      if (data.name === "user" && typeof data.icon === "string") {
+        defaultUserAvatar = data.icon;
+      }
+    });
+
+    teachersSnap.docs.forEach((doc) => {
+      const data = doc.data();
+      const name = typeof data.name === "string" ? data.name : "Teacher";
+      const avatar =
+        typeof data.avatar === "string" ? data.avatar : undefined;
+      avatarMap[name] = avatar || "";
+      profiles[doc.id] = { name, avatar };
+      if (
+        typeof data.name === "string" &&
+        typeof data.avatar === "string"
+      ) {
+        avatarMap[data.name] = data.avatar;
+      }
+    });
+  } catch (err) {
+    console.warn("Could not fetch teacher metadata", err);
+  }
+
+  return { teacherAvatars: avatarMap, ownerProfiles: profiles, defaultUserAvatar };
+}
+
+export async function loadTeacherPosts(): Promise<TeacherPost[]> {
+  for (const collectionName of teacherPostCollections) {
+    try {
+      const postsRef = collection(db, collectionName);
+      const postsQuery = query(postsRef, orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(postsQuery);
+      const fetchedPosts = snapshot.docs.map((doc) =>
+        normalizeTeacherPost(doc),
+      );
+      if (fetchedPosts.length > 0) {
+        return fetchedPosts;
+      }
+    } catch (queryError) {
+      console.warn(
+        `Teacher post collection ${collectionName} unavailable`,
+        queryError,
+      );
+    }
+  }
+  return [];
+}
+
 export const TeacherPostCard = ({
   posts: providedPosts,
 }: {
@@ -226,106 +291,26 @@ export const TeacherPostCard = ({
   useEffect(() => {
     let isMounted = true;
 
-    // Fetch default user icon
-    const fetchDefaultIcons = async () => {
-      try {
-        const defaultRef = collection(db, "default");
-        const defaultSnap = await getDocs(defaultRef);
+    const loadAll = async () => {
+      const metadata = await loadTeacherMetadata();
+      if (!isMounted) return;
+      setTeacherAvatars(metadata.teacherAvatars);
+      setOwnerProfiles(metadata.ownerProfiles);
+      setDefaultUserAvatar(metadata.defaultUserAvatar);
 
-        defaultSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          if (data.name === "user" && typeof data.icon === "string") {
-            if (isMounted) setDefaultUserAvatar(data.icon);
-          }
-        });
-      } catch (err) {
-        console.warn("Could not fetch default icons", err);
-      }
-    };
-
-    // Fetch teachers list for avatars mapping
-    const fetchTeachersAvatars = async () => {
-      try {
-        const teachersRef = collection(db, "teachers");
-        const teachersSnap = await getDocs(teachersRef);
-        const avatarMap: Record<string, string> = {};
-        const profiles: Record<string, { name: string; avatar?: string }> = {};
-
-        teachersSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          const name = typeof data.name === "string" ? data.name : "Teacher";
-          const avatar =
-            typeof data.avatar === "string" ? data.avatar : undefined;
-          avatarMap[name] = avatar || "";
-          profiles[doc.id] = { name, avatar };
-          if (
-            typeof data.name === "string" &&
-            typeof data.avatar === "string"
-          ) {
-            avatarMap[data.name] = data.avatar;
-          }
-        });
-
-        if (isMounted) {
-          setTeacherAvatars(avatarMap);
-          setOwnerProfiles(profiles);
-        }
-      } catch (err) {
-        console.warn("Could not fetch teachers list", err);
-      }
-    };
-
-    // Fetch posts
-    const fetchTeacherPost = async () => {
       if (providedPosts) {
         setPosts(providedPosts);
         setLoading(false);
         return;
       }
-      try {
-        for (const collectionName of teacherPostCollections) {
-          try {
-            const postsRef = collection(db, collectionName);
-            const postsQuery = query(postsRef, orderBy("createdAt", "desc"));
-            const snapshot = await getDocs(postsQuery);
 
-            if (!isMounted) return;
-
-            const fetchedPosts = snapshot.docs.map((doc) =>
-              normalizeTeacherPost(doc),
-            );
-
-            if (fetchedPosts.length > 0) {
-              setPosts(fetchedPosts);
-              setLoading(false);
-              return;
-            }
-          } catch (queryError) {
-            console.warn(
-              `Teacher post collection ${collectionName} unavailable`,
-              queryError,
-            );
-          }
-        }
-
-        if (isMounted) {
-          setPosts([]);
-        }
-      } catch (error) {
-        console.error("Failed to load teacher post", error);
-        if (isMounted) {
-          setPosts([]);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
+      const fetched = await loadTeacherPosts();
+      if (!isMounted) return;
+      setPosts(fetched);
+      setLoading(false);
     };
 
-    fetchDefaultIcons();
-    fetchTeachersAvatars();
-    fetchTeacherPost();
+    loadAll();
 
     return () => {
       isMounted = false;
@@ -377,22 +362,22 @@ export const TeacherPostCard = ({
   );
 };
 
-const TeacherPostItem = ({
+export const TeacherPostItem = ({
   postItem,
-  index,
-  isWide,
-  teacherAvatars,
-  ownerProfiles,
-  defaultUserAvatar,
-  isVisible,
+  index = 0,
+  isWide = false,
+  teacherAvatars = {},
+  ownerProfiles = {},
+  defaultUserAvatar = null,
+  isVisible = true,
 }: {
   postItem: TeacherPost;
-  index: number;
-  isWide: boolean;
-  teacherAvatars: Record<string, string>;
-  ownerProfiles: Record<string, { name: string; avatar?: string }>;
-  defaultUserAvatar: string | null;
-  isVisible: boolean;
+  index?: number;
+  isWide?: boolean;
+  teacherAvatars?: Record<string, string>;
+  ownerProfiles?: Record<string, { name: string; avatar?: string }>;
+  defaultUserAvatar?: string | null;
+  isVisible?: boolean;
 }) => {
   const { user, profile } = useProfile();
   const { colors } = useTheme();

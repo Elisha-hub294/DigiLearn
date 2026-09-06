@@ -14,45 +14,57 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BookCarousel } from "../../components/home/BookCarousel";
-import { CoursesCarousel } from "../../components/home/CoursesCarousel";
-import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
-import { FloatingAssistantButton } from "../../components/home/FloatingAssistantButton";
-import { TeacherPostCard } from "../../components/home/TeacherPostCard";
-import { TopicalNotesSlider } from "../../components/home/TopicalNotesSlider";
-import { PaperCarousel } from "../../components/library/PaperCarousel";
-import { Skeleton } from "../../components/ui/Skeleton";
 
 import { auth } from "../../../firebaseConfig";
+import { BookCarousel } from "../../components/home/BookCarousel";
+import { CoursesCarousel } from "../../components/home/CoursesCarousel";
+import {
+  FeaturedNoteItem,
+  loadFeaturedNotes,
+  loadFeaturedNotesMetadata,
+  TopicalNote,
+} from "../../components/home/FeaturedNoteCard";
+import { FloatingAssistantButton } from "../../components/home/FloatingAssistantButton";
+import {
+  loadTeacherMetadata,
+  loadTeacherPosts,
+  TeacherPost,
+  TeacherPostItem,
+} from "../../components/home/TeacherPostCard";
+import { TopicalNotesSlider } from "../../components/home/TopicalNotesSlider";
+import { BookCard } from "../../components/library/BookCard";
+import { PaperCard } from "../../components/library/PaperCard";
+import { PaperCarousel } from "../../components/library/PaperCarousel";
 import { Header } from "../../components/ui/Header";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { SectionHeader } from "../../components/ui/SectionHeader";
+import { Skeleton } from "../../components/ui/Skeleton";
+import { VideoLesson } from "../../components/ui/TrendingVideoCard";
+import { VideoCard } from "../../components/ui/VideoCard";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { PaperSection, useLibraryData } from "../../hooks/useLibraryData";
+import { PaperItem, PaperSection, useLibraryData } from "../../hooks/useLibraryData";
+import { recordUserActivity } from "../../services/activityService";
+import { BookRecord, loadBooks } from "../../services/booksService";
 import { clearGuestMode, isGuestMode } from "../../services/guestService";
+import { loadTrendingLessons } from "../../services/trendingLessonsService";
 import { getUserOnboardingState } from "../../services/userProfile";
+import { interleaveFeedItems } from "../../utils/feedAlgorithm";
 import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
 import LoadingScreen from "../loading";
 
-// Deterministic Pseudo-Random Number Generator (Mulberry32)
-function mulberry32(seed: number) {
-  let t = (seed += 0x6d2b79f5);
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-}
-
-type FeedModule = {
-  id: string;
-  type: string;
-  render: () => React.ReactNode;
-};
+type FeedItem =
+  | { kind: "teacherPost"; id: string; data: TeacherPost; subject?: string }
+  | { kind: "videoLesson"; id: string; data: VideoLesson; subject?: string }
+  | { kind: "featuredNote"; id: string; data: TopicalNote; subject?: string }
+  | { kind: "book"; id: string; data: BookRecord; subject?: string }
+  | { kind: "paper"; id: string; data: PaperItem; subject?: string }
+  | { kind: "break"; id: string; type: string; render: () => React.ReactNode };
 
 function HomePastPapers({
   collections,
@@ -81,7 +93,7 @@ function HomePastPapers({
   }, [collections]);
 
   return (
-    <View>
+    <View style={styles.breakSection}>
       {groups.map((group) => (
         <View key={group.type} style={styles.paperTypeSection}>
           {group.sections.map((section) => (
@@ -107,40 +119,90 @@ export default function HomeScreen() {
   const route = useRoute();
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
-  const { paperCollections } = useLibraryData();
+  const { paperCollections, onRefresh: refreshLibraryData } = useLibraryData();
+
   const [refreshing, setRefreshing] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
   const [authCheckReady, setAuthCheckReady] = useState(false);
   const [shuffleSeed, setShuffleSeed] = useState(() => Date.now());
   const scrollRef = useRef<ScrollView>(null);
 
+  // Raw Content Pools
+  const [teacherPosts, setTeacherPosts] = useState<TeacherPost[]>([]);
+  const [teacherMeta, setTeacherMeta] = useState<{
+    teacherAvatars: Record<string, string>;
+    ownerProfiles: Record<string, { name: string; avatar?: string }>;
+    defaultUserAvatar: string | null;
+  }>({ teacherAvatars: {}, ownerProfiles: {}, defaultUserAvatar: null });
+
+  const [videoLessons, setVideoLessons] = useState<VideoLesson[]>([]);
+  const [featuredNotes, setFeaturedNotes] = useState<TopicalNote[]>([]);
+  const [notesMeta, setNotesMeta] = useState<{
+    subjectAvatars: Record<string, string>;
+    defaultAvatar: string;
+  }>({ subjectAvatars: {}, defaultAvatar: "" });
+
+  const [books, setBooks] = useState<BookRecord[]>([]);
+
   // Infinite Scroll & Lazy Loading Pagination State
-  const INITIAL_BATCH_SIZE = 3;
-  const BATCH_INCREMENT = 2;
+  const INITIAL_BATCH_SIZE = 7;
+  const BATCH_INCREMENT = 5;
   const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH_SIZE);
   const [loadingMore, setLoadingMore] = useState(false);
 
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
-  const filteredPaperCollections = useMemo(() => {
-    if (!shouldFilterByInterests(profile)) return paperCollections;
 
-    return paperCollections
-      .map((section) => ({
-        ...section,
-        items: section.items.filter((paper) =>
-          matchesUserInterests(paper.subject, profile?.subjects),
-        ),
-      }))
-      .filter((section) => section.items.length > 0);
-  }, [paperCollections, profile]);
-  const hasPastPapers = filteredPaperCollections.length > 0;
+  // Fetch all pool data
+  const loadAllFeedPools = useCallback(async (force = false) => {
+    try {
+      const [
+        posts,
+        tMeta,
+        lessons,
+        notes,
+        nMeta,
+        bks,
+      ] = await Promise.all([
+        loadTeacherPosts(),
+        loadTeacherMetadata(),
+        loadTrendingLessons(force),
+        loadFeaturedNotes(),
+        loadFeaturedNotesMetadata(),
+        loadBooks(force),
+      ]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setShowLoading(false), 1100);
-    return () => clearTimeout(timer);
+      setTeacherPosts(posts);
+      setTeacherMeta(tMeta);
+      setVideoLessons(
+        lessons.map((lesson) => ({
+          ...lesson,
+          uploadedAt: lesson.uploadedAt || "Recently added",
+        })),
+      );
+      setFeaturedNotes(notes);
+      setNotesMeta(nMeta);
+      setBooks(bks);
+    } catch (err) {
+      console.warn("Failed to load feed pool data:", err);
+    }
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) void loadAllFeedPools();
+    });
+    const timer = setTimeout(() => {
+      if (active) setShowLoading(false);
+    }, 1000);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [loadAllFeedPools]);
+
+  // Auth gate check
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -184,13 +246,15 @@ export default function HomeScreen() {
     return () => unsubscribe();
   }, [router]);
 
-  const onRefresh = useCallback(() => {
+  // Pull-to-refresh
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Reset visible batch count & trigger new algorithmic seed
     setVisibleCount(INITIAL_BATCH_SIZE);
     setShuffleSeed(Date.now());
-    setTimeout(() => setRefreshing(false), 800);
-  }, []);
+    refreshLibraryData();
+    await loadAllFeedPools(true);
+    setTimeout(() => setRefreshing(false), 600);
+  }, [loadAllFeedPools, refreshLibraryData]);
 
   useEffect(() => {
     const addTabPressListener = navigation.addListener as unknown as (
@@ -206,106 +270,167 @@ export default function HomeScreen() {
     });
   }, [navigation, onRefresh, route.key]);
 
-  // Modern Feed Pool Definitions
-  const candidateModules: Omit<FeedModule, "id">[] = useMemo(
-    () => [
+  // Filter Past Papers by user interests
+  const filteredPaperCollections = useMemo(() => {
+    if (!shouldFilterByInterests(profile)) return paperCollections;
+
+    return paperCollections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((paper) =>
+          matchesUserInterests(paper.subject, profile?.subjects),
+        ),
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [paperCollections, profile]);
+
+  const allPastPaperItems = useMemo<PaperItem[]>(() => {
+    return filteredPaperCollections.flatMap((sec) => sec.items);
+  }, [filteredPaperCollections]);
+
+  // Filter other pools by user interests
+  const filterByInterestsActive = shouldFilterByInterests(profile);
+
+  const filteredTeacherPosts = useMemo(() => {
+    if (!filterByInterestsActive) return teacherPosts;
+    return teacherPosts.filter((post) =>
+      matchesUserInterests(post.subject, profile?.subjects),
+    );
+  }, [filterByInterestsActive, profile?.subjects, teacherPosts]);
+
+  const filteredVideoLessons = useMemo(() => {
+    if (!filterByInterestsActive) return videoLessons;
+    return videoLessons.filter((lesson) =>
+      matchesUserInterests(lesson.subject, profile?.subjects),
+    );
+  }, [filterByInterestsActive, profile?.subjects, videoLessons]);
+
+  const filteredFeaturedNotes = useMemo(() => {
+    if (!filterByInterestsActive) return featuredNotes;
+    return featuredNotes.filter((note) =>
+      matchesUserInterests(note.subject, profile?.subjects),
+    );
+  }, [filterByInterestsActive, featuredNotes, profile?.subjects]);
+
+  const filteredBooks = useMemo(() => {
+    if (!filterByInterestsActive) return books;
+    return books.filter((book) =>
+      matchesUserInterests(book.subject || book.title, profile?.subjects),
+    );
+  }, [books, filterByInterestsActive, profile?.subjects]);
+
+  // Generate Break Items (Carousels)
+  const breakModules: FeedItem[] = useMemo(() => {
+    const items: FeedItem[] = [
       {
-        type: "topicalNotes",
-        render: () => <TopicalNotesSlider />,
-      },
-      {
-        type: "featuredNote",
-        render: () => <FeaturedNoteCard />,
-      },
-      {
-        type: "teacherPost",
-        render: () => <TeacherPostCard />,
-      },
-      {
+        kind: "break",
+        id: "break-courses",
         type: "courses",
         render: () => <CoursesCarousel />,
       },
       {
+        kind: "break",
+        id: "break-books",
         type: "books",
         render: () => <BookCarousel />,
       },
-      ...(hasPastPapers
-        ? [
-            {
-              type: "pastPapers",
-              render: () => (
-                <HomePastPapers
-                  collections={filteredPaperCollections}
-                  onSeeAll={(paperType, paperYear) =>
-                    router.push(
-                      paperType
-                        ? ({
-                            pathname: "/see-all",
-                            params: {
-                              type: "papers",
-                              paperType,
-                              ...(paperYear ? { paperYear } : {}),
-                            },
-                          } as any)
-                        : "/see-all?type=papers",
-                    )
-                  }
-                />
-              ),
-            },
-          ]
-        : []),
-    ],
-    [filteredPaperCollections, hasPastPapers, router],
-  );
+    ];
 
-  // Modern Feed Randomization Engine:
-  // Generates a rich, non-repetitive feed order based on seed
-  const feedItems = useMemo(() => {
-    const prng = (index: number) => mulberry32(shuffleSeed + index * 101);
-
-    // Always start with Topical Notes slider as top discovery item
-    const topItem: FeedModule = {
-      id: `topical-0`,
-      type: candidateModules[0].type,
-      render: candidateModules[0].render,
-    };
-
-    const restPool = candidateModules.slice(1);
-    const pool = [...restPool];
-
-    // Fisher-Yates PRNG Shuffle
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = Math.floor(prng(i) * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
-    }
-
-    // Build extended feed items list
-    const result: FeedModule[] = [topItem];
-    let prevType = topItem.type;
-
-    for (let i = 0; i < pool.length; i++) {
-      let candidate = pool[i];
-      // Avoid placing identical card type adjacent
-      if (candidate.type === prevType && i + 1 < pool.length) {
-        candidate = pool[i + 1];
-        pool[i + 1] = pool[i];
-      }
-      result.push({
-        id: `${candidate.type}-${i}`,
-        type: candidate.type,
-        render: candidate.render,
+    if (filteredPaperCollections.length > 0) {
+      items.push({
+        kind: "break",
+        id: "break-papers",
+        type: "papers",
+        render: () => (
+          <HomePastPapers
+            collections={filteredPaperCollections}
+            onSeeAll={(paperType, paperYear) =>
+              router.push(
+                paperType
+                  ? ({
+                      pathname: "/see-all",
+                      params: {
+                        type: "papers",
+                        paperType,
+                        ...(paperYear ? { paperYear } : {}),
+                      },
+                    } as any)
+                  : "/see-all?type=papers",
+              )
+            }
+          />
+        ),
       });
-      prevType = candidate.type;
     }
 
-    return result;
-  }, [shuffleSeed, candidateModules]);
+    return items;
+  }, [filteredPaperCollections, router]);
 
-  // Handle Dynamic Scroll-Triggered Lazy Loading
+  // Interleave and randomize individual items into a continuous social feed!
+  const feedItems = useMemo<FeedItem[]>(() => {
+    const teacherItems: FeedItem[] = filteredTeacherPosts.map((post) => ({
+      kind: "teacherPost",
+      id: `teacher-${post.id}`,
+      data: post,
+      subject: post.subject,
+    }));
+
+    const videoItems: FeedItem[] = filteredVideoLessons.map((lesson) => ({
+      kind: "videoLesson",
+      id: `video-${lesson.id}`,
+      data: lesson,
+      subject: lesson.subject,
+    }));
+
+    const noteItems: FeedItem[] = filteredFeaturedNotes.map((note) => ({
+      kind: "featuredNote",
+      id: `note-${note.id}`,
+      data: note,
+      subject: Array.isArray(note.subject) ? note.subject[0] : note.subject,
+    }));
+
+    const bookItems: FeedItem[] = filteredBooks.map((book) => ({
+      kind: "book",
+      id: `book-${book.id}`,
+      data: book,
+      subject: book.subject,
+    }));
+
+    const paperItems: FeedItem[] = allPastPaperItems.map((paper, idx) => ({
+      kind: "paper",
+      id: `paper-${paper.id || idx}`,
+      data: paper,
+      subject: paper.subject,
+    }));
+
+    return interleaveFeedItems<FeedItem>({
+      buckets: [
+        { type: "teacherPost", items: teacherItems, weight: 2 },
+        { type: "videoLesson", items: videoItems, weight: 2 },
+        { type: "featuredNote", items: noteItems, weight: 2 },
+        { type: "book", items: bookItems, weight: 1.2 },
+        { type: "paper", items: paperItems, weight: 1.2 },
+      ],
+      seed: shuffleSeed,
+      getItemType: (item) => item.kind,
+      getItemSubject: (item) => (item.kind !== "break" ? item.subject : undefined),
+      breakItems: breakModules,
+      breakInterval: 6,
+    });
+  }, [
+    filteredTeacherPosts,
+    filteredVideoLessons,
+    filteredFeaturedNotes,
+    filteredBooks,
+    allPastPaperItems,
+    shuffleSeed,
+    breakModules,
+  ]);
+
+  // Scroll handler for incremental batch loading
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    const paddingToBottom = 350;
+    const paddingToBottom = 400;
     const isNearEnd =
       layoutMeasurement.height + contentOffset.y >=
       contentSize.height - paddingToBottom;
@@ -317,7 +442,7 @@ export default function HomeScreen() {
           Math.min(prev + BATCH_INCREMENT, feedItems.length),
         );
         setLoadingMore(false);
-      }, 350);
+      }, 250);
     }
   };
 
@@ -355,28 +480,134 @@ export default function HomeScreen() {
             <Header showPublishButton />
             <SearchBar placeholder="Search DigiLearn..." />
 
-            {visibleFeed.map((item, idx) => (
-              <Animated.View
-                key={item.id}
-                entering={FadeInUp.duration(400 + idx * 40)}
-                style={styles.section}
-              >
-                {item.render()}
-              </Animated.View>
-            ))}
+            {/* Story-style topical discovery slider always at top */}
+            <View style={styles.storiesSection}>
+              <TopicalNotesSlider />
+            </View>
+
+            {/* Continuous Interleaved Social Feed */}
+            {visibleFeed.map((item, idx) => {
+              if (item.kind === "teacherPost") {
+                return (
+                  <View key={item.id} style={styles.feedCardWrapper}>
+                    <TeacherPostItem
+                      postItem={item.data}
+                      index={idx}
+                      teacherAvatars={teacherMeta.teacherAvatars}
+                      ownerProfiles={teacherMeta.ownerProfiles}
+                      defaultUserAvatar={teacherMeta.defaultUserAvatar}
+                      isVisible
+                    />
+                  </View>
+                );
+              }
+
+              if (item.kind === "videoLesson") {
+                return (
+                  <View key={item.id} style={styles.feedCardWrapper}>
+                    <VideoCard item={item.data} index={idx} isGrid={false} />
+                  </View>
+                );
+              }
+
+              if (item.kind === "featuredNote") {
+                return (
+                  <View key={item.id} style={styles.feedCardWrapper}>
+                    <FeaturedNoteItem
+                      note={item.data}
+                      subjectAvatars={notesMeta.subjectAvatars}
+                      defaultAvatar={notesMeta.defaultAvatar}
+                      source="home"
+                      isVisible
+                    />
+                  </View>
+                );
+              }
+
+              if (item.kind === "book") {
+                return (
+                  <View key={item.id} style={styles.feedCardWrapper}>
+                    <View style={styles.itemHeaderBadge}>
+                      <Text style={[styles.itemBadgeText, { color: themeColors.primary }]}>
+                        📖 Featured Textbook {item.data.subject ? `• ${item.data.subject}` : ""}
+                      </Text>
+                    </View>
+                    <BookCard
+                      item={{
+                        id: item.data.id,
+                        title: item.data.title,
+                        author: item.data.author,
+                        description: item.data.subject || "Textbook resource",
+                        image: item.data.image,
+                        owner: item.data.owner,
+                      }}
+                      width="100%"
+                      marginRight={0}
+                      onPress={() => {
+                        if (auth.currentUser?.uid) {
+                          recordUserActivity(auth.currentUser.uid, "book", item.data.id);
+                        }
+                        router.push({
+                          pathname: "/book-preview",
+                          params: { id: item.data.id, source: "home", returnTo: "/" },
+                        } as any);
+                      }}
+                    />
+                  </View>
+                );
+              }
+
+              if (item.kind === "paper") {
+                return (
+                  <View key={item.id} style={styles.feedCardWrapper}>
+                    <View style={styles.itemHeaderBadge}>
+                      <Text style={[styles.itemBadgeText, { color: themeColors.primary }]}>
+                        📝 Past Exam Paper {item.data.year ? `• ${item.data.year}` : ""}
+                      </Text>
+                    </View>
+                    <PaperCard
+                      id={item.data.id}
+                      title={item.data.title}
+                      subject={item.data.subject}
+                      year={item.data.year}
+                      image={item.data.image}
+                      document={item.data.document}
+                      description={item.data.description}
+                      level={item.data.level}
+                      pageNumber={item.data.pageNumber}
+                      paperCode={item.data.paperCode}
+                      paperNumber={item.data.paperNumber}
+                      owner={item.data.owner}
+                      width="100%"
+                      marginRight={0}
+                    />
+                  </View>
+                );
+              }
+
+              if (item.kind === "break") {
+                return (
+                  <View key={item.id} style={styles.breakWrapper}>
+                    {item.render()}
+                  </View>
+                );
+              }
+
+              return null;
+            })}
 
             {/* Inline Lazy Loading & End Footer */}
             <View style={styles.feedFooter}>
               {loadingMore ? (
                 <View
                   style={styles.loaderWrap}
-                  accessibilityLabel="Loading more resources"
+                  accessibilityLabel="Loading more feed resources"
                 >
                   {[0, 1, 2].map((item) => (
                     <Skeleton key={item} style={styles.loaderSkeleton} />
                   ))}
                 </View>
-              ) : isAllLoaded ? (
+              ) : isAllLoaded && feedItems.length > 0 ? (
                 <Text style={[styles.endText, { color: themeColors.subtitle }]}>
                   You&apos;re all caught up! ✨
                 </Text>
@@ -413,17 +644,31 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
     width: "100%",
   },
-  section: {
-    marginBottom: spacing.sm,
+  storiesSection: {
+    marginBottom: spacing.md,
+  },
+  feedCardWrapper: {
+    marginBottom: spacing.xs,
+  },
+  breakWrapper: {
+    marginVertical: spacing.md,
+  },
+  breakSection: {
+    marginBottom: spacing.md,
   },
   paperTypeSection: {
     marginBottom: spacing.lg,
   },
-  paperYear: {
-    color: colors.subtitle,
-    fontSize: 13,
+  itemHeaderBadge: {
+    marginBottom: 6,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  itemBadgeText: {
+    fontSize: 12,
     fontWeight: "700",
-    marginBottom: spacing.sm,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   feedFooter: {
     paddingVertical: spacing.lg,
@@ -434,7 +679,11 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: spacing.sm,
   },
-  loaderSkeleton: { width: "100%", height: 64, borderRadius: 10 },
+  loaderSkeleton: {
+    width: "100%",
+    height: 72,
+    borderRadius: 12,
+  },
   endText: {
     color: colors.subtitle,
     fontSize: 13,

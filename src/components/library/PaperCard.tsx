@@ -8,7 +8,8 @@ import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 type PaperCardProps = {
   id?: string;
   title: string;
-  width?: number;
+  width?: number | string;
+  marginRight?: number;
   subject?: string;
   year?: string;
   pages?: string;
@@ -21,12 +22,14 @@ type PaperCardProps = {
   paperNumber?: string | number;
   owner?: string;
   onDeleted?: () => void;
+  style?: any;
 };
 
 export function PaperCard({
   id,
   title,
   width,
+  marginRight,
   image,
   document,
   subject,
@@ -38,6 +41,7 @@ export function PaperCard({
   paperNumber,
   owner,
   onDeleted,
+  style,
 }: PaperCardProps) {
   const router = useRouter();
   const { colors: themeColors } = useTheme();
@@ -101,6 +105,8 @@ export function PaperCard({
         styles.card,
         { backgroundColor: themeColors.white, borderColor: themeColors.border },
         width !== undefined && { width },
+        marginRight !== undefined && { marginRight },
+        style,
       ]}
     >
       <Pressable

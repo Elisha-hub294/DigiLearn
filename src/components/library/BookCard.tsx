@@ -19,8 +19,9 @@ type BookCardItem = {
 type BookCardProps = {
   item: BookCardItem;
   onPress?: () => void;
-  width?: number;
+  width?: number | string;
   marginRight?: number;
+  style?: any;
 };
 
 export function BookCard({
@@ -28,6 +29,7 @@ export function BookCard({
   onPress,
   width = 200,
   marginRight = spacing.md,
+  style,
 }: BookCardProps) {
   const { colors, isDark } = useTheme();
   const fallbackCover = getThemeAsset("bookCoverDefault", isDark);
@@ -36,6 +38,7 @@ export function BookCard({
       style={[
         styles.card,
         { width, marginRight, backgroundColor: colors.white },
+        style,
       ]}
     >
       <Pressable
