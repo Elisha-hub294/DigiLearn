@@ -239,11 +239,10 @@ const styles = StyleSheet.create({
   },
   bgGlow: {
     position: "absolute",
-    top: 0,
+    top: "15%",
     left: 0,
     right: 0,
     bottom: 0,
-    top: "15%",
     borderRadius: 999,
     transform: [{ scaleX: 2.5 }],
     opacity: 0.6,
