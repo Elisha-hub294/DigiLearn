@@ -17,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../../firebaseConfig";
 import { BookCarousel } from "../../components/home/BookCarousel";
+import { ContinueLearningShelf } from "../../components/home/ContinueLearningShelf";
 import { CoursesCarousel } from "../../components/home/CoursesCarousel";
 import {
   FeaturedNoteItem,
@@ -479,6 +480,9 @@ export default function HomeScreen() {
           >
             <Header showPublishButton />
             <SearchBar placeholder="Search DigiLearn..." />
+
+            {/* Continue Learning Shelf when user has active lesson progress */}
+            <ContinueLearningShelf />
 
             {/* Story-style topical discovery slider always at top */}
             <View style={styles.storiesSection}>

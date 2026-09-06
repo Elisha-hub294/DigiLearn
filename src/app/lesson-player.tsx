@@ -190,8 +190,15 @@ export default function LessonPlayerScreen() {
     }
 
     if (lessonId) {
-      // Mark an initial progress checkpoint if none existed
-      void saveLessonProgress(lessonId, startSec || 15);
+      // Mark progress checkpoint with lesson metadata
+      void saveLessonProgress(lessonId, startSec || 30, {
+        title: params.title,
+        subject: params.subject,
+        teacher: params.teacher,
+        thumbnail: params.thumbnail,
+        link: params.link,
+        duration: params.duration,
+      });
     }
 
     await WebBrowser.openBrowserAsync(targetUrl, {

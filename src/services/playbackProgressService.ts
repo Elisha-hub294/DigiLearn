@@ -1,12 +1,18 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const PLAYBACK_PREFIX = "@digilearn_playback_progress_";
-const MAX_RECENTS = 20;
+const MAX_RECENTS = 15;
 
 export interface PlaybackProgress {
   lessonId: string;
   positionSeconds: number;
   durationSeconds?: number;
+  title?: string;
+  subject?: string;
+  teacher?: string;
+  thumbnail?: string;
+  link?: string;
+  duration?: string;
   updatedAt: number;
 }
 
@@ -20,7 +26,15 @@ export function formatPlaybackTime(seconds: number): string {
 export async function saveLessonProgress(
   lessonId: string,
   positionSeconds: number,
-  durationSeconds?: number,
+  metadata?: {
+    durationSeconds?: number;
+    title?: string;
+    subject?: string;
+    teacher?: string;
+    thumbnail?: string;
+    link?: string;
+    duration?: string;
+  },
 ): Promise<void> {
   if (!lessonId || positionSeconds <= 0) return;
 
@@ -28,7 +42,15 @@ export async function saveLessonProgress(
     const data: PlaybackProgress = {
       lessonId,
       positionSeconds: Math.floor(positionSeconds),
-      durationSeconds: durationSeconds ? Math.floor(durationSeconds) : undefined,
+      durationSeconds: metadata?.durationSeconds
+        ? Math.floor(metadata.durationSeconds)
+        : undefined,
+      title: metadata?.title,
+      subject: metadata?.subject,
+      teacher: metadata?.teacher,
+      thumbnail: metadata?.thumbnail,
+      link: metadata?.link,
+      duration: metadata?.duration,
       updatedAt: Date.now(),
     };
     await AsyncStorage.setItem(`${PLAYBACK_PREFIX}${lessonId}`, JSON.stringify(data));
@@ -51,6 +73,39 @@ export async function getLessonProgress(
     return parsed;
   } catch {
     return null;
+  }
+}
+
+export async function getAllRecentProgress(): Promise<PlaybackProgress[]> {
+  try {
+    const allKeys = await AsyncStorage.getAllKeys();
+    const playbackKeys = allKeys.filter((k) => k.startsWith(PLAYBACK_PREFIX));
+    if (playbackKeys.length === 0) return [];
+
+    const keyPairs = await AsyncStorage.multiGet(playbackKeys);
+    const results: PlaybackProgress[] = [];
+
+    for (const [, val] of keyPairs) {
+      if (val) {
+        try {
+          const parsed = JSON.parse(val) as PlaybackProgress;
+          if (parsed && parsed.lessonId && parsed.title) {
+            results.push(parsed);
+          }
+        } catch {
+          // ignore corrupted items
+        }
+      }
+    }
+
+    return results
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+      .slice(0, MAX_RECENTS);
+  } catch (error) {
+    if (__DEV__) {
+      console.warn("Failed to get all recent progress:", error);
+    }
+    return [];
   }
 }
 
