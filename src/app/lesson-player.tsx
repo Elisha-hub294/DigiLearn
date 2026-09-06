@@ -599,6 +599,82 @@ export default function LessonPlayerScreen() {
                   "No description is available for this lesson."}
               </Text>
             </Animated.View>
+
+            {/* AI Assistant Help Card */}
+            <Animated.View
+              entering={FadeInDown.delay(250).duration(400)}
+              style={[
+                styles.aiCard,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                },
+              ]}
+            >
+              <View style={styles.aiCardHeader}>
+                <View
+                  style={[
+                    styles.aiIconBadge,
+                    { backgroundColor: themeColors.lightBackground },
+                  ]}
+                >
+                  <Ionicons
+                    name="sparkles"
+                    size={18}
+                    color={themeColors.primary}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[styles.aiCardTitle, { color: themeColors.text }]}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    Need help with this topic?
+                  </Text>
+                  <Text
+                    style={[
+                      styles.aiCardSubtitle,
+                      { color: themeColors.subtitle },
+                    ]}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    Ask DigiLearn AI for concept breakdowns, summaries, or practice questions.
+                  </Text>
+                </View>
+              </View>
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Ask AI Tutor about this lesson"
+                accessibilityHint="Opens AI assistant chat with lesson context"
+                style={[
+                  styles.aiButton,
+                  { backgroundColor: themeColors.primary },
+                ]}
+                onPress={() => {
+                  const subjectContext = params.subject
+                    ? ` in ${params.subject}`
+                    : "";
+                  const prompt = `Can you explain the key concepts and summary for the lesson "${params.title ?? "this topic"}"${subjectContext}?`;
+                  router.push({
+                    pathname: "/assistant",
+                    params: { initialPrompt: prompt },
+                  } as never);
+                }}
+              >
+                <Ionicons
+                  name="chatbubble-ellipses-outline"
+                  size={16}
+                  color="#FFFFFF"
+                />
+                <Text
+                  style={styles.aiButtonText}
+                  maxFontSizeMultiplier={1.3}
+                >
+                  Ask AI Tutor
+                </Text>
+              </Pressable>
+            </Animated.View>
           </ScrollView>
         </View>
       </View>
@@ -874,5 +950,48 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: "500",
+  },
+  aiCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    marginTop: 16,
+    padding: 18,
+    marginBottom: 24,
+  },
+  aiCardHeader: {
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "flex-start",
+    marginBottom: 14,
+  },
+  aiIconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiCardTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  aiCardSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  aiButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  aiButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });
