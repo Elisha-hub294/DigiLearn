@@ -1,10 +1,9 @@
-import { DocumentSnapshot } from "firebase/firestore";
-import { useCallback, useEffect, useState } from "react";
+import { DocumentSnapshot, QueryDocumentSnapshot } from "firebase/firestore";
+
 import { BookRecord, loadBooksPaginated } from "../services/booksService";
-import {
-  loadTrendingLessonsPaginated,
-  TrendingLessonRecord,
-} from "../services/trendingLessonsService";
+import { loadTrendingLessonsPaginated, TrendingLessonRecord } from "../services/trendingLessonsService";
+import { listReports, ReportRecord } from "../services/reportService";
+import { usePaginated } from "./usePaginated";
 
 export interface LibraryPageState<T> {
   items: T[];
@@ -22,212 +21,40 @@ const DEFAULT_PAGE_SIZE = 20;
  * Hook for paginated book loading with support for multiple views
  */
 export function useBooksPagination(): LibraryPageState<BookRecord> {
-  const [items, setItems] = useState<BookRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [cursor, setCursor] = useState<DocumentSnapshot | undefined>();
-
-  const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const result = await loadBooksPaginated(DEFAULT_PAGE_SIZE, cursor);
-      setItems((prev) => [...prev, ...result.items]);
-      setHasMore(result.hasMore);
-      setCursor(result.nextCursor);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load books";
-      setError(message);
-      console.error("Book pagination error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [cursor, hasMore, loading]);
-
-  const reset = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setCursor(undefined);
-    setItems([]);
-
-    try {
-      const result = await loadBooksPaginated(DEFAULT_PAGE_SIZE);
-      setItems(result.items);
-      setHasMore(result.hasMore);
-      setCursor(result.nextCursor);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load books";
-      setError(message);
-      console.error("Book pagination error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const refresh = useCallback(async () => {
-    await reset();
-  }, [reset]);
-
-  // Initial load
-  useEffect(() => {
-    reset();
-  }, []);
-
-  return {
-    items,
-    loading,
-    error,
-    hasMore,
-    loadMore,
-    reset,
-    refresh,
-  };
+  return usePaginated<BookRecord>(async (cursor?: DocumentSnapshot) => {
+    const result = await loadBooksPaginated(DEFAULT_PAGE_SIZE, cursor);
+    return {
+      items: result.items,
+      hasMore: result.hasMore,
+      nextCursor: result.nextCursor,
+    };
+  }, DEFAULT_PAGE_SIZE);
 }
 
 /**
  * Hook for paginated trending lessons loading
  */
 export function useTrendingLessonsPagination(): LibraryPageState<TrendingLessonRecord> {
-  const [items, setItems] = useState<TrendingLessonRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [cursor, setCursor] = useState<DocumentSnapshot | undefined>();
-
-  const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const result = await loadTrendingLessonsPaginated(
-        DEFAULT_PAGE_SIZE,
-        cursor,
-      );
-      setItems((prev) => [...prev, ...result.items]);
-      setHasMore(result.hasMore);
-      setCursor(result.nextCursor);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load lessons";
-      setError(message);
-      console.error("Lesson pagination error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [cursor, hasMore, loading]);
-
-  const reset = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setCursor(undefined);
-    setItems([]);
-
-    try {
-      const result = await loadTrendingLessonsPaginated(DEFAULT_PAGE_SIZE);
-      setItems(result.items);
-      setHasMore(result.hasMore);
-      setCursor(result.nextCursor);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load lessons";
-      setError(message);
-      console.error("Lesson pagination error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const refresh = useCallback(async () => {
-    await reset();
-  }, [reset]);
-
-  // Initial load
-  useEffect(() => {
-    reset();
-  }, []);
-
-  return {
-    items,
-    loading,
-    error,
-    hasMore,
-    loadMore,
-    reset,
-    refresh,
-  };
+  return usePaginated<TrendingLessonRecord>(async (cursor?: DocumentSnapshot) => {
+    const result = await loadTrendingLessonsPaginated(DEFAULT_PAGE_SIZE, cursor);
+    return {
+      items: result.items,
+      hasMore: result.hasMore,
+      nextCursor: result.nextCursor,
+    };
+  }, DEFAULT_PAGE_SIZE);
 }
 
 /**
  * Hook for paginated reports loading (for admin screens)
  */
-export function useReportsPagination(pageSize: number = 20) {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [cursor, setCursor] = useState<DocumentSnapshot | undefined>();
-
-  const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      // TODO: Implement paginated reports query
-      // For now, this is a placeholder
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load reports";
-      setError(message);
-      console.error("Reports pagination error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [cursor, hasMore, loading]);
-
-  const reset = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setCursor(undefined);
-    setItems([]);
-
-    try {
-      // TODO: Implement paginated reports query
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load reports";
-      setError(message);
-      console.error("Reports pagination error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const refresh = useCallback(async () => {
-    await reset();
-  }, [reset]);
-
-  // Initial load
-  useEffect(() => {
-    reset();
-  }, []);
-
-  return {
-    items,
-    loading,
-    error,
-    hasMore,
-    loadMore,
-    reset,
-    refresh,
-  };
+export function useReportsPagination(pageSize: number = 20): LibraryPageState<ReportRecord> {
+  return usePaginated<ReportRecord>(async (cursor?: DocumentSnapshot) => {
+    const { reports, hasMore, cursor: nextCursor } = await listReports(cursor as QueryDocumentSnapshot);
+    return {
+      items: reports,
+      hasMore,
+      nextCursor,
+    };
+  }, pageSize);
 }
