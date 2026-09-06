@@ -4,6 +4,7 @@ import {
   fetchYoutubeVideoMeta,
   formatDurationFromSeconds,
   getVideoThumbnailUrl,
+  isValidYouTubeVideoUrl,
 } from "@/utils/videoUtils";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -36,35 +37,6 @@ import {
   buildLibraryNotification,
 } from "../services/notifications";
 import { invalidateLocalCaches, LOCAL_CACHE_KEYS } from "../utils/localCache";
-
-function isValidYouTubeVideoUrl(url: string): boolean {
-  const trimmed = url.trim();
-  if (!trimmed) {
-    return false;
-  }
-
-  const videoId = extractYoutubeId(trimmed);
-  if (!videoId) {
-    return false;
-  }
-
-  try {
-    const parsed = new URL(trimmed);
-    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
-    const isYouTubeHost =
-      host === "youtube.com" ||
-      host === "youtu.be" ||
-      host === "m.youtube.com" ||
-      host === "music.youtube.com" ||
-      host.endsWith(".youtube.com");
-
-    return isYouTubeHost;
-  } catch {
-    return /^(https?:\/\/)?(www\.|m\.)?(youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/|v\/)|youtu\.be\/)/i.test(
-      trimmed,
-    );
-  }
-}
 
 function formatLessonTitle(value: string): string {
   return value.replace(/[^\p{L}\p{N}\s\/]/gu, "").replace(/\s+/g, " ");

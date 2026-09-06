@@ -1,5 +1,14 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  DimensionValue,
+  ImageSourcePropType,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from "react-native";
 import { radius, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -10,7 +19,7 @@ type BookCardItem = {
   title: string;
   author: string;
   description: string;
-  image: any;
+  image?: ImageSourcePropType | string | null;
   progress?: number;
   badge?: string;
   owner?: string;
@@ -19,9 +28,9 @@ type BookCardItem = {
 type BookCardProps = {
   item: BookCardItem;
   onPress?: () => void;
-  width?: number | string;
+  width?: DimensionValue;
   marginRight?: number;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 };
 
 export function BookCard({

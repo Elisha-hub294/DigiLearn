@@ -70,6 +70,52 @@ export function extractYoutubeId(url?: string): string | null {
   return null;
 }
 
+/**
+ * Builds a valid YouTube embed URL with optional starting timestamp.
+ */
+export function getYoutubeEmbedUrl(
+  rawUrl?: string,
+  startSeconds?: number,
+): string {
+  if (!rawUrl) return "";
+  const id = extractYoutubeId(rawUrl);
+  if (!id) return rawUrl.trim();
+
+  const base = `https://www.youtube.com/embed/${id}`;
+  if (startSeconds && startSeconds > 0) {
+    return `${base}?start=${Math.floor(startSeconds)}`;
+  }
+  return base;
+}
+
+/**
+ * Checks if a string is a valid YouTube video URL.
+ */
+export function isValidYouTubeVideoUrl(url?: string): boolean {
+  if (!url || typeof url !== "string") return false;
+  const trimmed = url.trim();
+  if (!trimmed) return false;
+
+  const videoId = extractYoutubeId(trimmed);
+  if (!videoId) return false;
+
+  try {
+    const parsed = new URL(trimmed);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    return (
+      host === "youtube.com" ||
+      host === "youtu.be" ||
+      host === "m.youtube.com" ||
+      host === "music.youtube.com" ||
+      host.endsWith(".youtube.com")
+    );
+  } catch {
+    return /^(https?:\/\/)?(www\.|m\.)?(youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/|v\/)|youtu\.be\/)/i.test(
+      trimmed,
+    );
+  }
+}
+
 export type VideoLinkCheck =
   | { valid: true }
   | { valid: false; message: string };

@@ -41,28 +41,7 @@ import {
 } from "../services/playbackProgressService";
 import { toggleSavedItem } from "../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../utils/nativeToast";
-import { validateVideoLink } from "../utils/videoUtils";
-
-function getYoutubeEmbedUrl(rawUrl?: string, startSeconds?: number) {
-  if (!rawUrl) {
-    return "";
-  }
-
-  const trimmed = rawUrl.trim();
-  const watchMatch = trimmed.match(/[?&]v=([^&#]+)/);
-  const shortMatch = trimmed.match(/youtu\.be\/([^?#]+)/);
-  const id = watchMatch?.[1] ?? shortMatch?.[1];
-
-  if (!id) {
-    return trimmed;
-  }
-
-  const base = `https://www.youtube.com/embed/${id}`;
-  if (startSeconds && startSeconds > 0) {
-    return `${base}?start=${Math.floor(startSeconds)}`;
-  }
-  return base;
-}
+import { getYoutubeEmbedUrl, validateVideoLink } from "../utils/videoUtils";
 
 function resolveImageSource(source: string | undefined, isDark: boolean) {
   if (!source) {

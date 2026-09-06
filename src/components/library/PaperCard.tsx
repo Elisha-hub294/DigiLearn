@@ -1,6 +1,14 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  DimensionValue,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from "react-native";
 import { colors, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
@@ -8,7 +16,7 @@ import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 type PaperCardProps = {
   id?: string;
   title: string;
-  width?: number | string;
+  width?: DimensionValue;
   marginRight?: number;
   subject?: string;
   year?: string;
@@ -22,7 +30,7 @@ type PaperCardProps = {
   paperNumber?: string | number;
   owner?: string;
   onDeleted?: () => void;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 };
 
 export function PaperCard({

@@ -193,6 +193,27 @@ export async function updateConversation(conversation: ConversationRecord) {
   return persistConversation(conversation);
 }
 
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  retries = 2,
+  delayMs = 1000,
+): Promise<T> {
+  let lastError: unknown;
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (i < retries) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, delayMs * Math.pow(2, i)),
+        );
+      }
+    }
+  }
+  throw lastError;
+}
+
 export async function generateAssistantReply(
   prompt: string,
   previousMessages: ChatMessage[],
@@ -240,11 +261,13 @@ export async function generateAssistantReply(
       { prompt: string; conversation: string; systemPrompt: string },
       { text?: string }
     >(functions, "generateAssistantReply");
-    const response = await callable({
-      prompt,
-      conversation: history,
-      systemPrompt,
-    });
+    const response = await withRetry(() =>
+      callable({
+        prompt,
+        conversation: history,
+        systemPrompt,
+      }),
+    );
     return response.data.text || ASSISTANT_UNAVAILABLE_MESSAGE;
   } catch (error) {
     throw new Error(getAssistantErrorMessage(error));
