@@ -348,7 +348,7 @@ export default function SettingsScreen() {
               <SettingsRow
                 icon="file-text"
                 title="Terms and Policies"
-                onPress={() => {}}
+                onPress={() => router.push("/terms-and-policies" as never)}
               />
               <SettingsRow
                 icon="info"

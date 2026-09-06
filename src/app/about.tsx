@@ -4,6 +4,7 @@ import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BackHandler,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -150,6 +151,33 @@ export default function AboutScreen() {
     [version],
   );
 
+  const handleRateApp = useCallback(async () => {
+    const playStoreUrl = "market://details?id=com.digilearn.app";
+    const webFallback = "https://play.google.com/store/apps/details?id=com.digilearn.app";
+    try {
+      const canOpen = await Linking.canOpenURL(playStoreUrl);
+      if (canOpen) {
+        await Linking.openURL(playStoreUrl);
+      } else {
+        await Linking.openURL(webFallback);
+      }
+    } catch {
+      await Linking.openURL(webFallback);
+    }
+  }, []);
+
+  const handleFeedback = useCallback(() => {
+    Linking.openURL("mailto:support@digilearn.com?subject=DigiLearn%20Feedback%20%26%20Support");
+  }, []);
+
+  const handleWebsite = useCallback(() => {
+    Linking.openURL("https://digilearn.com");
+  }, []);
+
+  const handleLegal = useCallback(() => {
+    router.push("/terms-and-policies" as never);
+  }, [router]);
+
   return (
     <SafeAreaView
       style={[styles.safe, { backgroundColor: themeColors.background }]}
@@ -229,20 +257,26 @@ export default function AboutScreen() {
               <AboutRow
                 icon="star"
                 title="Rate Us on Play Store"
-                onPress={() => {}}
+                onPress={handleRateApp}
               />
               <AboutRow
                 icon="message-circle"
                 iconColor={BRAND_BLUE}
                 title="Feedback & Support"
-                onPress={() => {}}
+                onPress={handleFeedback}
               />
               <AboutRow
                 icon="globe"
                 iconColor={BRAND_BLUE}
                 title="Official Website"
                 subtitle="digilearn.com"
-                onPress={() => {}}
+                onPress={handleWebsite}
+              />
+              <AboutRow
+                icon="shield"
+                iconColor={BRAND_BLUE}
+                title="Terms & Privacy Policy"
+                onPress={handleLegal}
               />
               <AboutRow
                 icon="info"

@@ -65,6 +65,7 @@ function AppShell() {
           <Stack.Screen name="teacher-application-review" />
           <Stack.Screen name="teacher-applications" />
           <Stack.Screen name="teacher-profile" />
+          <Stack.Screen name="terms-and-policies" />
           <Stack.Screen name="verify-email" />
           <Stack.Screen name="welcome" />
         </Stack>

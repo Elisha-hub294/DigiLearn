@@ -1,3 +1,4 @@
+import Constants from "expo-constants";
 import {
   FacebookAuthProvider,
   GoogleAuthProvider,
@@ -47,8 +48,16 @@ function getNativeGoogleSigninModule() {
   try {
     const mod = require("@react-native-google-signin/google-signin");
     if (mod && mod.GoogleSignin && typeof mod.GoogleSignin.configure === "function") {
+      const extra = (Constants.expoConfig?.extra as Record<string, any> | undefined) ?? {};
+      const webClientId =
+        process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+        extra.googleWebClientId ||
+        "";
+
       mod.GoogleSignin.configure({
+        webClientId: webClientId || undefined,
         scopes: ["profile", "email"],
+        offlineAccess: true,
       });
     }
     return mod;
