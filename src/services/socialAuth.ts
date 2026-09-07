@@ -68,6 +68,16 @@ function getNativeGoogleSigninModule() {
 
 export function parseAuthError(error: unknown): string {
   if (typeof error === "string") return error;
+  const message =
+    error && typeof error === "object" && "message" in error &&
+    typeof error.message === "string"
+      ? error.message
+      : "";
+
+  if (/deleted_client|OAuth client was deleted/i.test(message)) {
+    return "Google Sign-In is temporarily unavailable because its OAuth client was deleted. Please contact support.";
+  }
+
   if (error && typeof error === "object" && "code" in error) {
     const code = (error as { code: string }).code;
     switch (code) {
@@ -85,8 +95,8 @@ export function parseAuthError(error: unknown): string {
       case "auth/invalid-credential":
         return "Invalid credentials. Please try signing in again.";
       default:
-        if ("message" in error && typeof error.message === "string") {
-          return error.message;
+        if (message) {
+          return message;
         }
         return "Authentication failed. Please try again.";
     }
@@ -117,7 +127,7 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
       return {
         success: false,
         error:
-          "Google Sign-In on mobile requires native Google Play Services (available in a Development Build or standalone APK). Please sign up or log in using your Email & Password in Expo Go.",
+          "Google Sign-In on mobile requires native Google Play Services (available in a Development Build or standalone APK). Please use the email sign-in link in Expo Go.",
       };
     }
 

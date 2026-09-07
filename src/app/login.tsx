@@ -1,6 +1,6 @@
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -21,6 +21,7 @@ import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
+import { sendEmailLink } from "../services/emailLinkAuth";
 import {
   parseAuthError,
   signInWithFacebook,
@@ -35,8 +36,6 @@ function mapAuthError(code: string | undefined) {
       return "Please enter a valid email address.";
     case "auth/user-not-found":
       return "No account found with this email. Try signing up.";
-    case "auth/wrong-password":
-      return "Incorrect password. Please try again.";
     case "auth/too-many-requests":
       return "Too many attempts. Please try again later.";
     case "auth/network-request-failed":
@@ -58,12 +57,9 @@ export default function LoginScreen() {
   const { width } = useWindowDimensions();
   const emailInputRef = useRef<TextInput>(null);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
   const [generalError, setGeneralError] = useState("");
 
   const horizontalPadding = useMemo(() => getHorizontalPadding(width), [width]);
@@ -83,15 +79,8 @@ export default function LoginScreen() {
       setEmailError("");
     }
 
-    if (!password) {
-      setPasswordError("Please enter your password.");
-      hasError = true;
-    } else {
-      setPasswordError("");
-    }
-
     return !hasError;
-  }, [email, password]);
+  }, [email]);
 
   const handleContinue = useCallback(async () => {
     if (isLoading) return;
@@ -102,19 +91,11 @@ export default function LoginScreen() {
 
     try {
       setIsLoading(true);
-      const credential = await signInWithEmailAndPassword(
-        auth,
-        email.trim(),
-        password,
-      );
-      if (!credential.user.emailVerified) {
-        router.replace({
-          pathname: "/verify-email",
-          params: { next: "/" },
-        });
-        return;
-      }
-      router.replace("/");
+      await sendEmailLink(email);
+      router.replace({
+        pathname: "/verify-email",
+        params: { next: "/", email: email.trim() },
+      });
     } catch (error) {
       const code =
         typeof error === "object" && error !== null && "code" in error
@@ -124,18 +105,13 @@ export default function LoginScreen() {
 
       if (code === "auth/invalid-email") {
         setEmailError(message);
-      } else if (code === "auth/wrong-password") {
-        setPasswordError(message);
-        setPassword("");
-      } else if (code === "auth/user-not-found") {
-        setEmailError(message);
       } else {
         setGeneralError(message);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [email, password, isLoading, router, validateFields]);
+  }, [email, isLoading, router, validateFields]);
 
   const handleGoogleSignIn = useCallback(async () => {
     if (isLoading) return;
@@ -182,20 +158,12 @@ export default function LoginScreen() {
   }, [isLoading, router]);
 
   const handleEmailIcon = useCallback(() => {
-    if (email.trim() && password) {
+    if (email.trim()) {
       handleContinue();
     } else {
       emailInputRef.current?.focus();
     }
-  }, [email, password, handleContinue]);
-
-  const toggleShowPassword = useCallback(() => {
-    setShowPassword((c) => !c);
-  }, []);
-
-  const handleForgot = useCallback(() => {
-    router.push({ pathname: "/forgot-password", params: { from } });
-  }, [router, from]);
+  }, [email, handleContinue]);
 
   const handleBack = useCallback(() => {
     if (router.canGoBack()) {
@@ -352,62 +320,6 @@ export default function LoginScreen() {
                 ) : null}
               </View>
 
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Password</Text>
-                <View
-                  style={[
-                    styles.passwordRow,
-                    {
-                      backgroundColor: themeColors.white,
-                      borderColor: themeColors.border,
-                    },
-                    passwordError ? styles.inputError : null,
-                  ]}
-                >
-                  <TextInput
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    placeholder="Enter password"
-                    placeholderTextColor={themeColors.subtitle}
-                    style={[styles.passwordInput, { color: themeColors.text }]}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    textContentType="password"
-                    autoComplete="off"
-                    importantForAutofill="no"
-                    accessibilityLabel="Password"
-                    accessibilityHint="Enter your password"
-                  />
-                  <Pressable
-                    onPress={toggleShowPassword}
-                    style={styles.visibilityButton}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    <Feather
-                      name={showPassword ? "eye-off" : "eye"}
-                      size={20}
-                      color="#666666"
-                    />
-                  </Pressable>
-                </View>
-                {passwordError ? (
-                  <Text style={styles.fieldError}>{passwordError}</Text>
-                ) : null}
-              </View>
-
-              <Pressable
-                onPress={handleForgot}
-                style={styles.forgotRow}
-                accessibilityRole="button"
-                accessibilityLabel="Forgot password"
-              >
-                <Text style={styles.forgotText}>Forgot password?</Text>
-              </Pressable>
-
               {generalError ? (
                 <Text style={styles.generalError}>{generalError}</Text>
               ) : null}
@@ -421,12 +333,14 @@ export default function LoginScreen() {
                   pressed && !isLoading && styles.buttonPressed,
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Continue with email and password"
+                accessibilityLabel="Send email sign-in link"
               >
                 {isLoading ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
-                  <Text style={styles.continueButtonText}>Continue</Text>
+                  <Text style={styles.continueButtonText}>
+                    Send sign-in link
+                  </Text>
                 )}
               </Pressable>
             </View>
@@ -546,26 +460,6 @@ const styles = StyleSheet.create({
     color: colors.dark,
     fontSize: 15,
   },
-  passwordRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    height: 44,
-    backgroundColor: "#D7E4FA",
-    borderColor: "#AABBD5",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-  },
-  passwordInput: { flex: 1, color: colors.dark, fontSize: 15 },
-  visibilityButton: {
-    padding: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  forgotRow: { alignItems: "flex-end" },
-  forgotText: { color: "#444", fontSize: 12, textDecorationLine: "underline" },
   fieldError: { color: "#B91C1C", marginTop: 6 },
   generalError: {
     color: "#B91C1C",

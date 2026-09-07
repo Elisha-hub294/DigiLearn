@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Linking from "expo-linking";
 import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -9,6 +10,11 @@ import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 import { NetworkStatusBanner } from "../components/ui/NetworkStatusBanner";
 import { ProfileProvider } from "../contexts/ProfileContext";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
+import { completeEmailLink } from "../services/emailLinkAuth";
+import {
+  getUserOnboardingState,
+  initializeUserProfile,
+} from "../services/userProfile";
 
 const ONBOARDING_KEY = "onboarding_complete";
 
@@ -29,6 +35,39 @@ function AppShell() {
       }
     })();
   }, [isHydrated, router]);
+
+  useEffect(() => {
+    let active = true;
+
+    const handleUrl = async (url: string) => {
+      try {
+        const user = await completeEmailLink(url);
+        if (!user || !active) return;
+
+        await initializeUserProfile();
+        const onboarding = await getUserOnboardingState(user.uid);
+        if (active) {
+          router.replace(
+            onboarding.accountTypeCompleted ? "/" : "/account-type",
+          );
+        }
+      } catch (error) {
+        console.warn("Unable to complete email sign-in link", error);
+      }
+    };
+
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      void handleUrl(url);
+    });
+    void Linking.getInitialURL().then((url) => {
+      if (url) void handleUrl(url);
+    });
+
+    return () => {
+      active = false;
+      subscription.remove();
+    };
+  }, [router]);
 
   return (
     <ErrorBoundary>

@@ -1,9 +1,5 @@
 import { Feather, FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-} from "firebase/auth";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,10 +15,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
+import { sendEmailLink } from "../services/emailLinkAuth";
 import {
   parseAuthError,
   signInWithFacebook,
@@ -42,10 +38,17 @@ function mapAuthError(code: string | undefined) {
       return "An account with this email already exists. Try logging in instead.";
     case "auth/invalid-email":
       return "Please enter a valid email address.";
-    case "auth/weak-password":
-      return "Your password is too weak. Please choose a stronger password.";
     case "auth/network-request-failed":
       return "Couldn't connect. Please check your internet connection and try again.";
+    case "auth/too-many-requests":
+      return "Too many email links have been requested. Please wait a little and try again.";
+    case "auth/operation-not-allowed":
+      return "Email-link sign-in is not enabled yet. Please enable it in Firebase Authentication and try again.";
+    case "auth/unauthorized-continue-uri":
+    case "auth/unauthorized-domain":
+      return "Email-link sign-in is not configured for this app domain yet. Please contact support.";
+    case "auth/invalid-continue-uri":
+      return "Email-link sign-in is configured with an invalid return URL. Please contact support.";
     case "auth/popup-closed-by-user":
     case "auth/cancelled-popup-request":
       return "Authentication was cancelled.";
@@ -63,14 +66,8 @@ export default function SignUpScreen() {
   const { width } = useWindowDimensions();
   const emailInputRef = useRef<TextInput>(null);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [generalError, setGeneralError] = useState("");
 
   const horizontalPadding = useMemo(() => getHorizontalPadding(width), [width]);
@@ -90,31 +87,8 @@ export default function SignUpScreen() {
       setEmailError("");
     }
 
-    if (!password) {
-      setPasswordError("Password must be at least 6 characters.");
-      hasError = true;
-    } else if (password.length < 6) {
-      setPasswordError("Password must be at least 6 characters.");
-      hasError = true;
-    } else if (password.length > 50) {
-      setPasswordError("Password must be 50 characters or fewer.");
-      hasError = true;
-    } else {
-      setPasswordError("");
-    }
-
-    if (!confirmPassword) {
-      setConfirmPasswordError("Please confirm your password.");
-      hasError = true;
-    } else if (password !== confirmPassword) {
-      setConfirmPasswordError("Passwords do not match.");
-      hasError = true;
-    } else {
-      setConfirmPasswordError("");
-    }
-
     return !hasError;
-  }, [email, password, confirmPassword]);
+  }, [email]);
 
   const handleContinue = useCallback(async () => {
     if (isLoading) {
@@ -129,16 +103,10 @@ export default function SignUpScreen() {
 
     try {
       setIsLoading(true);
-      const credential = await createUserWithEmailAndPassword(
-        auth,
-        email.trim(),
-        password,
-      );
-      await initializeUserProfile();
-      await sendEmailVerification(credential.user);
+      await sendEmailLink(email);
       router.replace({
         pathname: "/verify-email",
-        params: { next: "/account-type" },
+        params: { next: "/account-type", email: email.trim() },
       });
     } catch (error) {
       const code =
@@ -149,15 +117,11 @@ export default function SignUpScreen() {
 
       if (code === "auth/invalid-email") {
         setEmailError(message);
-      } else if (code === "auth/weak-password") {
-        setPasswordError(message);
-      } else {
-        setGeneralError(message);
-      }
+      } else setGeneralError(message);
     } finally {
       setIsLoading(false);
     }
-  }, [email, password, isLoading, router, validateFields]);
+  }, [email, isLoading, router, validateFields]);
 
   const handleGoogleSignUp = useCallback(async () => {
     if (isLoading) return;
@@ -216,14 +180,6 @@ export default function SignUpScreen() {
     }
   }, [isLoading, router]);
 
-  const handleEmailIcon = useCallback(() => {
-    if (email.trim() && password) {
-      handleContinue();
-    } else {
-      emailInputRef.current?.focus();
-    }
-  }, [email, password, handleContinue]);
-
   const handleLoginNavigation = useCallback(() => {
     router.push({
       pathname: "/login",
@@ -243,14 +199,6 @@ export default function SignUpScreen() {
       router.replace(from as any);
     }
   }, [from, router]);
-
-  const toggleShowPassword = useCallback(() => {
-    setShowPassword((current) => !current);
-  }, []);
-
-  const toggleShowConfirmPassword = useCallback(() => {
-    setShowConfirmPassword((current) => !current);
-  }, []);
 
   return (
     <SafeAreaView
@@ -281,7 +229,7 @@ export default function SignUpScreen() {
               </Pressable>
               <Text style={styles.title}>Sign up</Text>
               <Text style={styles.subtitle}>
-                Fill your information or register with your social accounts
+                Enter your email and we will send you a secure sign-in link.
               </Text>
             </View>
 
@@ -307,96 +255,6 @@ export default function SignUpScreen() {
                 ) : null}
               </View>
 
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Password</Text>
-                <View
-                  style={[
-                    styles.passwordRow,
-                    passwordError ? styles.inputError : null,
-                  ]}
-                >
-                  <TextInput
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    placeholder="Enter password"
-                    placeholderTextColor="#9CA3AF"
-                    maxLength={50}
-                    style={styles.passwordInput}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    textContentType="password"
-                    autoComplete="off"
-                    importantForAutofill="no"
-                    accessibilityLabel="Password"
-                    accessibilityHint="Enter your password"
-                  />
-                  <Pressable
-                    onPress={toggleShowPassword}
-                    style={styles.visibilityButton}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    <Feather
-                      name={showPassword ? "eye-off" : "eye"}
-                      size={20}
-                      color="#666666"
-                    />
-                  </Pressable>
-                </View>
-                {passwordError ? (
-                  <Text style={styles.fieldError}>{passwordError}</Text>
-                ) : null}
-              </View>
-
-              <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Confirm password</Text>
-                <View
-                  style={[
-                    styles.passwordRow,
-                    confirmPasswordError ? styles.inputError : null,
-                  ]}
-                >
-                  <TextInput
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry={!showConfirmPassword}
-                    placeholder="Re-enter password"
-                    placeholderTextColor="#9CA3AF"
-                    maxLength={50}
-                    style={styles.passwordInput}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    textContentType="password"
-                    autoComplete="off"
-                    importantForAutofill="no"
-                    accessibilityLabel="Confirm password"
-                    accessibilityHint="Re-enter your password"
-                  />
-                  <Pressable
-                    onPress={toggleShowConfirmPassword}
-                    style={styles.visibilityButton}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      showConfirmPassword
-                        ? "Hide confirmed password"
-                        : "Show confirmed password"
-                    }
-                  >
-                    <Feather
-                      name={showConfirmPassword ? "eye-off" : "eye"}
-                      size={20}
-                      color="#666666"
-                    />
-                  </Pressable>
-                </View>
-                {confirmPasswordError ? (
-                  <Text style={styles.fieldError}>{confirmPasswordError}</Text>
-                ) : null}
-              </View>
-
               {generalError ? (
                 <Text style={styles.generalError}>{generalError}</Text>
               ) : null}
@@ -410,12 +268,14 @@ export default function SignUpScreen() {
                   pressed && !isLoading && styles.buttonPressed,
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Continue with email and password"
+                accessibilityLabel="Send email verification link"
               >
                 {isLoading ? (
                   <ActivityIndicator color={colors.white} />
                 ) : (
-                  <Text style={styles.continueButtonText}>Continue</Text>
+                  <Text style={styles.continueButtonText}>
+                    Send verification link
+                  </Text>
                 )}
               </Pressable>
             </View>
@@ -454,7 +314,7 @@ export default function SignUpScreen() {
               </Pressable>
 
               <Pressable
-                onPress={handleEmailIcon}
+                onPress={handleContinue}
                 style={({ pressed }) => [
                   styles.socialButton,
                   pressed && styles.socialPressed,
@@ -543,28 +403,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     color: colors.dark,
     fontSize: 15,
-  },
-  passwordRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    height: 44,
-    backgroundColor: "#D7E4FA",
-    borderColor: "#AABBD5",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-  },
-  passwordInput: {
-    flex: 1,
-    color: colors.dark,
-    fontSize: 15,
-  },
-  visibilityButton: {
-    padding: 8,
-    justifyContent: "center",
-    alignItems: "center",
   },
   continueButton: {
     width: "100%",

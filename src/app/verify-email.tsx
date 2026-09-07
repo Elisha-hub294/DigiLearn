@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { reload, sendEmailVerification, signOut } from "firebase/auth";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { signOut } from "firebase/auth";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,6 +17,7 @@ import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
+import { sendEmailLink } from "../services/emailLinkAuth";
 
 function getErrorMessage(error: unknown) {
   if (typeof error === "object" && error !== null && "code" in error) {
@@ -25,6 +26,13 @@ function getErrorMessage(error: unknown) {
         return "Too many emails have been requested. Please wait a little and try again.";
       case "auth/network-request-failed":
         return "Couldn't connect. Check your internet connection and try again.";
+      case "auth/operation-not-allowed":
+        return "Email-link sign-in is not enabled yet. Please enable it in Firebase Authentication and try again.";
+      case "auth/unauthorized-continue-uri":
+      case "auth/unauthorized-domain":
+        return "Email-link sign-in is not configured for this app domain yet. Please contact support.";
+      case "auth/invalid-continue-uri":
+        return "Email-link sign-in is configured with an invalid return URL. Please contact support.";
     }
   }
   return "Something went wrong. Please try again.";
@@ -33,7 +41,7 @@ function getErrorMessage(error: unknown) {
 export default function VerifyEmailScreen() {
   const { colors: themeColors } = useTheme();
   const router = useRouter();
-  const { next } = useLocalSearchParams<{ next?: string }>();
+  const { email: emailParam } = useLocalSearchParams<{ email?: string }>();
   const { width } = useWindowDimensions();
   const [isChecking, setIsChecking] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -42,53 +50,28 @@ export default function VerifyEmailScreen() {
 
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(520, width - horizontalPadding * 2);
-  const email = auth.currentUser?.email ?? "your email address";
-
-  const continueAfterVerification = useCallback(() => {
-    const destination = next === "/account-type" ? "/account-type" : "/";
-    router.replace(destination as never);
-  }, [next, router]);
+  const email = emailParam || "your email address";
 
   const checkVerification = useCallback(async () => {
-    const user = auth.currentUser;
-    if (!user || isChecking) return;
+    if (isChecking) return;
 
     setErrorMessage("");
     setMessage("");
     setIsChecking(true);
-    try {
-      await reload(user);
-      if (auth.currentUser?.emailVerified) {
-        continueAfterVerification();
-      } else {
-        setErrorMessage(
-          "Your email is not verified yet. Open the link in your email and try again.",
-        );
-      }
-    } catch (error) {
-      setErrorMessage(getErrorMessage(error));
-    } finally {
-      setIsChecking(false);
-    }
-  }, [continueAfterVerification, isChecking]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (auth.currentUser?.emailVerified) {
-        continueAfterVerification();
-      }
-    }, [continueAfterVerification]),
-  );
+    setMessage(
+      "Open the link in your email. DigiLearn will finish signing you in automatically.",
+    );
+    setIsChecking(false);
+  }, [isChecking]);
 
   const resendVerification = useCallback(async () => {
-    const user = auth.currentUser;
-    if (!user || isSending) return;
+    if (isSending || !emailParam) return;
 
     setErrorMessage("");
     setMessage("");
     setIsSending(true);
     try {
-      await sendEmailVerification(user);
+      await sendEmailLink(emailParam);
       setMessage(`A new verification link was sent to ${email}.`);
     } catch (error) {
       setErrorMessage(getErrorMessage(error));

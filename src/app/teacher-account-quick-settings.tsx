@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -33,6 +33,7 @@ import {
 } from "../utils/profileValidation";
 
 type Subject = { id: string; name: string };
+type ProfileData = Record<string, unknown>;
 type SocialKey =
   | "socials-youtube"
   | "socials-phone"
@@ -144,6 +145,20 @@ function getSubjectNames(items: unknown): string[] {
   return result;
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    switch ((error as { code?: string }).code) {
+      case "permission-denied":
+        return "You no longer have permission to update this profile. Please sign in again.";
+      case "unavailable":
+      case "network-request-failed":
+        return "Couldn't connect. Please check your internet connection and try again.";
+    }
+  }
+
+  return fallback;
+}
+
 function InfoMessage({
   children,
   color = "#3B82F6",
@@ -198,7 +213,7 @@ export default function TeacherAccountQuickSettingsScreen() {
           loadSubjects().catch(() => []),
         ]);
 
-      const profile = teacherSnapshot?.exists()
+      const profile: ProfileData = teacherSnapshot?.exists()
         ? teacherSnapshot.data()
         : {
             ...(userSnapshot?.data() ?? {}),
@@ -303,13 +318,8 @@ export default function TeacherAccountQuickSettingsScreen() {
     closeSocialModal();
   }, [activeSocial, closeSocialModal, socialInput]);
 
-  const saveProfile = useCallback(async () => {
-    if (!user || isSaving) {
-      return;
-    }
-
-    if (!user.emailVerified) {
-      setSaveError("Please verify your email before saving your details.");
+  const saveProfile = useCallback(async (currentUser: User) => {
+    if (isSaving) {
       return;
     }
 
@@ -317,37 +327,63 @@ export default function TeacherAccountQuickSettingsScreen() {
     setIsSaving(true);
 
     try {
+      await currentUser.reload();
+      const refreshedUser = auth.currentUser;
+      if (!refreshedUser || !refreshedUser.emailVerified) {
+        setSaveError("Please verify your email before saving your details.");
+        return;
+      }
+
       const payload = {
         name: normalizeProfileText(name),
         school: normalizeProfileText(school),
-        subjects: selectedSubjects,
+        subjects: getSubjectNames(selectedSubjects),
         filterFeedByInterests,
         ...socialValues,
       };
 
-      const applicationRef = doc(db, "teacherApplications", user.uid);
-      const applicationSnapshot = await getDoc(applicationRef);
-      const userRef = doc(db, "users", user.uid);
-      await setDoc(userRef, payload, { merge: true });
+      const applicationRef = doc(db, "teacherApplications", refreshedUser.uid);
+      const userRef = doc(db, "users", refreshedUser.uid);
+      const teacherRef = doc(db, "teachers", refreshedUser.uid);
+      const [applicationSnapshot, teacherSnapshot] = await Promise.all([
+        getDoc(applicationRef),
+        getDoc(teacherRef),
+      ]);
+
+      // Application status and its audit history are server-owned.
+      if (applicationSnapshot.data()?.status === "rejected") {
+        await resubmitTeacherApplication();
+      }
+
+      const batch = writeBatch(db);
+      batch.set(userRef, payload, { merge: true });
+
       if (applicationSnapshot.exists()) {
-        await setDoc(
+        batch.set(
           applicationRef,
           {
-            applicantId: user.uid,
+            applicantId: refreshedUser.uid,
             ...payload,
-            email: user.email ?? "",
-            updatedAt: new Date(),
+            email: refreshedUser.email ?? "",
+            updatedAt: serverTimestamp(),
           },
           { merge: true },
         );
-        if (applicationSnapshot.data()?.status === "rejected") {
-          await resubmitTeacherApplication();
-        }
       }
+
+      // Approved teacher profiles are read from this collection first.
+      if (teacherSnapshot.exists()) {
+        batch.set(teacherRef, payload, { merge: true });
+      }
+
+      await batch.commit();
       router.replace("/" as never);
-    } catch {
+    } catch (error) {
       setSaveError(
-        "Couldn't save your details. Please check your connection and try again.",
+        getErrorMessage(
+          error,
+          "Couldn't save your details. Please check your connection and try again.",
+        ),
       );
     } finally {
       setIsSaving(false);
@@ -360,7 +396,6 @@ export default function TeacherAccountQuickSettingsScreen() {
     school,
     selectedSubjects,
     socialValues,
-    user,
   ]);
 
   const handleConfirm = useCallback(async () => {
@@ -370,7 +405,9 @@ export default function TeacherAccountQuickSettingsScreen() {
 
     const cleanName = normalizeProfileText(name);
     const cleanSchool = normalizeProfileText(school);
-    const nameError = name.trim() ? validateProfileText(cleanName, "Name") : "";
+    const nameError = !cleanName
+      ? "Please enter your name."
+      : validateProfileText(cleanName, "Name");
     const schoolError = school.trim()
       ? validateProfileText(cleanSchool, "School")
       : "";
@@ -380,7 +417,7 @@ export default function TeacherAccountQuickSettingsScreen() {
       return;
     }
 
-    await saveProfile();
+    await saveProfile(user);
   }, [isSaving, name, saveProfile, school, user]);
 
   const handleLogin = useCallback(() => {
@@ -422,6 +459,7 @@ export default function TeacherAccountQuickSettingsScreen() {
                   onPress={handleSignup}
                   style={({ pressed }) => [
                     styles.primaryButton,
+                    styles.authSignupButton,
                     pressed && styles.buttonPressed,
                   ]}
                 >
@@ -888,6 +926,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 18,
+  },
+  authSignupButton: {
+    flex: 1,
+    minWidth: 120,
+    marginTop: 0,
   },
   secondaryButtonText: {
     color: colors.primary,
