@@ -97,67 +97,78 @@ export function TrendingVideoCard({
 
   return (
     <>
-      <AnimatedPressable
+      <Animated.View
         entering={FadeIn.duration(450)}
-        accessibilityLabel={`Watch trending video: ${item.title}`}
-        accessibilityRole="button"
-        onPressIn={() => {
-          scale.set(withSpring(0.97, { damping: 15, stiffness: 300 }));
-        }}
-        onPressOut={() => {
-          scale.set(withSpring(1, { damping: 15, stiffness: 300 }));
-        }}
-        onPress={openLesson}
         style={[styles.card, { width, marginRight }, animatedStyle]}
       >
-        <View style={styles.thumbnail}>
-          <Image
-            source={resolveVideoImageSource(item.thumbnail, item.link, isDark)}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            transition={250}
-          />
-          <View pointerEvents="none" style={styles.overlay} />
-          <View pointerEvents="none" style={styles.play}>
-            <View
-              style={[styles.playIcon, { backgroundColor: colors.primary }]}
-            >
-              <Ionicons
-                name="play"
-                size={25}
-                color={"white"}
-                style={styles.playIconGlyph}
-              />
+        <AnimatedPressable
+          accessibilityLabel={`Watch trending video: ${item.title}`}
+          accessibilityRole="button"
+          onPressIn={() => {
+            scale.set(withSpring(0.97, { damping: 15, stiffness: 300 }));
+          }}
+          onPressOut={() => {
+            scale.set(withSpring(1, { damping: 15, stiffness: 300 }));
+          }}
+          onPress={openLesson}
+        >
+          <View style={styles.thumbnail}>
+            <Image
+              source={resolveVideoImageSource(
+                item.thumbnail,
+                item.link,
+                isDark,
+              )}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              transition={250}
+            />
+            <View pointerEvents="none" style={styles.overlay} />
+            <View pointerEvents="none" style={styles.play}>
+              <View
+                style={[styles.playIcon, { backgroundColor: colors.primary }]}
+              >
+                <Ionicons
+                  name="play"
+                  size={25}
+                  color={"white"}
+                  style={styles.playIconGlyph}
+                />
+              </View>
+            </View>
+            <View style={styles.duration}>
+              <DurationBadge duration={item.duration} />
             </View>
           </View>
-          <View style={styles.duration}>
-            <DurationBadge duration={item.duration} />
-          </View>
-          <View style={styles.menu}>
-            <ResourceDeleteMenu
-              collection="trendingLessons"
-              id={item.id}
-              title={item.title}
-              data={{ owner: rawItem.owner, thumbnail: item.thumbnail }}
-              light
-            />
-          </View>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[styles.title, styles.truncateText, { color: colors.text }]}
+          >
+            {item.title}
+          </Text>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[
+              styles.meta,
+              styles.truncateText,
+              { color: colors.subtitle },
+            ]}
+          >
+            {item.teacher} • {item.uploadedAt}
+          </Text>
+        </AnimatedPressable>
+        <View style={styles.menu}>
+          <ResourceDeleteMenu
+            collection="trendingLessons"
+            id={item.id}
+            title={item.title}
+            data={{ owner: rawItem.owner, thumbnail: item.thumbnail }}
+            light
+          />
         </View>
-        <Text
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          style={[styles.title, styles.truncateText, { color: colors.text }]}
-        >
-          {item.title}
-        </Text>
-        <Text
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          style={[styles.meta, styles.truncateText, { color: colors.subtitle }]}
-        >
-          {item.teacher} • {item.uploadedAt}
-        </Text>
-      </AnimatedPressable>
+      </Animated.View>
       <ActionDialog
         visible={Boolean(notice)}
         title="Video unavailable"
@@ -171,7 +182,7 @@ export function TrendingVideoCard({
 }
 
 const styles = StyleSheet.create({
-  card: { marginRight: 14 },
+  card: { marginRight: 14, position: "relative" },
   thumbnail: {
     width: "100%", // Explicit width so aspectRatio calculates correctly
     aspectRatio: 1.5,

@@ -30,6 +30,7 @@ import {
 } from "../services/socialAuth";
 import {
   getUserOnboardingState,
+  initializeUserProfile,
   saveGoogleProfilePicture,
 } from "../services/userProfile";
 
@@ -133,6 +134,7 @@ export default function SignUpScreen() {
         email.trim(),
         password,
       );
+      await initializeUserProfile();
       await sendEmailVerification(credential.user);
       router.replace({
         pathname: "/verify-email",
@@ -168,6 +170,7 @@ export default function SignUpScreen() {
         return;
       }
       if (result.success && result.user) {
+        await initializeUserProfile();
         await saveGoogleProfilePicture(result.user);
         const onboarding = await getUserOnboardingState(result.user.uid);
         if (onboarding.accountTypeCompleted && onboarding.type) {
@@ -196,6 +199,7 @@ export default function SignUpScreen() {
         return;
       }
       if (result.success && result.user) {
+        await initializeUserProfile();
         const onboarding = await getUserOnboardingState(result.user.uid);
         if (onboarding.accountTypeCompleted && onboarding.type) {
           router.replace("/" as never);

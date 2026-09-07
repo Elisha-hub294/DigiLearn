@@ -115,8 +115,13 @@ async function findStoragePathByFileName(
   }
 
   async function walk(prefix: string): Promise<string | null> {
-    const currentRef = ref(storage, prefix || "");
-    const listing = await listAll(currentRef);
+    let listing;
+    try {
+      const currentRef = ref(storage, prefix || "");
+      listing = await listAll(currentRef);
+    } catch {
+      return null;
+    }
 
     for (const item of listing.items) {
       const itemName = item.name;
@@ -146,7 +151,7 @@ async function findStoragePathByFileName(
 export async function getFirebaseStorageUrl(
   url: string | undefined,
 ): Promise<string> {
-  if (!url || typeof url !== "string") return "";
+  if (!url || typeof url !== "string" || !url.trim()) return "";
 
   let storagePath: string | null = null;
 

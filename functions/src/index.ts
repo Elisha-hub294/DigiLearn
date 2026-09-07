@@ -19,6 +19,63 @@ const adminAuth = getAuth();
 const messaging = getMessaging();
 const storage = getStorage();
 
+const defaultProfileFields = (request: {
+  auth?: { token?: Record<string, unknown> } | null;
+}) => {
+  const token = request.auth?.token ?? {};
+  const email = typeof token.email === "string" ? token.email : "";
+  const displayName = typeof token.name === "string" ? token.name.trim() : "";
+
+  return {
+    name: displayName || email.split("@")[0] || "DigiLearn learner",
+    email,
+    photoURL: typeof token.picture === "string" ? token.picture : "",
+    bio: "",
+    level: "",
+    school: "",
+    gender: "",
+    subjects: [],
+    filterFeedByInterests: false,
+    accountTypeCompleted: false,
+    type: "",
+    "marked-as-read": [],
+    "hidden-pages": [],
+    "saved-pages": [],
+    "saved-books": [],
+    "saved-lessons": [],
+    "saved-papers": [],
+    "saved-posts": [],
+    "paper-revision-status": {},
+    savedAt: {},
+    joinedAt: FieldValue.serverTimestamp(),
+  };
+};
+
+export const initializeUserProfile = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+
+  const userRef = db.doc(`users/${request.auth.uid}`);
+  const snapshot = await userRef.get();
+  const profile = defaultProfileFields(request);
+
+  if (!snapshot.exists) {
+    await userRef.create(profile);
+    return { created: true };
+  }
+
+  const current = snapshot.data() ?? {};
+  const missing = Object.fromEntries(
+    Object.entries(profile).filter(([key]) => current[key] === undefined),
+  );
+  if (Object.keys(missing).length > 0) {
+    await userRef.set(missing, { merge: true });
+  }
+
+  return { created: false };
+});
+
 export const generateAssistantReply = onCall(
   { secrets: [geminiApiKey] },
   async (request) => {
@@ -445,26 +502,9 @@ export const changeAccountType = onCall(async (request) => {
   const userRef = db.doc(`users/${userId}`);
   const applicationRef = db.doc(`teacherApplications/${userId}`);
   const userSnapshot = await userRef.get();
-  const authUser = request.auth.token;
-  const userData = userSnapshot.data() ?? {
-    name: authUser.name || authUser.email?.split("@")[0] || "DigiLearn learner",
-    email: authUser.email || "",
-    photoURL: authUser.picture || "",
-    bio: "",
-    level: "",
-    school: "",
-    gender: "",
-    subjects: [],
-    filterFeedByInterests: false,
-    "marked-as-read": [],
-    "hidden-pages": [],
-    "saved-pages": [],
-    "saved-books": [],
-    "saved-lessons": [],
-    "saved-posts": [],
-    "paper-revision-status": {},
-    savedAt: {},
-    joinedAt: FieldValue.serverTimestamp(),
+  const userData = {
+    ...defaultProfileFields(request),
+    ...(userSnapshot.data() ?? {}),
   };
 
   if (accountType === "student") {

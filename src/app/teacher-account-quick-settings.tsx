@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -25,6 +25,7 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { loadSubjects } from "../services/subjectsService";
 import { resubmitTeacherApplication } from "../services/teacherApplications";
 import {
   normalizeProfileText,
@@ -161,7 +162,6 @@ function InfoMessage({
 export default function TeacherAccountQuickSettingsScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState("");
   const [school, setSchool] = useState("");
@@ -188,30 +188,27 @@ export default function TeacherAccountQuickSettingsScreen() {
     setSaveError("");
 
     try {
-      const userRef = doc(db, "teachers", currentUser.uid);
-      const [userSnapshot, subjectSnapshot] = await Promise.all([
-        getDoc(userRef),
-        getDocs(collection(db, "subject")),
-      ]);
+      const [teacherSnapshot, userSnapshot, applicationSnapshot, nextSubjects] =
+        await Promise.all([
+          getDoc(doc(db, "teachers", currentUser.uid)).catch(() => null),
+          getDoc(doc(db, "users", currentUser.uid)).catch(() => null),
+          getDoc(doc(db, "teacherApplications", currentUser.uid)).catch(
+            () => null,
+          ),
+          loadSubjects().catch(() => []),
+        ]);
 
-      const profile = userSnapshot.data() ?? {};
+      const profile = teacherSnapshot?.exists()
+        ? teacherSnapshot.data()
+        : {
+            ...(userSnapshot?.data() ?? {}),
+            ...(applicationSnapshot?.data() ?? {}),
+          };
 
-      const nextSubjects = subjectSnapshot.docs.reduce<Subject[]>(
-        (result, item) => {
-          const rawName =
-            typeof item.data().name === "string" ? item.data().name : "";
-          const nameText = normalizeProfileText(rawName);
-          const key = nameText.toLocaleLowerCase();
-          if (
-            nameText &&
-            !result.some((subject) => subject.name.toLocaleLowerCase() === key)
-          ) {
-            result.push({ id: item.id, name: nameText });
-          }
-          return result;
-        },
-        [],
-      );
+      const nextSubjectList = nextSubjects.map((subject) => ({
+        id: subject.id,
+        name: normalizeProfileText(subject.name),
+      }));
 
       const initialName = normalizeProfileText(
         typeof profile.name === "string"
@@ -235,7 +232,7 @@ export default function TeacherAccountQuickSettingsScreen() {
 
       setName(initialName);
       setSchool(initialSchool);
-      setSubjects(nextSubjects);
+      setSubjects(nextSubjectList);
       setSelectedSubjects(initialSelectedSubjects);
       setFilterFeedByInterests(initialFilter);
       setSocialValues(initialSocialValues);
@@ -311,6 +308,11 @@ export default function TeacherAccountQuickSettingsScreen() {
       return;
     }
 
+    if (!user.emailVerified) {
+      setSaveError("Please verify your email before saving your details.");
+      return;
+    }
+
     setSaveError("");
     setIsSaving(true);
 
@@ -323,19 +325,25 @@ export default function TeacherAccountQuickSettingsScreen() {
         ...socialValues,
       };
 
+      const applicationRef = doc(db, "teacherApplications", user.uid);
+      const applicationSnapshot = await getDoc(applicationRef);
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, payload, { merge: true });
-      await setDoc(
-        doc(db, "teacherApplications", user.uid),
-        {
-          applicantId: user.uid,
-          ...payload,
-          email: user.email ?? "",
-          updatedAt: new Date(),
-        },
-        { merge: true },
-      );
-      await resubmitTeacherApplication();
+      if (applicationSnapshot.exists()) {
+        await setDoc(
+          applicationRef,
+          {
+            applicantId: user.uid,
+            ...payload,
+            email: user.email ?? "",
+            updatedAt: new Date(),
+          },
+          { merge: true },
+        );
+        if (applicationSnapshot.data()?.status === "rejected") {
+          await resubmitTeacherApplication();
+        }
+      }
       router.replace("/" as never);
     } catch {
       setSaveError(
@@ -434,234 +442,228 @@ export default function TeacherAccountQuickSettingsScreen() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 40}
         style={styles.keyboardView}
       >
-        <Pressable style={styles.dismissArea} onPress={Keyboard.dismiss}>
-          <ScrollView
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingHorizontal: horizontalPadding },
-            ]}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            style={styles.scroll}
-          >
-            <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
-              <View style={styles.headerRow}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Back to account type"
-                  onPress={() => router.replace("/account-type" as never)}
-                  style={styles.backButton}
-                >
-                  <Feather name="arrow-left" size={22} color={colors.dark} />
-                </Pressable>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingHorizontal: horizontalPadding },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          style={styles.scroll}
+        >
+          <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
+            <View style={styles.headerRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Back to account type"
+                onPress={() => router.replace("/account-type" as never)}
+                style={styles.backButton}
+              >
+                <Feather name="arrow-left" size={22} color={colors.dark} />
+              </Pressable>
 
-                <View style={styles.titleWrap}>
-                  <Text style={styles.title}>Teacher Account</Text>
-                </View>
-
-                <View style={styles.headerSpacer} />
+              <View style={styles.titleWrap}>
+                <Text style={styles.title}>Teacher Account</Text>
               </View>
 
-              <InfoMessage>
-                Help us personalize your teacher experience and connect your
-                students with relevant learning resources.
-              </InfoMessage>
+              <View style={styles.headerSpacer} />
+            </View>
 
-              {isLoading ? (
-                <View style={styles.skeletonWrap}>
-                  <Skeleton style={styles.skeletonLine} />
-                  <Skeleton style={styles.skeletonField} />
-                  <Skeleton style={styles.skeletonField} />
-                  <View style={styles.skeletonChips}>
-                    {[0, 1, 2, 3, 4].map((item) => (
-                      <Skeleton key={item} style={styles.skeletonChip} />
-                    ))}
-                  </View>
+            <InfoMessage>
+              Help us personalize your teacher experience and connect your
+              students with relevant learning resources.
+            </InfoMessage>
+
+            {isLoading ? (
+              <View style={styles.skeletonWrap}>
+                <Skeleton style={styles.skeletonLine} />
+                <Skeleton style={styles.skeletonField} />
+                <Skeleton style={styles.skeletonField} />
+                <View style={styles.skeletonChips}>
+                  {[0, 1, 2, 3, 4].map((item) => (
+                    <Skeleton key={item} style={styles.skeletonChip} />
+                  ))}
                 </View>
-              ) : loadError ? (
-                <View style={styles.errorState}>
-                  <Text style={styles.errorTitle}>
-                    We couldn’t load your profile.
-                  </Text>
-                  <Text style={styles.errorText}>{loadError}</Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Retry loading teacher profile"
-                    onPress={() => user && loadData(user)}
-                    style={({ pressed }) => [
-                      styles.retryButton,
-                      pressed && styles.buttonPressed,
-                    ]}
-                  >
-                    <Text style={styles.retryButtonText}>Try again</Text>
-                  </Pressable>
+              </View>
+            ) : loadError ? (
+              <View style={styles.errorState}>
+                <Text style={styles.errorTitle}>
+                  We couldn&apos;t load your profile.
+                </Text>
+                <Text style={styles.errorText}>{loadError}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Retry loading teacher profile"
+                  onPress={() => user && loadData(user)}
+                  style={({ pressed }) => [
+                    styles.retryButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Text style={styles.retryButtonText}>Try again</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Name</Text>
+                  <TextInput
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="Your name"
+                    placeholderTextColor="#7A8FA8"
+                    style={styles.input}
+                    accessibilityLabel="Name"
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    textContentType="name"
+                  />
                 </View>
-              ) : (
-                <>
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>Name</Text>
-                    <TextInput
-                      value={name}
-                      onChangeText={setName}
-                      placeholder="Your name"
-                      placeholderTextColor="#7A8FA8"
-                      style={styles.input}
-                      accessibilityLabel="Name"
-                      autoCapitalize="words"
-                      autoCorrect={false}
-                      textContentType="name"
-                    />
-                  </View>
 
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>Schools (Optional)</Text>
-                    <TextInput
-                      value={school}
-                      onChangeText={setSchool}
-                      placeholder="Your school"
-                      placeholderTextColor="#7A8FA8"
-                      style={styles.input}
-                      accessibilityLabel="School"
-                      autoCapitalize="words"
-                      autoCorrect={false}
-                      textContentType="organizationName"
-                    />
-                    <InfoMessage>
-                      Adding your school helps you connect with your students
-                      and discover opportunities relevant to your teaching
-                      community.
-                    </InfoMessage>
-                  </View>
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Schools (Optional)</Text>
+                  <TextInput
+                    value={school}
+                    onChangeText={setSchool}
+                    placeholder="Your school"
+                    placeholderTextColor="#7A8FA8"
+                    style={styles.input}
+                    accessibilityLabel="School"
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    textContentType="organizationName"
+                  />
+                  <InfoMessage>
+                    Adding your school helps you connect with your students and
+                    discover opportunities relevant to your teaching community.
+                  </InfoMessage>
+                </View>
 
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>Subjects</Text>
-                    {subjects.length > 0 ? (
-                      <View style={styles.chipsWrap}>
-                        {subjects.map((subject) => {
-                          const isSelected = selectedSubjects.some(
-                            (item) =>
-                              item.localeCompare(subject.name, undefined, {
-                                sensitivity: "accent",
-                              }) === 0,
-                          );
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Subjects</Text>
+                  {subjects.length > 0 ? (
+                    <View style={styles.chipsWrap}>
+                      {subjects.map((subject) => {
+                        const isSelected = selectedSubjects.some(
+                          (item) =>
+                            item.localeCompare(subject.name, undefined, {
+                              sensitivity: "accent",
+                            }) === 0,
+                        );
 
-                          return (
-                            <SubjectChip
-                              key={subject.id}
-                              item={{
-                                id: subject.id,
-                                label: subject.name,
-                                active: isSelected,
-                              }}
-                              onPress={() => handleToggleSubject(subject.name)}
-                            />
-                          );
-                        })}
-                      </View>
-                    ) : (
-                      <Text style={styles.emptySubjects}>
-                        No subjects are available yet.
-                      </Text>
-                    )}
-
-                    <InfoMessage>
-                      Your selected subjects can be changed anytime in
-                      Preferences. We&apos;ll use them to help personalize your
-                      teaching experience and connect you with relevant
-                      resources.
-                    </InfoMessage>
-                  </View>
-
-                  <View style={styles.toggleCard}>
-                    <View style={styles.toggleInfo}>
-                      <Text style={styles.toggleTitle}>
-                        Only show selected interests in feeds
-                      </Text>
-                      <Text style={styles.toggleSubtitle}>
-                        Filter your Home and Library feeds to only display
-                        resources matching your selected subjects.
-                      </Text>
-                    </View>
-                    <NotifyToggle
-                      checked={filterFeedByInterests}
-                      onToggle={() =>
-                        setFilterFeedByInterests((value) => !value)
-                      }
-                      accessibilityLabel="Toggle filter feeds by interests"
-                    />
-                  </View>
-
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>Socials</Text>
-                    <View style={styles.socialsList}>
-                      {SOCIAL_OPTIONS.map((option) => {
-                        const value = socialValues[option.key];
                         return (
-                          <Pressable
-                            key={option.key}
-                            accessibilityRole="button"
-                            accessibilityLabel={`Set ${option.title}`}
-                            onPress={() => openSocialModal(option)}
-                            style={({ pressed }) => [
-                              styles.socialRow,
-                              pressed && styles.socialRowPressed,
-                            ]}
-                          >
-                            <Feather
-                              name={option.icon}
-                              size={21}
-                              color="#3B5B8F"
-                            />
-                            <View style={styles.socialTextWrap}>
-                              <Text style={styles.socialTitle}>
-                                {option.title}
-                              </Text>
-                              {value ? (
-                                <Text
-                                  style={styles.socialValue}
-                                  numberOfLines={1}
-                                >
-                                  {value}
-                                </Text>
-                              ) : null}
-                            </View>
-                          </Pressable>
+                          <SubjectChip
+                            key={subject.id}
+                            item={{
+                              id: subject.id,
+                              label: subject.name,
+                              active: isSelected,
+                            }}
+                            onPress={() => handleToggleSubject(subject.name)}
+                          />
                         );
                       })}
                     </View>
-                    <InfoMessage>
-                      Socials help students connect with you outside DigiLearn.
-                      Add only the contact details or social links you want
-                      students to use.
-                    </InfoMessage>
+                  ) : (
+                    <Text style={styles.emptySubjects}>
+                      No subjects are available yet.
+                    </Text>
+                  )}
+
+                  <InfoMessage>
+                    Your selected subjects can be changed anytime in
+                    Preferences. We&apos;ll use them to help personalize your
+                    teaching experience and connect you with relevant resources.
+                  </InfoMessage>
+                </View>
+
+                <View style={styles.toggleCard}>
+                  <View style={styles.toggleInfo}>
+                    <Text style={styles.toggleTitle}>
+                      Only show selected interests in feeds
+                    </Text>
+                    <Text style={styles.toggleSubtitle}>
+                      Filter your Home and Library feeds to only display
+                      resources matching your selected subjects.
+                    </Text>
                   </View>
+                  <NotifyToggle
+                    checked={filterFeedByInterests}
+                    onToggle={() => setFilterFeedByInterests((value) => !value)}
+                    accessibilityLabel="Toggle filter feeds by interests"
+                  />
+                </View>
 
-                  {saveError ? (
-                    <Text style={styles.errorBubble}>{saveError}</Text>
-                  ) : null}
+                <View style={styles.fieldGroup}>
+                  <Text style={styles.fieldLabel}>Socials</Text>
+                  <View style={styles.socialsList}>
+                    {SOCIAL_OPTIONS.map((option) => {
+                      const value = socialValues[option.key];
+                      return (
+                        <Pressable
+                          key={option.key}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Set ${option.title}`}
+                          onPress={() => openSocialModal(option)}
+                          style={({ pressed }) => [
+                            styles.socialRow,
+                            pressed && styles.socialRowPressed,
+                          ]}
+                        >
+                          <Feather
+                            name={option.icon}
+                            size={21}
+                            color="#3B5B8F"
+                          />
+                          <View style={styles.socialTextWrap}>
+                            <Text style={styles.socialTitle}>
+                              {option.title}
+                            </Text>
+                            {value ? (
+                              <Text
+                                style={styles.socialValue}
+                                numberOfLines={1}
+                              >
+                                {value}
+                              </Text>
+                            ) : null}
+                          </View>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  <InfoMessage>
+                    Socials help students connect with you outside DigiLearn.
+                    Add only the contact details or social links you want
+                    students to use.
+                  </InfoMessage>
+                </View>
 
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Confirm teacher account details"
-                    disabled={isSaving}
-                    onPress={handleConfirm}
-                    style={({ pressed }) => [
-                      styles.primaryButton,
-                      isSaving && styles.primaryButtonDisabled,
-                      pressed && !isSaving && styles.buttonPressed,
-                    ]}
-                  >
-                    {isSaving ? (
-                      <ActivityIndicator color={colors.white} size="small" />
-                    ) : (
-                      <Text style={styles.primaryButtonText}>Confirm</Text>
-                    )}
-                  </Pressable>
-                </>
-              )}
-            </View>
-          </ScrollView>
-        </Pressable>
+                {saveError ? (
+                  <Text style={styles.errorBubble}>{saveError}</Text>
+                ) : null}
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Confirm teacher account details"
+                  disabled={isSaving}
+                  onPress={handleConfirm}
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    isSaving && styles.primaryButtonDisabled,
+                    pressed && !isSaving && styles.buttonPressed,
+                  ]}
+                >
+                  {isSaving ? (
+                    <ActivityIndicator color={colors.white} size="small" />
+                  ) : (
+                    <Text style={styles.primaryButtonText}>Confirm</Text>
+                  )}
+                </Pressable>
+              </>
+            )}
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
       <Modal
         visible={Boolean(activeSocial)}
@@ -736,9 +738,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   keyboardView: {
-    flex: 1,
-  },
-  dismissArea: {
     flex: 1,
   },
   page: {

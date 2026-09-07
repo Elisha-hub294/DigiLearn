@@ -359,6 +359,11 @@ export async function getUserOnboardingState(userId: string) {
   return result;
 }
 
+export async function initializeUserProfile() {
+  const callable = httpsCallable(getFunctions(app), "initializeUserProfile");
+  await callable();
+}
+
 export async function saveAccountTypeDecision(
   user: User,
   accountType: AccountType,
@@ -405,6 +410,7 @@ export async function ensureUserProfile(user: User) {
     "saved-pages",
     "saved-books",
     "saved-lessons",
+    "saved-papers",
     "saved-posts",
   ].forEach((key) => {
     if (current[key] === undefined)

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = exports.initializeUserProfile = void 0;
 const genai_1 = require("@google/genai");
 const app_1 = require("firebase-admin/app");
 const auth_1 = require("firebase-admin/auth");
@@ -17,6 +17,52 @@ const db = (0, firestore_1.getFirestore)();
 const adminAuth = (0, auth_1.getAuth)();
 const messaging = (0, messaging_1.getMessaging)();
 const storage = (0, storage_1.getStorage)();
+const defaultProfileFields = (request) => {
+    const token = request.auth?.token ?? {};
+    const email = typeof token.email === "string" ? token.email : "";
+    const displayName = typeof token.name === "string" ? token.name.trim() : "";
+    return {
+        name: displayName || email.split("@")[0] || "DigiLearn learner",
+        email,
+        photoURL: typeof token.picture === "string" ? token.picture : "",
+        bio: "",
+        level: "",
+        school: "",
+        gender: "",
+        subjects: [],
+        filterFeedByInterests: false,
+        accountTypeCompleted: false,
+        type: "",
+        "marked-as-read": [],
+        "hidden-pages": [],
+        "saved-pages": [],
+        "saved-books": [],
+        "saved-lessons": [],
+        "saved-papers": [],
+        "saved-posts": [],
+        "paper-revision-status": {},
+        savedAt: {},
+        joinedAt: firestore_1.FieldValue.serverTimestamp(),
+    };
+};
+exports.initializeUserProfile = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
+    }
+    const userRef = db.doc(`users/${request.auth.uid}`);
+    const snapshot = await userRef.get();
+    const profile = defaultProfileFields(request);
+    if (!snapshot.exists) {
+        await userRef.create(profile);
+        return { created: true };
+    }
+    const current = snapshot.data() ?? {};
+    const missing = Object.fromEntries(Object.entries(profile).filter(([key]) => current[key] === undefined));
+    if (Object.keys(missing).length > 0) {
+        await userRef.set(missing, { merge: true });
+    }
+    return { created: false };
+});
 exports.generateAssistantReply = (0, https_1.onCall)({ secrets: [geminiApiKey] }, async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Sign in required.");
@@ -343,26 +389,9 @@ exports.changeAccountType = (0, https_1.onCall)(async (request) => {
     const userRef = db.doc(`users/${userId}`);
     const applicationRef = db.doc(`teacherApplications/${userId}`);
     const userSnapshot = await userRef.get();
-    const authUser = request.auth.token;
-    const userData = userSnapshot.data() ?? {
-        name: authUser.name || authUser.email?.split("@")[0] || "DigiLearn learner",
-        email: authUser.email || "",
-        photoURL: authUser.picture || "",
-        bio: "",
-        level: "",
-        school: "",
-        gender: "",
-        subjects: [],
-        filterFeedByInterests: false,
-        "marked-as-read": [],
-        "hidden-pages": [],
-        "saved-pages": [],
-        "saved-books": [],
-        "saved-lessons": [],
-        "saved-posts": [],
-        "paper-revision-status": {},
-        savedAt: {},
-        joinedAt: firestore_1.FieldValue.serverTimestamp(),
+    const userData = {
+        ...defaultProfileFields(request),
+        ...(userSnapshot.data() ?? {}),
     };
     if (accountType === "student") {
         await userRef.set({
