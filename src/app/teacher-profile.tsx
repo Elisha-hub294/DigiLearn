@@ -753,25 +753,48 @@ export default function TeacherProfileScreen() {
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Publish resource"
+                  accessibilityState={{
+                    disabled: profile?.teacherApprovalStatus !== "approved",
+                  }}
+                  disabled={profile?.teacherApprovalStatus !== "approved"}
                   style={[
                     styles.contactSecondaryButton,
                     {
-                      borderColor: accentColor,
-                      backgroundColor: `${accentColor}12`,
+                      borderColor:
+                        profile?.teacherApprovalStatus === "approved"
+                          ? accentColor
+                          : "#D1D5DB",
+                      backgroundColor:
+                        profile?.teacherApprovalStatus === "approved"
+                          ? `${accentColor}12`
+                          : "#F3F4F6",
                     },
                   ]}
-                  onPress={() => router.push("/publish")}
+                  onPress={
+                    profile?.teacherApprovalStatus === "approved"
+                      ? () => router.push("/publish")
+                      : undefined
+                  }
                 >
                   <Icon
                     name="plus-circle"
                     size={16}
-                    color={accentColor}
+                    color={
+                      profile?.teacherApprovalStatus === "approved"
+                        ? accentColor
+                        : "#9CA3AF"
+                    }
                     style={{ marginRight: 6 }}
                   />
                   <Text
                     style={[
                       styles.contactSecondaryButtonText,
-                      { color: accentColor },
+                      {
+                        color:
+                          profile?.teacherApprovalStatus === "approved"
+                            ? accentColor
+                            : "#9CA3AF",
+                      },
                     ]}
                   >
                     Publish
