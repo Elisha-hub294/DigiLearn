@@ -114,7 +114,7 @@ service cloud.firestore {
           request.auth.uid == applicationId
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'applicantId', 'name', 'email', 'school', 'subjects',
-            'filterFeedByInterests', 'phone', 'youtube', 'socials-youtube',
+            'filterFeedByInterests', 'photoURL', 'phone', 'youtube', 'socials-youtube',
             'socials-phone', 'socials-email', 'socials-whatsapp',
             'socials-whatsapp-channel', 'updatedAt'
           ])

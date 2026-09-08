@@ -6,7 +6,13 @@ const {
   assertSucceeds,
   initializeTestEnvironment,
 } = require("@firebase/rules-unit-testing");
-const { collection, doc, getDocs, setDoc } = require("firebase/firestore");
+const {
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  updateDoc,
+} = require("firebase/firestore");
 const { ref, uploadBytes } = require("firebase/storage");
 
 const projectId = "digilearn-rules-tests";
@@ -139,6 +145,21 @@ test("admin users can read admin notifications", async () => {
   const context = firestoreContext(auth("admin-1"));
   await assertSucceeds(
     getDocs(collection(context.firestore(), "adminNotifications")),
+  );
+});
+
+test("teachers can update their application photo URL", async () => {
+  const disabled = testEnv.withSecurityRulesDisabled();
+  await setDoc(doc(disabled.firestore(), "teacherApplications", "teacher-1"), {
+    applicantId: "teacher-1",
+    status: "pending",
+  });
+
+  const context = firestoreContext(auth("teacher-1", "teacher"));
+  await assertSucceeds(
+    updateDoc(doc(context.firestore(), "teacherApplications", "teacher-1"), {
+      photoURL: "https://cdn.example.com/profile.png",
+    }),
   );
 });
 
