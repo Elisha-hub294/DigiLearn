@@ -11,6 +11,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -36,6 +37,7 @@ type Application = {
   phone?: string;
   youtube?: string;
   socials?: Record<string, string>;
+  photoURL?: string;
   status?: "pending" | "approved" | "rejected";
   createdAt?: { toDate?: () => Date } | string | number;
   rejectionReason?: string;
@@ -236,11 +238,18 @@ export default function TeacherApplicationReviewScreen() {
         </View>
 
         <View style={styles.hero}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {(application.name || "T").slice(0, 1).toUpperCase()}
-            </Text>
-          </View>
+          {application.photoURL ? (
+            <Image
+              source={{ uri: application.photoURL }}
+              style={styles.avatarImage}
+            />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {(application.name || "T").slice(0, 1).toUpperCase()}
+              </Text>
+            </View>
+          )}
           <View style={styles.heroCopy}>
             <Text style={styles.name}>
               {application.name || "Unnamed applicant"}

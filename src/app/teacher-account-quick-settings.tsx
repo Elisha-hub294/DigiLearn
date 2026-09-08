@@ -1,10 +1,12 @@
 import { Feather } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -27,6 +29,7 @@ import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { loadSubjects } from "../services/subjectsService";
 import { resubmitTeacherApplication } from "../services/teacherApplications";
+import { saveProfilePicture } from "../services/userProfile";
 import {
   normalizeProfileText,
   validateProfileText,
@@ -193,6 +196,9 @@ export default function TeacherAccountQuickSettingsScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [profilePicture, setProfilePicture] = useState<string>("");
+  const [pictureSaving, setPictureSaving] = useState(false);
+  const [pictureError, setPictureError] = useState("");
 
   const horizontalPadding = useMemo(() => getHorizontalPadding(width), [width]);
   const contentMaxWidth = Math.min(500, width - horizontalPadding * 2);
@@ -235,6 +241,8 @@ export default function TeacherAccountQuickSettingsScreen() {
       );
       const initialSelectedSubjects = getSubjectNames(profile.subjects ?? []);
       const initialFilter = Boolean(profile.filterFeedByInterests);
+      const initialPhotoUrl =
+        typeof profile.photoURL === "string" ? profile.photoURL : "";
       const initialSocialValues = SOCIAL_OPTIONS.reduce<
         Partial<Record<SocialKey, string>>
       >((result, option) => {
@@ -250,6 +258,7 @@ export default function TeacherAccountQuickSettingsScreen() {
       setSubjects(nextSubjectList);
       setSelectedSubjects(initialSelectedSubjects);
       setFilterFeedByInterests(initialFilter);
+      setProfilePicture(initialPhotoUrl);
       setSocialValues(initialSocialValues);
     } catch {
       setLoadError(
@@ -318,6 +327,40 @@ export default function TeacherAccountQuickSettingsScreen() {
     closeSocialModal();
   }, [activeSocial, closeSocialModal, socialInput]);
 
+  const handleProfilePictureChange = useCallback(async () => {
+    if (!user || pictureSaving) return;
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: Platform.OS !== "web",
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets[0]) return;
+
+      setPictureError("");
+      setPictureSaving(true);
+      const uploadedUrl = await saveProfilePicture(
+        user,
+        result.assets[0].uri,
+        result.assets[0].mimeType,
+        result.assets[0].fileSize,
+        "teacher",
+      );
+      setProfilePicture(uploadedUrl ?? "");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "We couldn't update your profile picture. Please try again.";
+      setPictureError(message);
+    } finally {
+      setPictureSaving(false);
+    }
+  }, [pictureSaving, user]);
+
   const saveProfile = useCallback(
     async (currentUser: User) => {
       if (isSaving) {
@@ -335,11 +378,13 @@ export default function TeacherAccountQuickSettingsScreen() {
           return;
         }
 
+        const resolvedPhotoURL = profilePicture || refreshedUser.photoURL || "";
         const payload = {
           name: normalizeProfileText(name),
           school: normalizeProfileText(school),
           subjects: getSubjectNames(selectedSubjects),
           filterFeedByInterests,
+          photoURL: resolvedPhotoURL,
           ...socialValues,
         };
 
@@ -389,6 +434,7 @@ export default function TeacherAccountQuickSettingsScreen() {
       filterFeedByInterests,
       isSaving,
       name,
+      profilePicture,
       router,
       school,
       selectedSubjects,
@@ -509,6 +555,40 @@ export default function TeacherAccountQuickSettingsScreen() {
               Help us personalize your teacher experience and connect your
               students with relevant learning resources.
             </InfoMessage>
+
+            <View style={styles.profilePictureSection}>
+              <Text style={styles.fieldLabel}>Profile picture</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Choose teacher profile picture"
+                onPress={handleProfilePictureChange}
+                style={({ pressed }) => [
+                  styles.profilePictureButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                {profilePicture ? (
+                  <Image
+                    source={{ uri: profilePicture }}
+                    style={styles.profilePicturePreview}
+                  />
+                ) : (
+                  <View style={styles.profilePictureFallback}>
+                    <Feather name="camera" size={24} color="#3B5B8F" />
+                  </View>
+                )}
+                <Text style={styles.profilePictureText}>
+                  {pictureSaving
+                    ? "Saving picture..."
+                    : profilePicture
+                      ? "Change profile picture"
+                      : "Upload profile picture"}
+                </Text>
+              </Pressable>
+              {pictureError ? (
+                <Text style={styles.socialError}>{pictureError}</Text>
+              ) : null}
+            </View>
 
             {isLoading ? (
               <View style={styles.skeletonWrap}>
@@ -826,6 +906,39 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#FF6269",
     textAlign: "center",
+  },
+  profilePictureSection: {
+    marginTop: spacing.xl,
+  },
+  profilePictureButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#F7C9CC",
+    borderRadius: 14,
+    backgroundColor: "#FFF7F7",
+  },
+  profilePicturePreview: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#EDF2F8",
+  },
+  profilePictureFallback: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#F1F5F9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profilePictureText: {
+    color: "#3B5B8F",
+    fontSize: 15,
+    fontWeight: "600",
   },
   fieldGroup: {
     marginTop: spacing.xl,
