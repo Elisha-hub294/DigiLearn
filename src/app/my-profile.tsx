@@ -458,6 +458,21 @@ export default function MyProfileScreen() {
                     onPress={() => openEditor("gender")}
                   />
                 </View>
+                {profile?.type === "teacher" ? (
+                  <Pressable
+                    onPress={() =>
+                      router.push("/teacher-account-quick-settings" as never)
+                    }
+                    style={styles.teacherSettingsButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open teacher profile settings"
+                  >
+                    <Feather name="edit-3" size={16} color="#3B82F6" />
+                    <Text style={styles.teacherSettingsText}>
+                      Teacher profile settings
+                    </Text>
+                  </Pressable>
+                ) : null}
               </>
             )}
           </ScrollView>
@@ -651,6 +666,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   changePictureText: { color: "#3B82F6", fontSize: 14, fontWeight: "700" },
+  teacherSettingsButton: {
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 4,
+    minHeight: 44,
+    paddingHorizontal: 12,
+  },
+  teacherSettingsText: { color: "#3B82F6", fontSize: 14, fontWeight: "700" },
   rows: { marginTop: 40, gap: 30 },
   row: { flexDirection: "row", minHeight: 60 },
   iconArea: { width: 48, paddingTop: 2, alignItems: "center" },
