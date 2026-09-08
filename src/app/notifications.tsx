@@ -112,6 +112,12 @@ export default function NotificationsScreen() {
 
   const openItem = useCallback(
     async (notification: NotificationRecord) => {
+      if (notification.notificationKind === "teacher-review") {
+        if (user && !notification.read) await markRead(notification.id);
+        router.replace("/profile" as never);
+        return;
+      }
+
       if (!notification.itemId) {
         setUnavailableDialog({
           visible: true,

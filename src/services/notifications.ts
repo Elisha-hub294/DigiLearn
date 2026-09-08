@@ -23,6 +23,7 @@ export type NotificationRecord = {
   itemId?: string;
   collection?: string;
   navigation?: string;
+  notificationKind?: "teacher-review";
   storage?: "admin";
   adminKind?: "report" | "teacher-application";
 };
@@ -30,6 +31,7 @@ export type NotificationRecord = {
 export const DIGILEARN_PUBLISHER_NAME = "DigiLearn";
 export const DIGILEARN_PUBLISHER_AVATAR = "@/assets/images/panda.png";
 export const MAX_SAVED_NOTIFICATIONS = 50;
+export type NotificationProfileCollection = "users" | "teachers";
 
 export const NOTIFICATION_TYPE_META: Record<
   NotificationType,
@@ -38,7 +40,7 @@ export const NOTIFICATION_TYPE_META: Record<
   book: {
     label: "Books",
     color: "#FF626A",
-    icon: "book-open",
+    icon: "book-open-variant",
     background: "#FF626A",
   },
   lesson: {
@@ -50,7 +52,7 @@ export const NOTIFICATION_TYPE_META: Record<
   page: {
     label: "Pages",
     color: "#3F82F4",
-    icon: "file-text",
+    icon: "file-document-outline",
     background: "#3F82F4",
   },
   paper: {
@@ -62,7 +64,7 @@ export const NOTIFICATION_TYPE_META: Record<
   announcement: {
     label: "Announcements",
     color: "#4B5563",
-    icon: "megaphone",
+    icon: "bullhorn",
     background: "#4B5563",
   },
 };
@@ -149,6 +151,10 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
     navigation:
       typeof candidate.navigation === "string"
         ? candidate.navigation
+        : undefined,
+    notificationKind:
+      candidate.notificationKind === "teacher-review"
+        ? candidate.notificationKind
         : undefined,
     storage: candidate.storage === "admin" ? "admin" : undefined,
     adminKind:
@@ -293,10 +299,11 @@ export function getNotificationSections(notifications: NotificationRecord[]) {
 export async function appendNotificationForUser(
   userId: string,
   notification: NotificationRecord,
+  collectionName: NotificationProfileCollection = "users",
 ) {
   if (!userId) return;
 
-  const userRef = doc(db, "users", userId);
+  const userRef = doc(db, collectionName, userId);
   const snapshot = await getDoc(userRef);
   const current = Array.isArray(snapshot.data()?.notifications)
     ? (snapshot.data()?.notifications ?? [])
@@ -330,10 +337,11 @@ export async function appendNotificationToAllUsers(
 export async function markNotificationAsRead(
   userId: string,
   notificationId: string,
+  collectionName: NotificationProfileCollection = "users",
 ) {
   if (!userId) return false;
 
-  const userRef = doc(db, "users", userId);
+  const userRef = doc(db, collectionName, userId);
   const snapshot = await getDoc(userRef);
   const current = Array.isArray(snapshot.data()?.notifications)
     ? (snapshot.data()?.notifications as NotificationRecord[])
@@ -351,9 +359,12 @@ export async function markNotificationAsRead(
   return true;
 }
 
-export async function markAllUserNotificationsAsRead(userId: string) {
+export async function markAllUserNotificationsAsRead(
+  userId: string,
+  collectionName: NotificationProfileCollection = "users",
+) {
   if (!userId) return false;
-  const userRef = doc(db, "users", userId);
+  const userRef = doc(db, collectionName, userId);
   const snapshot = await getDoc(userRef);
   const current = Array.isArray(snapshot.data()?.notifications)
     ? (snapshot.data()?.notifications as NotificationRecord[])
@@ -373,10 +384,11 @@ export async function markAllUserNotificationsAsRead(userId: string) {
 export async function deleteNotification(
   userId: string,
   notificationId: string,
+  collectionName: NotificationProfileCollection = "users",
 ) {
   if (!userId) return false;
 
-  const userRef = doc(db, "users", userId);
+  const userRef = doc(db, collectionName, userId);
   const snapshot = await getDoc(userRef);
   const current = Array.isArray(snapshot.data()?.notifications)
     ? (snapshot.data()?.notifications as NotificationRecord[])

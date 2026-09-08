@@ -70,7 +70,9 @@ export default function SettingsScreen() {
       const localSettings = await getPushNotificationSettings();
       let pushValue = localSettings.pushEnabled;
       if (user) {
-        const snapshot = await getDoc(doc(db, "users", user.uid));
+        const collectionName =
+          profile?.type === "teacher" ? "teachers" : "users";
+        const snapshot = await getDoc(doc(db, collectionName, user.uid));
         const remoteValue = snapshot.data()?.pushNotificationsEnabled;
         if (typeof remoteValue === "boolean") pushValue = remoteValue;
       }
@@ -83,19 +85,23 @@ export default function SettingsScreen() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [profile?.type, user]);
 
   const togglePushNotifications = useCallback(
     async (value: boolean) => {
       setPushEnabled(value);
       try {
-        await setPushNotificationsEnabled(user?.uid, value);
+        await setPushNotificationsEnabled(
+          user?.uid,
+          value,
+          profile?.type === "teacher" ? "teachers" : "users",
+        );
       } catch (error) {
         console.error("Unable to update push notification settings:", error);
         setPushEnabled(!value);
       }
     },
-    [user],
+    [profile, user],
   );
 
   const toggleReminders = useCallback(async (value: boolean) => {

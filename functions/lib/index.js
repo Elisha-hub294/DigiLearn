@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = exports.sendLibraryNotification = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = exports.initializeUserProfile = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendTeacherNotifications = exports.sendUserNotifications = exports.sendLibraryNotification = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = exports.initializeUserProfile = void 0;
 const genai_1 = require("@google/genai");
 const app_1 = require("firebase-admin/app");
 const auth_1 = require("firebase-admin/auth");
@@ -110,7 +110,7 @@ exports.generateAssistantReply = (0, https_1.onCall)({ secrets: [geminiApiKey] }
     if (!apiKey) {
         throw new https_1.HttpsError("unavailable", "The assistant is not configured.");
     }
-    const { ref: usageRef, legacyRef, email } = getAssistantUsageRef(request.auth.uid, request.auth.token.email);
+    const { ref: usageRef, legacyRef, email, } = getAssistantUsageRef(request.auth.uid, request.auth.token.email);
     const today = new Date().toISOString().slice(0, 10);
     await db.runTransaction(async (transaction) => {
         const usageSnapshot = await transaction.get(usageRef);
@@ -171,7 +171,9 @@ const storagePrefixes = [
 ];
 function getAssistantUsageRef(userId, email) {
     const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
-    const usageKey = normalizedEmail ? encodeURIComponent(normalizedEmail) : userId;
+    const usageKey = normalizedEmail
+        ? encodeURIComponent(normalizedEmail)
+        : userId;
     return {
         ref: db.doc(`assistantUsage/${usageKey}`),
         legacyRef: db.doc(`assistantUsage/${userId}`),
@@ -320,24 +322,28 @@ exports.sendLibraryNotification = (0, https_1.onCall)(async (request) => {
         createdAt: firestore_1.Timestamp.now(),
         read: false,
     };
-    const usersSnapshot = await db.collection("users").get();
+    const [usersSnapshot, teachersSnapshot] = await Promise.all([
+        db.collection("users").get(),
+        db.collection("teachers").get(),
+    ]);
+    const recipientDocs = [...usersSnapshot.docs, ...teachersSnapshot.docs];
     const batchSize = 450;
-    for (let start = 0; start < usersSnapshot.docs.length; start += batchSize) {
+    for (let start = 0; start < recipientDocs.length; start += batchSize) {
         const batch = db.batch();
-        usersSnapshot.docs.slice(start, start + batchSize).forEach((userDoc) => {
+        recipientDocs.slice(start, start + batchSize).forEach((userDoc) => {
             batch.update(userDoc.ref, {
                 notifications: firestore_1.FieldValue.arrayUnion(notification),
             });
         });
         await batch.commit();
     }
-    return { sent: usersSnapshot.size };
+    return { sent: recipientDocs.length };
 });
 function getNewNotifications(before, after) {
     const previousIds = new Set((before ?? []).map((item) => item.id));
     return (after ?? []).filter((item) => item.id && !previousIds.has(item.id));
 }
-exports.sendUserNotifications = (0, firestore_2.onDocumentWritten)("users/{userId}", async (event) => {
+async function sendUserNotification(event) {
     const before = event.data?.before.data();
     const after = event.data?.after.data();
     if (!after)
@@ -359,7 +365,9 @@ exports.sendUserNotifications = (0, firestore_2.onDocumentWritten)("users/{userI
         },
         data: { screen: "/notifications" },
     });
-});
+}
+exports.sendUserNotifications = (0, firestore_2.onDocumentWritten)("users/{userId}", sendUserNotification);
+exports.sendTeacherNotifications = (0, firestore_2.onDocumentWritten)("teachers/{userId}", sendUserNotification);
 function requireAdmin(request) {
     if (!request.auth)
         throw new https_1.HttpsError("unauthenticated", "Sign in required.");
@@ -377,6 +385,7 @@ function applicantNotification(message, title) {
     return {
         id: `teacher-review-${Date.now()}`,
         type: "announcement",
+        notificationKind: "teacher-review",
         publisherName: "DigiLearn",
         publisherAvatar: "@/assets/images/panda.png",
         message,
@@ -769,7 +778,7 @@ exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentWritten)("t
             createdAt: firestore_1.FieldValue.serverTimestamp(),
             read: false,
         }, { merge: true }),
-        db.doc(`users/${applicationId}`).set({
+        db.doc(`teachers/${applicationId}`).set({
             notifications: firestore_1.FieldValue.arrayUnion(applicantNotification("Your teacher application is under review. We will notify you when a decision is made.", application.name || "Teacher application")),
         }, { merge: true }),
     ]);

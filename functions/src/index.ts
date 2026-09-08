@@ -413,12 +413,16 @@ export const sendLibraryNotification = onCall(async (request) => {
     createdAt: Timestamp.now(),
     read: false,
   };
-  const usersSnapshot = await db.collection("users").get();
+  const [usersSnapshot, teachersSnapshot] = await Promise.all([
+    db.collection("users").get(),
+    db.collection("teachers").get(),
+  ]);
+  const recipientDocs = [...usersSnapshot.docs, ...teachersSnapshot.docs];
 
   const batchSize = 450;
-  for (let start = 0; start < usersSnapshot.docs.length; start += batchSize) {
+  for (let start = 0; start < recipientDocs.length; start += batchSize) {
     const batch = db.batch();
-    usersSnapshot.docs.slice(start, start + batchSize).forEach((userDoc) => {
+    recipientDocs.slice(start, start + batchSize).forEach((userDoc) => {
       batch.update(userDoc.ref, {
         notifications: FieldValue.arrayUnion(notification),
       });
@@ -426,7 +430,7 @@ export const sendLibraryNotification = onCall(async (request) => {
     await batch.commit();
   }
 
-  return { sent: usersSnapshot.size };
+  return { sent: recipientDocs.length };
 });
 
 function getNewNotifications(
@@ -437,40 +441,47 @@ function getNewNotifications(
   return (after ?? []).filter((item) => item.id && !previousIds.has(item.id));
 }
 
+async function sendUserNotification(event: any) {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  if (!after) return;
+
+  const newItems = getNewNotifications(
+    before?.notifications as UserNotification[] | undefined,
+    after.notifications as UserNotification[] | undefined,
+  );
+  const tokens = Object.values(
+    (after.pushTokens ?? {}) as Record<string, unknown>,
+  ).filter((token): token is string => typeof token === "string" && !!token);
+  if (
+    after.pushNotificationsEnabled === false ||
+    !tokens.length ||
+    !newItems.length
+  ) {
+    return;
+  }
+
+  await messaging.sendEachForMulticast({
+    tokens,
+    notification: {
+      title: "DigiLearn",
+      body:
+        newItems[0].resourceTitle ??
+        newItems[0].message ??
+        "You have a new notification.",
+    },
+    data: { screen: "/notifications" },
+  });
+}
+
 export const sendUserNotifications = onDocumentWritten(
   "users/{userId}",
-  async (event) => {
-    const before = event.data?.before.data();
-    const after = event.data?.after.data();
-    if (!after) return;
+  sendUserNotification,
+);
 
-    const newItems = getNewNotifications(
-      before?.notifications as UserNotification[] | undefined,
-      after.notifications as UserNotification[] | undefined,
-    );
-    const tokens = Object.values(
-      (after.pushTokens ?? {}) as Record<string, unknown>,
-    ).filter((token): token is string => typeof token === "string" && !!token);
-    if (
-      after.pushNotificationsEnabled === false ||
-      !tokens.length ||
-      !newItems.length
-    ) {
-      return;
-    }
-
-    await messaging.sendEachForMulticast({
-      tokens,
-      notification: {
-        title: "DigiLearn",
-        body:
-          newItems[0].resourceTitle ??
-          newItems[0].message ??
-          "You have a new notification.",
-      },
-      data: { screen: "/notifications" },
-    });
-  },
+export const sendTeacherNotifications = onDocumentWritten(
+  "teachers/{userId}",
+  sendUserNotification,
 );
 
 function requireAdmin(request: { auth?: { uid: string } | null }) {
@@ -494,6 +505,7 @@ function applicantNotification(message: string, title: string) {
   return {
     id: `teacher-review-${Date.now()}`,
     type: "announcement",
+    notificationKind: "teacher-review",
     publisherName: "DigiLearn",
     publisherAvatar: "@/assets/images/panda.png",
     message,
@@ -1016,7 +1028,7 @@ export const notifyAdminsOfTeacherApplication = onDocumentWritten(
           },
           { merge: true },
         ),
-      db.doc(`users/${applicationId}`).set(
+      db.doc(`teachers/${applicationId}`).set(
         {
           notifications: FieldValue.arrayUnion(
             applicantNotification(

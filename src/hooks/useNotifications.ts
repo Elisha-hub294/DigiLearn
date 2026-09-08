@@ -27,6 +27,7 @@ export function useNotifications() {
     () => new Set(),
   );
   const { profile } = useProfile();
+  const profileCollection = profile?.type === "teacher" ? "teachers" : "users";
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
@@ -46,7 +47,7 @@ export function useNotifications() {
       return;
     }
 
-    const ref = doc(db, "users", user.uid);
+    const ref = doc(db, profileCollection, user.uid);
     const unsubscribe = onSnapshot(
       ref,
       (snapshot) => {
@@ -68,7 +69,7 @@ export function useNotifications() {
     );
 
     return () => unsubscribe();
-  }, [user]);
+  }, [profileCollection, user]);
 
   useEffect(() => {
     if (!user || profile?.type !== "admin") return;
@@ -176,15 +177,19 @@ export function useNotifications() {
         });
         return true;
       }
-      const updated = await markNotificationAsRead(user.uid, notificationId);
+      const updated = await markNotificationAsRead(
+        user.uid,
+        notificationId,
+        profileCollection,
+      );
       return updated;
     },
-    [user],
+    [notifications, profileCollection, user],
   );
 
   const markAllRead = useCallback(async () => {
     if (!user) return false;
-    await markAllUserNotificationsAsRead(user.uid);
+    await markAllUserNotificationsAsRead(user.uid, profileCollection);
     const adminItems = notifications.filter(
       (item) => item.storage === "admin" && !item.read,
     );
@@ -205,15 +210,19 @@ export function useNotifications() {
         ]),
     );
     return true;
-  }, [notifications, user]);
+  }, [notifications, profileCollection, user]);
 
   const deleteNotif = useCallback(
     async (notificationId: string) => {
       if (!user) return false;
-      const updated = await deleteNotification(user.uid, notificationId);
+      const updated = await deleteNotification(
+        user.uid,
+        notificationId,
+        profileCollection,
+      );
       return updated;
     },
-    [user],
+    [profileCollection, user],
   );
 
   return {

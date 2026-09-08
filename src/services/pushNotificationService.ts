@@ -3,6 +3,7 @@ import * as Notifications from "expo-notifications";
 import { doc, updateDoc } from "firebase/firestore";
 import { Platform } from "react-native";
 import { db } from "../../firebaseConfig";
+import type { NotificationProfileCollection } from "./notifications";
 
 const PUSH_ENABLED_KEY = "digilearn.pushNotificationsEnabled";
 const REMINDERS_ENABLED_KEY = "digilearn.remindersEnabled";
@@ -55,12 +56,15 @@ async function ensurePermission() {
   );
 }
 
-export async function registerDeviceForPushNotifications(userId: string) {
+export async function registerDeviceForPushNotifications(
+  userId: string,
+  collectionName: NotificationProfileCollection = "users",
+) {
   if (!userId || Platform.OS === "web") return false;
   if (!(await ensurePermission())) return false;
 
   const token = await Notifications.getDevicePushTokenAsync();
-  await updateDoc(doc(db, "users", userId), {
+  await updateDoc(doc(db, collectionName, userId), {
     [`pushTokens.${token.type}`]: token.data,
   });
   return true;
@@ -77,13 +81,14 @@ async function cancelReminder() {
 export async function setPushNotificationsEnabled(
   userId: string | undefined,
   enabled: boolean,
+  collectionName: NotificationProfileCollection = "users",
 ) {
   await AsyncStorage.setItem(PUSH_ENABLED_KEY, String(enabled));
   if (enabled && userId) {
-    await registerDeviceForPushNotifications(userId);
+    await registerDeviceForPushNotifications(userId, collectionName);
   }
   if (userId) {
-    await updateDoc(doc(db, "users", userId), {
+    await updateDoc(doc(db, collectionName, userId), {
       pushNotificationsEnabled: enabled,
     });
   }
@@ -122,10 +127,12 @@ export async function scheduleStreakReminder(currentStreak: number) {
       await AsyncStorage.removeItem(STREAK_REMINDER_ID_KEY);
     }
 
-    const title = currentStreak > 0
-      ? `🔥 Don't break your ${currentStreak}-day streak!`
-      : "Start your study streak today! 📚";
-    const body = "Spend 5 minutes with a quick lesson or past paper to keep your momentum going.";
+    const title =
+      currentStreak > 0
+        ? `🔥 Don't break your ${currentStreak}-day streak!`
+        : "Start your study streak today! 📚";
+    const body =
+      "Spend 5 minutes with a quick lesson or past paper to keep your momentum going.";
 
     // Schedule notification for 7:00 PM (19:00) every day
     const reminderId = await Notifications.scheduleNotificationAsync({
