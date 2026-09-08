@@ -11,6 +11,7 @@ import {
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
+import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
@@ -18,7 +19,10 @@ import {
   getPageReadingProgress,
   ReadingProgress,
 } from "../../services/readingProgressService";
-import { toggleSavedItem } from "../../services/userProfile";
+import {
+  getHiddenPageEntries,
+  toggleSavedItem,
+} from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
 import { Skeleton } from "../ui/Skeleton";
@@ -115,6 +119,7 @@ const extractAccentColor = (rawAccent: unknown): string => {
 
 export function PagePreviewScreen() {
   const { colors: themeColors } = useTheme();
+  const { profile } = useProfile();
   const { id, source, returnTo, title } = useLocalSearchParams<{
     id: string;
     source?: "home" | "library" | "pages" | "activity";
@@ -132,7 +137,8 @@ export function PagePreviewScreen() {
   const [loading, setLoading] = useState(true);
   const [currentTime] = useState(() => Date.now());
   const [bookmarked, setBookmarked] = useState(false);
-  const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null);
+  const [readingProgress, setReadingProgress] =
+    useState<ReadingProgress | null>(null);
   const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
   const [noticeDialog, setNoticeDialog] = useState<{
     title: string;
@@ -354,10 +360,15 @@ export function PagePreviewScreen() {
     if (!note) return [];
     const currentSubjects = normalizeArray(note.subject);
     if (currentSubjects.length === 0) return [];
+    const hiddenPageIds = new Set(
+      getHiddenPageEntries(profile).map((entry) => entry.id),
+    );
 
     return allNotes
       .filter((candidate) => {
-        if (candidate.id === note.id) return false;
+        if (candidate.id === note.id || hiddenPageIds.has(candidate.id)) {
+          return false;
+        }
         const candidateSubjects = normalizeArray(candidate.subject);
         return candidateSubjects.some((sub) =>
           currentSubjects.some(
@@ -366,7 +377,7 @@ export function PagePreviewScreen() {
         );
       })
       .slice(0, 10);
-  }, [allNotes, note]);
+  }, [allNotes, note, profile]);
 
   const dateFormatted = useMemo(
     () => formatDate(note?.updatedAt ?? note?.createdAt),
