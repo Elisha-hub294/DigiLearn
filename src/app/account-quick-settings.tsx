@@ -33,6 +33,7 @@ import {
 type Subject = { id: string; name: string };
 
 const LEVEL_OPTIONS = ["Ordinary level", "Advanced level"];
+const MAX_PROFILE_FIELD_LENGTH = 50;
 
 function getSubjectNames(items: unknown): string[] {
   if (!Array.isArray(items)) {
@@ -224,6 +225,18 @@ export default function AccountQuickSettingsScreen() {
 
     const cleanName = normalizeProfileText(name);
     const cleanSchool = normalizeProfileText(school);
+    if (cleanName.length > MAX_PROFILE_FIELD_LENGTH) {
+      setSaveError(
+        `Name must be ${MAX_PROFILE_FIELD_LENGTH} characters or fewer.`,
+      );
+      return;
+    }
+    if (cleanSchool.length > MAX_PROFILE_FIELD_LENGTH) {
+      setSaveError(
+        `School must be ${MAX_PROFILE_FIELD_LENGTH} characters or fewer.`,
+      );
+      return;
+    }
     const nameError = name.trim() ? validateProfileText(cleanName, "Name") : "";
     const schoolError = school.trim()
       ? validateProfileText(cleanSchool, "School")
@@ -374,6 +387,7 @@ export default function AccountQuickSettingsScreen() {
                   <TextInput
                     value={name}
                     onChangeText={setName}
+                    maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your name"
                     placeholderTextColor="#7A8FA8"
                     style={styles.input}
@@ -414,6 +428,7 @@ export default function AccountQuickSettingsScreen() {
                   <TextInput
                     value={school}
                     onChangeText={setSchool}
+                    maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your school"
                     placeholderTextColor="#7A8FA8"
                     style={styles.input}

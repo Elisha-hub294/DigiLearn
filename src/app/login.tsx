@@ -29,6 +29,7 @@ import {
 } from "../services/socialAuth";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_EMAIL_LENGTH = 50;
 
 function mapAuthError(code: string | undefined) {
   switch (code) {
@@ -71,6 +72,9 @@ export default function LoginScreen() {
 
     if (!trimmedEmail) {
       setEmailError("Please enter your email address.");
+      hasError = true;
+    } else if (trimmedEmail.length > MAX_EMAIL_LENGTH) {
+      setEmailError(`Email must be ${MAX_EMAIL_LENGTH} characters or fewer.`);
       hasError = true;
     } else if (!EMAIL_REGEX.test(trimmedEmail)) {
       setEmailError("Please enter a valid email address.");
@@ -297,6 +301,7 @@ export default function LoginScreen() {
                   ref={emailInputRef}
                   value={email}
                   onChangeText={setEmail}
+                  maxLength={MAX_EMAIL_LENGTH}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
