@@ -27,7 +27,9 @@ import { SearchBar } from "../components/ui/SearchBar";
 import { VideoCard } from "../components/ui/VideoCard";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
+import { getThemeAsset } from "../constants/themeAssets";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 type TeacherRecord = {
   id: string;
@@ -144,6 +146,7 @@ type ContactDialogState = {
 export default function TeacherProfileScreen() {
   const router = useRouter();
   const { user, profile } = useProfile();
+  const { isDark } = useTheme();
   const params = useLocalSearchParams<{
     id?: string;
     name?: string;
@@ -165,11 +168,13 @@ export default function TeacherProfileScreen() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<TeacherTab>("All");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [failedAvatarUri, setFailedAvatarUri] = useState<string | null>(null);
   const [contactDialog, setContactDialog] = useState<ContactDialogState | null>(
     null,
   );
   const [isCommunityDialogVisible, setCommunityDialogVisible] = useState(false);
   const [pulseAnim] = useState(() => new RNAnimated.Value(0.45));
+  const fallbackAvatar = getThemeAsset("userDefault", isDark);
 
   const teacherName = String(params.name ?? "Teacher").trim();
   const normalizedTeacherName = normalizeKey(teacherName);
@@ -622,8 +627,14 @@ export default function TeacherProfileScreen() {
 
           <View style={styles.avatarShell}>
             <Image
-              source={{
-                uri: teacher?.avatar || "TeacherProfile/user-default.png",
+              source={
+                teacher?.avatar && teacher.avatar !== failedAvatarUri
+                  ? { uri: teacher.avatar }
+                  : fallbackAvatar
+              }
+              placeholder={fallbackAvatar}
+              onError={() => {
+                if (teacher?.avatar) setFailedAvatarUri(teacher.avatar);
               }}
               style={[
                 styles.avatar,
@@ -951,6 +962,8 @@ export default function TeacherProfileScreen() {
     [
       accentColor,
       activeTab,
+      failedAvatarUri,
+      fallbackAvatar,
       canViewSaved,
       openContactSheet,
       openEmailPrompt,
