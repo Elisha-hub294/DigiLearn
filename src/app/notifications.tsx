@@ -112,7 +112,14 @@ export default function NotificationsScreen() {
 
   const openItem = useCallback(
     async (notification: NotificationRecord) => {
-      if (notification.notificationKind === "teacher-review") {
+      const isTeacherApplicationUpdate =
+        notification.notificationKind === "teacher-review" ||
+        (notification.type === "announcement" &&
+          notification.message
+            .toLowerCase()
+            .startsWith("your teacher application needs updates"));
+
+      if (isTeacherApplicationUpdate) {
         if (user && !notification.read) await markRead(notification.id);
         router.replace("/profile" as never);
         return;

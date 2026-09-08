@@ -162,6 +162,10 @@ export default function ProfileScreen() {
                 <Text style={[s.reviewText, { color: themeColors.text }]}>
                   {rejectionComment || "We requested changes before approval."}
                 </Text>
+                <Text style={[s.reviewText, { color: themeColors.text }]}>
+                  Please address the requested changes and resubmit your teacher
+                  account for review.
+                </Text>
                 <Pressable
                   style={s.resubmitButton}
                   onPress={() =>
