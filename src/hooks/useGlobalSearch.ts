@@ -11,6 +11,7 @@ import {
   readLocalCache,
   writeLocalCache,
 } from "../utils/localCache";
+import { filterApprovedTeachers } from "../utils/teacherSearchFilters";
 import { getVideoThumbnailUrl } from "../utils/videoUtils";
 
 const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
@@ -240,7 +241,7 @@ export function useGlobalSearch(
       setPastPapers(data.pastPapers);
       setVideos(data.videos);
       setBooks(data.books);
-      setTeachers(data.teachers);
+      setTeachers(filterApprovedTeachers(data.teachers));
       setSubjectsMap(data.subjectsMap);
       setTeachersAvatarMap(data.teachersAvatarMap);
       setLoading(false);
@@ -282,10 +283,12 @@ export function useGlobalSearch(
         ]);
         if (!isMounted) return;
 
-        const teacherList = teachersSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const teacherList = filterApprovedTeachers(
+          teachersSnap.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })),
+        );
         const teachersAvatarMap: Record<string, string> = {};
         teacherList.forEach((teacher: any) => {
           if (teacher.name && (teacher.avatar || teacher.image)) {
@@ -311,7 +314,7 @@ export function useGlobalSearch(
           })),
           videos: trendingLessons,
           books: booksSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
-          teachers: teacherList,
+          teachers: filterApprovedTeachers(teacherList),
           subjectsMap,
           teachersAvatarMap,
         };

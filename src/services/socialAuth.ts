@@ -47,8 +47,13 @@ function getNativeGoogleSigninModule() {
   }
   try {
     const mod = require("@react-native-google-signin/google-signin");
-    if (mod && mod.GoogleSignin && typeof mod.GoogleSignin.configure === "function") {
-      const extra = (Constants.expoConfig?.extra as Record<string, any> | undefined) ?? {};
+    if (
+      mod &&
+      mod.GoogleSignin &&
+      typeof mod.GoogleSignin.configure === "function"
+    ) {
+      const extra =
+        (Constants.expoConfig?.extra as Record<string, any> | undefined) ?? {};
       const webClientId =
         process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
         extra.googleWebClientId ||
@@ -69,10 +74,20 @@ function getNativeGoogleSigninModule() {
 export function parseAuthError(error: unknown): string {
   if (typeof error === "string") return error;
   const message =
-    error && typeof error === "object" && "message" in error &&
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
     typeof error.message === "string"
       ? error.message
       : "";
+
+  if (
+    /app not active|app is not accessible right now|app developer is aware/i.test(
+      message,
+    )
+  ) {
+    return "Facebook Login is unavailable because the Meta app is inactive. Reactivate the app in Meta for Developers, then try again.";
+  }
 
   if (/deleted_client|OAuth client was deleted/i.test(message)) {
     return "Google Sign-In is temporarily unavailable because its OAuth client was deleted. Please contact support.";
@@ -131,13 +146,17 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
       };
     }
 
-    const { GoogleSignin, statusCodes, isErrorWithCode, isSuccessResponse } = googleModule;
+    const { GoogleSignin, statusCodes, isErrorWithCode, isSuccessResponse } =
+      googleModule;
 
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
     const response = await GoogleSignin.signIn();
 
     let idToken: string | undefined | null;
-    if (typeof isSuccessResponse === "function" && isSuccessResponse(response)) {
+    if (
+      typeof isSuccessResponse === "function" &&
+      isSuccessResponse(response)
+    ) {
       idToken = response.data?.idToken;
     } else if (response && response.data && response.data.idToken) {
       idToken = response.data.idToken;
@@ -153,7 +172,8 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
     if (!idToken) {
       return {
         success: false,
-        error: "Unable to retrieve Google identification token. Please try again.",
+        error:
+          "Unable to retrieve Google identification token. Please try again.",
       };
     }
 
@@ -162,7 +182,11 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
     return { success: true, user: userCredential.user };
   } catch (error: any) {
     const googleModule = getNativeGoogleSigninModule();
-    if (googleModule && typeof googleModule.isErrorWithCode === "function" && googleModule.isErrorWithCode(error)) {
+    if (
+      googleModule &&
+      typeof googleModule.isErrorWithCode === "function" &&
+      googleModule.isErrorWithCode(error)
+    ) {
       const { statusCodes } = googleModule;
       switch (error.code) {
         case statusCodes.SIGN_IN_CANCELLED:
@@ -175,7 +199,8 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
         case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
           return {
             success: false,
-            error: "Google Play Services is unavailable or outdated on this device.",
+            error:
+              "Google Play Services is unavailable or outdated on this device.",
           };
         default:
           return {
