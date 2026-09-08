@@ -2,7 +2,9 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
     match /{allPaths=**} {
-      allow read: if request.auth != null && request.auth.token.email_verified == true;
+      // Learning assets (covers, PDFs, and videos) are available to guests.
+      // Upload and modification permissions remain restricted below.
+      allow read: if true;
     }
 
     match /profile-pics/{userId}/{fileName} {

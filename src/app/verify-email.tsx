@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { signOut } from "firebase/auth";
+import { reload, signOut } from "firebase/auth";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -18,6 +18,10 @@ import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { sendEmailLink } from "../services/emailLinkAuth";
+import {
+  getUserOnboardingState,
+  initializeUserProfile,
+} from "../services/userProfile";
 
 function getErrorMessage(error: unknown) {
   if (typeof error === "object" && error !== null && "code" in error) {
@@ -58,11 +62,36 @@ export default function VerifyEmailScreen() {
     setErrorMessage("");
     setMessage("");
     setIsChecking(true);
-    setMessage(
-      "Open the link in your email. DigiLearn will finish signing you in automatically.",
-    );
-    setIsChecking(false);
-  }, [isChecking]);
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setErrorMessage(
+          "Return to this web app in the same browser where you started sign-up, then try again.",
+        );
+        return;
+      }
+
+      await reload(user);
+      if (!auth.currentUser?.emailVerified) {
+        setMessage(
+          "Your email is not confirmed yet. Open the verification link, then come back and try again.",
+        );
+        return;
+      }
+
+      await initializeUserProfile();
+      const onboarding = await getUserOnboardingState(user.uid);
+      router.replace(
+        onboarding.accountTypeCompleted && onboarding.type
+          ? ("/" as never)
+          : ("/account-type" as never),
+      );
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error));
+    } finally {
+      setIsChecking(false);
+    }
+  }, [isChecking, router]);
 
   const resendVerification = useCallback(async () => {
     if (isSending || !emailParam) return;

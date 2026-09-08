@@ -40,6 +40,15 @@ function AppShell() {
     let active = true;
 
     const handleUrl = async (url: string) => {
+      // Expo Router opens this callback in finishSignIn.tsx, which owns the
+      // sign-in and profile initialization flow.
+      try {
+        const path = new URL(url).pathname.toLowerCase();
+        if (path === "/finishsignin" || path === "/__/auth/links") return;
+      } catch {
+        // Continue to the existing handler for non-standard deep-link URLs.
+      }
+
       try {
         const user = await completeEmailLink(url);
         if (!user || !active) return;
@@ -95,6 +104,7 @@ function AppShell() {
           <Stack.Screen name="assistant" />
           <Stack.Screen name="book-preview" />
           <Stack.Screen name="forgot-password" />
+          <Stack.Screen name="finishSignIn" />
           <Stack.Screen name="help" />
           <Stack.Screen name="hidden-items" />
           <Stack.Screen name="lesson-player" />

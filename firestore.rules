@@ -64,7 +64,7 @@ service cloud.firestore {
     match /teachers/{teacherId} {
       allow create: if isVerified()
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
-      allow read: if isVerified();
+      allow read: if true;
       allow update: if isVerified() && (
         request.auth.uid == teacherId
         || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin'
@@ -73,22 +73,22 @@ service cloud.firestore {
     }
 
     match /subject/{documentId} {
-      allow read: if isVerified();
+      allow read: if true;
       allow write: if false;
     }
 
     match /pastPaperType/{documentId} {
-      allow read: if isVerified();
+      allow read: if true;
       allow write: if false;
     }
 
     match /default/{documentId} {
-      allow read: if isVerified();
+      allow read: if true;
       allow write: if false;
     }
 
     match /promotionalBanner/{documentId} {
-      allow read: if isVerified();
+      allow read: if true;
       allow write: if false;
     }
 
@@ -171,7 +171,7 @@ service cloud.firestore {
           'cover',
           'updatedAt'
         ]);
-      allow read: if isVerified();
+      allow read: if true;
       allow update: if isPublisher()
         && (resource.data.owner == request.auth.uid || isAdmin())
         && request.resource.data.owner == resource.data.owner;
@@ -179,21 +179,21 @@ service cloud.firestore {
     }
 
     match /pages/{pageId} {
-      allow read: if isVerified();
+      allow read: if true;
       allow create: if isPublisher() && request.resource.data.owner == request.auth.uid;
       allow update: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
       allow delete: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
     }
 
     match /pastPaper/{paperId} {
-      allow read: if isVerified();
+      allow read: if true;
       allow create: if isPublisher() && request.resource.data.owner == request.auth.uid;
       allow update: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
       allow delete: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
     }
 
     match /trendingLessons/{lessonId} {
-      allow read: if isVerified();
+      allow read: if true;
       allow create: if isPublisher() && request.resource.data.owner == request.auth.uid;
       allow update: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
       allow delete: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
