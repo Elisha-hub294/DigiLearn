@@ -38,10 +38,17 @@ import { getHorizontalPadding } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { PaperItem, PaperSection, useLibraryData } from "../../hooks/useLibraryData";
+import {
+  PaperItem,
+  PaperSection,
+  useLibraryData,
+} from "../../hooks/useLibraryData";
 import { recordUserActivity } from "../../services/activityService";
 import { BookRecord, loadBooks } from "../../services/booksService";
-import { interleaveFeedItems, shuffleWithSeed } from "../../utils/feedAlgorithm";
+import {
+  interleaveFeedItems,
+  shuffleWithSeed,
+} from "../../utils/feedAlgorithm";
 import {
   matchesUserInterests,
   shouldFilterByInterests,
@@ -77,11 +84,18 @@ export default function LibraryScreen() {
   const route = useRoute();
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
-  const { loading: libraryLoading, refreshing, heroSlides, paperCollections, onRefresh: refreshLibraryData } =
-    useLibraryData();
+  const {
+    loading: libraryLoading,
+    refreshing,
+    heroSlides,
+    paperCollections,
+    onRefresh: refreshLibraryData,
+  } = useLibraryData();
 
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [pastPaperCategories, setPastPaperCategories] = useState<LibraryCategory[]>([]);
+  const [pastPaperCategories, setPastPaperCategories] = useState<
+    LibraryCategory[]
+  >([]);
   const [shuffleSeed, setShuffleSeed] = useState(() => Date.now());
   const scrollRef = useRef<ScrollView>(null);
 
@@ -232,7 +246,13 @@ export default function LibraryScreen() {
     }
 
     return collections.sort((a, b) => yearNumber(b.year) - yearNumber(a.year));
-  }, [categories, selectedCategory, paperCollections, filterActive, profile?.subjects]);
+  }, [
+    categories,
+    selectedCategory,
+    paperCollections,
+    filterActive,
+    profile?.subjects,
+  ]);
 
   const allPastPaperItems = useMemo<PaperItem[]>(() => {
     return filteredPaperCollections.flatMap((sec) => sec.items);
@@ -268,12 +288,14 @@ export default function LibraryScreen() {
       subject: book.subject,
     }));
 
-    const paperItems: LibraryFeedItem[] = allPastPaperItems.map((paper, idx) => ({
-      kind: "paper",
-      id: `paper-${paper.id || idx}`,
-      data: paper,
-      subject: paper.subject,
-    }));
+    const paperItems: LibraryFeedItem[] = allPastPaperItems.map(
+      (paper, idx) => ({
+        kind: "paper",
+        id: `paper-${paper.id || idx}`,
+        data: paper,
+        subject: paper.subject,
+      }),
+    );
 
     return interleaveFeedItems<LibraryFeedItem>({
       buckets: [
@@ -472,8 +494,14 @@ export default function LibraryScreen() {
                     return (
                       <View key={item.id} style={styles.feedCardWrapper}>
                         <View style={styles.badgeRow}>
-                          <Text style={[styles.badgeText, { color: themeColors.primary }]}>
-                            📄 Study Page {item.data.subject ? `• ${item.data.subject}` : ""}
+                          <Text
+                            style={[
+                              styles.badgeText,
+                              { color: themeColors.primary },
+                            ]}
+                          >
+                            Pages{" "}
+                            {item.data.subject ? `• ${item.data.subject}` : ""}
                           </Text>
                         </View>
                         <FeaturedNoteItem
@@ -491,8 +519,14 @@ export default function LibraryScreen() {
                     return (
                       <View key={item.id} style={styles.feedCardWrapper}>
                         <View style={styles.badgeRow}>
-                          <Text style={[styles.badgeText, { color: themeColors.primary }]}>
-                            📖 Textbook {item.data.subject ? `• ${item.data.subject}` : ""}
+                          <Text
+                            style={[
+                              styles.badgeText,
+                              { color: themeColors.primary },
+                            ]}
+                          >
+                            Textbook{" "}
+                            {item.data.subject ? `• ${item.data.subject}` : ""}
                           </Text>
                         </View>
                         <BookCard
@@ -500,7 +534,8 @@ export default function LibraryScreen() {
                             id: item.data.id,
                             title: item.data.title,
                             author: item.data.author,
-                            description: item.data.subject || "Textbook resource",
+                            description:
+                              item.data.subject || "Textbook resource",
                             image: item.data.image,
                             owner: item.data.owner,
                           }}
@@ -508,11 +543,19 @@ export default function LibraryScreen() {
                           marginRight={0}
                           onPress={() => {
                             if (auth.currentUser?.uid) {
-                              recordUserActivity(auth.currentUser.uid, "book", item.data.id);
+                              recordUserActivity(
+                                auth.currentUser.uid,
+                                "book",
+                                item.data.id,
+                              );
                             }
                             router.push({
                               pathname: "/book-preview",
-                              params: { id: item.data.id, source: "library", returnTo: "/library" },
+                              params: {
+                                id: item.data.id,
+                                source: "library",
+                                returnTo: "/library",
+                              },
                             } as any);
                           }}
                         />
@@ -524,8 +567,14 @@ export default function LibraryScreen() {
                     return (
                       <View key={item.id} style={styles.feedCardWrapper}>
                         <View style={styles.badgeRow}>
-                          <Text style={[styles.badgeText, { color: themeColors.primary }]}>
-                            📝 Past Exam Paper {item.data.year ? `• ${item.data.year}` : ""}
+                          <Text
+                            style={[
+                              styles.badgeText,
+                              { color: themeColors.primary },
+                            ]}
+                          >
+                            Past Exam Paper{" "}
+                            {item.data.year ? `• ${item.data.year}` : ""}
                           </Text>
                         </View>
                         <PaperCard
@@ -560,7 +609,9 @@ export default function LibraryScreen() {
                       ))}
                     </View>
                   ) : isAllLoaded && libraryFeedItems.length > 0 ? (
-                    <Text style={[styles.endText, { color: themeColors.subtitle }]}>
+                    <Text
+                      style={[styles.endText, { color: themeColors.subtitle }]}
+                    >
                       You&apos;ve seen all library resources! ✨
                     </Text>
                   ) : null}
@@ -574,12 +625,12 @@ export default function LibraryScreen() {
                   <BookCarousel />
                 </View>
                 <View style={{ marginTop: spacing.lg }}>
-                  <SectionHeader
-                    title="All Textbooks"
-                    actionLabel=""
-                  />
+                  <SectionHeader title="All Textbooks" actionLabel="" />
                   {shuffledCategoryBooks.map((book) => (
-                    <View key={`cat-book-${book.id}`} style={styles.feedCardWrapper}>
+                    <View
+                      key={`cat-book-${book.id}`}
+                      style={styles.feedCardWrapper}
+                    >
                       <BookCard
                         item={{
                           id: book.id,
@@ -593,11 +644,19 @@ export default function LibraryScreen() {
                         marginRight={0}
                         onPress={() => {
                           if (auth.currentUser?.uid) {
-                            recordUserActivity(auth.currentUser.uid, "book", book.id);
+                            recordUserActivity(
+                              auth.currentUser.uid,
+                              "book",
+                              book.id,
+                            );
                           }
                           router.push({
                             pathname: "/book-preview",
-                            params: { id: book.id, source: "library", returnTo: "/library" },
+                            params: {
+                              id: book.id,
+                              source: "library",
+                              returnTo: "/library",
+                            },
                           } as any);
                         }}
                       />

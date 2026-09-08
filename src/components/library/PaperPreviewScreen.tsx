@@ -18,8 +18,8 @@ import {
   Share,
   StyleSheet,
   Text,
-  View,
   useWindowDimensions,
+  View,
 } from "react-native";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
@@ -28,6 +28,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import {
+  getSavedItemsProfile,
   PaperRevisionStatus,
   setPaperRevisionStatus,
   toggleSavedItem,
@@ -258,9 +259,12 @@ export function PaperPreviewScreen() {
 
     const loadUserPaperState = async () => {
       try {
-        const userSnap = await getDoc(doc(db, "users", userId));
-        const savedPapers = Array.isArray(userSnap.data()?.["saved-papers"])
-          ? userSnap.data()?.["saved-papers"]
+        const [savedProfile, userSnap] = await Promise.all([
+          getSavedItemsProfile(userId),
+          getDoc(doc(db, "users", userId)),
+        ]);
+        const savedPapers = Array.isArray(savedProfile?.["saved-papers"])
+          ? savedProfile["saved-papers"]
           : [];
         const revisionMap =
           userSnap.data()?.["paper-revision-status"] &&

@@ -203,9 +203,8 @@ const s = StyleSheet.create({
   },
   avatarWrap: {
     borderRadius: 999,
-    padding: 4,
     marginBottom: 10,
-    borderWidth: 3,
+    borderWidth: 5,
   },
   avatar: { width: "100%", height: "100%", borderRadius: 999 },
   name: {

@@ -18,7 +18,10 @@ import {
   recordUserActivity,
 } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
-import { toggleSavedItem } from "../../services/userProfile";
+import {
+  getSavedItemsProfile,
+  toggleSavedItem,
+} from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
 import { Skeleton } from "../ui/Skeleton";
@@ -203,12 +206,10 @@ export function BookPreviewScreen() {
 
     const checkBookmarked = async () => {
       try {
-        const userRef = doc(db, "users", auth.currentUser!.uid);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          const savedBooks = Array.isArray(userData["saved-books"])
-            ? userData["saved-books"]
+        const profile = await getSavedItemsProfile(auth.currentUser!.uid);
+        if (profile) {
+          const savedBooks = Array.isArray(profile["saved-books"])
+            ? profile["saved-books"]
             : [];
           setBookmarked(savedBooks.includes(book.id));
         }

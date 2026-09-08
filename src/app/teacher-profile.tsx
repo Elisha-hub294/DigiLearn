@@ -21,6 +21,7 @@ import { db } from "../../firebaseConfig";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
 import { TeacherPostItem } from "../components/home/TeacherPostCard";
 import { BookCard } from "../components/library/BookCard";
+import { SavedResources } from "../components/profile/SavedResources";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { SearchBar } from "../components/ui/SearchBar";
 import { VideoCard } from "../components/ui/VideoCard";
@@ -127,6 +128,7 @@ const teacherTabOptions = [
   "Books",
   "Announcements",
   "Lessons",
+  "Saved",
 ] as const;
 type TeacherTab = (typeof teacherTabOptions)[number];
 
@@ -191,6 +193,7 @@ export default function TeacherProfileScreen() {
     : profile?.type === "teacher"
       ? "teacher"
       : "student";
+  const canViewSaved = Boolean(isOwnProfile && profile?.type === "teacher");
 
   const fetchTeacherProfile =
     useCallback(async (): Promise<TeacherRecord | null> => {
@@ -487,6 +490,7 @@ export default function TeacherProfileScreen() {
     const tabFilter = activeTab;
 
     const scoped = resources.filter((resource) => {
+      if (tabFilter === "Saved") return false;
       if (tabFilter === "All") return true;
       if (tabFilter === "Pages") return resource.type === "page";
       if (tabFilter === "Books") return resource.type === "book";
@@ -891,30 +895,32 @@ export default function TeacherProfileScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.tabRow}
           >
-            {teacherTabOptions.map((tab) => {
-              const isActive = activeTab === tab;
-              return (
-                <Pressable
-                  key={tab}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Filter resources by ${tab}`}
-                  onPress={() => setActiveTab(tab)}
-                  style={[
-                    styles.tabButton,
-                    isActive && { backgroundColor: accentColor },
-                  ]}
-                >
-                  <Text
+            {teacherTabOptions
+              .filter((tab) => tab !== "Saved" || canViewSaved)
+              .map((tab) => {
+                const isActive = activeTab === tab;
+                return (
+                  <Pressable
+                    key={tab}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Filter resources by ${tab}`}
+                    onPress={() => setActiveTab(tab)}
                     style={[
-                      styles.tabButtonText,
-                      isActive ? styles.tabButtonTextActive : null,
+                      styles.tabButton,
+                      isActive && { backgroundColor: accentColor },
                     ]}
                   >
-                    {tab}
-                  </Text>
-                </Pressable>
-              );
-            })}
+                    <Text
+                      style={[
+                        styles.tabButtonText,
+                        isActive ? styles.tabButtonTextActive : null,
+                      ]}
+                    >
+                      {tab}
+                    </Text>
+                  </Pressable>
+                );
+              })}
           </ScrollView>
         </View>
       </>
@@ -922,6 +928,7 @@ export default function TeacherProfileScreen() {
     [
       accentColor,
       activeTab,
+      canViewSaved,
       openContactSheet,
       openEmailPrompt,
       openYoutubePrompt,
@@ -1199,15 +1206,19 @@ export default function TeacherProfileScreen() {
             />
           }
           ListHeaderComponent={renderHeader}
-          ListEmptyComponent={() => (
-            <View style={styles.emptyState}>
-              <Icon name="inbox" size={38} color={accentColor} />
-              <Text style={styles.emptyText}>
-                {errorMessage ||
-                  "No matching resources found for this teacher."}
-              </Text>
-            </View>
-          )}
+          ListEmptyComponent={() =>
+            activeTab === "Saved" && canViewSaved ? (
+              <SavedResources profile={profile} signedIn />
+            ) : (
+              <View style={styles.emptyState}>
+                <Icon name="inbox" size={38} color={accentColor} />
+                <Text style={styles.emptyText}>
+                  {errorMessage ||
+                    "No matching resources found for this teacher."}
+                </Text>
+              </View>
+            )
+          }
           renderItem={renderResourceCard}
         />
         <ActionDialog

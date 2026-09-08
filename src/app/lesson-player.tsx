@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
-import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
   Pressable,
@@ -23,7 +22,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { auth, db } from "../../firebaseConfig";
+import { auth } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
 import { getTeacherAvatar } from "../constants/teacherAvatar";
@@ -39,7 +38,7 @@ import {
   saveLessonProgress,
   type PlaybackProgress,
 } from "../services/playbackProgressService";
-import { toggleSavedItem } from "../services/userProfile";
+import { getSavedItemsProfile, toggleSavedItem } from "../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../utils/nativeToast";
 import { getYoutubeEmbedUrl, validateVideoLink } from "../utils/videoUtils";
 
@@ -64,7 +63,9 @@ export default function LessonPlayerScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [showExternalVideoDialog, setShowExternalVideoDialog] = useState(false);
-  const [savedProgress, setSavedProgress] = useState<PlaybackProgress | null>(null);
+  const [savedProgress, setSavedProgress] = useState<PlaybackProgress | null>(
+    null,
+  );
   const [noticeDialog, setNoticeDialog] = useState<{
     title: string;
     message: string;
@@ -128,9 +129,9 @@ export default function LessonPlayerScreen() {
       return;
     }
 
-    getDoc(doc(db, "users", userId))
-      .then((snapshot) => {
-        const savedLessons = snapshot.data()?.["saved-lessons"];
+    getSavedItemsProfile(userId)
+      .then((profile) => {
+        const savedLessons = profile?.["saved-lessons"];
         if (active) {
           setIsSaved(
             Array.isArray(savedLessons) && savedLessons.includes(lessonId),
@@ -158,14 +159,17 @@ export default function LessonPlayerScreen() {
 
   async function launchVideo(resume: boolean = false) {
     setShowExternalVideoDialog(false);
-    const startSec = resume && savedProgress ? savedProgress.positionSeconds : undefined;
+    const startSec =
+      resume && savedProgress ? savedProgress.positionSeconds : undefined;
     const targetUrl = getYoutubeEmbedUrl(params.link, startSec);
     if (!targetUrl) {
       return;
     }
 
     if (resume && savedProgress) {
-      showNativeToast(`Resuming from ${formatPlaybackTime(savedProgress.positionSeconds)}`);
+      showNativeToast(
+        `Resuming from ${formatPlaybackTime(savedProgress.positionSeconds)}`,
+      );
     }
 
     if (lessonId) {
@@ -624,7 +628,8 @@ export default function LessonPlayerScreen() {
                     ]}
                     maxFontSizeMultiplier={1.3}
                   >
-                    Ask DigiLearn AI for concept breakdowns, summaries, or practice questions.
+                    Ask DigiLearn AI for concept breakdowns, summaries, or
+                    practice questions.
                   </Text>
                 </View>
               </View>
@@ -653,10 +658,7 @@ export default function LessonPlayerScreen() {
                   size={16}
                   color="#FFFFFF"
                 />
-                <Text
-                  style={styles.aiButtonText}
-                  maxFontSizeMultiplier={1.3}
-                >
+                <Text style={styles.aiButtonText} maxFontSizeMultiplier={1.3}>
                   Ask AI Tutor
                 </Text>
               </Pressable>

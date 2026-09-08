@@ -56,7 +56,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         return;
       const data = teachersData ?? usersData;
       setProfile(
-        data ? ({ ...defaultUserProfile(user), ...data } as UserProfile) : null,
+        data
+          ? ({
+              ...defaultUserProfile(user),
+              ...usersData,
+              ...teachersData,
+            } as UserProfile)
+          : null,
       );
       setLoading(false);
     };

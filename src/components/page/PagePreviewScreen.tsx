@@ -21,6 +21,7 @@ import {
 } from "../../services/readingProgressService";
 import {
   getHiddenPageEntries,
+  getSavedItemsProfile,
   toggleSavedItem,
 } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
@@ -338,9 +339,9 @@ export function PagePreviewScreen() {
       }
 
       try {
-        const userSnap = await getDoc(doc(db, "users", userId));
-        const savedPages = Array.isArray(userSnap.data()?.["saved-pages"])
-          ? userSnap.data()?.["saved-pages"]
+        const profile = await getSavedItemsProfile(userId);
+        const savedPages = Array.isArray(profile?.["saved-pages"])
+          ? profile["saved-pages"]
           : [];
 
         if (active) setBookmarked(savedPages.includes(id));

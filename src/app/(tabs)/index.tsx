@@ -539,7 +539,7 @@ export default function HomeScreen() {
                           { color: themeColors.primary },
                         ]}
                       >
-                        📖 Featured Textbook{" "}
+                        Textbook{" "}
                         {item.data.subject ? `• ${item.data.subject}` : ""}
                       </Text>
                     </View>
@@ -586,7 +586,7 @@ export default function HomeScreen() {
                           { color: themeColors.primary },
                         ]}
                       >
-                        📝 Past Exam Paper{" "}
+                        Past Exam Paper{" "}
                         {item.data.year ? `• ${item.data.year}` : ""}
                       </Text>
                     </View>

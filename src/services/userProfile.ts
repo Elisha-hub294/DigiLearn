@@ -87,9 +87,14 @@ export async function toggleSavedItem(
   itemId: string,
   isCurrentlySaved: boolean,
 ) {
-  const userRef = doc(db, "users", userId);
+  const teacherSnapshot = await getDoc(doc(db, "teachers", userId));
+  const profileRef = doc(
+    db,
+    teacherSnapshot.exists() ? "teachers" : "users",
+    userId,
+  );
   await setDoc(
-    userRef,
+    profileRef,
     {
       [itemType]: isCurrentlySaved ? arrayRemove(itemId) : arrayUnion(itemId),
       savedAt: {
@@ -100,6 +105,14 @@ export async function toggleSavedItem(
     },
     { merge: true },
   );
+}
+
+export async function getSavedItemsProfile(userId: string) {
+  const teacherSnapshot = await getDoc(doc(db, "teachers", userId));
+  if (teacherSnapshot.exists()) return teacherSnapshot.data();
+
+  const userSnapshot = await getDoc(doc(db, "users", userId));
+  return userSnapshot.exists() ? userSnapshot.data() : null;
 }
 
 export async function setPaperRevisionStatus(
