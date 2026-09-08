@@ -26,6 +26,7 @@ export type UserProfile = {
   name: string;
   email: string;
   photoURL: string;
+  accent: string;
   bio: string;
   level: string;
   school: string;
@@ -60,6 +61,25 @@ const onboardingStateCache: Record<
   string,
   { exists: boolean; accountTypeCompleted: boolean; type: AccountType }
 > = {};
+
+const profileAccentPalette = [
+  "#0F766E",
+  "#1D4ED8",
+  "#6D28D9",
+  "#BE123C",
+  "#B45309",
+  "#047857",
+  "#4338CA",
+  "#C2410C",
+] as const;
+
+export const generateProfileAccent = (seed = Math.random().toString()) => {
+  let hash = 0;
+  for (const character of seed) {
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  }
+  return profileAccentPalette[hash % profileAccentPalette.length];
+};
 
 export async function toggleSavedItem(
   userId: string,
@@ -175,6 +195,7 @@ export const defaultUserProfile = (user: User): UserProfile => ({
   name: user.displayName?.trim() || nameFromEmail(user.email),
   email: user.email ?? "",
   photoURL: user.photoURL ?? "",
+  accent: generateProfileAccent(user.uid),
   bio: "",
   level: "",
   school: "",
@@ -398,6 +419,7 @@ export async function ensureUserProfile(user: User) {
   if (!current.name && fallback.name) missing.name = fallback.name;
   if (!current.photoURL && fallback.photoURL)
     missing.photoURL = fallback.photoURL;
+  if (!current.accent) missing.accent = fallback.accent;
   [
     "bio",
     "level",

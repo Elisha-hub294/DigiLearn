@@ -25,6 +25,7 @@ export function ProfileHeader({
   const router = useRouter();
   const { colors: themeColors, isDark } = useTheme();
   const fallbackAvatar = getThemeAsset("userDefault", isDark);
+  const accentColor = profile.accent || themeColors.primaryDark;
   const { width } = useWindowDimensions();
   const requestedUri = photoURL || profile.photoURL;
   const [uri, setUri] = useState(requestedUri);
@@ -32,7 +33,7 @@ export function ProfileHeader({
   useEffect(() => setUri(requestedUri), [requestedUri]);
   return (
     <View style={[s.wrap, { backgroundColor: themeColors.white }]}>
-      <View style={[s.banner, { backgroundColor: themeColors.primaryDark }]}>
+      <View style={[s.banner, { backgroundColor: accentColor }]}>
         {profile.type === "admin" ? (
           <LinearGradient
             colors={["rgba(255,255,255,0.18)", "transparent"]}
@@ -49,7 +50,12 @@ export function ProfileHeader({
             end={{ x: 1, y: 1 }}
             style={s.teacherBadge}
           >
-            <Feather name="award" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
+            <Feather
+              name="award"
+              size={12}
+              color="#FFFFFF"
+              style={{ marginRight: 4 }}
+            />
             <Text style={s.adminText}>TEACHER</Text>
           </LinearGradient>
         ) : null}
@@ -67,6 +73,7 @@ export function ProfileHeader({
           style={[
             s.avatarWrap,
             { backgroundColor: themeColors.white },
+            { borderColor: accentColor },
             {
               width: avatarSize,
               height: avatarSize,
@@ -114,11 +121,18 @@ export function ProfileHeader({
                 },
               } as any);
             }}
-            style={[s.publicProfileButton, { borderColor: themeColors.primary }]}
+            style={[
+              s.publicProfileButton,
+              { borderColor: themeColors.primary },
+            ]}
             accessibilityRole="button"
             accessibilityLabel="View public teacher profile"
           >
-            <Feather name="external-link" size={14} color={themeColors.primary} />
+            <Feather
+              name="external-link"
+              size={14}
+              color={themeColors.primary}
+            />
             <Text
               style={[
                 s.publicProfileButtonText,
@@ -191,6 +205,7 @@ const s = StyleSheet.create({
     borderRadius: 999,
     padding: 4,
     marginBottom: 10,
+    borderWidth: 3,
   },
   avatar: { width: "100%", height: "100%", borderRadius: 999 },
   name: {

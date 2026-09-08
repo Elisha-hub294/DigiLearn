@@ -19,6 +19,20 @@ const adminAuth = getAuth();
 const messaging = getMessaging();
 const storage = getStorage();
 
+const profileAccentPalette = [
+  "#0F766E",
+  "#1D4ED8",
+  "#6D28D9",
+  "#BE123C",
+  "#B45309",
+  "#047857",
+  "#4338CA",
+  "#C2410C",
+] as const;
+
+const generateProfileAccent = () =>
+  profileAccentPalette[Math.floor(Math.random() * profileAccentPalette.length)];
+
 const defaultProfileFields = (request: {
   auth?: { token?: Record<string, unknown> } | null;
 }) => {
@@ -30,6 +44,7 @@ const defaultProfileFields = (request: {
     name: displayName || email.split("@")[0] || "DigiLearn learner",
     email,
     photoURL: typeof token.picture === "string" ? token.picture : "",
+    accent: generateProfileAccent(),
     bio: "",
     level: "",
     school: "",
