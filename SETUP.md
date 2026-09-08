@@ -50,6 +50,20 @@ DigiLearn needs Firebase and Google OAuth credentials to run fully. Here's what 
    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<your-google-client-id>
    ```
 
+### Facebook Login Setup
+
+Facebook Login uses the Firebase web OAuth flow. Configure it before testing:
+
+1. Create or select the app in [Meta for Developers](https://developers.facebook.com/apps/), add the Facebook Login product, and make sure the app is active.
+2. In Firebase Console, open Authentication > Sign-in method, enable Facebook, and enter the Meta App ID and App Secret.
+3. In the Meta app's Facebook Login settings, add this OAuth redirect URI:
+
+   ```
+   https://digilearn-af86d.firebaseapp.com/__/auth/handler
+   ```
+
+4. While the Meta app is in development mode, only app roles and test users can sign in. Submit the app for review before opening Facebook Login to everyone.
+
 ### Step 4: Start the App
 
 ```bash
