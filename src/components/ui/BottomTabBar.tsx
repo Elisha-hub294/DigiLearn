@@ -104,7 +104,8 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
       return null;
     }
     const isActive =
-      state.routes[state.index].key === route.key || isTeacherAccountScreen;
+      state.routes[state.index].key === route.key ||
+      (route.name === "teacher-profile" && isTeacherAccountScreen);
     const onPress = () => {
       const event = navigation.emit({
         type: "tabPress",
