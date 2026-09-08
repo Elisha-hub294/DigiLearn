@@ -32,6 +32,12 @@ const tabs = [
     activeIcon: "account",
     route: "profile",
   },
+  {
+    name: "Teacher Profile",
+    icon: "account-outline",
+    activeIcon: "account",
+    route: "teacher-profile",
+  },
 ] as const;
 
 export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
@@ -47,7 +53,7 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
     activeRoute?.name === "teacher-profile" &&
     activeRouteParams?.openedFromAccount === "true";
   const navigateToTab = (route: TabRoute) => {
-    if (route.name === "profile" && profile?.type === "teacher") {
+    if (route.name === "teacher-profile" && profile?.type === "teacher") {
       navigation.navigate("teacher-profile", {
         name: profile.name,
         openedFromAccount: "true",
@@ -91,9 +97,14 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
   const renderTab = (route: TabRoute, desktop: boolean) => {
     const tab = tabs.find((item) => item.route === route.name);
     if (!tab) return null;
+    if (
+      (route.name === "teacher-profile" && profile?.type !== "teacher") ||
+      (route.name === "profile" && profile?.type === "teacher")
+    ) {
+      return null;
+    }
     const isActive =
-      state.routes[state.index].key === route.key ||
-      (route.name === "profile" && isTeacherAccountScreen);
+      state.routes[state.index].key === route.key || isTeacherAccountScreen;
     const onPress = () => {
       const event = navigation.emit({
         type: "tabPress",
