@@ -159,7 +159,7 @@ function getFirstName(user: User | null, isTeacher: boolean) {
   const name = user.displayName?.trim();
   if (!name) return null;
   const firstName = name.split(" ")[0];
-  return isTeacher ? `Tr ${firstName}` : firstName;
+  return isTeacher ? `Tr. ${firstName}` : firstName;
 }
 
 function generateGreeting() {

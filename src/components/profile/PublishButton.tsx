@@ -22,6 +22,8 @@ export function PublishButton({
     <A
       accessibilityLabel="Publish"
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={disabled ? undefined : onPress}
       onPressIn={() => {
         scale.value = withSpring(0.97);

@@ -174,6 +174,10 @@ export default function TeacherProfileScreen() {
   const accentColor = teacher?.accent || colors.primaryDark;
   const teacherFirstName =
     (teacher?.name || teacherName).split(" ")[0] || "Teacher";
+  const hasPhone = Boolean(teacher?.phone);
+  const hasYoutube = Boolean(teacher?.youtube);
+  const hasEmail = Boolean(teacher?.email);
+  const hasCommunityLink = hasPhone || hasYoutube;
   const isOwnProfile =
     (teacher?.id && user?.uid && teacher.id === user.uid) ||
     (user?.uid && params.id === user.uid) ||
@@ -793,8 +797,11 @@ export default function TeacherProfileScreen() {
                   }
                   style={[
                     styles.contactButton,
-                    { backgroundColor: accentColor },
+                    {
+                      backgroundColor: hasPhone ? accentColor : "#D1D5DB",
+                    },
                   ]}
+                  disabled={!hasPhone}
                   onPress={openContactSheet}
                 >
                   <Icon
@@ -813,11 +820,17 @@ export default function TeacherProfileScreen() {
                   accessibilityLabel="Visit teacher YouTube"
                   style={[
                     styles.iconButton,
+                    !hasYoutube && styles.disabledIconButton,
                     { width: actionIconSize, height: actionIconSize },
                   ]}
+                  disabled={!hasYoutube}
                   onPress={openYoutubePrompt}
                 >
-                  <Icon name="youtube" size={22} color={accentColor} />
+                  <Icon
+                    name="youtube"
+                    size={22}
+                    color={hasYoutube ? accentColor : "#9CA3AF"}
+                  />
                 </Pressable>
 
                 <Pressable
@@ -825,11 +838,17 @@ export default function TeacherProfileScreen() {
                   accessibilityLabel="Email teacher"
                   style={[
                     styles.iconButton,
+                    !hasEmail && styles.disabledIconButton,
                     { width: actionIconSize, height: actionIconSize },
                   ]}
+                  disabled={!hasEmail}
                   onPress={openEmailPrompt}
                 >
-                  <Icon name="mail" size={22} color={accentColor} />
+                  <Icon
+                    name="mail"
+                    size={22}
+                    color={hasEmail ? accentColor : "#9CA3AF"}
+                  />
                 </Pressable>
 
                 <Pressable
@@ -837,11 +856,17 @@ export default function TeacherProfileScreen() {
                   accessibilityLabel="Open teacher community"
                   style={[
                     styles.iconButton,
+                    !hasCommunityLink && styles.disabledIconButton,
                     { width: actionIconSize, height: actionIconSize },
                   ]}
+                  disabled={!hasCommunityLink}
                   onPress={openCommunityDialog}
                 >
-                  <Icon name="users" size={22} color={accentColor} />
+                  <Icon
+                    name="users"
+                    size={22}
+                    color={hasCommunityLink ? accentColor : "#9CA3AF"}
+                  />
                 </Pressable>
               </>
             )}
@@ -1424,6 +1449,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: colors.white,
+  },
+  disabledIconButton: {
+    borderColor: "#D1D5DB",
+    backgroundColor: "#E5E7EB",
   },
   sectionTitle: {
     marginTop: spacing.xl,

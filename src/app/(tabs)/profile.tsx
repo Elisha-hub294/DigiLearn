@@ -67,6 +67,7 @@ export default function ProfileScreen() {
   const { newReportCount, pendingApplicationCount } = useAdminReviewSignals();
   const [refreshing, setRefreshing] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const rejectionComment = profile?.teacherReviewReason?.trim();
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -159,8 +160,7 @@ export default function ProfileScreen() {
                   TEACHER APPLICATION NEEDS UPDATES
                 </Text>
                 <Text style={[s.reviewText, { color: themeColors.text }]}>
-                  {profile.teacherReviewReason ||
-                    "We requested changes before approval."}
+                  {rejectionComment || "We requested changes before approval."}
                 </Text>
                 <Pressable
                   style={s.resubmitButton}

@@ -25,6 +25,8 @@ export function NotificationCard({
   const { colors: themeColors, isDark } = useTheme();
   const meta = NOTIFICATION_TYPE_META[notification.type];
   const adminNotification = notification.storage === "admin";
+  const teacherApplicationNotification =
+    adminNotification && notification.adminKind === "teacher-application";
   const resourceTitle = notification.resourceTitle?.trim();
   const previewImage = notification.previewImage?.trim();
   const [failedPreviewUrl, setFailedPreviewUrl] = useState<string | null>(null);
@@ -37,6 +39,7 @@ export function NotificationCard({
       style={[
         styles.card,
         adminNotification && styles.adminCard,
+        teacherApplicationNotification && styles.teacherApplicationCard,
         notification.read
           ? [
               styles.readCard,
@@ -65,13 +68,21 @@ export function NotificationCard({
         ]}
       >
         <View
-          style={[styles.avatarWrap, adminNotification && styles.adminAvatar]}
+          style={[
+            styles.avatarWrap,
+            adminNotification && styles.adminAvatar,
+            teacherApplicationNotification && styles.teacherApplicationAvatar,
+          ]}
         >
           {adminNotification ? (
             <MaterialCommunityIcons
-              name="shield-alert-outline"
+              name={
+                teacherApplicationNotification
+                  ? "school-outline"
+                  : "shield-alert-outline"
+              }
               size={22}
-              color="#B45309"
+              color={teacherApplicationNotification ? "#1D4ED8" : "#B45309"}
             />
           ) : (
             <Image
@@ -134,18 +145,32 @@ export function NotificationCard({
             </View>
           ) : (
             <View
-              accessibilityLabel={`${meta.label} notification icon`}
+              accessibilityLabel={
+                teacherApplicationNotification
+                  ? "Teacher application notification icon"
+                  : adminNotification
+                    ? "Report notification icon"
+                    : `${meta.label} notification icon`
+              }
               style={[
                 styles.typeIconWrap,
                 {
                   backgroundColor: adminNotification
-                    ? "#B45309"
+                    ? teacherApplicationNotification
+                      ? "#2563EB"
+                      : "#B45309"
                     : meta.background,
                 },
               ]}
             >
               <MaterialCommunityIcons
-                name={adminNotification ? "flag" : (meta.icon as any)}
+                name={
+                  adminNotification
+                    ? teacherApplicationNotification
+                      ? "school-outline"
+                      : "flag"
+                    : (meta.icon as any)
+                }
                 size={22}
                 color={colors.white}
               />
@@ -202,6 +227,7 @@ const styles = StyleSheet.create({
   unreadCard: {},
   readCard: {},
   adminCard: { borderLeftWidth: 4, borderLeftColor: "#B45309" },
+  teacherApplicationCard: { borderLeftColor: "#2563EB" },
   pressed: {
     opacity: 0.94,
     transform: [{ scale: 0.995 }],
@@ -231,6 +257,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  teacherApplicationAvatar: { backgroundColor: "#DBEAFE" },
   content: {
     flex: 1,
     justifyContent: "center",
