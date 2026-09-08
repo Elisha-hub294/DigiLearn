@@ -260,20 +260,16 @@ export function PdfReaderScreen() {
         downloadUrl = `${downloadUrl}${separator}response-content-disposition=attachment%3Bfilename%3D%22${encodeURIComponent(safeTitle)}.${fileExtension}%22`;
       }
 
-      // A direct link may download the file, but it cannot be restored offline.
-      const iframe = document.createElement("iframe");
-      iframe.style.display = "none";
-      iframe.src = downloadUrl;
-      document.body.appendChild(iframe);
-      setTimeout(() => {
-        try {
-          if (document.body.contains(iframe)) {
-            document.body.removeChild(iframe);
-          }
-        } catch {}
-      }, 6000);
-
-      setOfflineNoticeVisible(true);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download =
+        (title ? title.replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") +
+        `.${fileExtension}`;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } finally {
       setTimeout(() => {
         setDownloading(false);
