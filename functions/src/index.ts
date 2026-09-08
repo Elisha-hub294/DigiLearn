@@ -336,6 +336,50 @@ type UserNotification = {
   read?: boolean;
 };
 
+export const sendLibraryNotification = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+
+  const userSnapshot = await db.doc(`users/${request.auth.uid}`).get();
+  const teacherSnapshot = await db.doc(`teachers/${request.auth.uid}`).get();
+  const userData = userSnapshot.data() ?? {};
+  const teacherData = teacherSnapshot.data() ?? {};
+  const isPublisher =
+    userData.type === "admin" ||
+    (teacherData.type === "teacher" &&
+      teacherData.teacherApprovalStatus === "approved");
+
+  if (!isPublisher) {
+    throw new HttpsError(
+      "permission-denied",
+      "Publishing permission required.",
+    );
+  }
+
+  const input = request.data?.notification;
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new HttpsError("invalid-argument", "Invalid notification.");
+  }
+
+  const notification = {
+    ...(input as Record<string, unknown>),
+    createdAt: Timestamp.now(),
+    read: false,
+  };
+  const usersSnapshot = await db.collection("users").get();
+  const batch = db.batch();
+
+  usersSnapshot.docs.forEach((userDoc) => {
+    batch.update(userDoc.ref, {
+      notifications: FieldValue.arrayUnion(notification),
+    });
+  });
+
+  if (usersSnapshot.size > 0) await batch.commit();
+  return { sent: usersSnapshot.size };
+});
+
 function getNewNotifications(
   before: UserNotification[] | undefined,
   after: UserNotification[] | undefined,

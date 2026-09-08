@@ -1,13 +1,6 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  Timestamp,
-  updateDoc,
-} from "firebase/firestore";
-import { db } from "../../firebaseConfig";
+import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
+import { db, functions } from "../../firebaseConfig";
 import { getThemeAsset } from "../constants/themeAssets";
 
 export type NotificationType =
@@ -330,29 +323,8 @@ export async function appendNotificationForUser(
 export async function appendNotificationToAllUsers(
   notification: NotificationRecord,
 ) {
-  const usersSnap = await getDocs(collection(db, "users"));
-
-  await Promise.all(
-    usersSnap.docs.map(async (userDoc) => {
-      const data = userDoc.data() as { notifications?: NotificationRecord[] };
-      const current = Array.isArray(data.notifications)
-        ? data.notifications
-        : [];
-
-      const nextNotification = stripUndefinedFields({
-        ...notification,
-        createdAt: notification.createdAt ?? Timestamp.now(),
-      });
-      const notifications = [
-        ...current.slice(-(MAX_SAVED_NOTIFICATIONS - 1)),
-        nextNotification,
-      ];
-
-      await updateDoc(userDoc.ref, {
-        notifications,
-      });
-    }),
-  );
+  const sendNotification = httpsCallable(functions, "sendLibraryNotification");
+  await sendNotification({ notification: stripUndefinedFields(notification) });
 }
 
 export async function markNotificationAsRead(

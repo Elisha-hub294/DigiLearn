@@ -26,8 +26,8 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
-import { BookCard } from "../components/library/BookCard";
 import { TeacherPostItem } from "../components/home/TeacherPostCard";
+import { BookCard } from "../components/library/BookCard";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { SearchBar } from "../components/ui/SearchBar";
 import { VideoCard } from "../components/ui/VideoCard";
@@ -83,6 +83,15 @@ const pickArray = (value: unknown): string[] => {
   const single = pickString(value);
   return single ? [single] : [];
 };
+
+const getTeacherAvatar = (data: Record<string, unknown>) =>
+  pickString(
+    data.avatar ||
+      data.image ||
+      data.imageUrl ||
+      data.profileImage ||
+      data.photoURL,
+  );
 
 const getCreatedAt = (value: unknown) => {
   if (typeof value === "number") return value;
@@ -165,8 +174,8 @@ export default function TeacherProfileScreen() {
     (user?.uid && params.id === user.uid) ||
     Boolean(
       profile?.type === "teacher" &&
-        teacher &&
-        normalizeKey(profile.name) === normalizeKey(teacher.name),
+      teacher &&
+      normalizeKey(profile.name) === normalizeKey(teacher.name),
     );
   const viewerRole: "own" | "teacher" | "student" = isOwnProfile
     ? "own"
@@ -184,7 +193,7 @@ export default function TeacherProfileScreen() {
           setTeacher({
             id: docSnap.id,
             name: pickString(data.name, teacherName),
-            avatar: pickString(data.avatar || data.photoURL),
+            avatar: getTeacherAvatar(data),
             bio: pickString(data.bio, "Teacher at DigiLearn"),
             accent: pickString(data.accent, colors.primary),
             phone: pickString(data.phone),
@@ -218,7 +227,7 @@ export default function TeacherProfileScreen() {
       setTeacher({
         id: matched.id,
         name: pickString(data.name, teacherName),
-        avatar: pickString(data.avatar || data.photoURL),
+        avatar: getTeacherAvatar(data),
         bio: pickString(data.bio, "Teacher at DigiLearn"),
         accent: pickString(data.accent, colors.primary),
         phone: pickString(data.phone),
