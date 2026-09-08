@@ -537,8 +537,8 @@ export default function TeacherAccountQuickSettingsScreen() {
             <View style={styles.headerRow}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Back to account type"
-                onPress={() => router.replace("/account-type" as never)}
+                accessibilityLabel="Go back"
+                onPress={() => router.back()}
                 style={styles.backButton}
               >
                 <Feather name="arrow-left" size={22} color={colors.dark} />
