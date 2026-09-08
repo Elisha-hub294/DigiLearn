@@ -141,3 +141,38 @@ test("admin users can read admin notifications", async () => {
     getDocs(collection(context.firestore(), "adminNotifications")),
   );
 });
+
+test("guests can read published teacher resources", async () => {
+  const disabled = testEnv.withSecurityRulesDisabled();
+  for (const collectionName of [
+    "pages",
+    "books",
+    "pastPaper",
+    "teacherPosts",
+    "teacherPostsCards",
+    "teacherUpdates",
+    "trendingLessons",
+  ]) {
+    await setDoc(
+      doc(disabled.firestore(), collectionName, `${collectionName}-1`),
+      {
+        owner: "teacher-1",
+      },
+    );
+  }
+
+  const guest = testEnv.unauthenticatedContext();
+  for (const collectionName of [
+    "pages",
+    "books",
+    "pastPaper",
+    "teacherPosts",
+    "teacherPostsCards",
+    "teacherUpdates",
+    "trendingLessons",
+  ]) {
+    await assertSucceeds(
+      getDocs(collection(guest.firestore(), collectionName)),
+    );
+  }
+});

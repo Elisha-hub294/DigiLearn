@@ -201,7 +201,7 @@ export default function TeacherProfileScreen() {
               name: pickString(data.name, teacherName),
               avatar: getTeacherAvatar(data),
               bio: pickString(data.bio, "Teacher at DigiLearn"),
-              accent: pickString(data.accent, colors.primary),
+              accent: pickString(data.accent, colors.primaryDark),
               phone: pickString(data.phone),
               email: pickString(data.email),
               youtube: pickString(data.youtube),

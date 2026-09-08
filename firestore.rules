@@ -94,12 +94,12 @@ service cloud.firestore {
     }
 
     match /teacherPostsCards/{documentId} {
-      allow read: if isVerified();
+      allow read: if true;
       allow write: if false;
     }
 
     match /teacherUpdates/{documentId} {
-      allow read: if isVerified();
+      allow read: if true;
       allow write: if false;
     }
 
@@ -201,7 +201,7 @@ service cloud.firestore {
     }
 
     match /teacherPosts/{postId} {
-      allow read: if isVerified();
+      allow read: if true;
       allow create: if isPublisher() && request.resource.data.owner == request.auth.uid;
       allow update: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
       allow delete: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
