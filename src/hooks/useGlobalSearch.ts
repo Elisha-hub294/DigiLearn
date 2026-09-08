@@ -18,7 +18,7 @@ const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
 const MAX_RECENT_ITEMS = 10;
 const FALLBACK_TEACHER_AVATAR = "TeacherProfile/tr-default.png";
 const SEARCH_CACHE_KEY = LOCAL_CACHE_KEYS.search;
-const SEARCH_CACHE_VERSION = 2;
+const SEARCH_CACHE_VERSION = 3;
 const SEARCH_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
 type SearchCache = {
@@ -291,9 +291,14 @@ export function useGlobalSearch(
         );
         const teachersAvatarMap: Record<string, string> = {};
         teacherList.forEach((teacher: any) => {
-          if (teacher.name && (teacher.avatar || teacher.image)) {
+          if (
+            teacher.name &&
+            (teacher.avatar || teacher.image || teacher.photoURL)
+          ) {
             teachersAvatarMap[String(teacher.name).toLowerCase().trim()] =
-              String(teacher.avatar || teacher.image).trim();
+              String(
+                teacher.avatar || teacher.image || teacher.photoURL,
+              ).trim();
           }
         });
         const subjectsMap: Record<string, string> = {};
@@ -586,7 +591,7 @@ export function useGlobalSearch(
       const teacherName = String(t.name || "Teacher");
       const teacherAvatar = resolveTeacherAvatar(
         teacherName,
-        t.avatar || t.image,
+        t.avatar || t.image || t.photoURL,
       );
 
       addScored(

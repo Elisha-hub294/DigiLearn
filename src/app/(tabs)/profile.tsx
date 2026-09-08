@@ -138,8 +138,8 @@ export default function ProfileScreen() {
                   TEACHER ACCOUNT UNDER REVIEW
                 </Text>
                 <Text style={[s.reviewText, { color: themeColors.text }]}>
-                  DigiLearn is ready to use in student mode while we review your
-                  teacher application.
+                  Your teacher account is awaiting admin approval. Teacher
+                  features will be available once your application is approved.
                 </Text>
               </View>
             )}

@@ -692,8 +692,8 @@ export default function TeacherProfileScreen() {
             <View style={styles.reviewNotice}>
               <Icon name="clock" size={16} color="#946200" />
               <Text style={styles.reviewNoticeText}>
-                Teacher account under review. You are currently using student
-                mode while an admin reviews your application.
+                Your teacher account is awaiting admin approval. Teacher
+                features will be available once your application is approved.
               </Text>
             </View>
           )}
