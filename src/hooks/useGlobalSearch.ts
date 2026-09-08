@@ -377,6 +377,9 @@ export function useGlobalSearch(
   // Helper to match subject image
   const getNotePreview = useCallback(
     (item: any): string => {
+      const resourcePreview = item.cover || item.preview || item.avatar;
+      if (resourcePreview) return resourcePreview;
+
       const sub = item.subject;
       const subjects: string[] = Array.isArray(sub)
         ? sub
@@ -387,7 +390,7 @@ export function useGlobalSearch(
         const norm = s.toLowerCase().trim();
         if (subjectsMap[norm]) return subjectsMap[norm];
       }
-      return item.preview || item.avatar || DEFAULT_SUBJECT_AVATAR;
+      return DEFAULT_SUBJECT_AVATAR;
     },
     [subjectsMap],
   );
