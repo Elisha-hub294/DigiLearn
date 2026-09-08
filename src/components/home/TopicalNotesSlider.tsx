@@ -37,7 +37,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 const AUTO_SCROLL_INTERVAL_MS = 2500;
-const RESUME_DELAY_MS = 3000;
+const RESUME_DELAY_MS = 5000;
 const CARD_GAP = 0; // marginRight on each card
 const MIN_LOOP_COPIES = 5;
 

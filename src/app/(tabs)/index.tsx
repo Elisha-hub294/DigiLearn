@@ -482,14 +482,12 @@ export default function HomeScreen() {
             {/* Daily Learning Streak Card */}
             {/* <StreakCard /> */}
 
-           
-
             {/* Story-style topical discovery slider always at top */}
             <View style={styles.storiesSection}>
               <TopicalNotesSlider />
             </View>
 
-             {/* Continue Learning Shelf when user has active lesson progress */}
+            {/* Continue Learning Shelf when user has active page progress */}
             <ContinueLearningShelf />
 
             {/* Continuous Interleaved Social Feed */}

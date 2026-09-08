@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -15,23 +15,33 @@ import { radius, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
-  formatPlaybackTime,
-  getAllRecentProgress,
-  type PlaybackProgress,
-} from "../../services/playbackProgressService";
+  clearPageReadingProgress,
+  getRecentReadingProgressList,
+  type ReadingProgress,
+} from "../../services/readingProgressService";
 import { SectionHeader } from "../ui/SectionHeader";
+
+const MAX_CONTINUE_ITEMS = 5;
 
 export function ContinueLearningShelf() {
   const { colors, isDark } = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const [recents, setRecents] = useState<PlaybackProgress[]>([]);
+  const [recents, setRecents] = useState<ReadingProgress[]>([]);
 
   const loadRecents = useCallback(() => {
-    void getAllRecentProgress().then((items) => {
-      setRecents(items);
+    void getRecentReadingProgressList().then((items) => {
+      setRecents(items.slice(0, MAX_CONTINUE_ITEMS));
     });
   }, []);
+
+  const clearRecents = useCallback(async () => {
+    const itemsToClear = recents;
+    setRecents([]);
+    await Promise.all(
+      itemsToClear.map((item) => clearPageReadingProgress(item.pageId)),
+    );
+  }, [recents]);
 
   useFocusEffect(
     useCallback(() => {
@@ -44,35 +54,32 @@ export function ContinueLearningShelf() {
   }
 
   const cardWidth = Math.min(280, Math.max(240, width * 0.72));
-
   return (
-    <Animated.View
-      entering={FadeInUp.duration(380)}
-      style={styles.container}
-    >
+    <Animated.View entering={FadeInUp.duration(380)} style={styles.container}>
       <SectionHeader
         title="Continue Learning"
         actionLabel="Clear"
-        onSeeAll={() => setRecents([])}
+        onSeeAll={() => {
+          void clearRecents();
+        }}
       />
 
       <FlatList
         horizontal
         showsHorizontalScrollIndicator={false}
         data={recents}
-        keyExtractor={(item) => item.lessonId}
+        keyExtractor={(item) => item.pageId}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => {
-          const formattedTime = formatPlaybackTime(item.positionSeconds);
-          const thumbSource = item.thumbnail
-            ? { uri: item.thumbnail }
+          const thumbSource = item.cover
+            ? { uri: item.cover }
             : getThemeAsset("thumbDefault", isDark);
 
           return (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Resume lesson: ${item.title}`}
-              accessibilityHint={`Resumes video playback at ${formattedTime}`}
+              accessibilityLabel={`Continue reading: ${item.title}`}
+              accessibilityHint={`Opens this page at page ${item.lastPage}`}
               style={[
                 styles.card,
                 {
@@ -83,15 +90,12 @@ export function ContinueLearningShelf() {
               ]}
               onPress={() => {
                 router.push({
-                  pathname: "/lesson-player",
+                  pathname: "/pdf-reader",
                   params: {
-                    id: item.lessonId,
+                    pageId: item.pageId,
                     title: item.title,
-                    subject: item.subject,
-                    teacher: item.teacher,
-                    thumbnail: item.thumbnail,
-                    link: item.link,
-                    duration: item.duration,
+                    document: item.documentUri,
+                    initialPage: String(item.lastPage),
                   },
                 } as never);
               }}
@@ -113,14 +117,17 @@ export function ContinueLearningShelf() {
                     style={[styles.subjectText, { color: colors.primary }]}
                     maxFontSizeMultiplier={1.3}
                   >
-                    {item.subject?.toUpperCase() ?? "LESSON"}
+                    {item.subject?.toUpperCase() ?? "PAGE"}
                   </Text>
                 </View>
 
                 <View style={styles.playBadge}>
-                  <Ionicons name="play" size={14} color="#FFFFFF" />
-                  <Text style={styles.playBadgeText} maxFontSizeMultiplier={1.3}>
-                    {formattedTime}
+                  <Ionicons name="document-text" size={14} color="#FFFFFF" />
+                  <Text
+                    style={styles.playBadgeText}
+                    maxFontSizeMultiplier={1.3}
+                  >
+                    Page {item.lastPage}
                   </Text>
                 </View>
               </View>
@@ -138,7 +145,7 @@ export function ContinueLearningShelf() {
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.3}
                 >
-                  {item.teacher ?? "DigiLearn Educator"}
+                  {item.documentUri ? "DigiLearn Page" : "Page document"}
                 </Text>
 
                 <View
@@ -152,7 +159,7 @@ export function ContinueLearningShelf() {
                     style={styles.resumeButtonText}
                     maxFontSizeMultiplier={1.3}
                   >
-                    Resume from {formattedTime}
+                    Continue from page {item.lastPage}
                   </Text>
                 </View>
               </View>
