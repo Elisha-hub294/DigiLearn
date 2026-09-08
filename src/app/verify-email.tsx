@@ -45,7 +45,10 @@ function getErrorMessage(error: unknown) {
 export default function VerifyEmailScreen() {
   const { colors: themeColors } = useTheme();
   const router = useRouter();
-  const { email: emailParam } = useLocalSearchParams<{ email?: string }>();
+  const { email: emailParam, next } = useLocalSearchParams<{
+    email?: string;
+    next?: string;
+  }>();
   const { width } = useWindowDimensions();
   const [isChecking, setIsChecking] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -113,6 +116,10 @@ export default function VerifyEmailScreen() {
     await signOut(auth);
     router.replace("/welcome" as never);
   }, [router]);
+
+  const handleModifyEmail = useCallback(() => {
+    router.replace(next === "/account-type" ? "/signup" : "/login");
+  }, [next, router]);
 
   return (
     <SafeAreaView
@@ -182,6 +189,14 @@ export default function VerifyEmailScreen() {
             accessibilityLabel="Sign out"
           >
             <Text style={styles.signOutText}>Sign out</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={handleModifyEmail}
+            accessibilityRole="button"
+            accessibilityLabel="Modify email"
+          >
+            <Text style={styles.modifyEmailText}>Modify email</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -261,6 +276,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     marginTop: spacing.xl,
+  },
+  modifyEmailText: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "600",
+    marginTop: spacing.md,
   },
   pressed: { opacity: 0.75 },
 });
