@@ -318,85 +318,83 @@ export default function TeacherAccountQuickSettingsScreen() {
     closeSocialModal();
   }, [activeSocial, closeSocialModal, socialInput]);
 
-  const saveProfile = useCallback(async (currentUser: User) => {
-    if (isSaving) {
-      return;
-    }
-
-    setSaveError("");
-    setIsSaving(true);
-
-    try {
-      await currentUser.reload();
-      const refreshedUser = auth.currentUser;
-      if (!refreshedUser || !refreshedUser.emailVerified) {
-        setSaveError("Please verify your email before saving your details.");
+  const saveProfile = useCallback(
+    async (currentUser: User) => {
+      if (isSaving) {
         return;
       }
 
-      const payload = {
-        name: normalizeProfileText(name),
-        school: normalizeProfileText(school),
-        subjects: getSubjectNames(selectedSubjects),
-        filterFeedByInterests,
-        ...socialValues,
-      };
+      setSaveError("");
+      setIsSaving(true);
 
-      const applicationRef = doc(db, "teacherApplications", refreshedUser.uid);
-      const userRef = doc(db, "users", refreshedUser.uid);
-      const teacherRef = doc(db, "teachers", refreshedUser.uid);
-      const [applicationSnapshot, teacherSnapshot] = await Promise.all([
-        getDoc(applicationRef),
-        getDoc(teacherRef),
-      ]);
+      try {
+        await currentUser.reload();
+        const refreshedUser = auth.currentUser;
+        if (!refreshedUser || !refreshedUser.emailVerified) {
+          setSaveError("Please verify your email before saving your details.");
+          return;
+        }
 
-      // Application status and its audit history are server-owned.
-      if (applicationSnapshot.data()?.status === "rejected") {
-        await resubmitTeacherApplication();
-      }
+        const payload = {
+          name: normalizeProfileText(name),
+          school: normalizeProfileText(school),
+          subjects: getSubjectNames(selectedSubjects),
+          filterFeedByInterests,
+          ...socialValues,
+        };
 
-      const batch = writeBatch(db);
-      batch.set(userRef, payload, { merge: true });
-
-      if (applicationSnapshot.exists()) {
-        batch.set(
-          applicationRef,
-          {
-            applicantId: refreshedUser.uid,
-            ...payload,
-            email: refreshedUser.email ?? "",
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true },
+        const applicationRef = doc(
+          db,
+          "teacherApplications",
+          refreshedUser.uid,
         );
-      }
+        const teacherRef = doc(db, "teachers", refreshedUser.uid);
+        const applicationSnapshot = await getDoc(applicationRef);
 
-      // Approved teacher profiles are read from this collection first.
-      if (teacherSnapshot.exists()) {
+        // Application status and its audit history are server-owned.
+        if (applicationSnapshot.data()?.status === "rejected") {
+          await resubmitTeacherApplication();
+        }
+
+        const batch = writeBatch(db);
+        if (applicationSnapshot.exists()) {
+          batch.set(
+            applicationRef,
+            {
+              applicantId: refreshedUser.uid,
+              ...payload,
+              email: refreshedUser.email ?? "",
+              updatedAt: serverTimestamp(),
+            },
+            { merge: true },
+          );
+        }
+
         batch.set(teacherRef, payload, { merge: true });
-      }
 
-      await batch.commit();
-      router.replace("/" as never);
-    } catch (error) {
-      setSaveError(
-        getErrorMessage(
-          error,
-          "Couldn't save your details. Please check your connection and try again.",
-        ),
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  }, [
-    filterFeedByInterests,
-    isSaving,
-    name,
-    router,
-    school,
-    selectedSubjects,
-    socialValues,
-  ]);
+        await batch.commit();
+        router.replace("/" as never);
+      } catch (error) {
+        setSaveError(
+          getErrorMessage(
+            error,
+            "Couldn't save your details. Please check your connection and try again.",
+          ),
+        );
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [
+      filterFeedByInterests,
+      isSaving,
+      name,
+      router,
+      school,
+      selectedSubjects,
+      socialValues,
+    ],
+  );
 
   const handleConfirm = useCallback(async () => {
     if (!user || isSaving) {

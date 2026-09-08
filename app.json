@@ -14,15 +14,13 @@
       "firebaseStorageBucket": "digilearn-af86d.firebasestorage.app",
       "firebaseMessagingSenderId": "851245099108",
       "firebaseAppId": "1:851245099108:web:fab0d172231b2a550a9771",
-      "googleWebClientId": "851245099108-fojkh0r8dp5iv56dh04b7os5c6ls0e80.apps.googleusercontent.com"
+      "googleWebClientId": "851245099108-ckatv1djqhf5h2m40ni879p8nsb2vne5.apps.googleusercontent.com"
     },
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.digilearn.app",
       "buildNumber": "1",
-      "associatedDomains": [
-        "applinks:digilearn-af86d.firebaseapp.com"
-      ]
+      "associatedDomains": ["applinks:digilearn-af86d.firebaseapp.com"]
     },
     "android": {
       "package": "com.digilearn.app",

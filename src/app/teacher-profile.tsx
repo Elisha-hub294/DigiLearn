@@ -936,6 +936,8 @@ export default function TeacherProfileScreen() {
               },
             ]}
             source="pages"
+            includeHiddenItems
+            filterByInterests={false}
           />
         );
       }
