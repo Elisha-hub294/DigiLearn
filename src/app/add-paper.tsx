@@ -7,7 +7,9 @@ export default function AddPaperScreen() {
   const router = useRouter();
   const { profile } = useProfile();
   const isAuthorizedPublisher =
-    profile?.type === "teacher" || profile?.type === "admin";
+    profile?.type === "admin" ||
+    (profile?.type === "teacher" &&
+      profile.teacherApprovalStatus === "approved");
 
   return (
     <PublishAccessGate

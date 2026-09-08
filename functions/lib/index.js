@@ -322,7 +322,7 @@ exports.reviewTeacherApplication = (0, https_1.onCall)(async (request) => {
     if (decision === "reject" && reason.length < 5)
         throw new https_1.HttpsError("invalid-argument", "A rejection reason is required.");
     const applicationRef = db.doc(`teacherApplications/${applicationId}`);
-    const applicantRef = db.doc(`users/${applicationId}`);
+    const applicantRef = db.doc(`teachers/${applicationId}`);
     const teacherRef = db.doc(`teachers/${applicationId}`);
     const auditRef = db.collection("teacherApplicationAudit").doc();
     await db.runTransaction(async (transaction) => {
@@ -350,19 +350,14 @@ exports.reviewTeacherApplication = (0, https_1.onCall)(async (request) => {
             reviewedBy: adminId,
             updatedAt: now,
         });
-        transaction.update(applicantRef, {
-            type: decision === "approve" ? "teacher" : "student",
+        transaction.set(teacherRef, {
+            ...applicant,
+            type: "teacher",
             teacherApprovalStatus: status,
             teacherReviewReason: decision === "reject" ? reason : firestore_1.FieldValue.delete(),
             notifications: firestore_1.FieldValue.arrayUnion(notification),
-        });
-        if (decision === "approve")
-            transaction.set(teacherRef, {
-                ...applicant,
-                type: "teacher",
-                teacherApprovalStatus: "approved",
-                approvedAt: now,
-            }, { merge: true });
+            ...(decision === "approve" ? { approvedAt: now } : {}),
+        }, { merge: true });
         transaction.set(auditRef, {
             applicationId,
             applicantId: applicationId,
@@ -387,11 +382,13 @@ exports.changeAccountType = (0, https_1.onCall)(async (request) => {
     }
     const userId = request.auth.uid;
     const userRef = db.doc(`users/${userId}`);
+    const teacherRef = db.doc(`teachers/${userId}`);
     const applicationRef = db.doc(`teacherApplications/${userId}`);
     const userSnapshot = await userRef.get();
+    const teacherSnapshot = await teacherRef.get();
     const userData = {
         ...defaultProfileFields(request),
-        ...(userSnapshot.data() ?? {}),
+        ...(teacherSnapshot.data() ?? userSnapshot.data() ?? {}),
     };
     if (accountType === "student") {
         await userRef.set({
@@ -402,17 +399,21 @@ exports.changeAccountType = (0, https_1.onCall)(async (request) => {
             teacherApprovalStatus: firestore_1.FieldValue.delete(),
             teacherReviewReason: firestore_1.FieldValue.delete(),
         }, { merge: true });
+        if (teacherSnapshot.exists)
+            await teacherRef.delete();
         await applicationRef.delete();
         return { status: "student" };
     }
-    await userRef.set({
+    await teacherRef.set({
         ...userData,
-        type: "student",
+        type: "teacher",
         accountTypeCompleted: true,
         requestedAccountType: "teacher",
         teacherApprovalStatus: "pending",
         teacherReviewReason: firestore_1.FieldValue.delete(),
     }, { merge: true });
+    if (userSnapshot.exists)
+        await userRef.delete();
     await applicationRef.set({
         applicantId: userId,
         name: userData.name,
@@ -428,7 +429,7 @@ exports.resubmitTeacherApplication = (0, https_1.onCall)(async (request) => {
         throw new https_1.HttpsError("unauthenticated", "Sign in required.");
     const applicationId = request.auth.uid;
     const applicationRef = db.doc(`teacherApplications/${applicationId}`);
-    const applicantRef = db.doc(`users/${applicationId}`);
+    const applicantRef = db.doc(`teachers/${applicationId}`);
     const auditRef = db.collection("teacherApplicationAudit").doc();
     const currentApplication = await applicationRef.get();
     if (currentApplication.data()?.status === "pending") {
@@ -448,7 +449,7 @@ exports.resubmitTeacherApplication = (0, https_1.onCall)(async (request) => {
             resubmittedAt: now,
         });
         transaction.update(applicantRef, {
-            type: "student",
+            type: "teacher",
             teacherApprovalStatus: "pending",
             teacherReviewReason: firestore_1.FieldValue.delete(),
         });

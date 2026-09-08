@@ -244,7 +244,9 @@ export function AddItemModal({
   const [ownedBooksLoading, setOwnedBooksLoading] = useState(false);
 
   const isAuthorizedPublisher =
-    profile?.type === "teacher" || profile?.type === "admin";
+    profile?.type === "admin" ||
+    (profile?.type === "teacher" &&
+      profile.teacherApprovalStatus === "approved");
 
   useEffect(() => {
     if (!visible || formType !== "page" || !user?.uid) {

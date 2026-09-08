@@ -174,11 +174,14 @@ export default function ProfileScreen() {
                 </Pressable>
               </View>
             )}
-            {(profile.type === "admin" ||
-              (profile.type === "teacher" &&
-                profile.teacherApprovalStatus !== "pending" &&
-                profile.teacherApprovalStatus !== "rejected")) && (
-              <PublishButton onPress={() => router.push("/publish")} />
+            {(profile.type === "admin" || profile.type === "teacher") && (
+              <PublishButton
+                disabled={
+                  profile.type === "teacher" &&
+                  profile.teacherApprovalStatus !== "approved"
+                }
+                onPress={() => router.push("/publish")}
+              />
             )}
             {profile.type === "admin" && (
               <>

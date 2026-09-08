@@ -1,10 +1,27 @@
 import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { auth, db } from "../../firebaseConfig";
-import { defaultUserProfile, ensureUserProfile, getUserOnboardingState, UserProfile } from "../services/userProfile";
+import {
+  defaultUserProfile,
+  ensureUserProfile,
+  UserProfile,
+} from "../services/userProfile";
 
-type ProfileState = { user: User | null; profile: UserProfile | null; loading: boolean; error: string | null; refresh: () => Promise<void> };
+type ProfileState = {
+  user: User | null;
+  profile: UserProfile | null;
+  loading: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+};
 const ProfileContext = createContext<ProfileState | undefined>(undefined);
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
@@ -13,27 +30,84 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => onAuthStateChanged(auth, (nextUser) => { setUser(nextUser); setProfile(null); setError(null); setLoading(Boolean(nextUser)); }), []);
+  useEffect(
+    () =>
+      onAuthStateChanged(auth, (nextUser) => {
+        setUser(nextUser);
+        setProfile(null);
+        setError(null);
+        setLoading(Boolean(nextUser));
+      }),
+    [],
+  );
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
-    let unsubscribe = () => {};
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     let active = true;
-    getUserOnboardingState(user.uid).then((onboarding) => {
-      if (!active) return;
-      if (!onboarding.exists) {
-        setLoading(false);
+    let usersSnapshotReceived = false;
+    let teachersSnapshotReceived = false;
+    let usersData: Record<string, unknown> | null = null;
+    let teachersData: Record<string, unknown> | null = null;
+
+    const updateProfile = () => {
+      if (!active || (!usersSnapshotReceived && !teachersSnapshotReceived))
         return;
-      }
-      const collectionName = onboarding.type === "teacher" ? "teachers" : "users";
-      unsubscribe = onSnapshot(doc(db, collectionName, user.uid), (snapshot) => {
-        setProfile({ ...defaultUserProfile(user), ...(snapshot.data() ?? {}) } as UserProfile);
-        setLoading(false);
-      }, (reason) => { setError(reason.message || "Could not load your profile."); setLoading(false); });
-    }).catch((reason) => { if (active) { setError(reason instanceof Error ? reason.message : "Could not load your profile."); setLoading(false); } });
-    return () => { active = false; unsubscribe(); };
+      const data = teachersData ?? usersData;
+      setProfile(
+        data ? ({ ...defaultUserProfile(user), ...data } as UserProfile) : null,
+      );
+      setLoading(false);
+    };
+    const handleError = (reason: Error) => {
+      if (!active) return;
+      setError(reason.message || "Could not load your profile.");
+      setLoading(false);
+    };
+
+    const unsubscribeUsers = onSnapshot(
+      doc(db, "users", user.uid),
+      (snapshot) => {
+        usersSnapshotReceived = true;
+        usersData = snapshot.exists()
+          ? (snapshot.data() as Record<string, unknown>)
+          : null;
+        updateProfile();
+      },
+      handleError,
+    );
+    const unsubscribeTeachers = onSnapshot(
+      doc(db, "teachers", user.uid),
+      (snapshot) => {
+        teachersSnapshotReceived = true;
+        teachersData = snapshot.exists()
+          ? (snapshot.data() as Record<string, unknown>)
+          : null;
+        updateProfile();
+      },
+      handleError,
+    );
+
+    return () => {
+      active = false;
+      unsubscribeUsers();
+      unsubscribeTeachers();
+    };
   }, [user]);
-  const refresh = async () => { if (user) await ensureUserProfile(user); };
-  const value = useMemo(() => ({ user, profile, loading, error, refresh }), [user, profile, loading, error]);
-  return <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>;
+  const refresh = async () => {
+    if (user) await ensureUserProfile(user);
+  };
+  const value = useMemo(
+    () => ({ user, profile, loading, error, refresh }),
+    [user, profile, loading, error],
+  );
+  return (
+    <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>
+  );
 }
-export function useProfile() { const state = useContext(ProfileContext); if (!state) throw new Error("useProfile must be used within ProfileProvider"); return state; }
+export function useProfile() {
+  const state = useContext(ProfileContext);
+  if (!state) throw new Error("useProfile must be used within ProfileProvider");
+  return state;
+}

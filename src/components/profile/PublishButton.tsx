@@ -7,7 +7,13 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 const A = Animated.createAnimatedComponent(Pressable);
-export function PublishButton({ onPress }: { onPress: () => void }) {
+export function PublishButton({
+  onPress,
+  disabled = false,
+}: {
+  onPress: () => void;
+  disabled?: boolean;
+}) {
   const scale = useSharedValue(1);
   const style = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -16,17 +22,17 @@ export function PublishButton({ onPress }: { onPress: () => void }) {
     <A
       accessibilityLabel="Publish"
       accessibilityRole="button"
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
       onPressIn={() => {
         scale.value = withSpring(0.97);
       }}
       onPressOut={() => {
         scale.value = withSpring(1);
       }}
-      style={[s.button, style]}
+      style={[s.button, disabled && s.disabledButton, style]}
     >
       <LinearGradient
-        colors={["#3F7BEB", "#E500C7"]}
+        colors={disabled ? ["#9CA3AF", "#6B7280"] : ["#3F7BEB", "#E500C7"]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={s.gradient}
@@ -55,6 +61,10 @@ const s = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 5,
+  },
+  disabledButton: {
+    shadowOpacity: 0,
+    elevation: 0,
   },
   gradient: { flex: 1, alignItems: "center", justifyContent: "center" },
   content: {

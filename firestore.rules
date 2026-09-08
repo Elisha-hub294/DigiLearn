@@ -15,8 +15,8 @@ service cloud.firestore {
         && (
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin'
           || (
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'teacher'
-            && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.teacherApprovalStatus == 'approved'
+            get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.type == 'teacher'
+            && get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.teacherApprovalStatus == 'approved'
           )
         );
     }

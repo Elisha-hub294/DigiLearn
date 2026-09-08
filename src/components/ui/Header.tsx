@@ -40,6 +40,8 @@ export const Header = ({
   const canPublish =
     showPublishButton &&
     (profile?.type === "teacher" || profile?.type === "admin");
+  const publishDisabled =
+    profile?.type === "teacher" && profile.teacherApprovalStatus !== "approved";
   const hasUnread = notifications.some(
     (notification) =>
       !notification.read &&
@@ -108,9 +110,13 @@ export const Header = ({
       <View style={styles.actions}>
         {canPublish ? (
           <Pressable
-            style={styles.publishButton}
             accessibilityLabel="Publish content"
+            disabled={publishDisabled}
             onPress={() => router.push("/publish" as any)}
+            style={[
+              styles.publishButton,
+              publishDisabled && styles.publishDisabled,
+            ]}
           >
             <Icon
               name="plus"
@@ -216,6 +222,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 4,
+  },
+  publishDisabled: {
+    backgroundColor: colors.inactive,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   notificationButton: {
     width: 46,
