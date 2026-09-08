@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = exports.initializeUserProfile = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendUserNotifications = exports.sendLibraryNotification = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = exports.initializeUserProfile = void 0;
 const genai_1 = require("@google/genai");
 const app_1 = require("firebase-admin/app");
 const auth_1 = require("firebase-admin/auth");
@@ -50,8 +50,23 @@ exports.initializeUserProfile = (0, https_1.onCall)(async (request) => {
         throw new https_1.HttpsError("unauthenticated", "Sign in required.");
     }
     const userRef = db.doc(`users/${request.auth.uid}`);
-    const snapshot = await userRef.get();
+    const teacherRef = db.doc(`teachers/${request.auth.uid}`);
+    const [snapshot, teacherSnapshot] = await Promise.all([
+        userRef.get(),
+        teacherRef.get(),
+    ]);
     const profile = defaultProfileFields(request);
+    if (teacherSnapshot.exists) {
+        if (snapshot.exists) {
+            await userRef.delete();
+        }
+        const currentTeacher = teacherSnapshot.data() ?? {};
+        const missingTeacherFields = Object.fromEntries(Object.entries(profile).filter(([key]) => currentTeacher[key] === undefined));
+        if (Object.keys(missingTeacherFields).length > 0) {
+            await teacherRef.set(missingTeacherFields, { merge: true });
+        }
+        return { created: false, collection: "teachers" };
+    }
     if (!snapshot.exists) {
         await userRef.create(profile);
         return { created: true };
@@ -256,6 +271,42 @@ exports.deleteResource = (0, https_1.onCall)(async (request) => {
     }));
     await resourceRef.delete();
     return { deleted: true };
+});
+exports.sendLibraryNotification = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
+    }
+    const userSnapshot = await db.doc(`users/${request.auth.uid}`).get();
+    const teacherSnapshot = await db.doc(`teachers/${request.auth.uid}`).get();
+    const userData = userSnapshot.data() ?? {};
+    const teacherData = teacherSnapshot.data() ?? {};
+    const isPublisher = userData.type === "admin" ||
+        (teacherData.type === "teacher" &&
+            teacherData.teacherApprovalStatus === "approved");
+    if (!isPublisher) {
+        throw new https_1.HttpsError("permission-denied", "Publishing permission required.");
+    }
+    const input = request.data?.notification;
+    if (!input || typeof input !== "object" || Array.isArray(input)) {
+        throw new https_1.HttpsError("invalid-argument", "Invalid notification.");
+    }
+    const notification = {
+        ...input,
+        createdAt: firestore_1.Timestamp.now(),
+        read: false,
+    };
+    const usersSnapshot = await db.collection("users").get();
+    const batchSize = 450;
+    for (let start = 0; start < usersSnapshot.docs.length; start += batchSize) {
+        const batch = db.batch();
+        usersSnapshot.docs.slice(start, start + batchSize).forEach((userDoc) => {
+            batch.update(userDoc.ref, {
+                notifications: firestore_1.FieldValue.arrayUnion(notification),
+            });
+        });
+        await batch.commit();
+    }
+    return { sent: usersSnapshot.size };
 });
 function getNewNotifications(before, after) {
     const previousIds = new Set((before ?? []).map((item) => item.id));

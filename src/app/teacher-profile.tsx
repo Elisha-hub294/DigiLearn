@@ -1,14 +1,7 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Feather as Icon } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-} from "firebase/firestore";
+import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
@@ -61,6 +54,7 @@ type ResourceItem = {
   ownerType?: string;
   fileType?: "image" | "doc" | "";
   teacher?: string;
+  owner?: string;
   image?: string;
   link?: string;
   thumbnail?: string;
@@ -94,10 +88,21 @@ const getTeacherAvatar = (data: Record<string, unknown>) =>
   );
 
 const getCreatedAt = (value: unknown) => {
+  if (
+    value &&
+    typeof value === "object" &&
+    "toMillis" in value &&
+    typeof value.toMillis === "function"
+  ) {
+    return value.toMillis();
+  }
   if (typeof value === "number") return value;
   if (typeof value === "string") return value;
   return 0;
 };
+
+const getResourceDate = (data: Record<string, unknown>) =>
+  data.createdAt ?? data.updatedAt ?? data.uploadedAt;
 
 const formatResourceTime = (value: unknown) => {
   const date =
@@ -183,257 +188,267 @@ export default function TeacherProfileScreen() {
       ? "teacher"
       : "student";
 
-  const fetchTeacherProfile = useCallback(async () => {
-    try {
-      if (params.id) {
-        const teacherDocRef = doc(db, "teachers", params.id);
-        const docSnap = await getDoc(teacherDocRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data() as Record<string, unknown>;
-          setTeacher({
-            id: docSnap.id,
-            name: pickString(data.name, teacherName),
-            avatar: getTeacherAvatar(data),
-            bio: pickString(data.bio, "Teacher at DigiLearn"),
-            accent: pickString(data.accent, colors.primary),
-            phone: pickString(data.phone),
-            email: pickString(data.email),
-            youtube: pickString(data.youtube),
-            verified: Boolean(data.verified),
-            subjects: pickArray(data.subjects),
-            createdAt: data.createdAt,
-          });
-          return;
+  const fetchTeacherProfile =
+    useCallback(async (): Promise<TeacherRecord | null> => {
+      try {
+        if (params.id) {
+          const teacherDocRef = doc(db, "teachers", params.id);
+          const docSnap = await getDoc(teacherDocRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data() as Record<string, unknown>;
+            const teacherRecord = {
+              id: docSnap.id,
+              name: pickString(data.name, teacherName),
+              avatar: getTeacherAvatar(data),
+              bio: pickString(data.bio, "Teacher at DigiLearn"),
+              accent: pickString(data.accent, colors.primary),
+              phone: pickString(data.phone),
+              email: pickString(data.email),
+              youtube: pickString(data.youtube),
+              verified: Boolean(data.verified),
+              subjects: pickArray(data.subjects),
+              createdAt: data.createdAt,
+            };
+            setTeacher(teacherRecord);
+            return teacherRecord;
+          }
         }
-      }
 
-      const teachersRef = collection(db, "teachers");
-      const snapshot = await getDocs(teachersRef);
-      const matched = snapshot.docs.find((d) => {
-        const data = d.data() as Record<string, unknown>;
-        const name = pickString(data.name);
-        return (
-          (params.id && d.id === params.id) ||
-          normalizeKey(name) === normalizedTeacherName
-        );
-      });
+        const teachersRef = collection(db, "teachers");
+        const snapshot = await getDocs(teachersRef);
+        const matched = snapshot.docs.find((d) => {
+          const data = d.data() as Record<string, unknown>;
+          const name = pickString(data.name);
+          return (
+            (params.id && d.id === params.id) ||
+            normalizeKey(name) === normalizedTeacherName
+          );
+        });
 
-      if (!matched) {
+        if (!matched) {
+          setTeacher(null);
+          return null;
+        }
+
+        const data = matched.data() as Record<string, unknown>;
+        const teacherRecord = {
+          id: matched.id,
+          name: pickString(data.name, teacherName),
+          avatar: getTeacherAvatar(data),
+          bio: pickString(data.bio, "Teacher at DigiLearn"),
+          accent: pickString(data.accent, colors.primary),
+          phone: pickString(data.phone),
+          email: pickString(data.email),
+          youtube: pickString(data.youtube),
+          verified: Boolean(data.verified),
+          subjects: pickArray(data.subjects),
+          createdAt: data.createdAt,
+        };
+        setTeacher(teacherRecord);
+        return teacherRecord;
+      } catch (err) {
+        console.error("Failed to load teacher profile:", err);
         setTeacher(null);
+        return null;
+      }
+    }, [normalizedTeacherName, params.id, teacherName]);
+
+  const fetchTeacherResources = useCallback(
+    async (teacherId: string) => {
+      if (!teacherId) {
+        setResources([]);
+        setErrorMessage(`No resources published for ${teacherName} yet.`);
         return;
       }
 
-      const data = matched.data() as Record<string, unknown>;
-      setTeacher({
-        id: matched.id,
-        name: pickString(data.name, teacherName),
-        avatar: getTeacherAvatar(data),
-        bio: pickString(data.bio, "Teacher at DigiLearn"),
-        accent: pickString(data.accent, colors.primary),
-        phone: pickString(data.phone),
-        email: pickString(data.email),
-        youtube: pickString(data.youtube),
-        verified: Boolean(data.verified),
-        subjects: pickArray(data.subjects),
-        createdAt: data.createdAt,
-      });
-    } catch (err) {
-      console.error("Failed to load teacher profile:", err);
-      setTeacher(null);
-    }
-  }, [normalizedTeacherName, params.id, teacherName]);
-
-  const fetchTeacherResources = useCallback(async () => {
-    if (!teacherName) return;
-
-    try {
-      const [pagesSnap, booksSnap, postSnapshots, lessonsSnap] =
-        await Promise.all([
-          getDocs(query(collection(db, "pages"), orderBy("createdAt", "desc"))),
-          getDocs(query(collection(db, "books"), orderBy("createdAt", "desc"))),
+      try {
+        const [
+          pagesSnap,
+          booksSnap,
+          pastPapersSnap,
+          postSnapshots,
+          lessonsSnap,
+        ] = await Promise.all([
+          getDocs(collection(db, "pages")),
+          getDocs(collection(db, "books")),
+          getDocs(collection(db, "pastPaper")),
           Promise.all([
-            getDocs(
-              query(
-                collection(db, "teacherPosts"),
-                orderBy("createdAt", "desc"),
-              ),
-            ),
-            getDocs(
-              query(
-                collection(db, "teacherPostsCards"),
-                orderBy("createdAt", "desc"),
-              ),
-            ),
-            getDocs(
-              query(
-                collection(db, "teacherUpdates"),
-                orderBy("createdAt", "desc"),
-              ),
-            ),
+            getDocs(collection(db, "teacherPosts")),
+            getDocs(collection(db, "teacherPostsCards")),
+            getDocs(collection(db, "teacherUpdates")),
           ]),
-          getDocs(
-            query(
-              collection(db, "trendingLessons"),
-              orderBy("createdAt", "desc"),
-            ),
-          ),
+          getDocs(collection(db, "trendingLessons")),
         ]);
 
-      const allBooks = booksSnap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+        const matchesTeacher = (data: Record<string, unknown>) => {
+          return pickString(data.owner) === teacherId;
+        };
 
-      const bookMatchSet = new Set<string>();
-      allBooks.forEach((item) => {
-        const authors = pickArray((item as Record<string, unknown>).author);
-        if (
-          authors.some((entry) => normalizeKey(entry) === normalizedTeacherName)
-        ) {
-          bookMatchSet.add(
-            normalizeKey(pickString((item as Record<string, unknown>).title)),
-          );
-        }
-      });
-
-      const pageResources: ResourceItem[] = pagesSnap.docs
-        .map((doc) => ({
+        const allBooks = booksSnap.docs.map((doc) => ({
           id: doc.id,
-          data: doc.data() as Record<string, unknown>,
-        }))
-        .filter((entry) => {
-          const pageData = entry.data as Record<string, unknown>;
-          const pageBooks = pickArray(pageData.book);
-          const matchedBook = pageBooks.some((bookEntry) =>
-            bookMatchSet.has(normalizeKey(bookEntry)),
-          );
-          return matchedBook;
-        })
-        .map((entry) => {
-          const data = entry.data as Record<string, unknown>;
-          return {
-            id: entry.id,
-            type: "page",
-            title: pickString(data.title, "Untitled note"),
-            description: pickString(data.description),
-            subject: pickString(data.subject),
-            createdAt: data.createdAt,
-            document: pickString(data.document),
-            book: pickArray(data.book),
-          } as ResourceItem;
-        });
-
-      const bookResources: ResourceItem[] = allBooks
-        .filter((entry) => {
-          const authors = pickArray((entry as Record<string, unknown>).author);
-          return authors.some(
-            (item) => normalizeKey(item) === normalizedTeacherName,
-          );
-        })
-        .map((entry) => ({
-          id: (entry as { id: string }).id,
-          type: "book",
-          title: pickString(
-            (entry as Record<string, unknown>).title,
-            "Untitled book",
-          ),
-          description: pickString(
-            (entry as Record<string, unknown>).description,
-          ),
-          createdAt: (entry as Record<string, unknown>).createdAt,
-          image: pickString(
-            (entry as Record<string, unknown>).image ||
-              (entry as Record<string, unknown>).cover,
-          ),
-          author: pickArray((entry as Record<string, unknown>).author),
+          ...doc.data(),
         }));
 
-      const postCollections = postSnapshots.flatMap(
-        (snapshot) => snapshot.docs,
-      );
-      const announcementResources: ResourceItem[] = postCollections
-        .map((doc) => {
-          const data = doc.data() as Record<string, unknown>;
-          const teacherValue = pickString(data.teacher || data.teacherName);
-          const document = pickString(data.document);
-          const rawType = pickString(data.type).toLowerCase();
-          const type =
-            rawType === "image" ? "image" : document ? "pdf" : "announcement";
-          return {
+        const pageResources: ResourceItem[] = pagesSnap.docs
+          .map((doc) => ({
             id: doc.id,
-            type,
-            title: pickString(data.title || data.subject || "Teacher update"),
-            description: pickString(
-              data.description ||
-                data.descriprion ||
-                data.content ||
-                data.message,
+            data: doc.data() as Record<string, unknown>,
+          }))
+          .filter((entry) => {
+            const pageData = entry.data as Record<string, unknown>;
+            return matchesTeacher(pageData);
+          })
+          .map((entry) => {
+            const data = entry.data as Record<string, unknown>;
+            return {
+              id: entry.id,
+              type: "page",
+              title: pickString(data.title, "Untitled note"),
+              description: pickString(data.description),
+              subject: pickString(data.subject),
+              createdAt: getResourceDate(data),
+              document: pickString(data.document),
+              book: pickArray(data.book),
+              owner: pickString(data.owner),
+            } as ResourceItem;
+          });
+
+        const bookResources: ResourceItem[] = allBooks
+          .filter((entry) => {
+            return matchesTeacher(entry as Record<string, unknown>);
+          })
+          .map((entry) => ({
+            id: (entry as { id: string }).id,
+            type: "book",
+            title: pickString(
+              (entry as Record<string, unknown>).title,
+              "Untitled book",
             ),
-            createdAt: data.createdAt,
-            teacher: teacherValue,
-            document,
-            hasCover:
-              typeof data.hasCover === "boolean"
-                ? data.hasCover
-                : pickString(data.hasCover),
-            ownerType: pickString(data.ownerType),
-            fileType:
-              data.fileType === "image" || data.fileType === "doc"
-                ? data.fileType
-                : "",
-            image: pickString(data.cover || data.image),
-          } as ResourceItem;
-        })
-        .filter((item) => normalizeKey(item.teacher) === normalizedTeacherName);
+            description: pickString(
+              (entry as Record<string, unknown>).description,
+            ),
+            createdAt: getResourceDate(entry as Record<string, unknown>),
+            image: pickString(
+              (entry as Record<string, unknown>).image ||
+                (entry as Record<string, unknown>).cover,
+            ),
+            author: pickArray((entry as Record<string, unknown>).author),
+            owner: pickString((entry as Record<string, unknown>).owner),
+          }));
 
-      const lessonResources: ResourceItem[] = lessonsSnap.docs
-        .map((doc) => {
-          const data = doc.data() as Record<string, unknown>;
-          const teacherValue = pickString(data.teacher);
-          return {
-            id: doc.id,
-            type: "lesson",
-            title: pickString(data.title, "Untitled lesson"),
-            description: pickString(data.subject),
-            createdAt: data.createdAt,
-            teacher: teacherValue,
-            thumbnail: pickString(data.thumbnail),
-            link: pickString(data.link),
-            duration: pickString(data.duration),
-          } as ResourceItem;
-        })
-        .filter((item) => normalizeKey(item.teacher) === normalizedTeacherName);
+        const paperResources: ResourceItem[] = pastPapersSnap.docs
+          .map((doc) => {
+            const data = doc.data() as Record<string, unknown>;
+            return {
+              id: doc.id,
+              type: "pdf" as const,
+              title: pickString(data.title, "Untitled past paper"),
+              description: pickString(data.description),
+              subject: pickString(data.subject),
+              createdAt: getResourceDate(data),
+              document: pickString(data.document),
+              image: pickString(data.cover),
+              owner: pickString(data.owner),
+              teacher: pickString(data.teacher || data.teacherName),
+              fileType: "doc" as const,
+            };
+          })
+          .filter((item) => matchesTeacher(item as Record<string, unknown>));
 
-      const merged = [
-        ...pageResources,
-        ...bookResources,
-        ...announcementResources,
-        ...lessonResources,
-      ].sort((a, b) => {
-        const left = getCreatedAt(a.createdAt);
-        const right = getCreatedAt(b.createdAt);
-        if (left === right) return 0;
-        return Number(right) - Number(left);
-      });
+        const postCollections = postSnapshots.flatMap(
+          (snapshot) => snapshot.docs,
+        );
+        const announcementResources: ResourceItem[] = postCollections
+          .map((doc) => {
+            const data = doc.data() as Record<string, unknown>;
+            const teacherValue = pickString(data.teacher || data.teacherName);
+            const document = pickString(data.document);
+            const rawType = pickString(data.type).toLowerCase();
+            const type =
+              rawType === "image" ? "image" : document ? "pdf" : "announcement";
+            return {
+              id: doc.id,
+              type,
+              title: pickString(data.title || data.subject || "Teacher update"),
+              description: pickString(
+                data.description ||
+                  data.descriprion ||
+                  data.content ||
+                  data.message,
+              ),
+              createdAt: getResourceDate(data),
+              teacher: teacherValue,
+              owner: pickString(data.owner),
+              document,
+              hasCover:
+                typeof data.hasCover === "boolean"
+                  ? data.hasCover
+                  : pickString(data.hasCover),
+              ownerType: pickString(data.ownerType),
+              fileType:
+                data.fileType === "image" || data.fileType === "doc"
+                  ? data.fileType
+                  : "",
+              image: pickString(data.cover || data.image),
+            } as ResourceItem;
+          })
+          .filter((item) => matchesTeacher(item as Record<string, unknown>));
 
-      setResources(merged);
-      setErrorMessage(
-        merged.length === 0
-          ? `No resources published for ${teacherName} yet.`
-          : null,
-      );
-    } catch (err) {
-      console.error("Failed to load teacher resources:", err);
-      setResources([]);
-      setErrorMessage("We could not load this teacher’s resources right now.");
-    }
-  }, [normalizedTeacherName, teacherName]);
+        const lessonResources: ResourceItem[] = lessonsSnap.docs
+          .map((doc) => {
+            const data = doc.data() as Record<string, unknown>;
+            const teacherValue = pickString(data.teacher);
+            return {
+              id: doc.id,
+              type: "lesson",
+              title: pickString(data.title, "Untitled lesson"),
+              description: pickString(data.subject),
+              createdAt: getResourceDate(data),
+              teacher: teacherValue,
+              owner: pickString(data.owner),
+              thumbnail: pickString(data.thumbnail),
+              link: pickString(data.link),
+              duration: pickString(data.duration),
+            } as ResourceItem;
+          })
+          .filter((item) => matchesTeacher(item as Record<string, unknown>));
+
+        const merged = [
+          ...pageResources,
+          ...bookResources,
+          ...paperResources,
+          ...announcementResources,
+          ...lessonResources,
+        ].sort((a, b) => {
+          const left = getCreatedAt(a.createdAt);
+          const right = getCreatedAt(b.createdAt);
+          if (left === right) return 0;
+          return Number(right) - Number(left);
+        });
+
+        setResources(merged);
+        setErrorMessage(
+          merged.length === 0
+            ? `No resources published for ${teacherName} yet.`
+            : null,
+        );
+      } catch (err) {
+        console.error("Failed to load teacher resources:", err);
+        setResources([]);
+        setErrorMessage(
+          "We could not load this teacher’s resources right now.",
+        );
+      }
+    },
+    [teacherName],
+  );
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    await Promise.all([fetchTeacherProfile(), fetchTeacherResources()]);
+    const loadedTeacher = await fetchTeacherProfile();
+    await fetchTeacherResources(loadedTeacher?.id || params.id || "");
     setLoading(false);
-  }, [fetchTeacherProfile, fetchTeacherResources]);
+  }, [fetchTeacherProfile, fetchTeacherResources, params.id]);
 
   useEffect(() => {
     const runLoad = async () => {

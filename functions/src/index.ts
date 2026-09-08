@@ -368,15 +368,18 @@ export const sendLibraryNotification = onCall(async (request) => {
     read: false,
   };
   const usersSnapshot = await db.collection("users").get();
-  const batch = db.batch();
 
-  usersSnapshot.docs.forEach((userDoc) => {
-    batch.update(userDoc.ref, {
-      notifications: FieldValue.arrayUnion(notification),
+  const batchSize = 450;
+  for (let start = 0; start < usersSnapshot.docs.length; start += batchSize) {
+    const batch = db.batch();
+    usersSnapshot.docs.slice(start, start + batchSize).forEach((userDoc) => {
+      batch.update(userDoc.ref, {
+        notifications: FieldValue.arrayUnion(notification),
+      });
     });
-  });
+    await batch.commit();
+  }
 
-  if (usersSnapshot.size > 0) await batch.commit();
   return { sent: usersSnapshot.size };
 });
 
