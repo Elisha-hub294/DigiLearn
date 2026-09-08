@@ -186,7 +186,9 @@ const decodeXmlText = (value: string): string =>
       String.fromCharCode(parseInt(code, 16)),
     );
 
-const extractDocxText = async (data: ArrayBuffer | string): Promise<string> => {
+export const extractDocxText = async (
+  data: ArrayBuffer | string,
+): Promise<string> => {
   const zip = await JSZip.loadAsync(
     data,
     typeof data === "string" ? { base64: true } : undefined,

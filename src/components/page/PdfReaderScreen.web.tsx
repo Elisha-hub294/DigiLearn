@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useNetworkState } from "expo-network";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 import { recordPageVisit } from "../../services/activityService";
 import {
@@ -18,6 +18,7 @@ import {
 
 import { useTheme } from "../../contexts/ThemeContext";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
+import { extractDocxText } from "../library/add-item/pdfService";
 import { ActionDialog } from "../ui/ActionDialog";
 
 function normalizeUriParam(
@@ -74,6 +75,7 @@ export function PdfReaderScreen() {
   const [downloaded, setDownloaded] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [localBlobUri, setLocalBlobUri] = useState<string | null>(null);
+  const [docxText, setDocxText] = useState<string | null>(null);
   const networkState = useNetworkState();
 
   const goBack = () => {
@@ -109,6 +111,30 @@ export function PdfReaderScreen() {
     networkState.isInternetReachable === false;
   const fileExtension = getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
+  const isDocxFile = fileExtension === "docx";
+
+  useEffect(() => {
+    if (!isDocxFile || !decodedUri) return;
+
+    let active = true;
+    const loadDocx = async () => {
+      try {
+        const response = await fetch(decodedUri);
+        if (!response.ok)
+          throw new Error(`DOCX request failed: ${response.status}`);
+        const text = await extractDocxText(await response.arrayBuffer());
+        if (active) setDocxText(text);
+      } catch (error) {
+        console.warn("Failed to open DOCX document:", error);
+        if (active) setIframeError(true);
+      }
+    };
+
+    void loadDocx();
+    return () => {
+      active = false;
+    };
+  }, [decodedUri, isDocxFile]);
 
   useEffect(() => {
     if (pageId) void recordPageVisit(pageId);
@@ -435,6 +461,27 @@ export function PdfReaderScreen() {
           <Feather name="file-text" size={48} color={colors.primary} />
           <Text style={styles.errorTitle}>Loading PDF…</Text>
         </View>
+      ) : isDocxFile && docxText === null && !iframeError ? (
+        <View
+          style={[styles.center, { backgroundColor: themeColors.background }]}
+        >
+          <Feather name="file-text" size={48} color={colors.primary} />
+          <Text style={styles.errorTitle}>Loading document...</Text>
+        </View>
+      ) : isDocxFile && docxText !== null ? (
+        <ScrollView
+          style={styles.docxContent}
+          contentContainerStyle={styles.docxContentContainer}
+        >
+          {docxText.split("\n").map((paragraph, index) => (
+            <Text
+              key={`${index}-${paragraph.slice(0, 12)}`}
+              style={[styles.docxParagraph, { color: themeColors.text }]}
+            >
+              {paragraph || " "}
+            </Text>
+          ))}
+        </ScrollView>
       ) : !decodedUri || iframeError ? (
         <View
           style={[styles.center, { backgroundColor: themeColors.background }]}
@@ -466,6 +513,18 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: "#1A1A2E",
+  },
+  docxContent: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  docxContentContainer: {
+    padding: spacing.lg,
+  },
+  docxParagraph: {
+    fontSize: 16,
+    lineHeight: 25,
+    marginBottom: spacing.md,
   },
 
   // Header

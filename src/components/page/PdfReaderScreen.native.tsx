@@ -9,6 +9,7 @@ import {
   NativeModules,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   UIManager,
@@ -27,6 +28,7 @@ import {
   savePageReadingProgress,
 } from "../../services/readingProgressService";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
+import { extractDocxText } from "../library/add-item/pdfService";
 import { ActionDialog } from "../ui/ActionDialog";
 
 // Fallback timeout: if onLoadEnd never fires (can happen with some PDFs),
@@ -107,6 +109,7 @@ export function PdfReaderScreen() {
   // For Android remote PDFs: pre-fetched base64 to avoid CORS inside WebView
   const [remoteBase64, setRemoteBase64] = useState<string | null>(null);
   const [remoteFetchError, setRemoteFetchError] = useState(false);
+  const [docxText, setDocxText] = useState<string | null>(null);
   const [noticeDialog, setNoticeDialog] = useState<{
     title: string;
     message: string;
@@ -125,6 +128,7 @@ export function PdfReaderScreen() {
   const isLocalFile = Boolean(decodedUri?.startsWith("file://"));
   const fileExtension = getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
+  const isDocxFile = fileExtension === "docx";
   const useNativePdf =
     Platform.OS === "android" && Boolean(NativePdfComponent) && !isOfficeFile;
   const isOffline =
@@ -201,8 +205,6 @@ export function PdfReaderScreen() {
       return;
 
     let active = true;
-    setRemoteBase64(null);
-    setRemoteFetchError(false);
 
     const tmpPath = `${FileSystem.cacheDirectory}pdf_tmp_${Date.now()}.pdf`;
 
@@ -217,9 +219,14 @@ export function PdfReaderScreen() {
         const b64 = await FileSystem.readAsStringAsync(result.uri, {
           encoding: FileSystem.EncodingType?.Base64 ?? "base64",
         });
-        if (active) setRemoteBase64(b64);
+        if (active) {
+          setRemoteFetchError(false);
+          setRemoteBase64(b64);
+        }
         // Clean up temp file (fire-and-forget)
-        FileSystem.deleteAsync(result.uri, { idempotent: true }).catch(() => {});
+        FileSystem.deleteAsync(result.uri, { idempotent: true }).catch(
+          () => {},
+        );
       })
       .catch((err) => {
         console.warn("Failed to pre-fetch remote PDF for Android:", err);
@@ -230,6 +237,39 @@ export function PdfReaderScreen() {
       active = false;
     };
   }, [decodedUri, isLocalFile, isOfficeFile, useNativePdf]);
+
+  useEffect(() => {
+    if (!isDocxFile || !decodedUri) return;
+
+    let active = true;
+
+    const loadDocx = async () => {
+      try {
+        const data = isLocalFile
+          ? await FileSystem.readAsStringAsync(decodedUri, {
+              encoding: FileSystem.EncodingType?.Base64 ?? "base64",
+            })
+          : await (await fetch(decodedUri)).arrayBuffer();
+        const text = await extractDocxText(data);
+        if (active) {
+          setDocxText(text);
+          setLoaded(true);
+        }
+      } catch (error) {
+        console.warn("Failed to open DOCX document:", error);
+        if (active) {
+          setLoaded(true);
+          setLoadError(true);
+          setLoadErrorMessage("This DOCX document could not be opened.");
+        }
+      }
+    };
+
+    void loadDocx();
+    return () => {
+      active = false;
+    };
+  }, [decodedUri, isDocxFile, isLocalFile]);
 
   // The base64 payload used by the pdf.js HTML template
   // – for local files it's read directly; for Android remote PDFs it's pre-fetched
@@ -309,6 +349,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
   const webViewSource = (() => {
     if (!decodedUri) return null;
     if (isOfficeFile) {
+      if (isDocxFile) return null;
       if (isLocalFile) return null;
       return {
         uri: `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(decodedUri)}`,
@@ -581,7 +622,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     );
   }
 
-  if (!decodedUri || (!webViewSource && !useNativePdf)) {
+  if (!decodedUri || (!webViewSource && !useNativePdf && !isDocxFile)) {
     return (
       <>
         <ActionDialog
@@ -807,6 +848,22 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
           </View>
         )}
 
+        {isDocxFile && !loadError && docxText !== null && (
+          <ScrollView
+            style={styles.docxContent}
+            contentContainerStyle={styles.docxContentContainer}
+          >
+            {docxText.split("\n").map((paragraph, index) => (
+              <Text
+                key={`${index}-${paragraph.slice(0, 12)}`}
+                style={[styles.docxParagraph, { color: themeColors.text }]}
+              >
+                {paragraph || " "}
+              </Text>
+            ))}
+          </ScrollView>
+        )}
+
         {/* ── WebView — always mounted so it loads in the background ── */}
         {!loadError && useNativePdf && decodedUri && (
           <NativePdfComponent
@@ -976,6 +1033,18 @@ const styles = StyleSheet.create({
   webview: {
     flex: 1,
     backgroundColor: "#1A1A2E",
+  },
+  docxContent: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  docxContentContainer: {
+    padding: spacing.lg,
+  },
+  docxParagraph: {
+    fontSize: 16,
+    lineHeight: 25,
+    marginBottom: spacing.md,
   },
   // Hide (but keep mounted) while loading, so it silently fetches in the background
   webviewHidden: {
