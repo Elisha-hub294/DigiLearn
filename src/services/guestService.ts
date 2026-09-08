@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { invalidateLocalCaches, LOCAL_CACHE_KEYS } from "../utils/localCache";
 
 const GUEST_MODE_KEY = "@digilearn_guest_mode";
 
@@ -38,5 +39,20 @@ export async function clearGuestMode(): Promise<void> {
     await AsyncStorage.removeItem(GUEST_MODE_KEY);
   } catch (error) {
     console.error("Error clearing guest mode:", error);
+  }
+}
+
+/**
+ * Removes persisted local account state so the deleted account is not left in
+ * memory or cached for the next session.
+ */
+export async function clearLocalAccountState(): Promise<void> {
+  try {
+    await Promise.all([
+      clearGuestMode(),
+      invalidateLocalCaches(...Object.values(LOCAL_CACHE_KEYS)),
+    ]);
+  } catch (error) {
+    console.error("Error clearing local account state:", error);
   }
 }

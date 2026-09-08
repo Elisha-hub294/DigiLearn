@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import { signOut } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { useState } from "react";
@@ -27,7 +28,7 @@ import { colors, spacing } from "../constants/theme";
 import { getThemeAsset } from "../constants/themeAssets";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
-import { clearGuestMode } from "../services/guestService";
+import { clearLocalAccountState } from "../services/guestService";
 import { saveProfilePicture } from "../services/userProfile";
 import {
   normalizeProfileText,
@@ -294,9 +295,10 @@ export default function MyProfileScreen() {
           setDeleteDialogVisible(false);
           if (!auth.currentUser) return;
           try {
-            await clearGuestMode();
             const deleteAccount = httpsCallable(functions, "deleteAccount");
             await deleteAccount({});
+            await clearLocalAccountState();
+            await signOut(auth);
             router.replace("/welcome" as never);
           } catch (reason) {
             setUpdateErrorMessage(
