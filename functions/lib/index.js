@@ -110,11 +110,16 @@ exports.generateAssistantReply = (0, https_1.onCall)({ secrets: [geminiApiKey] }
     if (!apiKey) {
         throw new https_1.HttpsError("unavailable", "The assistant is not configured.");
     }
-    const usageRef = db.doc(`assistantUsage/${request.auth.uid}`);
+    const { ref: usageRef, legacyRef, email } = getAssistantUsageRef(request.auth.uid, request.auth.token.email);
     const today = new Date().toISOString().slice(0, 10);
     await db.runTransaction(async (transaction) => {
         const usageSnapshot = await transaction.get(usageRef);
-        const usage = usageSnapshot.data();
+        const legacySnapshot = usageRef.path === legacyRef.path
+            ? usageSnapshot
+            : await transaction.get(legacyRef);
+        const usage = usageSnapshot.exists
+            ? usageSnapshot.data()
+            : legacySnapshot.data();
         const requestCount = usage?.day === today ? Number(usage.count ?? 0) : 0;
         if (requestCount >= 30) {
             throw new https_1.HttpsError("resource-exhausted", "Daily assistant usage limit reached.");
@@ -123,7 +128,11 @@ exports.generateAssistantReply = (0, https_1.onCall)({ secrets: [geminiApiKey] }
             day: today,
             count: requestCount + 1,
             updatedAt: firestore_1.Timestamp.now(),
+            ...(email ? { email } : {}),
         });
+        if (usageRef.path !== legacyRef.path && legacySnapshot.exists) {
+            transaction.delete(legacyRef);
+        }
     });
     try {
         const ai = new genai_1.GoogleGenAI({ apiKey });
@@ -138,34 +147,58 @@ exports.generateAssistantReply = (0, https_1.onCall)({ secrets: [geminiApiKey] }
         throw new https_1.HttpsError("unavailable", "Unable to generate a response.");
     }
 });
+const deletableCollections = new Set([
+    "pages",
+    "books",
+    "pastPaper",
+    "trendingLessons",
+    "teacherPosts",
+]);
+const ownedCollections = [
+    "books",
+    "pages",
+    "pastPaper",
+    "trendingLessons",
+    "teacherPosts",
+];
+const storagePrefixes = [
+    "book-covers/",
+    "page-covers/",
+    "docs/",
+    "post-covers/",
+    "post-documents/",
+    "past-papers/",
+];
+function getAssistantUsageRef(userId, email) {
+    const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+    const usageKey = normalizedEmail ? encodeURIComponent(normalizedEmail) : userId;
+    return {
+        ref: db.doc(`assistantUsage/${usageKey}`),
+        legacyRef: db.doc(`assistantUsage/${userId}`),
+        email: normalizedEmail,
+    };
+}
 exports.deleteAccount = (0, https_1.onCall)(async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Sign in required.");
     }
     const userId = request.auth.uid;
-    const usageRef = db.doc(`assistantUsage/${userId}`);
+    const ownedResourceSnapshots = await Promise.all(ownedCollections.map((collectionName) => db.collection(collectionName).where("owner", "==", userId).get()));
     const paths = new Set();
-    const ownedCollections = [
-        "books",
-        "pages",
-        "pastPaper",
-        "trendingLessons",
-        "teacherPosts",
-    ];
-    for (const collectionName of ownedCollections) {
-        const snapshot = await db
-            .collection(collectionName)
-            .where("owner", "==", userId)
-            .get();
+    ownedResourceSnapshots.forEach((snapshot) => {
         snapshot.docs.forEach((document) => {
             collectStoragePaths(document.data(), paths);
         });
-    }
-    const bucket = storage.bucket();
-    const profileFiles = await bucket.getFiles({
-        prefix: `profile-pics/${userId}/`,
     });
-    profileFiles[0].forEach((file) => paths.add(file.name));
+    const bucket = storage.bucket();
+    const userStoragePrefixes = [
+        `profile-pics/${userId}/`,
+        ...storagePrefixes.map((prefix) => `${prefix}${userId}/`),
+    ];
+    const userFiles = await Promise.all(userStoragePrefixes.map((prefix) => bucket.getFiles({ prefix })));
+    userFiles.forEach(([files]) => {
+        files.forEach((file) => paths.add(file.name));
+    });
     await Promise.all(Array.from(paths, async (path) => {
         try {
             await bucket.file(path).delete();
@@ -175,52 +208,32 @@ exports.deleteAccount = (0, https_1.onCall)(async (request) => {
                 throw error;
         }
     }));
-    await Promise.all(ownedCollections.map(async (collectionName) => {
-        const snapshot = await db
-            .collection(collectionName)
-            .where("owner", "==", userId)
-            .get();
-        await Promise.all(snapshot.docs.map((document) => document.ref.delete()));
-    }));
-    const activity = await db
-        .collection("activityEvents")
-        .where("userId", "==", userId)
-        .get();
-    const reports = await db
-        .collection("reports")
-        .where("userId", "==", userId)
-        .get();
-    const applicationAudit = await db
-        .collection("teacherApplicationAudit")
-        .where("applicantId", "==", userId)
-        .get();
+    const [activity, reports, applicationAudit] = await Promise.all([
+        db.collection("activityEvents").where("userId", "==", userId).get(),
+        db.collection("reports").where("userId", "==", userId).get(),
+        db
+            .collection("teacherApplicationAudit")
+            .where("applicantId", "==", userId)
+            .get(),
+    ]);
+    const adminNotificationRefs = [
+        db.doc(`adminNotifications/${userId}`),
+        ...reports.docs.map((report) => db.doc(`adminNotifications/report-${report.id}`)),
+        ...applicationAudit.docs.map((audit) => db.doc(`adminNotifications/${audit.data().applicationId ?? userId}`)),
+    ];
     await Promise.all([
+        ...ownedResourceSnapshots.flatMap((snapshot) => snapshot.docs.map((document) => db.recursiveDelete(document.ref))),
         ...activity.docs.map((document) => document.ref.delete()),
         ...reports.docs.map((document) => document.ref.delete()),
         ...applicationAudit.docs.map((document) => document.ref.delete()),
+        ...adminNotificationRefs.map((reference) => reference.delete()),
         db.recursiveDelete(db.doc(`users/${userId}`)),
         db.recursiveDelete(db.doc(`teachers/${userId}`)),
         db.recursiveDelete(db.doc(`teacherApplications/${userId}`)),
-        usageRef.delete(),
     ]);
     await adminAuth.deleteUser(userId);
     return { deleted: true };
 });
-const deletableCollections = new Set([
-    "pages",
-    "books",
-    "pastPaper",
-    "trendingLessons",
-    "teacherPosts",
-]);
-const storagePrefixes = [
-    "book-covers/",
-    "page-covers/",
-    "docs/",
-    "post-covers/",
-    "post-documents/",
-    "past-papers/",
-];
 function collectStoragePaths(value, paths) {
     if (typeof value === "string") {
         const trimmed = value.trim();
