@@ -18,8 +18,6 @@ function getEmailLinkContinueUrl() {
     typeof window !== "undefined" &&
     window.location.hostname === "localhost"
   ) {
-    // During local web development, callback on the same origin so Firebase
-    // Auth persistence is shared with the tab where sign-up began.
     return `${window.location.origin}/finishSignIn`;
   }
 
@@ -27,9 +25,6 @@ function getEmailLinkContinueUrl() {
 }
 
 const actionCodeSettings: ActionCodeSettings = {
-  // Keep the callback on the same Hosting origin as the web app. Firebase
-  // Auth persistence is scoped to an origin, so using firebaseapp.com here
-  // while users sign up on web.app leaves the original tab unsigned in.
   url: getEmailLinkContinueUrl(),
   handleCodeInApp: true,
   iOS: { bundleId: "com.digilearn.app" },

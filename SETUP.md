@@ -64,6 +64,12 @@ Facebook Login uses the Firebase web OAuth flow. Configure it before testing:
 
 4. While the Meta app is in development mode, only app roles and test users can sign in. Submit the app for review before opening Facebook Login to everyone.
 
+### Email-Link Delivery
+
+Email-link authentication currently uses Firebase Authentication's built-in email delivery, so no custom domain or email provider is required. Firebase may display a generic `noreply` sender, and some providers may place the message in spam or junk.
+
+On the verification screen, users are reminded to search for DigiLearn and check their spam or junk folder. To improve the sender branding later, configure a verified domain with an email provider such as Resend, then replace the built-in delivery path with a provider-backed Function.
+
 ### Step 4: Start the App
 
 ```bash

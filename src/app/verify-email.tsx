@@ -142,6 +142,10 @@ export default function VerifyEmailScreen() {
             We sent a verification link to {email}. Verify your email before
             continuing to DigiLearn.
           </Text>
+          <Text style={styles.infoMessage}>
+            If you do not see the email, check your spam or junk folder and
+            search for DigiLearn.
+          </Text>
 
           {message ? (
             <Text style={styles.successMessage}>{message}</Text>
@@ -235,6 +239,13 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     textAlign: "center",
     marginBottom: spacing.xl,
+  },
+  infoMessage: {
+    color: "#666666",
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: "center",
+    marginBottom: spacing.lg,
   },
   primaryButton: {
     width: "100%",
