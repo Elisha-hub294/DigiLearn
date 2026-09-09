@@ -70,7 +70,14 @@ export default function SeeAllScreen() {
       ? params.type
       : "books";
   const pages = useMemo(() => parsePages(params.pages), [params.pages]);
-  const columns = width >= 700 ? 3 : width >= 430 ? 2 : 1;
+  const columns =
+    contentMaxWidth >= 900
+      ? 4
+      : contentMaxWidth >= 620
+        ? 3
+        : contentMaxWidth >= 360
+          ? 2
+          : 1;
   const { paperCollections, loading: papersLoading } = useLibraryData();
 
   // Pagination hooks
@@ -712,7 +719,7 @@ const styles = StyleSheet.create({
   skeletonImage: { width: "100%", aspectRatio: 0.9 },
   skeletonCardTitle: { width: "78%", height: 14 },
   skeletonCardLine: { width: "54%", height: 11 },
-  row: { alignItems: "flex-start", marginHorizontal: -spacing.xs },
+  row: { alignItems: "stretch", marginHorizontal: -spacing.xs },
   cell: { paddingHorizontal: spacing.xs, marginBottom: spacing.lg },
   card: {
     backgroundColor: colors.white,
@@ -720,7 +727,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     paddingBottom: spacing.sm,
   },
-  bookImage: { width: "100%", aspectRatio: 0.9 },
+  bookImage: { width: "100%", aspectRatio: 0.72 },
   courseImageWrap: {
     width: "100%",
     aspectRatio: 1.45,

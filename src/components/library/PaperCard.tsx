@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   },
   previewContainer: {
     width: "100%",
-    height: 150,
+    aspectRatio: 1.35,
     position: "relative",
   },
   preview: {

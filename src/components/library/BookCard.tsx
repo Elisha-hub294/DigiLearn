@@ -64,7 +64,7 @@ export function BookCard({
           style={styles.image}
           contentFit="cover"
         />
-        <View>
+        <View style={styles.content}>
           <View style={styles.badgeRow}>
             {item.badge ? (
               <View
@@ -128,6 +128,10 @@ const styles = StyleSheet.create({
   cardContent: {
     flex: 1,
   },
+  content: {
+    flex: 1,
+    padding: spacing.md,
+  },
   hovered: {
     opacity: 0.98,
     transform: [{ scale: 1.01 }],
@@ -139,7 +143,7 @@ const styles = StyleSheet.create({
   menu: { position: "absolute", top: 6, right: 6, zIndex: 2 },
   image: {
     width: "100%",
-    height: 300,
+    aspectRatio: 0.72,
   },
   badgeRow: {
     flexDirection: "row",
