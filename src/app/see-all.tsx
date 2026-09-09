@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -29,6 +30,11 @@ import {
   useTrendingLessons,
 } from "../hooks/useTrendingLessons";
 import { recordUserActivity } from "../services/activityService";
+import {
+  getSavedItemsProfile,
+  toggleSavedItem,
+  type SavedItemType,
+} from "../services/userProfile";
 import { resolveVideoImageSource } from "../utils/videoUtils";
 
 type Book = { id: string; title: string; author: string; image: string };
@@ -97,6 +103,7 @@ export default function SeeAllScreen() {
   const [selectedPaperYear, setSelectedPaperYear] = useState(
     params.paperYear?.trim() || "All",
   );
+  const [filterVersion, setFilterVersion] = useState(0);
 
   useEffect(() => {
     void Promise.resolve().then(() =>
@@ -342,6 +349,32 @@ export default function SeeAllScreen() {
                 )}
               />
             </View>
+            {(selectedPaperType !== "All" || selectedPaperYear !== "All") && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Clear paper filters"
+                style={styles.clearFilters}
+                onPress={() => {
+                  setSelectedPaperType("All");
+                  setSelectedPaperYear("All");
+                  setFilterVersion((value) => value + 1);
+                }}
+              >
+                <Feather
+                  name="x-circle"
+                  size={15}
+                  color={themeColors.primary}
+                />
+                <Text
+                  style={[
+                    styles.clearFiltersText,
+                    { color: themeColors.primary },
+                  ]}
+                >
+                  Clear filters
+                </Text>
+              </Pressable>
+            )}
           </View>
         )}
 
@@ -362,16 +395,51 @@ export default function SeeAllScreen() {
           </View>
         ) : data.length === 0 || (mode === "courses" && coursesError) ? (
           <View style={styles.state}>
+            <Feather
+              name={coursesError ? "wifi-off" : "inbox"}
+              size={30}
+              color={themeColors.subtitle}
+            />
             <Text style={[styles.stateTitle, { color: themeColors.text }]}>
-              Nothing here yet
+              {coursesError ? "Could not load resources" : "Nothing here yet"}
             </Text>
             <Text style={[styles.stateText, { color: themeColors.subtitle }]}>
-              Check back soon for more {title.toLowerCase()}.
+              {coursesError
+                ? "Check your connection and try again."
+                : mode === "papers" &&
+                    (selectedPaperType !== "All" || selectedPaperYear !== "All")
+                  ? "Try clearing the filters to see all past papers."
+                  : `Check back soon for more ${title.toLowerCase()}.`}
             </Text>
+            {(coursesError ||
+              (mode === "papers" &&
+                (selectedPaperType !== "All" ||
+                  selectedPaperYear !== "All"))) && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  coursesError ? "Retry loading" : "Clear filters"
+                }
+                style={[
+                  styles.retryButton,
+                  { backgroundColor: themeColors.primary },
+                ]}
+                onPress={() => {
+                  if (coursesError) void lessonsPagination.refresh();
+                  setSelectedPaperType("All");
+                  setSelectedPaperYear("All");
+                  setFilterVersion((value) => value + 1);
+                }}
+              >
+                <Text style={styles.retryText}>
+                  {coursesError ? "Try again" : "Clear filters"}
+                </Text>
+              </Pressable>
+            )}
           </View>
         ) : (
           <FlatList
-            key={columns}
+            key={`${columns}-${filterVersion}`}
             data={data}
             numColumns={columns}
             showsVerticalScrollIndicator={false}
@@ -486,27 +554,63 @@ export default function SeeAllScreen() {
 
 function BookTile({ item, onPress }: { item: Book; onPress: () => void }) {
   const { colors: themeColors } = useTheme();
+  const [imageFailed, setImageFailed] = useState(false);
   return (
-    <Pressable
-      style={[styles.card, { backgroundColor: themeColors.white }]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Open ${item.title}`}
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: themeColors.white, borderColor: themeColors.border },
+      ]}
     >
-      <Image source={item.image} style={styles.bookImage} contentFit="cover" />
-      <Text
-        style={[styles.cardTitle, { color: themeColors.text }]}
-        numberOfLines={2}
+      <Pressable
+        style={({ pressed, hovered }) => [
+          styles.cardPressable,
+          hovered && styles.cardHovered,
+          pressed && styles.cardPressed,
+        ]}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Open ${item.title}`}
       >
-        {item.title}
-      </Text>
-      <Text
-        style={[styles.cardMeta, { color: themeColors.subtitle }]}
-        numberOfLines={1}
-      >
-        {item.author}
-      </Text>
-    </Pressable>
+        {imageFailed ? (
+          <View
+            style={[
+              styles.bookImage,
+              styles.imageFallback,
+              { backgroundColor: themeColors.border },
+            ]}
+          >
+            <Feather name="book" size={28} color={themeColors.white} />
+          </View>
+        ) : (
+          <Image
+            source={item.image}
+            style={styles.bookImage}
+            contentFit="cover"
+            onError={() => setImageFailed(true)}
+          />
+        )}
+        <View style={styles.cardContent}>
+          <Text
+            style={[styles.cardTitle, { color: themeColors.text }]}
+            numberOfLines={2}
+          >
+            {item.title}
+          </Text>
+          <Text
+            style={[styles.cardMeta, { color: themeColors.subtitle }]}
+            numberOfLines={1}
+          >
+            {item.author}
+          </Text>
+        </View>
+      </Pressable>
+      <SaveButton
+        itemId={item.id}
+        itemType="saved-books"
+        label={`Save ${item.title}`}
+      />
+    </View>
   );
 }
 
@@ -521,36 +625,54 @@ function CourseTile({
 }) {
   const { colors: themeColors } = useTheme();
   return (
-    <Pressable
-      style={[styles.card, { backgroundColor: themeColors.white }]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Open lesson: ${item.title}`}
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: themeColors.white, borderColor: themeColors.border },
+      ]}
     >
-      <View style={styles.courseImageWrap}>
-        <Image
-          source={resolveVideoImageSource(item.thumbnail, item.link, isDark)}
-          style={styles.courseImage}
-          contentFit="cover"
-        />
-        <View style={styles.play}>
-          <Feather name="play" size={16} color={colors.white} />
+      <Pressable
+        style={({ pressed, hovered }) => [
+          styles.cardPressable,
+          hovered && styles.cardHovered,
+          pressed && styles.cardPressed,
+        ]}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Open lesson: ${item.title}`}
+      >
+        <View style={styles.courseImageWrap}>
+          <Image
+            source={resolveVideoImageSource(item.thumbnail, item.link, isDark)}
+            style={styles.courseImage}
+            contentFit="cover"
+          />
+          <View style={styles.play}>
+            <Feather name="play" size={16} color={colors.white} />
+          </View>
+          <Text style={styles.duration}>{item.duration}</Text>
         </View>
-        <Text style={styles.duration}>{item.duration}</Text>
-      </View>
-      <Text
-        style={[styles.cardTitle, { color: themeColors.text }]}
-        numberOfLines={2}
-      >
-        {item.title}
-      </Text>
-      <Text
-        style={[styles.cardMeta, { color: themeColors.subtitle }]}
-        numberOfLines={1}
-      >
-        {item.teacher}
-      </Text>
-    </Pressable>
+        <View style={styles.cardContent}>
+          <Text
+            style={[styles.cardTitle, { color: themeColors.text }]}
+            numberOfLines={2}
+          >
+            {item.title}
+          </Text>
+          <Text
+            style={[styles.cardMeta, { color: themeColors.subtitle }]}
+            numberOfLines={1}
+          >
+            {item.teacher}
+          </Text>
+        </View>
+      </Pressable>
+      <SaveButton
+        itemId={item.id}
+        itemType="saved-lessons"
+        label={`Save ${item.title}`}
+      />
+    </View>
   );
 }
 
@@ -566,45 +688,63 @@ function PageTile({
   const cover = item.cover?.trim();
 
   return (
-    <Pressable
-      style={[styles.card, { backgroundColor: themeColors.white }]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Open ${item.title || "Untitled page"}`}
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: themeColors.white, borderColor: themeColors.border },
+      ]}
     >
-      {cover && !imageFailed ? (
-        <Image
-          source={{ uri: cover }}
-          style={styles.pageImage}
-          contentFit="cover"
-          onError={() => setImageFailed(true)}
-        />
-      ) : (
-        <View
-          style={[
-            styles.pageImage,
-            styles.pageImageFallback,
-            { backgroundColor: themeColors.border },
-          ]}
-        >
-          <Feather name="file-text" size={28} color={colors.white} />
+      <Pressable
+        style={({ pressed, hovered }) => [
+          styles.cardPressable,
+          hovered && styles.cardHovered,
+          pressed && styles.cardPressed,
+        ]}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Open ${item.title || "Untitled page"}`}
+      >
+        {cover && !imageFailed ? (
+          <Image
+            source={{ uri: cover }}
+            style={styles.pageImage}
+            contentFit="cover"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <View
+            style={[
+              styles.pageImage,
+              styles.pageImageFallback,
+              { backgroundColor: themeColors.border },
+            ]}
+          >
+            <Feather name="file-text" size={28} color={colors.white} />
+          </View>
+        )}
+        <View style={styles.cardContent}>
+          <Text
+            style={[styles.cardTitle, { color: themeColors.text }]}
+            numberOfLines={2}
+          >
+            {item.title || "Untitled page"}
+          </Text>
+          <Text
+            style={[styles.cardMeta, { color: themeColors.subtitle }]}
+            numberOfLines={1}
+          >
+            {Array.isArray(item.subject)
+              ? item.subject.join(", ")
+              : item.subject || "Study note"}
+          </Text>
         </View>
-      )}
-      <Text
-        style={[styles.cardTitle, { color: themeColors.text }]}
-        numberOfLines={2}
-      >
-        {item.title || "Untitled page"}
-      </Text>
-      <Text
-        style={[styles.cardMeta, { color: themeColors.subtitle }]}
-        numberOfLines={1}
-      >
-        {Array.isArray(item.subject)
-          ? item.subject.join(", ")
-          : item.subject || "Study note"}
-      </Text>
-    </Pressable>
+      </Pressable>
+      <SaveButton
+        itemId={item.id}
+        itemType="saved-pages"
+        label={`Save ${item.title || "study note"}`}
+      />
+    </View>
   );
 }
 
@@ -617,24 +757,119 @@ function PaperTile({
 }) {
   const { colors: themeColors } = useTheme();
   return (
-    <Pressable
-      style={[styles.card, { backgroundColor: themeColors.white }]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Open ${item.title}`}
+    <View
+      style={[
+        styles.card,
+        { backgroundColor: themeColors.white, borderColor: themeColors.border },
+      ]}
     >
-      <Image source={item.image} style={styles.paperImage} contentFit="cover" />
-      <Text style={[styles.subject, { color: themeColors.primary }]}>
-        {item.subject}
-      </Text>
-      <Text
-        style={[styles.cardTitle, { color: themeColors.text }]}
-        numberOfLines={2}
+      <Pressable
+        style={({ pressed, hovered }) => [
+          styles.cardPressable,
+          hovered && styles.cardHovered,
+          pressed && styles.cardPressed,
+        ]}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Open ${item.title}`}
       >
-        {item.title}
-      </Text>
-      <Text style={[styles.cardMeta, { color: themeColors.subtitle }]}>
-        {item.year} • {item.pages}
+        <Image
+          source={item.image}
+          style={styles.paperImage}
+          contentFit="cover"
+        />
+        <View style={styles.cardContent}>
+          <Text style={[styles.subject, { color: themeColors.primary }]}>
+            {item.subject}
+          </Text>
+          <Text
+            style={[styles.cardTitle, { color: themeColors.text }]}
+            numberOfLines={2}
+          >
+            {item.title}
+          </Text>
+          <Text
+            style={[styles.cardMeta, { color: themeColors.subtitle }]}
+            numberOfLines={1}
+          >
+            {item.year} • {item.pages}
+          </Text>
+        </View>
+      </Pressable>
+      <SaveButton
+        itemId={item.id}
+        itemType="saved-papers"
+        label={`Save ${item.title}`}
+      />
+    </View>
+  );
+}
+
+function SaveButton({
+  itemId,
+  itemType,
+  label,
+}: {
+  itemId: string;
+  itemType: SavedItemType;
+  label: string;
+}) {
+  const { colors: themeColors } = useTheme();
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const userId = auth.currentUser?.uid;
+    if (!userId) return () => undefined;
+    void getSavedItemsProfile(userId).then((profile) => {
+      if (active) setSaved(Boolean(profile?.[itemType]?.includes(itemId)));
+    });
+    return () => {
+      active = false;
+    };
+  }, [itemId, itemType]);
+
+  const handleSave = async () => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) {
+      Alert.alert(
+        "Sign in to save",
+        "Create an account to save resources for later.",
+      );
+      return;
+    }
+    if (saving) return;
+    setSaving(true);
+    try {
+      await toggleSavedItem(userId, itemType, itemId, saved);
+      setSaved((value) => !value);
+    } catch {
+      Alert.alert("Could not save resource", "Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ busy: saving, selected: saved }}
+      hitSlop={8}
+      style={({ pressed }) => [
+        styles.saveButton,
+        pressed && styles.savePressed,
+      ]}
+      onPress={handleSave}
+    >
+      <Feather
+        name={saved ? "bookmark" : "bookmark"}
+        size={16}
+        color={themeColors.primary}
+      />
+      <Text style={[styles.saveText, { color: themeColors.primary }]}>
+        {saved ? "Saved" : "Save"}
       </Text>
     </Pressable>
   );
@@ -696,6 +931,18 @@ const styles = StyleSheet.create({
   filterChipTextActive: {
     color: colors.primary,
   },
+  clearFilters: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.xs,
+    alignSelf: "flex-start",
+    minHeight: 40,
+    paddingHorizontal: spacing.xs,
+  },
+  clearFiltersText: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
   eyebrow: {
     color: colors.primary,
     fontSize: 12,
@@ -725,9 +972,35 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: radius.sm,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "transparent",
+    minHeight: 270,
     paddingBottom: spacing.sm,
   },
+  cardPressable: {
+    flex: 1,
+  },
+  cardContent: {
+    flex: 1,
+    padding: spacing.sm,
+  },
+  cardHovered: {
+    borderColor: "rgba(0, 110, 255, 0.25)",
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
+  },
+  cardPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
+  },
   bookImage: { width: "100%", aspectRatio: 0.72 },
+  imageFallback: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
   courseImageWrap: {
     width: "100%",
     aspectRatio: 1.45,
@@ -775,18 +1048,36 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 14,
     fontWeight: "600",
-    marginTop: spacing.sm,
+    lineHeight: 19,
+    minHeight: 38,
   },
   cardMeta: {
     color: colors.subtitle,
     fontSize: 12,
-    marginTop: 4,
+    lineHeight: 17,
+    marginTop: spacing.xs,
+    minHeight: 17,
+  },
+  saveButton: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: spacing.xs,
+    minHeight: 40,
+    marginTop: spacing.xs,
+  },
+  savePressed: {
+    opacity: 0.65,
+  },
+  saveText: {
+    fontSize: 12,
+    fontWeight: "700",
   },
   state: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.xl,
+    minHeight: 240,
   },
   stateTitle: { color: colors.text, fontSize: 18, fontWeight: "700" },
   stateText: {
@@ -794,6 +1085,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: spacing.sm,
     textAlign: "center",
+  },
+  retryButton: {
+    alignItems: "center",
+    borderRadius: radius.sm,
+    minHeight: 44,
+    justifyContent: "center",
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  retryText: {
+    color: colors.white,
+    fontWeight: "700",
+    fontSize: 13,
   },
   footerLoader: {
     paddingVertical: spacing.lg,

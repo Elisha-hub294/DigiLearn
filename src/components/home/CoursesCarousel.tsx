@@ -44,20 +44,18 @@ const CourseCardImage = ({
     () => resolveVideoImageSource(thumbnail, link, isDark),
     [thumbnail, link, isDark],
   );
-  const [source, setSource] = useState(primarySource);
-
-  useEffect(() => {
-    setSource(primarySource);
-  }, [primarySource]);
+  const [failedSource, setFailedSource] = useState<unknown>(null);
+  const source =
+    failedSource === primarySource
+      ? getThemeAsset("thumbDefault", isDark)
+      : primarySource;
 
   return (
     <Image
       source={source}
       style={styles.image}
       contentFit="cover"
-      onError={() => {
-        setSource(getThemeAsset("thumbDefault", isDark));
-      }}
+      onError={() => setFailedSource(primarySource)}
     />
   );
 };
@@ -68,7 +66,7 @@ export const CoursesCarousel = () => {
   const { profile } = useProfile();
   const { colors: themeColors } = useTheme();
   const { lessons, loading, error } = useTrendingLessons();
-  const cardWidth = width >= 900 ? 240 : 220;
+  const cardWidth = Math.min(260, Math.max(200, width - 56));
   const itemStep = cardWidth + CARD_GAP;
 
   const filteredLessons = useMemo(() => {
@@ -366,7 +364,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   imageWrap: {
-    height: 132,
+    aspectRatio: 1.45,
     position: "relative",
     borderRadius: radius.sm,
     overflow: "hidden",

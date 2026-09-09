@@ -47,7 +47,7 @@ export const BookCarousel = () => {
   const { colors: themeColors, isDark } = useTheme();
   const [books, setBooks] = useState<BookItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const cardWidth = width >= 900 ? 300 : 250;
+  const cardWidth = Math.min(300, Math.max(190, width - 40));
 
   useEffect(() => {
     let isMounted = true;
@@ -92,7 +92,7 @@ export const BookCarousel = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isDark]);
 
   const displayedBooks = useMemo(() => {
     if (!shouldFilterByInterests(profile)) return books;
@@ -227,8 +227,8 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   menu: { position: "absolute", top: 6, right: 6, zIndex: 2 },
-  image: { width: "100%", height: 200 },
-  body: { paddingVertical: spacing.xs },
+  image: { width: "100%", aspectRatio: 0.72 },
+  body: { padding: spacing.sm, minHeight: 72 },
   title: {
     fontSize: 14,
     fontWeight: "600",

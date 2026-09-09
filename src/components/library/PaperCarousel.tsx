@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet } from "react-native";
+import { FlatList, StyleSheet, useWindowDimensions } from "react-native";
 import { spacing } from "../../constants/theme";
 import { PaperCard } from "./PaperCard";
 
@@ -24,6 +24,9 @@ type PaperCarouselProps = {
 };
 
 export function PaperCarousel({ items }: PaperCarouselProps) {
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = Math.min(280, Math.max(210, screenWidth - 56));
+
   return (
     <FlatList
       data={items}
@@ -47,6 +50,8 @@ export function PaperCarousel({ items }: PaperCarouselProps) {
           owner={item.owner}
           image={item.image}
           document={item.document}
+          width={cardWidth}
+          marginRight={0}
         />
       )}
     />

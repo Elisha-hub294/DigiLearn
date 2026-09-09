@@ -207,14 +207,10 @@ export async function loadTeacherMetadata(): Promise<{
     teachersSnap.docs.forEach((doc) => {
       const data = doc.data();
       const name = typeof data.name === "string" ? data.name : "Teacher";
-      const avatar =
-        typeof data.avatar === "string" ? data.avatar : undefined;
+      const avatar = typeof data.avatar === "string" ? data.avatar : undefined;
       avatarMap[name] = avatar || "";
       profiles[doc.id] = { name, avatar };
-      if (
-        typeof data.name === "string" &&
-        typeof data.avatar === "string"
-      ) {
+      if (typeof data.name === "string" && typeof data.avatar === "string") {
         avatarMap[data.name] = data.avatar;
       }
     });
@@ -222,7 +218,11 @@ export async function loadTeacherMetadata(): Promise<{
     console.warn("Could not fetch teacher metadata", err);
   }
 
-  return { teacherAvatars: avatarMap, ownerProfiles: profiles, defaultUserAvatar };
+  return {
+    teacherAvatars: avatarMap,
+    ownerProfiles: profiles,
+    defaultUserAvatar,
+  };
 }
 
 export async function loadTeacherPosts(): Promise<TeacherPost[]> {
@@ -810,7 +810,7 @@ const styles = StyleSheet.create({
     position: "relative",
     marginBottom: spacing.xs,
   },
-  preview: { width: "100%", height: 250 },
+  preview: { width: "100%", aspectRatio: 1.5 },
   previewOverlay: {
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.1)",
@@ -854,7 +854,7 @@ const styles = StyleSheet.create({
   actionLabel: { fontSize: 12, fontWeight: "500" },
   skeletonBox: { borderRadius: radius.sm },
   skeletonPreview: {
-    height: 250,
+    aspectRatio: 1.5,
     marginBottom: spacing.xs,
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,

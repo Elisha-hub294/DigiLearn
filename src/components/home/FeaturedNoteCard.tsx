@@ -926,7 +926,7 @@ const styles = StyleSheet.create({
   },
   preview: {
     width: "100%",
-    height: 320,
+    aspectRatio: 1.5,
   },
   previewFallback: { backgroundColor: "#D1D5DB" },
   pdfLoading: {
@@ -1015,7 +1015,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   actionLabel: { color: colors.subtitle, fontSize: 12, fontWeight: "500" },
-  skeletonPreview: { height: 320, marginBottom: spacing.sm },
+  skeletonPreview: { aspectRatio: 1.5, marginBottom: spacing.sm },
   skeletonTitle: { height: 16, width: "60%", marginBottom: 8 },
   skeletonDesc: { height: 12, width: "90%", marginBottom: 6 },
   skeletonDescShort: { height: 12, width: "40%" },
