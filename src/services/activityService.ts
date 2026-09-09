@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   addDoc,
   collection,
@@ -7,11 +8,14 @@ import {
   runTransaction,
   setDoc,
 } from "firebase/firestore";
+import { AppState } from "react-native";
 import { auth, db } from "../../firebaseConfig";
 import { ActivityItem, ActivityRecord, ActivityType } from "../types/activity";
 import { recordStudyActivity } from "./streakService";
 
 const MAX_ACTIVITY_ITEMS = 50;
+const ACTIVITY_EVENT_BATCH_SIZE = 20;
+const ACTIVITY_EVENT_QUEUE_KEY = "@digilearn/activity-event-queue";
 const ACTIVITY_FETCH_TIMEOUT_MS = 15000;
 
 const ACTIVITY_FIELD_MAP: Record<ActivityType, string> = {
@@ -20,6 +24,95 @@ const ACTIVITY_FIELD_MAP: Record<ActivityType, string> = {
   book: "activity-books",
   paper: "activity-pages",
 };
+
+type PendingActivityEvent = Omit<ActivityEvent, "id">;
+
+let activityQueueOperation: Promise<unknown> = Promise.resolve();
+
+function withActivityQueueLock<T>(operation: () => Promise<T>): Promise<T> {
+  const nextOperation = activityQueueOperation.then(operation, operation);
+  activityQueueOperation = nextOperation.catch(() => undefined);
+  return nextOperation;
+}
+
+function getActivityQueueKey(userId: string): string {
+  return `${ACTIVITY_EVENT_QUEUE_KEY}:${userId}`;
+}
+
+async function readPendingActivityEvents(
+  userId: string,
+): Promise<PendingActivityEvent[]> {
+  const stored = await AsyncStorage.getItem(getActivityQueueKey(userId));
+  if (!stored) return [];
+
+  try {
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function uploadActivityBatch(
+  userId: string,
+  events: PendingActivityEvent[],
+): Promise<void> {
+  if (events.length === 0) return;
+
+  const firstEvent = events[0];
+  await addDoc(collection(db, "activityEvents"), {
+    userId,
+    userName: firstEvent.userName,
+    userEmail: firstEvent.userEmail,
+    events: events.map(({ type, resourceId, openedAt }) => ({
+      type,
+      resourceId,
+      openedAt,
+    })),
+    createdAt: new Date().toISOString(),
+  });
+}
+
+async function flushActivityEventsLocked(userId: string): Promise<void> {
+  const pendingEvents = await readPendingActivityEvents(userId);
+  if (pendingEvents.length === 0) return;
+
+  await uploadActivityBatch(
+    userId,
+    pendingEvents.slice(0, ACTIVITY_EVENT_BATCH_SIZE),
+  );
+  const remainingEvents = pendingEvents.slice(ACTIVITY_EVENT_BATCH_SIZE);
+  const queueKey = getActivityQueueKey(userId);
+
+  if (remainingEvents.length > 0) {
+    await AsyncStorage.setItem(queueKey, JSON.stringify(remainingEvents));
+  } else {
+    await AsyncStorage.removeItem(queueKey);
+  }
+}
+
+export function flushActivityEvents(): Promise<void> {
+  const userId = auth.currentUser?.uid;
+  if (!userId) return Promise.resolve();
+  return withActivityQueueLock(() => flushActivityEventsLocked(userId));
+}
+
+AppState.addEventListener("change", (nextState) => {
+  if (nextState === "active") void flushActivityEvents();
+});
+
+async function queueActivityEvent(event: PendingActivityEvent): Promise<void> {
+  return withActivityQueueLock(async () => {
+    const queueKey = getActivityQueueKey(event.userId);
+    const pendingEvents = await readPendingActivityEvents(event.userId);
+    const nextEvents = [...pendingEvents, event];
+    await AsyncStorage.setItem(queueKey, JSON.stringify(nextEvents));
+
+    if (nextEvents.length >= ACTIVITY_EVENT_BATCH_SIZE) {
+      await flushActivityEventsLocked(event.userId);
+    }
+  });
+}
 
 async function getActivityProfileRef(userId: string) {
   const teacherRef = doc(db, "teachers", userId);
@@ -150,7 +243,7 @@ export async function recordUserActivity(
 
     await setDoc(profileRef, { [fieldName]: updatedList }, { merge: true });
 
-    await addDoc(collection(db, "activityEvents"), {
+    await queueActivityEvent({
       userId,
       userName: auth.currentUser?.displayName || "DigiLearn user",
       userEmail: auth.currentUser?.email || "",
@@ -243,8 +336,28 @@ export type ActivityEvent = {
 export async function fetchActivityEvents(): Promise<ActivityEvent[]> {
   const snapshot = await getDocs(collection(db, "activityEvents"));
   return snapshot.docs
-    .map((item) => ({ id: item.id, ...item.data() }) as ActivityEvent)
-    .filter((item) => item.userId && item.type && item.openedAt)
+    .flatMap((item) => {
+      const data = item.data();
+      if (Array.isArray(data.events)) {
+        return data.events.map(
+          (event, index) =>
+            ({
+              id: `${item.id}-${index}`,
+              userId: String(data.userId || ""),
+              userName: String(data.userName || "DigiLearn user"),
+              userEmail: String(data.userEmail || ""),
+              type: event.type,
+              resourceId: String(event.resourceId || ""),
+              openedAt: event.openedAt,
+            }) as ActivityEvent,
+        );
+      }
+
+      return [{ id: item.id, ...data } as ActivityEvent];
+    })
+    .filter(
+      (item) => item.userId && item.type && item.resourceId && item.openedAt,
+    )
     .sort(
       (first, second) =>
         new Date(second.openedAt).getTime() -

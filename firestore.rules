@@ -136,9 +136,19 @@ service cloud.firestore {
     match /activityEvents/{eventId} {
       allow create: if isVerified()
         && request.resource.data.userId == request.auth.uid
-        && request.resource.data.keys().hasOnly([
-          'userId', 'userName', 'userEmail', 'type', 'resourceId', 'openedAt'
-        ]);
+        && (
+          (
+            request.resource.data.events is list
+            && request.resource.data.events.size() > 0
+            && request.resource.data.events.size() <= 20
+            && request.resource.data.keys().hasOnly([
+              'userId', 'userName', 'userEmail', 'events', 'createdAt'
+            ])
+          ) ||
+          request.resource.data.keys().hasOnly([
+            'userId', 'userName', 'userEmail', 'type', 'resourceId', 'openedAt'
+          ])
+        );
       allow read: if isVerified() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
       allow update, delete: if false;
