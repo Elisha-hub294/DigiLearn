@@ -9,9 +9,15 @@ export async function reviewTeacherApplication(
   applicationId: string,
   decision: ReviewDecision,
   reason?: string,
+  allowReapply = false,
 ) {
   const callable = httpsCallable(functions, "reviewTeacherApplication");
-  return callable({ applicationId, decision, reason: reason?.trim() ?? "" });
+  return callable({
+    applicationId,
+    decision,
+    reason: reason?.trim() ?? "",
+    allowReapply,
+  });
 }
 
 export async function resubmitTeacherApplication() {

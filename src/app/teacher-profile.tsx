@@ -713,6 +713,21 @@ export default function TeacherProfileScreen() {
             </View>
           )}
 
+          {isOwnProfile &&
+            profile?.teacherApprovalStatus === "rejected" &&
+            profile?.allowReapply === true && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Resend teacher request"
+                style={[styles.resendButton, { backgroundColor: accentColor }]}
+                onPress={() =>
+                  router.push("/teacher-account-quick-settings" as never)
+                }
+              >
+                <Text style={styles.resendButtonText}>Resend request</Text>
+              </Pressable>
+            )}
+
           <View style={styles.statsRow}>
             <View style={styles.statChip}>
               <Text style={styles.statValue}>
@@ -1430,6 +1445,19 @@ const styles = StyleSheet.create({
     color: "#6B4B00",
     fontSize: 12,
     lineHeight: 18,
+  },
+  resendButton: {
+    alignSelf: "flex-start",
+    marginTop: spacing.md,
+    marginHorizontal: spacing.md,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+  },
+  resendButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
   },
   statsRow: {
     marginTop: spacing.lg,

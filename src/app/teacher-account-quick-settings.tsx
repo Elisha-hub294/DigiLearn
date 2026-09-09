@@ -397,7 +397,10 @@ export default function TeacherAccountQuickSettingsScreen() {
         const applicationSnapshot = await getDoc(applicationRef);
 
         // Application status and its audit history are server-owned.
-        if (applicationSnapshot.data()?.status === "rejected") {
+        if (
+          applicationSnapshot.data()?.status === "rejected" &&
+          applicationSnapshot.data()?.allowReapply === true
+        ) {
           await resubmitTeacherApplication();
         }
 

@@ -68,6 +68,9 @@ export default function ProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const rejectionComment = profile?.teacherReviewReason?.trim();
+  const canResendTeacherRequest =
+    profile?.teacherApprovalStatus === "rejected" &&
+    Boolean(profile?.allowReapply);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
@@ -166,16 +169,20 @@ export default function ProfileScreen() {
                   Please address the requested changes and resubmit your teacher
                   account for review.
                 </Text>
-                <Pressable
-                  style={s.resubmitButton}
-                  onPress={() =>
-                    router.push("/teacher-account-quick-settings" as never)
-                  }
-                >
-                  <Text style={[s.resubmitText, { color: themeColors.white }]}>
-                    Update and resubmit
-                  </Text>
-                </Pressable>
+                {canResendTeacherRequest ? (
+                  <Pressable
+                    style={s.resubmitButton}
+                    onPress={() =>
+                      router.push("/teacher-account-quick-settings" as never)
+                    }
+                  >
+                    <Text
+                      style={[s.resubmitText, { color: themeColors.white }]}
+                    >
+                      Resend request
+                    </Text>
+                  </Pressable>
+                ) : null}
               </View>
             )}
             {(profile.type === "admin" || profile.type === "teacher") && (

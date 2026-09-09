@@ -521,6 +521,7 @@ export const reviewTeacherApplication = onCall(async (request) => {
     applicationId?: unknown;
     decision?: unknown;
     reason?: unknown;
+    allowReapply?: unknown;
   };
   const applicationId =
     typeof data.applicationId === "string" ? data.applicationId.trim() : "";
@@ -529,6 +530,7 @@ export const reviewTeacherApplication = onCall(async (request) => {
       ? data.decision
       : "";
   const reason = typeof data.reason === "string" ? data.reason.trim() : "";
+  const allowReapply = data.allowReapply === true;
   if (!applicationId || !decision)
     throw new HttpsError(
       "invalid-argument",
@@ -562,7 +564,7 @@ export const reviewTeacherApplication = onCall(async (request) => {
     const notification = applicantNotification(
       decision === "approve"
         ? "Your teacher application has been approved. You can now publish books, lessons, pages, announcements, and past papers on DigiLearn."
-        : `Your teacher application needs updates: ${reason}`,
+        : `Your teacher application needs updates: ${reason}. Please resolve the issue and resend your request.`,
       decision === "approve"
         ? "Teacher account approved"
         : applicant?.name || application?.name || "Teacher application",
@@ -571,6 +573,7 @@ export const reviewTeacherApplication = onCall(async (request) => {
     transaction.update(applicationRef, {
       status,
       rejectionReason: decision === "reject" ? reason : FieldValue.delete(),
+      allowReapply: decision === "reject" ? allowReapply : FieldValue.delete(),
       reviewedAt: now,
       reviewedBy: adminId,
       updatedAt: now,
@@ -583,6 +586,8 @@ export const reviewTeacherApplication = onCall(async (request) => {
         teacherApprovalStatus: status,
         teacherReviewReason:
           decision === "reject" ? reason : FieldValue.delete(),
+        allowReapply:
+          decision === "reject" ? allowReapply : FieldValue.delete(),
         notifications: FieldValue.arrayUnion(notification),
         ...(decision === "approve" ? { approvedAt: now } : {}),
       },
@@ -688,19 +693,24 @@ export const resubmitTeacherApplication = onCall(async (request) => {
   }
   await db.runTransaction(async (transaction) => {
     const applicationSnapshot = await transaction.get(applicationRef);
-    if (
-      !applicationSnapshot.exists ||
-      applicationSnapshot.data()?.status !== "rejected"
-    ) {
+    const applicationData = applicationSnapshot.data();
+    if (!applicationSnapshot.exists || applicationData?.status !== "rejected") {
       throw new HttpsError(
         "failed-precondition",
         "Only rejected applications can be resubmitted.",
+      );
+    }
+    if (applicationData?.allowReapply !== true) {
+      throw new HttpsError(
+        "failed-precondition",
+        "This application cannot be resubmitted until an admin allows it again.",
       );
     }
     const now = FieldValue.serverTimestamp();
     transaction.update(applicationRef, {
       status: "pending",
       rejectionReason: FieldValue.delete(),
+      allowReapply: FieldValue.delete(),
       updatedAt: now,
       resubmittedAt: now,
     });
@@ -708,6 +718,7 @@ export const resubmitTeacherApplication = onCall(async (request) => {
       type: "teacher",
       teacherApprovalStatus: "pending",
       teacherReviewReason: FieldValue.delete(),
+      allowReapply: FieldValue.delete(),
     });
     transaction.set(auditRef, {
       applicationId,

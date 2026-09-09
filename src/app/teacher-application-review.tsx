@@ -471,6 +471,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: colors.primaryLight,
   },
+  avatarImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+  },
   avatarText: { color: colors.primaryDark, fontSize: 26, fontWeight: "800" },
   heroCopy: { flex: 1 },
   name: { color: colors.text, fontSize: 21, fontWeight: "800" },

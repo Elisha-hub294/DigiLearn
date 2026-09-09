@@ -57,6 +57,7 @@ export default function TeacherApplicationsScreen() {
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [rejecting, setRejecting] = useState<Application | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [allowReapply, setAllowReapply] = useState(false);
 
   useEffect(() => {
     if (profile?.type !== "admin") return;
@@ -84,12 +85,19 @@ export default function TeacherApplicationsScreen() {
     application: Application,
     decision: "approve" | "reject",
     reason = "",
+    nextAllowReapply = false,
   ) => {
     setBusyId(application.id);
     try {
-      await reviewTeacherApplication(application.id, decision, reason);
+      await reviewTeacherApplication(
+        application.id,
+        decision,
+        reason,
+        nextAllowReapply,
+      );
       setRejecting(null);
       setRejectionReason("");
+      setAllowReapply(false);
     } catch (error) {
       console.error("Failed to review teacher application:", error);
     } finally {
@@ -271,6 +279,22 @@ export default function TeacherApplicationsScreen() {
             <Text style={styles.modalText}>
               Share what the applicant should update before resubmitting.
             </Text>
+            <Pressable
+              style={[
+                styles.toggleButton,
+                allowReapply && styles.toggleButtonActive,
+              ]}
+              onPress={() => setAllowReapply((current) => !current)}
+            >
+              <Text
+                style={[
+                  styles.toggleButtonText,
+                  allowReapply && styles.toggleButtonTextActive,
+                ]}
+              >
+                {allowReapply ? "Re-apply allowed" : "Allow re-apply"}
+              </Text>
+            </Pressable>
             <TextInput
               value={rejectionReason}
               onChangeText={setRejectionReason}
@@ -282,7 +306,10 @@ export default function TeacherApplicationsScreen() {
             <View style={styles.actions}>
               <Pressable
                 style={styles.reject}
-                onPress={() => setRejecting(null)}
+                onPress={() => {
+                  setRejecting(null);
+                  setAllowReapply(false);
+                }}
               >
                 <Text style={styles.rejectText}>Cancel</Text>
               </Pressable>
@@ -297,7 +324,8 @@ export default function TeacherApplicationsScreen() {
                     styles.disabled,
                 ]}
                 onPress={() =>
-                  rejecting && review(rejecting, "reject", rejectionReason)
+                  rejecting &&
+                  review(rejecting, "reject", rejectionReason, allowReapply)
                 }
               >
                 <Text style={styles.approveText}>Send feedback</Text>
@@ -461,5 +489,27 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     textAlignVertical: "top",
     color: colors.text,
+  },
+  toggleButton: {
+    marginTop: spacing.md,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#D7DCE4",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  toggleButtonActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight,
+  },
+  toggleButtonText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  toggleButtonTextActive: {
+    color: colors.primary,
   },
 });

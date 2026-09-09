@@ -50,6 +50,15 @@ export default function NotificationsScreen() {
     visible: boolean;
     notificationId: string | null;
   }>({ visible: false, notificationId: null });
+  const [teacherApplicationDialog, setTeacherApplicationDialog] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+  }>({
+    visible: false,
+    title: "",
+    message: "",
+  });
   const horizontalPadding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - horizontalPadding * 2);
 
@@ -121,7 +130,18 @@ export default function NotificationsScreen() {
 
       if (isTeacherApplicationUpdate) {
         if (user && !notification.read) await markRead(notification.id);
-        router.replace("/profile" as never);
+        const lowerMessage = notification.message.toLowerCase();
+        const isRejected =
+          lowerMessage.includes("needs updates") ||
+          lowerMessage.includes("needs update") ||
+          lowerMessage.includes("rejected");
+        setTeacherApplicationDialog({
+          visible: true,
+          title: isRejected
+            ? "Teacher application needs updates"
+            : "Teacher application approved",
+          message: notification.message,
+        });
         return;
       }
 
@@ -422,6 +442,26 @@ export default function NotificationsScreen() {
         }}
         onClose={() =>
           setUnavailableDialog({ visible: false, notificationId: null })
+        }
+      />
+      <ActionDialog
+        visible={teacherApplicationDialog.visible}
+        title={teacherApplicationDialog.title}
+        message={teacherApplicationDialog.message}
+        primaryText="Close"
+        onPrimary={() =>
+          setTeacherApplicationDialog({
+            visible: false,
+            title: "",
+            message: "",
+          })
+        }
+        onClose={() =>
+          setTeacherApplicationDialog({
+            visible: false,
+            title: "",
+            message: "",
+          })
         }
       />
       <View style={[styles.page, { maxWidth }]}>

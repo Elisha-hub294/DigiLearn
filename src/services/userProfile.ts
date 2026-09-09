@@ -39,6 +39,7 @@ export type UserProfile = {
   requestedAccountType?: "teacher";
   teacherApprovalStatus?: "pending" | "approved" | "rejected";
   teacherReviewReason?: string;
+  allowReapply?: boolean;
   "marked-as-read": string[];
   "hidden-pages": HiddenPageRecord[];
   "saved-pages": string[];
