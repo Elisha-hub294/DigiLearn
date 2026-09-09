@@ -21,7 +21,7 @@ import { fetchUserActivity } from "../services/activityService";
 import { ActivityItem } from "../types/activity";
 
 export default function ActivityScreen() {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const router = useRouter();
   const navigation = useNavigation();
   const { user } = useProfile();
@@ -125,23 +125,29 @@ export default function ActivityScreen() {
       return (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconCircle}>
-            <Icon name="clock" size={32} color="#3B82F6" />
+            <Icon name="clock" size={32} color={themeColors.primary} />
           </View>
-          <Text style={styles.emptyTitle}>Your activity will appear here</Text>
-          <Text style={styles.emptySubtitle}>
+          <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
+            Your activity will appear here
+          </Text>
+          <Text style={[styles.emptySubtitle, { color: themeColors.subtitle }]}>
             Log in or sign up to keep track of the lessons, pages, and books
             you&apos;ve opened on DigiLearn.
           </Text>
           <Pressable
             style={({ pressed }) => [
-              styles.primaryButton,
+              [styles.primaryButton, { backgroundColor: themeColors.primary }],
               pressed && styles.buttonPressed,
             ]}
             onPress={() => router.push("/welcome" as never)}
             accessibilityRole="button"
             accessibilityLabel="Log in or Sign up"
           >
-            <Text style={styles.primaryButtonText}>Log in or Sign up</Text>
+            <Text
+              style={[styles.primaryButtonText, { color: themeColors.white }]}
+            >
+              Log in or Sign up
+            </Text>
           </Pressable>
         </View>
       );
@@ -152,20 +158,35 @@ export default function ActivityScreen() {
       return (
         <View style={styles.emptyContainer}>
           <View
-            style={[styles.emptyIconCircle, { backgroundColor: "#FEE2E2" }]}
+            style={[
+              styles.emptyIconCircle,
+              { backgroundColor: isDark ? "#3A1F25" : "#FEE2E2" },
+            ]}
           >
-            <Icon name="alert-circle" size={32} color="#EF4444" />
+            <Icon
+              name="alert-circle"
+              size={32}
+              color={isDark ? "#FCA5A5" : "#EF4444"}
+            />
           </View>
-          <Text style={styles.emptyTitle}>Something went wrong</Text>
-          <Text style={styles.emptySubtitle}>{error}</Text>
+          <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
+            Something went wrong
+          </Text>
+          <Text style={[styles.emptySubtitle, { color: themeColors.subtitle }]}>
+            {error}
+          </Text>
           <Pressable
             style={({ pressed }) => [
-              styles.primaryButton,
+              [styles.primaryButton, { backgroundColor: themeColors.primary }],
               pressed && styles.buttonPressed,
             ]}
             onPress={loadData}
           >
-            <Text style={styles.primaryButtonText}>Try Again</Text>
+            <Text
+              style={[styles.primaryButtonText, { color: themeColors.white }]}
+            >
+              Try Again
+            </Text>
           </Pressable>
         </View>
       );
@@ -176,23 +197,29 @@ export default function ActivityScreen() {
       return (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconCircle}>
-            <Icon name="book-open" size={32} color="#3B82F6" />
+            <Icon name="book-open" size={32} color={themeColors.primary} />
           </View>
-          <Text style={styles.emptyTitle}>No activity yet</Text>
-          <Text style={styles.emptySubtitle}>
+          <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
+            No activity yet
+          </Text>
+          <Text style={[styles.emptySubtitle, { color: themeColors.subtitle }]}>
             Start exploring lessons, books, and academic resources. Your
             recently opened items will appear here.
           </Text>
           <Pressable
             style={({ pressed }) => [
-              styles.primaryButton,
+              [styles.primaryButton, { backgroundColor: themeColors.primary }],
               pressed && styles.buttonPressed,
             ]}
             onPress={() => router.push("/" as never)}
             accessibilityRole="button"
             accessibilityLabel="Explore DigiLearn"
           >
-            <Text style={styles.primaryButtonText}>Explore DigiLearn</Text>
+            <Text
+              style={[styles.primaryButtonText, { color: themeColors.white }]}
+            >
+              Explore DigiLearn
+            </Text>
           </Pressable>
         </View>
       );
@@ -231,9 +258,11 @@ export default function ActivityScreen() {
               accessibilityRole="button"
               accessibilityLabel="Back to Settings"
             >
-              <Icon name="arrow-left" size={22} color={colors.dark} />
+              <Icon name="arrow-left" size={22} color={themeColors.text} />
             </Pressable>
-            <Text style={styles.title}>Activity</Text>
+            <Text style={[styles.title, { color: themeColors.text }]}>
+              Activity
+            </Text>
           </View>
 
           {/* Body Content */}

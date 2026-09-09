@@ -88,21 +88,25 @@ export default function FinishSignInScreen() {
   }, [email, finishSignIn, isCompleting, linkUrl]);
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      {isCompleting ? <ActivityIndicator color={colors.primary} size="large" /> : null}
+    <View
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+    >
+      {isCompleting ? (
+        <ActivityIndicator color={colors.primary} size="large" />
+      ) : null}
       <Text style={[styles.title, { color: themeColors.text }]}>
         {isComplete
           ? "Email confirmed"
           : needsEmail || errorMessage
-          ? "Confirm your email address"
-          : "Signing you in"}
+            ? "Confirm your email address"
+            : "Signing you in"}
       </Text>
       <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
         {isComplete
-          ? "Return to the DigiLearn web app, then select \"I verified my email\" to continue."
+          ? 'Return to the DigiLearn web app, then select "I verified my email" to continue.'
           : needsEmail
-          ? "Enter the email address used to request this link."
-          : errorMessage || "Finishing your email verification..."}
+            ? "Enter the email address used to request this link."
+            : errorMessage || "Finishing your email verification..."}
       </Text>
       {needsEmail ? (
         <View style={styles.emailForm}>
@@ -113,8 +117,11 @@ export default function FinishSignInScreen() {
             autoCorrect={false}
             keyboardType="email-address"
             placeholder="you@example.com"
-            placeholderTextColor="#94A3B8"
-            style={[styles.emailInput, { color: themeColors.text, borderColor: themeColors.border }]}
+            placeholderTextColor={themeColors.subtitle}
+            style={[
+              styles.emailInput,
+              { color: themeColors.text, borderColor: themeColors.border },
+            ]}
           />
           <Pressable
             onPress={submitEmail}
@@ -150,7 +157,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     textAlign: "center",
   },
-  emailForm: { width: "100%", maxWidth: 360, marginTop: spacing.lg, gap: spacing.md },
+  emailForm: {
+    width: "100%",
+    maxWidth: 360,
+    marginTop: spacing.lg,
+    gap: spacing.md,
+  },
   emailInput: {
     height: 46,
     borderWidth: 1,

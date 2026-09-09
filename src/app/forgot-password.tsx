@@ -123,19 +123,23 @@ export default function ForgotPasswordScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Go back"
               >
-                <Feather name="arrow-left" size={22} color="#111" />
+                <Feather name="arrow-left" size={22} color={themeColors.text} />
               </Pressable>
-              <Text style={styles.title}>Forgot Password</Text>
+              <Text style={[styles.title, { color: themeColors.text }]}>
+                Forgot Password
+              </Text>
             </View>
 
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
               Enter the email address associated with your DigiLearn account and
-              we'll send you a password reset link.
+              we&apos;ll send you a password reset link.
             </Text>
 
             <View style={styles.form}>
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Email</Text>
+                <Text style={[styles.fieldLabel, { color: themeColors.text }]}>
+                  Email
+                </Text>
                 <TextInput
                   value={email}
                   onChangeText={setEmail}
@@ -143,19 +147,38 @@ export default function ForgotPasswordScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   placeholder="your@email.com"
-                  placeholderTextColor="#9CA3AF"
-                  style={[styles.input, emailError ? styles.inputError : null]}
+                  placeholderTextColor={themeColors.subtitle}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                      color: themeColors.text,
+                    },
+                    emailError ? styles.inputError : null,
+                  ]}
                   textContentType="emailAddress"
                   accessibilityLabel="Email"
                   accessibilityHint="Enter your email address"
                 />
                 {emailError ? (
-                  <Text style={styles.fieldError}>{emailError}</Text>
+                  <Text
+                    style={[
+                      styles.fieldError,
+                      { color: themeColors.primaryRed },
+                    ]}
+                  >
+                    {emailError}
+                  </Text>
                 ) : null}
               </View>
 
               {generalMessage ? (
-                <Text style={styles.generalMessage}>{generalMessage}</Text>
+                <Text
+                  style={[styles.generalMessage, { color: themeColors.text }]}
+                >
+                  {generalMessage}
+                </Text>
               ) : null}
 
               <Pressable

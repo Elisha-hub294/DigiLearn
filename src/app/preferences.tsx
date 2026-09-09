@@ -38,6 +38,7 @@ function PreferenceChip({
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
+        { backgroundColor: themeColors.white, borderColor: themeColors.border },
         selected && styles.chipSelected,
         pressed && styles.chipPressed,
       ]}
@@ -63,7 +64,7 @@ function AuthPrompt() {
   const { colors: themeColors } = useTheme();
   return (
     <View style={styles.authPrompt}>
-      <Feather name="sliders" size={32} color={colors.primary} />
+      <Feather name="sliders" size={32} color={themeColors.primary} />
       <Text style={[styles.authTitle, { color: themeColors.dark }]}>
         Personalize your learning
       </Text>
@@ -79,15 +80,19 @@ function AuthPrompt() {
               params: { from: "preferences" },
             } as never)
           }
-          style={styles.login}
+          style={[styles.login, { borderColor: themeColors.primary }]}
         >
-          <Text style={styles.loginText}>Log in</Text>
+          <Text style={[styles.loginText, { color: themeColors.primary }]}>
+            Log in
+          </Text>
         </Pressable>
         <Pressable
           onPress={() => router.push("/signup" as never)}
-          style={styles.signup}
+          style={[styles.signup, { backgroundColor: themeColors.primary }]}
         >
-          <Text style={styles.signupText}>Sign up</Text>
+          <Text style={[styles.signupText, { color: themeColors.white }]}>
+            Sign up
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -95,7 +100,7 @@ function AuthPrompt() {
 }
 
 export default function PreferencesScreen() {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, profile, loading: profileLoading } = useProfile();
@@ -226,9 +231,13 @@ export default function PreferencesScreen() {
                   style={styles.backButton}
                   accessibilityLabel="Back to profile"
                 >
-                  <Feather name="chevron-left" size={22} color={colors.dark} />
+                  <Feather
+                    name="chevron-left"
+                    size={22}
+                    color={themeColors.text}
+                  />
                 </Pressable>
-                <Text style={[styles.title, { color: themeColors.dark }]}>
+                <Text style={[styles.title, { color: themeColors.text }]}>
                   Preferences
                 </Text>
               </View>
@@ -240,7 +249,10 @@ export default function PreferencesScreen() {
                   accessibilityLabel="Save preferences"
                 >
                   {saving ? (
-                    <ActivityIndicator size="small" color="#3B82F6" />
+                    <ActivityIndicator
+                      size="small"
+                      color={themeColors.primary}
+                    />
                   ) : (
                     <Text
                       style={[
@@ -272,10 +284,12 @@ export default function PreferencesScreen() {
               </View>
             ) : loadError ? (
               <View style={styles.error}>
-                <Text style={styles.errorTitle}>
+                <Text style={[styles.errorTitle, { color: themeColors.text }]}>
                   We couldn’t load preferences.
                 </Text>
-                <Text style={styles.errorCopy}>
+                <Text
+                  style={[styles.errorCopy, { color: themeColors.subtitle }]}
+                >
                   Check your connection and try again.
                 </Text>
                 <Pressable onPress={loadSubjects} style={styles.retry}>
@@ -311,31 +325,63 @@ export default function PreferencesScreen() {
                   </View>
                 ) : (
                   <View style={styles.empty}>
-                    <Text style={styles.emptyTitle}>
+                    <Text
+                      style={[styles.emptyTitle, { color: themeColors.text }]}
+                    >
                       No subjects available yet.
                     </Text>
-                    <Text style={styles.emptyCopy}>
+                    <Text
+                      style={[
+                        styles.emptyCopy,
+                        { color: themeColors.subtitle },
+                      ]}
+                    >
                       We&apos;re preparing more subjects for you.
                     </Text>
                   </View>
                 )}
                 {saved ? (
-                  <Text style={styles.success}>Preferences saved.</Text>
+                  <Text
+                    style={[
+                      styles.success,
+                      { color: isDark ? "#86EFAC" : "#238636" },
+                    ]}
+                  >
+                    Preferences saved.
+                  </Text>
                 ) : null}
                 {saveError ? (
-                  <Text style={styles.saveError}>
+                  <Text
+                    style={[
+                      styles.saveError,
+                      { color: themeColors.primaryRed },
+                    ]}
+                  >
                     Couldn&apos;t save preferences. Please try again.
                   </Text>
                 ) : null}
               </>
             )}
 
-            <View style={styles.toggleCard}>
+            <View
+              style={[
+                styles.toggleCard,
+                {
+                  backgroundColor: themeColors.lightBackground,
+                  borderColor: themeColors.border,
+                },
+              ]}
+            >
               <View style={styles.toggleInfo}>
-                <Text style={styles.toggleTitle}>
+                <Text style={[styles.toggleTitle, { color: themeColors.text }]}>
                   Only show selected interests in feeds
                 </Text>
-                <Text style={styles.toggleSubtitle}>
+                <Text
+                  style={[
+                    styles.toggleSubtitle,
+                    { color: themeColors.subtitle },
+                  ]}
+                >
                   Filter your Home and Library feeds to only display resources
                   matching your selected subjects.
                 </Text>

@@ -235,17 +235,21 @@ export default function SignUpScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Go back"
               >
-                <Feather name="arrow-left" size={22} color="#111" />
+                <Feather name="arrow-left" size={22} color={themeColors.text} />
               </Pressable>
-              <Text style={styles.title}>Sign up</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: themeColors.text }]}>
+                Sign up
+              </Text>
+              <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
                 Enter your email and we will send you a secure sign-in link.
               </Text>
             </View>
 
             <View style={styles.form}>
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Email</Text>
+                <Text style={[styles.fieldLabel, { color: themeColors.text }]}>
+                  Email
+                </Text>
                 <TextInput
                   ref={emailInputRef}
                   value={email}
@@ -255,19 +259,41 @@ export default function SignUpScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   placeholder="your@email.com"
-                  placeholderTextColor="#9CA3AF"
-                  style={[styles.input, emailError ? styles.inputError : null]}
+                  placeholderTextColor={themeColors.subtitle}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                      color: themeColors.text,
+                    },
+                    emailError ? styles.inputError : null,
+                  ]}
                   textContentType="emailAddress"
                   accessibilityLabel="Email"
                   accessibilityHint="Enter your email address"
                 />
                 {emailError ? (
-                  <Text style={styles.fieldError}>{emailError}</Text>
+                  <Text
+                    style={[
+                      styles.fieldError,
+                      { color: themeColors.primaryRed },
+                    ]}
+                  >
+                    {emailError}
+                  </Text>
                 ) : null}
               </View>
 
               {generalError ? (
-                <Text style={styles.generalError}>{generalError}</Text>
+                <Text
+                  style={[
+                    styles.generalError,
+                    { color: themeColors.primaryRed },
+                  ]}
+                >
+                  {generalError}
+                </Text>
               ) : null}
 
               <Pressable
@@ -292,9 +318,23 @@ export default function SignUpScreen() {
             </View>
 
             <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR SIGN UP WITH</Text>
-              <View style={styles.dividerLine} />
+              <View
+                style={[
+                  styles.dividerLine,
+                  { backgroundColor: themeColors.border },
+                ]}
+              />
+              <Text
+                style={[styles.dividerText, { color: themeColors.subtitle }]}
+              >
+                OR SIGN UP WITH
+              </Text>
+              <View
+                style={[
+                  styles.dividerLine,
+                  { backgroundColor: themeColors.border },
+                ]}
+              />
             </View>
 
             <View style={styles.socialRow}>
@@ -302,6 +342,10 @@ export default function SignUpScreen() {
                 onPress={handleGoogleSignUp}
                 style={({ pressed }) => [
                   styles.socialButton,
+                  {
+                    backgroundColor: themeColors.white,
+                    borderColor: themeColors.border,
+                  },
                   pressed && styles.socialPressed,
                 ]}
                 disabled={isLoading}
@@ -315,6 +359,10 @@ export default function SignUpScreen() {
                 onPress={handleFacebookSignUp}
                 style={({ pressed }) => [
                   styles.socialButton,
+                  {
+                    backgroundColor: themeColors.white,
+                    borderColor: themeColors.border,
+                  },
                   pressed && styles.socialPressed,
                 ]}
                 disabled={isLoading}
@@ -328,18 +376,24 @@ export default function SignUpScreen() {
                 onPress={handleContinue}
                 style={({ pressed }) => [
                   styles.socialButton,
+                  {
+                    backgroundColor: themeColors.white,
+                    borderColor: themeColors.border,
+                  },
                   pressed && styles.socialPressed,
                 ]}
                 disabled={isLoading}
                 accessibilityRole="button"
                 accessibilityLabel="Continue with email"
               >
-                <Feather name="mail" size={20} color="#111111" />
+                <Feather name="mail" size={20} color={themeColors.text} />
               </Pressable>
             </View>
 
             <View style={styles.footerRow}>
-              <Text style={styles.footerText}>Already have an account?</Text>
+              <Text style={[styles.footerText, { color: themeColors.text }]}>
+                Already have an account?
+              </Text>
               <Pressable
                 onPress={handleLoginNavigation}
                 accessibilityRole="button"

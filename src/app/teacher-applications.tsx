@@ -17,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { reviewTeacherApplication } from "../services/teacherApplications";
 
 type Application = {
@@ -51,6 +52,7 @@ export default function TeacherApplicationsScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
+  const { colors: themeColors, isDark } = useTheme();
   const [applications, setApplications] = useState<Application[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("pending");
@@ -126,31 +128,56 @@ export default function TeacherApplicationsScreen() {
         : "PENDING";
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={[styles.header, { paddingHorizontal: padding, maxWidth }]}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
+      <View
+        style={[
+          styles.header,
+          {
+            paddingHorizontal: padding,
+            maxWidth,
+            backgroundColor: themeColors.white,
+          },
+        ]}
+      >
         <Pressable
           onPress={() => router.back()}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >
-          <Feather name="arrow-left" size={22} color={colors.text} />
+          <Feather name="arrow-left" size={22} color={themeColors.text} />
         </Pressable>
         <View>
           <Text style={styles.eyebrow}>ADMIN REVIEW</Text>
-          <Text style={styles.title}>Teacher applications</Text>
+          <Text style={[styles.title, { color: themeColors.text }]}>
+            Teacher applications
+          </Text>
         </View>
       </View>
       <View
-        style={[styles.dashboard, { paddingHorizontal: padding, maxWidth }]}
+        style={[
+          styles.dashboard,
+          {
+            paddingHorizontal: padding,
+            maxWidth,
+            backgroundColor: themeColors.white,
+          },
+        ]}
       >
         {(Object.keys(counts) as Filter[]).map((item) => (
           <Pressable
             key={item}
             onPress={() => setFilter(item)}
-            style={[styles.metric, filter === item && styles.metricActive]}
+            style={[
+              styles.metric,
+              { backgroundColor: isDark ? "#243247" : "#F4F6F8" },
+              filter === item && styles.metricActive,
+            ]}
           >
             <Text
               style={[
+                { color: themeColors.text },
                 styles.metricValue,
                 filter === item && styles.metricValueActive,
               ]}
@@ -159,6 +186,7 @@ export default function TeacherApplicationsScreen() {
             </Text>
             <Text
               style={[
+                { color: themeColors.subtitle },
                 styles.metricLabel,
                 filter === item && styles.metricLabelActive,
               ]}
@@ -187,7 +215,15 @@ export default function TeacherApplicationsScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: themeColors.white,
+                borderColor: themeColors.border,
+              },
+            ]}
+          >
             <View style={styles.cardHeader}>
               <View style={styles.avatar}>
                 <Text style={styles.avatarText}>
@@ -211,10 +247,10 @@ export default function TeacherApplicationsScreen() {
                 <Text style={styles.viewButtonText}>Review details</Text>
               </Pressable>
               <View style={styles.identity}>
-                <Text style={styles.name}>
+                <Text style={[styles.name, { color: themeColors.text }]}>
                   {item.name || "Unnamed applicant"}
                 </Text>
-                <Text style={styles.email}>
+                <Text style={[styles.email, { color: themeColors.subtitle }]}>
                   {item.email || "No email provided"}
                 </Text>
               </View>
@@ -236,18 +272,32 @@ export default function TeacherApplicationsScreen() {
                 </Text>
               </View>
             </View>
-            {!!item.school && <Text style={styles.detail}>{item.school}</Text>}
+            {!!item.school && (
+              <Text style={[styles.detail, { color: themeColors.subtitle }]}>
+                {item.school}
+              </Text>
+            )}
             {!!item.subjects?.length && (
-              <Text style={styles.detail}>{item.subjects.join("  ·  ")}</Text>
+              <Text style={[styles.detail, { color: themeColors.subtitle }]}>
+                {item.subjects.join("  ·  ")}
+              </Text>
             )}
             <View style={styles.actions}>
               {item.status === "pending" && (
                 <Pressable
                   disabled={busyId === item.id}
-                  style={[styles.reject, busyId === item.id && styles.disabled]}
+                  style={[
+                    styles.reject,
+                    { borderColor: themeColors.border },
+                    busyId === item.id && styles.disabled,
+                  ]}
                   onPress={() => setRejecting(item)}
                 >
-                  <Text style={styles.rejectText}>Decline</Text>
+                  <Text
+                    style={[styles.rejectText, { color: themeColors.text }]}
+                  >
+                    Decline
+                  </Text>
                 </Pressable>
               )}
               {item.status === "pending" && (
@@ -274,12 +324,17 @@ export default function TeacherApplicationsScreen() {
         <View
           style={[styles.history, { paddingHorizontal: padding, maxWidth }]}
         >
-          <Text style={styles.historyTitle}>Audit history</Text>
+          <Text style={[styles.historyTitle, { color: themeColors.text }]}>
+            Audit history
+          </Text>
           {audit
             .slice(-5)
             .reverse()
             .map((entry) => (
-              <Text key={entry.id} style={styles.historyItem}>
+              <Text
+                key={entry.id}
+                style={[styles.historyItem, { color: themeColors.subtitle }]}
+              >
                 {entry.action || "reviewed"} ·{" "}
                 {entry.applicationId || "application"}
                 {entry.reason ? ` · ${entry.reason}` : ""}
@@ -293,21 +348,39 @@ export default function TeacherApplicationsScreen() {
         animationType="fade"
         onRequestClose={() => setRejecting(null)}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Reason for decline</Text>
-            <Text style={styles.modalText}>
+        <View
+          style={[
+            styles.modalBackdrop,
+            {
+              backgroundColor: isDark
+                ? "rgba(2, 6, 23, 0.72)"
+                : "rgba(15, 23, 42, 0.45)",
+            },
+          ]}
+        >
+          <View
+            style={[styles.modalCard, { backgroundColor: themeColors.white }]}
+          >
+            <Text style={[styles.modalTitle, { color: themeColors.text }]}>
+              Reason for decline
+            </Text>
+            <Text style={[styles.modalText, { color: themeColors.subtitle }]}>
               Share what the applicant should update before resubmitting.
             </Text>
             <Pressable
               style={[
                 styles.toggleButton,
+                {
+                  borderColor: themeColors.border,
+                  backgroundColor: themeColors.lightBackground,
+                },
                 allowReapply && styles.toggleButtonActive,
               ]}
               onPress={() => setAllowReapply((current) => !current)}
             >
               <Text
                 style={[
+                  { color: themeColors.text },
                   styles.toggleButtonText,
                   allowReapply && styles.toggleButtonTextActive,
                 ]}
@@ -320,8 +393,11 @@ export default function TeacherApplicationsScreen() {
               onChangeText={setRejectionReason}
               multiline
               placeholder="Add a clear, helpful reason"
-              placeholderTextColor="#98A2B3"
-              style={styles.reasonInput}
+              placeholderTextColor={themeColors.subtitle}
+              style={[
+                styles.reasonInput,
+                { borderColor: themeColors.border, color: themeColors.text },
+              ]}
             />
             <View style={styles.actions}>
               <Pressable

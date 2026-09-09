@@ -219,14 +219,16 @@ export default function LoginScreen() {
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
-              <Feather name="arrow-left" size={22} color="#111" />
+              <Feather name="arrow-left" size={22} color={themeColors.text} />
             </Pressable>
-            <Text style={styles.title}>You're already signed in</Text>
+            <Text style={[styles.title, { color: themeColors.text }]}>
+              You&apos;re already signed in
+            </Text>
           </View>
 
           <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
-            You're already signed in to DigiLearn. You can continue learning or
-            log out to switch accounts.
+            You&apos;re already signed in to DigiLearn. You can continue
+            learning or log out to switch accounts.
           </Text>
 
           <View style={styles.form}>
@@ -245,12 +247,14 @@ export default function LoginScreen() {
                 {
                   backgroundColor: colors.white,
                   borderWidth: 1,
-                  borderColor: "#E5E7EB",
+                  borderColor: themeColors.border,
                 },
               ]}
               accessibilityRole="button"
             >
-              <Text style={[styles.continueButtonText, { color: colors.dark }]}>
+              <Text
+                style={[styles.continueButtonText, { color: themeColors.text }]}
+              >
                 Log out
               </Text>
             </Pressable>
@@ -285,9 +289,9 @@ export default function LoginScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Go back"
               >
-                <Feather name="arrow-left" size={22} color="#111" />
+                <Feather name="arrow-left" size={22} color={themeColors.text} />
               </Pressable>
-              <Text style={[styles.title, { color: themeColors.dark }]}>
+              <Text style={[styles.title, { color: themeColors.text }]}>
                 Log In
               </Text>
             </View>
@@ -298,7 +302,9 @@ export default function LoginScreen() {
 
             <View style={styles.form}>
               <View style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>Email</Text>
+                <Text style={[styles.fieldLabel, { color: themeColors.text }]}>
+                  Email
+                </Text>
                 <TextInput
                   ref={emailInputRef}
                   value={email}
@@ -323,12 +329,26 @@ export default function LoginScreen() {
                   accessibilityHint="Enter your email address"
                 />
                 {emailError ? (
-                  <Text style={styles.fieldError}>{emailError}</Text>
+                  <Text
+                    style={[
+                      styles.fieldError,
+                      { color: themeColors.primaryRed },
+                    ]}
+                  >
+                    {emailError}
+                  </Text>
                 ) : null}
               </View>
 
               {generalError ? (
-                <Text style={styles.generalError}>{generalError}</Text>
+                <Text
+                  style={[
+                    styles.generalError,
+                    { color: themeColors.primaryRed },
+                  ]}
+                >
+                  {generalError}
+                </Text>
               ) : null}
 
               <Pressable
@@ -353,9 +373,23 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.dividerRow}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>OR LOG IN WITH</Text>
-              <View style={styles.dividerLine} />
+              <View
+                style={[
+                  styles.dividerLine,
+                  { backgroundColor: themeColors.border },
+                ]}
+              />
+              <Text
+                style={[styles.dividerText, { color: themeColors.subtitle }]}
+              >
+                OR LOG IN WITH
+              </Text>
+              <View
+                style={[
+                  styles.dividerLine,
+                  { backgroundColor: themeColors.border },
+                ]}
+              />
             </View>
 
             <View style={styles.socialRow}>
@@ -363,6 +397,10 @@ export default function LoginScreen() {
                 onPress={handleGoogleSignIn}
                 style={({ pressed }) => [
                   styles.socialButton,
+                  {
+                    backgroundColor: themeColors.white,
+                    borderColor: themeColors.border,
+                  },
                   pressed && styles.socialPressed,
                 ]}
                 disabled={isLoading}
@@ -376,6 +414,10 @@ export default function LoginScreen() {
                 onPress={handleFacebookSignIn}
                 style={({ pressed }) => [
                   styles.socialButton,
+                  {
+                    backgroundColor: themeColors.white,
+                    borderColor: themeColors.border,
+                  },
                   pressed && styles.socialPressed,
                 ]}
                 disabled={isLoading}
@@ -389,18 +431,24 @@ export default function LoginScreen() {
                 onPress={handleEmailIcon}
                 style={({ pressed }) => [
                   styles.socialButton,
+                  {
+                    backgroundColor: themeColors.white,
+                    borderColor: themeColors.border,
+                  },
                   pressed && styles.socialPressed,
                 ]}
                 disabled={isLoading}
                 accessibilityRole="button"
                 accessibilityLabel="Continue with email"
               >
-                <Feather name="mail" size={20} color="#111111" />
+                <Feather name="mail" size={20} color={themeColors.text} />
               </Pressable>
             </View>
 
             <View style={styles.footerRow}>
-              <Text style={styles.footerText}>Don't have an account?</Text>
+              <Text style={[styles.footerText, { color: themeColors.text }]}>
+                Don&apos;t have an account?
+              </Text>
               <Pressable
                 onPress={() =>
                   router.push({

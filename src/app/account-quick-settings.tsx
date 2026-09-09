@@ -25,6 +25,7 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   MAX_PROFILE_FIELD_LENGTH,
   normalizeProfileText,
@@ -57,15 +58,19 @@ function getSubjectNames(items: unknown): string[] {
 }
 
 function InfoMessage({ children }: { children: string }) {
+  const { colors: themeColors } = useTheme();
   return (
     <View style={styles.infoRow}>
-      <Feather name="info" size={12} color="#FF6B6B" />
-      <Text style={styles.infoText}>{children}</Text>
+      <Feather name="info" size={12} color={themeColors.primaryRed} />
+      <Text style={[styles.infoText, { color: themeColors.primaryRed }]}>
+        {children}
+      </Text>
     </View>
   );
 }
 
 export default function AccountQuickSettingsScreen() {
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
 
@@ -273,8 +278,10 @@ export default function AccountQuickSettingsScreen() {
 
   const renderAuthState = () => (
     <View style={styles.authState}>
-      <Text style={styles.authTitle}>You&apos;re not signed in</Text>
-      <Text style={styles.authText}>
+      <Text style={[styles.authTitle, { color: themeColors.text }]}>
+        You&apos;re not signed in
+      </Text>
+      <Text style={[styles.authText, { color: themeColors.subtitle }]}>
         Log in or create an account to finish setting up your DigiLearn profile.
       </Text>
 
@@ -284,11 +291,21 @@ export default function AccountQuickSettingsScreen() {
           accessibilityLabel="Log in"
           onPress={handleLogin}
           style={({ pressed }) => [
-            styles.secondaryButton,
+            [
+              styles.secondaryButton,
+              {
+                borderColor: themeColors.primary,
+                backgroundColor: themeColors.white,
+              },
+            ],
             pressed && styles.buttonPressed,
           ]}
         >
-          <Text style={styles.secondaryButtonText}>Log in</Text>
+          <Text
+            style={[styles.secondaryButtonText, { color: themeColors.primary }]}
+          >
+            Log in
+          </Text>
         </Pressable>
 
         <Pressable
@@ -296,11 +313,15 @@ export default function AccountQuickSettingsScreen() {
           accessibilityLabel="Sign up"
           onPress={handleSignup}
           style={({ pressed }) => [
-            styles.primaryButton,
+            [styles.primaryButton, { backgroundColor: themeColors.primary }],
             pressed && styles.buttonPressed,
           ]}
         >
-          <Text style={styles.primaryButtonText}>Sign up</Text>
+          <Text
+            style={[styles.primaryButtonText, { color: themeColors.white }]}
+          >
+            Sign up
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -308,7 +329,9 @@ export default function AccountQuickSettingsScreen() {
 
   if (!user && !isLoading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
         <View style={[styles.page, { paddingHorizontal: horizontalPadding }]}>
           <View style={[styles.authContainer, { maxWidth: contentMaxWidth }]}>
             {renderAuthState()}
@@ -319,7 +342,9 @@ export default function AccountQuickSettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 40}
@@ -342,11 +367,13 @@ export default function AccountQuickSettingsScreen() {
                 onPress={() => router.replace("/account-type" as never)}
                 style={styles.backButton}
               >
-                <Feather name="arrow-left" size={22} color={colors.dark} />
+                <Feather name="arrow-left" size={22} color={themeColors.text} />
               </Pressable>
 
               <View style={styles.titleWrap}>
-                <Text style={styles.title}>Student Account</Text>
+                <Text style={[styles.title, { color: themeColors.text }]}>
+                  Student Account
+                </Text>
               </View>
 
               <View style={styles.headerSpacer} />
@@ -398,8 +425,15 @@ export default function AccountQuickSettingsScreen() {
                     }
                     maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your name"
-                    placeholderTextColor="#7A8FA8"
-                    style={styles.input}
+                    placeholderTextColor={themeColors.subtitle}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: themeColors.white,
+                        borderColor: themeColors.border,
+                        color: themeColors.text,
+                      },
+                    ]}
                     accessibilityLabel="Name"
                     autoCapitalize="words"
                     autoCorrect={false}
@@ -413,17 +447,28 @@ export default function AccountQuickSettingsScreen() {
                     accessibilityRole="button"
                     accessibilityLabel="Select level"
                     onPress={() => setShowLevelModal(true)}
-                    style={styles.selectField}
+                    style={[
+                      styles.selectField,
+                      {
+                        backgroundColor: themeColors.white,
+                        borderColor: themeColors.border,
+                      },
+                    ]}
                   >
                     <Text
                       style={[
+                        { color: themeColors.text },
                         styles.selectText,
                         !level && styles.placeholderText,
                       ]}
                     >
                       {level || "Select level"}
                     </Text>
-                    <Feather name="chevron-down" size={18} color="#475569" />
+                    <Feather
+                      name="chevron-down"
+                      size={18}
+                      color={themeColors.subtitle}
+                    />
                   </Pressable>
 
                   <InfoMessage>
@@ -446,8 +491,15 @@ export default function AccountQuickSettingsScreen() {
                     }
                     maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your school"
-                    placeholderTextColor="#7A8FA8"
-                    style={styles.input}
+                    placeholderTextColor={themeColors.subtitle}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: themeColors.white,
+                        borderColor: themeColors.border,
+                        color: themeColors.text,
+                      },
+                    ]}
                     accessibilityLabel="School"
                     autoCapitalize="words"
                     autoCorrect={false}
@@ -498,7 +550,15 @@ export default function AccountQuickSettingsScreen() {
                   </InfoMessage>
                 </View>
 
-                <View style={styles.toggleCard}>
+                <View
+                  style={[
+                    styles.toggleCard,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
+                >
                   <View style={styles.toggleInfo}>
                     <Text style={styles.toggleTitle}>
                       Only show selected interests in feeds
@@ -563,11 +623,19 @@ export default function AccountQuickSettingsScreen() {
         onRequestClose={() => setShowLevelModal(false)}
       >
         <Pressable
-          style={styles.modalBackdrop}
+          style={[
+            styles.modalBackdrop,
+            { backgroundColor: "rgba(2, 6, 23, 0.72)" },
+          ]}
           onPress={() => setShowLevelModal(false)}
         >
-          <Pressable style={styles.modalCard} onPress={() => undefined}>
-            <Text style={styles.modalTitle}>Select level</Text>
+          <Pressable
+            style={[styles.modalCard, { backgroundColor: themeColors.white }]}
+            onPress={() => undefined}
+          >
+            <Text style={[styles.modalTitle, { color: themeColors.text }]}>
+              Select level
+            </Text>
             {LEVEL_OPTIONS.map((option) => (
               <Pressable
                 key={option}
@@ -579,10 +647,18 @@ export default function AccountQuickSettingsScreen() {
                 }}
                 style={[
                   styles.modalOption,
+                  { borderBottomColor: themeColors.border },
+                  level === option && {
+                    backgroundColor: themeColors.primaryLight,
+                  },
                   level === option && styles.modalOptionSelected,
                 ]}
               >
-                <Text style={styles.modalOptionText}>{option}</Text>
+                <Text
+                  style={[styles.modalOptionText, { color: themeColors.text }]}
+                >
+                  {option}
+                </Text>
                 {level === option ? (
                   <Feather name="check" size={16} color={colors.primary} />
                 ) : null}

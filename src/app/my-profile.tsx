@@ -552,7 +552,7 @@ export default function MyProfileScreen() {
                       ? "Tell us about yourself..."
                       : `Enter your ${field ?? "value"}`
                   }
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={themeColors.subtitle}
                   multiline={field === "bio"}
                   maxLength={field === "bio" ? MAX_BIO_LENGTH : undefined}
                   style={[

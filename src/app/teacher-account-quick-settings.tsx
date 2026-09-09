@@ -28,6 +28,7 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 import { loadSubjects } from "../services/subjectsService";
 import { resubmitTeacherApplication } from "../services/teacherApplications";
 import { saveProfilePicture } from "../services/userProfile";
@@ -181,6 +182,7 @@ function InfoMessage({
 }
 
 export default function TeacherAccountQuickSettingsScreen() {
+  const { colors: themeColors } = useTheme();
   const fallbackAvatar = userDefault;
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -654,7 +656,7 @@ export default function TeacherAccountQuickSettingsScreen() {
                     }
                     maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your name"
-                    placeholderTextColor="#7A8FA8"
+                    placeholderTextColor={themeColors.subtitle}
                     style={styles.input}
                     accessibilityLabel="Name"
                     autoCapitalize="words"
@@ -677,7 +679,7 @@ export default function TeacherAccountQuickSettingsScreen() {
                     }
                     maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your school"
-                    placeholderTextColor="#7A8FA8"
+                    placeholderTextColor={themeColors.subtitle}
                     style={styles.input}
                     accessibilityLabel="School"
                     autoCapitalize="words"
@@ -849,7 +851,7 @@ export default function TeacherAccountQuickSettingsScreen() {
                     if (socialError) setSocialError("");
                   }}
                   placeholder={activeSocial?.placeholder}
-                  placeholderTextColor="#7A8FA8"
+                  placeholderTextColor={themeColors.subtitle}
                   style={styles.input}
                   autoCapitalize="none"
                   autoCorrect={false}

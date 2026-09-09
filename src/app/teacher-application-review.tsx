@@ -27,6 +27,7 @@ import { FirebaseImage } from "../components/ui/FirebaseImage";
 import { Skeleton } from "../components/ui/Skeleton";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { reviewTeacherApplication } from "../services/teacherApplications";
 
 type Application = {
@@ -74,6 +75,7 @@ const formatDate = (
 export default function TeacherApplicationReviewScreen() {
   const router = useRouter();
   const { profile } = useProfile();
+  const { colors: themeColors, isDark } = useTheme();
   const { applicationId } = useLocalSearchParams<{ applicationId?: string }>();
   const [application, setApplication] = useState<Application | null>(null);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
@@ -163,7 +165,9 @@ export default function TeacherApplicationReviewScreen() {
   if (profile?.type !== "admin") return null;
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
         <View style={styles.center}>
           <Skeleton style={styles.loadingSkeleton} />
         </View>
@@ -172,11 +176,15 @@ export default function TeacherApplicationReviewScreen() {
   }
   if (!application) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
         <View style={styles.center}>
-          <Feather name="file-text" size={38} color={colors.subtitle} />
-          <Text style={styles.emptyTitle}>Application unavailable</Text>
-          <Text style={styles.emptyText}>
+          <Feather name="file-text" size={38} color={themeColors.subtitle} />
+          <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
+            Application unavailable
+          </Text>
+          <Text style={[styles.emptyText, { color: themeColors.subtitle }]}>
             This application may have been removed or already archived.
           </Text>
         </View>
@@ -186,7 +194,9 @@ export default function TeacherApplicationReviewScreen() {
 
   const isPending = application.status === "pending";
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <ActionDialog
         visible={reviewDialog.visible}
         title={reviewDialog.title}
@@ -225,20 +235,35 @@ export default function TeacherApplicationReviewScreen() {
             accessibilityLabel="Go back"
             style={styles.iconButton}
           >
-            <Feather name="arrow-left" size={21} color={colors.text} />
+            <Feather name="arrow-left" size={21} color={themeColors.text} />
           </Pressable>
           <View style={styles.topCopy}>
             <Text style={styles.eyebrow}>ADMIN REVIEW</Text>
-            <Text style={styles.title}>Teacher application</Text>
+            <Text style={[styles.title, { color: themeColors.text }]}>
+              Teacher application
+            </Text>
           </View>
           <View style={styles.status}>
-            <Text style={styles.statusText}>
+            <Text
+              style={[
+                styles.statusText,
+                { color: isDark ? "#FCD34D" : "#946200" },
+              ]}
+            >
               {application.status?.toUpperCase() || "UNKNOWN"}
             </Text>
           </View>
         </View>
 
-        <View style={styles.hero}>
+        <View
+          style={[
+            styles.hero,
+            {
+              backgroundColor: themeColors.white,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
           <FirebaseImage
             source={
               application.photoURL ? { uri: application.photoURL } : undefined
@@ -249,20 +274,44 @@ export default function TeacherApplicationReviewScreen() {
             contentFit="cover"
           />
           <View style={styles.heroCopy}>
-            <Text style={styles.name}>
+            <Text style={[styles.name, { color: themeColors.text }]}>
               {application.name || "Unnamed applicant"}
             </Text>
-            <Text style={styles.email}>
+            <Text style={[styles.email, { color: themeColors.subtitle }]}>
               {application.email || "No email provided"}
             </Text>
           </View>
         </View>
 
-        <View style={styles.slaCard}>
-          <Feather name="clock" size={18} color="#946200" />
+        <View
+          style={[
+            styles.slaCard,
+            {
+              backgroundColor: isDark ? "#3A2F16" : "#FFF8E6",
+              borderColor: isDark ? "#6B5522" : "#F2D48A",
+            },
+          ]}
+        >
+          <Feather
+            name="clock"
+            size={18}
+            color={isDark ? "#FCD34D" : "#946200"}
+          />
           <View style={styles.slaCopy}>
-            <Text style={styles.slaTitle}>{ageLabel}</Text>
-            <Text style={styles.slaText}>
+            <Text
+              style={[
+                styles.slaTitle,
+                { color: isDark ? "#FDE68A" : "#6B4B00" },
+              ]}
+            >
+              {ageLabel}
+            </Text>
+            <Text
+              style={[
+                styles.slaText,
+                { color: isDark ? "#F5D98A" : "#80621A" },
+              ]}
+            >
               Applications older than 3 days are highlighted for admin
               follow-up.
             </Text>
@@ -308,19 +357,36 @@ export default function TeacherApplicationReviewScreen() {
         </Section>
 
         {isPending ? (
-          <View style={styles.decisionPanel}>
-            <Text style={styles.decisionTitle}>Make a decision</Text>
-            <Text style={styles.decisionText}>
+          <View
+            style={[
+              styles.decisionPanel,
+              {
+                backgroundColor: isDark ? "#172B46" : "#EEF6FF",
+                borderColor: isDark ? "#2D5A8D" : "#C9DFFF",
+              },
+            ]}
+          >
+            <Text style={[styles.decisionTitle, { color: themeColors.text }]}>
+              Make a decision
+            </Text>
+            <Text
+              style={[styles.decisionText, { color: themeColors.subtitle }]}
+            >
               Review the details above before granting teacher publishing
               access.
             </Text>
             <View style={styles.actions}>
               <Pressable
                 disabled={busy}
-                style={styles.rejectButton}
+                style={[
+                  styles.rejectButton,
+                  { borderColor: themeColors.border },
+                ]}
                 onPress={() => setShowRejectModal(true)}
               >
-                <Text style={styles.rejectText}>Request changes</Text>
+                <Text style={[styles.rejectText, { color: themeColors.text }]}>
+                  Request changes
+                </Text>
               </Pressable>
               <Pressable
                 disabled={busy}
@@ -336,9 +402,11 @@ export default function TeacherApplicationReviewScreen() {
             </View>
           </View>
         ) : (
-          <View style={styles.closedCard}>
+          <View
+            style={[styles.closedCard, { backgroundColor: themeColors.white }]}
+          >
             <Feather name="check-circle" size={20} color={colors.green} />
-            <Text style={styles.closedText}>
+            <Text style={[styles.closedText, { color: themeColors.text }]}>
               This application has already been reviewed.
             </Text>
           </View>
@@ -350,10 +418,23 @@ export default function TeacherApplicationReviewScreen() {
         animationType="fade"
         onRequestClose={() => setShowRejectModal(false)}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Request changes</Text>
-            <Text style={styles.modalText}>
+        <View
+          style={[
+            styles.modalBackdrop,
+            {
+              backgroundColor: isDark
+                ? "rgba(2, 6, 23, 0.72)"
+                : "rgba(15,23,42,0.45)",
+            },
+          ]}
+        >
+          <View
+            style={[styles.modalCard, { backgroundColor: themeColors.white }]}
+          >
+            <Text style={[styles.modalTitle, { color: themeColors.text }]}>
+              Request changes
+            </Text>
+            <Text style={[styles.modalText, { color: themeColors.subtitle }]}>
               Give the applicant clear feedback before they resubmit.
             </Text>
             <TextInput
@@ -361,15 +442,20 @@ export default function TeacherApplicationReviewScreen() {
               onChangeText={setReason}
               multiline
               placeholder="Example: Please add your school and the subjects you teach."
-              placeholderTextColor="#98A2B3"
+              placeholderTextColor={themeColors.subtitle}
               style={styles.reasonInput}
             />
             <View style={styles.actions}>
               <Pressable
-                style={styles.rejectButton}
+                style={[
+                  styles.rejectButton,
+                  { borderColor: themeColors.border },
+                ]}
                 onPress={() => setShowRejectModal(false)}
               >
-                <Text style={styles.rejectText}>Cancel</Text>
+                <Text style={[styles.rejectText, { color: themeColors.text }]}>
+                  Cancel
+                </Text>
               </Pressable>
               <Pressable
                 disabled={reason.trim().length < 5 || busy}
@@ -396,18 +482,31 @@ function Section({
   title: string;
   children: React.ReactNode;
 }) {
+  const { colors: themeColors } = useTheme();
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+    <View
+      style={[
+        styles.section,
+        { backgroundColor: themeColors.white, borderColor: themeColors.border },
+      ]}
+    >
+      <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+        {title}
+      </Text>
       {children}
     </View>
   );
 }
 function Detail({ label, value }: { label: string; value?: string }) {
+  const { colors: themeColors } = useTheme();
   return (
     <View style={styles.detail}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value || "Not provided"}</Text>
+      <Text style={[styles.detailLabel, { color: themeColors.subtitle }]}>
+        {label}
+      </Text>
+      <Text style={[styles.detailValue, { color: themeColors.text }]}>
+        {value || "Not provided"}
+      </Text>
     </View>
   );
 }

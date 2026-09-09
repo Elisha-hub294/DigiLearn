@@ -28,7 +28,7 @@ const dateLabel = (value?: { seconds?: number }) =>
     : "Unknown date";
 
 export default function AdminReportsScreen() {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const router = useRouter();
   const { profile } = useProfile();
   const { width } = useWindowDimensions();
@@ -121,31 +121,50 @@ export default function AdminReportsScreen() {
                 accessibilityLabel="Back to settings"
                 style={styles.iconButton}
               >
-                <Icon name="arrow-left" size={22} color={colors.dark} />
+                <Icon name="arrow-left" size={22} color={themeColors.dark} />
               </Pressable>
               <View style={styles.heading}>
-                <Text style={styles.eyebrow}>ADMIN TOOLS</Text>
-                <Text style={styles.title}>Resource reports</Text>
+                <Text style={[styles.eyebrow, { color: themeColors.primary }]}>
+                  ADMIN TOOLS
+                </Text>
+                <Text style={[styles.title, { color: themeColors.text }]}>
+                  Resource reports
+                </Text>
               </View>
               <Pressable
                 onPress={() => void load(true)}
                 accessibilityLabel="Refresh reports"
                 style={styles.iconButton}
               >
-                <Icon name="refresh-cw" size={18} color={colors.primary} />
+                <Icon name="refresh-cw" size={18} color={themeColors.primary} />
               </Pressable>
             </View>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
               Review, track, and resolve reported content.
             </Text>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? (
+              <Text
+                style={[
+                  styles.error,
+                  { color: isDark ? "#FCA5A5" : "#B42318" },
+                ]}
+              >
+                {error}
+              </Text>
+            ) : null}
             {loading || refreshing ? (
               <View
                 style={styles.skeletonList}
                 accessibilityLabel="Loading reports"
               >
                 {[0, 1, 2].map((item) => (
-                  <View key={item} style={styles.skeletonReport}>
+                  <View
+                    key={item}
+                    style={[
+                      styles.skeletonReport,
+                      { backgroundColor: themeColors.white },
+                    ]}
+                  >
                     <View style={styles.skeletonReportCopy}>
                       <Skeleton style={styles.skeletonTitle} />
                       <Skeleton style={styles.skeletonLine} />
@@ -156,14 +175,31 @@ export default function AdminReportsScreen() {
               </View>
             ) : null}
             {!loading && !reports.length ? (
-              <Text style={styles.empty}>No reports yet.</Text>
+              <Text style={[styles.empty, { color: themeColors.subtitle }]}>
+                No reports yet.
+              </Text>
             ) : null}
             {reports.map((report) => (
-              <View key={report.id} style={styles.report}>
+              <View
+                key={report.id}
+                style={[
+                  styles.report,
+                  {
+                    backgroundColor: themeColors.white,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
                 <View style={styles.reportHeader}>
                   <View style={styles.reportTitleWrap}>
-                    <Text style={styles.reportTitle}>{report.item.name}</Text>
-                    <Text style={styles.meta}>
+                    <Text
+                      style={[styles.reportTitle, { color: themeColors.text }]}
+                    >
+                      {report.item.name}
+                    </Text>
+                    <Text
+                      style={[styles.meta, { color: themeColors.subtitle }]}
+                    >
                       {report.item.type} · {dateLabel(report.createdAt)}
                     </Text>
                   </View>
@@ -177,16 +213,16 @@ export default function AdminReportsScreen() {
                     {report.status}
                   </Text>
                 </View>
-                <Text style={styles.body}>
+                <Text style={[styles.body, { color: themeColors.text }]}>
                   Problems: {report.reasons?.join(", ") || "None selected"}
                 </Text>
-                <Text style={styles.body}>
+                <Text style={[styles.body, { color: themeColors.text }]}>
                   {report.details || "No written details."}
                 </Text>
-                <Text style={styles.meta}>
+                <Text style={[styles.meta, { color: themeColors.subtitle }]}>
                   By {report.username} · {report.userEmail}
                 </Text>
-                <Text style={styles.meta}>
+                <Text style={[styles.meta, { color: themeColors.subtitle }]}>
                   Item ID: {report.item.id} · User ID: {report.userId}
                 </Text>
                 <View style={styles.statusActions}>
@@ -204,10 +240,16 @@ export default function AdminReportsScreen() {
                       disabled={savingId === report.id}
                       style={[
                         styles.statusButton,
+                        { borderColor: themeColors.border },
                         report.status === status && styles.statusButtonSelected,
                       ]}
                     >
-                      <Text style={styles.statusButtonText}>
+                      <Text
+                        style={[
+                          styles.statusButtonText,
+                          { color: themeColors.text },
+                        ]}
+                      >
                         {status.replace("_", " ")}
                       </Text>
                     </Pressable>
@@ -219,10 +261,16 @@ export default function AdminReportsScreen() {
                     setNotes((current) => ({ ...current, [report.id]: value }))
                   }
                   placeholder="Add an internal admin note"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={themeColors.subtitle}
                   multiline
                   maxLength={2000}
-                  style={styles.notesInput}
+                  style={[
+                    styles.notesInput,
+                    {
+                      borderColor: themeColors.border,
+                      color: themeColors.text,
+                    },
+                  ]}
                 />
               </View>
             ))}
