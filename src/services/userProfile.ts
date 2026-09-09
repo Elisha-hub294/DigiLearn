@@ -60,7 +60,12 @@ export type SavedItemType =
 
 const onboardingStateCache: Record<
   string,
-  { exists: boolean; accountTypeCompleted: boolean; type: AccountType }
+  {
+    exists: boolean;
+    accountTypeCompleted: boolean;
+    type: AccountType;
+    teacherApprovalStatus?: UserProfile["teacherApprovalStatus"];
+  }
 > = {};
 
 const profileAccentPalette = [
@@ -409,12 +414,15 @@ export async function getUserOnboardingState(userId: string) {
     exists: snapshot.exists(),
     accountTypeCompleted: Boolean(data?.accountTypeCompleted === true),
     type: (data?.type as AccountType | undefined) ?? "",
+    teacherApprovalStatus:
+      data?.teacherApprovalStatus as UserProfile["teacherApprovalStatus"],
   };
 
   onboardingStateCache[userId] = {
     exists: result.exists,
     accountTypeCompleted: result.accountTypeCompleted,
     type: result.type,
+    teacherApprovalStatus: result.teacherApprovalStatus,
   };
 
   return result;
@@ -437,6 +445,7 @@ export async function saveAccountTypeDecision(
     exists: true,
     accountTypeCompleted: true,
     type: accountType,
+    teacherApprovalStatus: accountType === "teacher" ? "pending" : undefined,
   };
 }
 

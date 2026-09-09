@@ -45,6 +45,7 @@ export default function AccountTypeScreen() {
     useState<AccountType | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReviewPending, setIsReviewPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const horizontalPadding = useMemo(() => getHorizontalPadding(width), [width]);
@@ -61,6 +62,7 @@ export default function AccountTypeScreen() {
 
       try {
         const onboarding = await getUserOnboardingState(nextUser.uid);
+        setIsReviewPending(onboarding.teacherApprovalStatus === "pending");
         if (onboarding.accountTypeCompleted && !openedFromSettings) {
           router.replace("/" as never);
         }
@@ -105,13 +107,19 @@ export default function AccountTypeScreen() {
     }, [navigation, openedFromSettings, router]),
   );
 
-  const handleSelect = useCallback((accountType: AccountType) => {
-    setErrorMessage("");
-    setSelectedAccountType(accountType);
-  }, []);
+  const handleSelect = useCallback(
+    (accountType: AccountType) => {
+      if (isReviewPending) {
+        return;
+      }
+      setErrorMessage("");
+      setSelectedAccountType(accountType);
+    },
+    [isReviewPending],
+  );
 
   const handleSave = useCallback(async () => {
-    if (!user || !selectedAccountType || isSubmitting) {
+    if (!user || !selectedAccountType || isSubmitting || isReviewPending) {
       return;
     }
 
@@ -149,10 +157,17 @@ export default function AccountTypeScreen() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, openedFromSettings, router, selectedAccountType, user]);
+  }, [
+    isReviewPending,
+    isSubmitting,
+    openedFromSettings,
+    router,
+    selectedAccountType,
+    user,
+  ]);
 
   const handleSkip = useCallback(async () => {
-    if (!user || isSubmitting) {
+    if (!user || isSubmitting || isReviewPending) {
       return;
     }
 
@@ -168,7 +183,7 @@ export default function AccountTypeScreen() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, router, user]);
+  }, [isReviewPending, isSubmitting, router, user]);
 
   const handleLogin = useCallback(() => {
     router.replace("/login" as never);
@@ -241,13 +256,22 @@ export default function AccountTypeScreen() {
             features before deciding.
           </Text>
 
+          {isReviewPending ? (
+            <Text style={styles.reviewNotice}>
+              Your teacher account is under review. Account type changes are
+              unavailable until the application is decided.
+            </Text>
+          ) : null}
+
           <View style={styles.cardRow}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Select student account"
               accessibilityState={{
                 selected: selectedAccountType === "student",
+                disabled: isReviewPending,
               }}
+              disabled={isReviewPending}
               onPress={() => handleSelect("student")}
               style={({ pressed }) => [
                 styles.card,
@@ -272,7 +296,9 @@ export default function AccountTypeScreen() {
               accessibilityLabel="Select teacher account"
               accessibilityState={{
                 selected: selectedAccountType === "teacher",
+                disabled: isReviewPending,
               }}
+              disabled={isReviewPending}
               onPress={() => handleSelect("teacher")}
               style={({ pressed }) => [
                 styles.card,
@@ -299,14 +325,14 @@ export default function AccountTypeScreen() {
           ) : null}
 
           <Pressable
-            disabled={!selectedAccountType || isSubmitting}
+            disabled={!selectedAccountType || isSubmitting || isReviewPending}
             accessibilityRole="button"
             accessibilityLabel="Confirm account type"
             onPress={handleSave}
             style={({ pressed }) => [
               styles.primaryButton,
               styles.confirmButton,
-              (!selectedAccountType || isSubmitting) &&
+              (!selectedAccountType || isSubmitting || isReviewPending) &&
                 styles.primaryButtonDisabled,
               pressed && !isSubmitting && styles.buttonPressed,
             ]}
@@ -322,7 +348,7 @@ export default function AccountTypeScreen() {
             <View style={styles.skipRow}>
               <Pressable
                 onPress={handleSkip}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isReviewPending}
                 style={({ pressed }) => [
                   styles.skipButton,
                   pressed && !isSubmitting && styles.skipButtonPressed,
@@ -377,6 +403,14 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: "center",
     marginBottom: spacing.xl,
+  },
+  reviewNotice: {
+    width: "100%",
+    marginBottom: spacing.xl,
+    color: colors.text,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
   },
   cardRow: {
     width: "100%",

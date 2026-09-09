@@ -806,10 +806,17 @@ export const changeAccountType = onCall(async (request) => {
   const applicationRef = db.doc(`teacherApplications/${userId}`);
   const userSnapshot = await userRef.get();
   const teacherSnapshot = await teacherRef.get();
-  const userData = {
+  const userData: Record<string, unknown> = {
     ...defaultProfileFields(request),
     ...(teacherSnapshot.data() ?? userSnapshot.data() ?? {}),
   };
+
+  if (userData.teacherApprovalStatus === "pending") {
+    throw new HttpsError(
+      "failed-precondition",
+      "Account type cannot be changed while the teacher application is under review.",
+    );
+  }
 
   if (accountType === "student") {
     await userRef.set(

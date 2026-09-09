@@ -606,6 +606,9 @@ exports.changeAccountType = (0, https_1.onCall)(async (request) => {
         ...defaultProfileFields(request),
         ...(teacherSnapshot.data() ?? userSnapshot.data() ?? {}),
     };
+    if (userData.teacherApprovalStatus === "pending") {
+        throw new https_1.HttpsError("failed-precondition", "Account type cannot be changed while the teacher application is under review.");
+    }
     if (accountType === "student") {
         await userRef.set({
             ...userData,
