@@ -2,6 +2,7 @@
   "hosting": {
     "public": "dist",
     "cleanUrls": true,
+    "predeploy": ["node scripts/prepare-hosting.js"],
     "rewrites": [
       {
         "source": "/finishSignIn",

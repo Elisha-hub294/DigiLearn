@@ -5,11 +5,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  Platform,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -27,6 +27,7 @@ import {
   TopicalNote,
 } from "../../components/home/FeaturedNoteCard";
 import { FloatingAssistantButton } from "../../components/home/FloatingAssistantButton";
+import { PublicHome } from "../../components/home/PublicHome";
 import {
   loadTeacherMetadata,
   loadTeacherPosts,
@@ -36,7 +37,6 @@ import {
 import { TopicalNotesSlider } from "../../components/home/TopicalNotesSlider";
 import { BookCard } from "../../components/library/BookCard";
 import { PaperCard } from "../../components/library/PaperCard";
-import { PublicHome } from "../../components/home/PublicHome";
 import { PaperCarousel } from "../../components/library/PaperCarousel";
 import { Header } from "../../components/ui/Header";
 import { SearchBar } from "../../components/ui/SearchBar";

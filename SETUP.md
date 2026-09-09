@@ -76,6 +76,29 @@ Firebase's web OAuth redirect remains:
 https://digilearn-af86d.firebaseapp.com/__/auth/handler
 ```
 
+### Google OAuth Verification
+
+After deploying the web build, complete Google's verification checks:
+
+1. Confirm these public URLs load in an incognito browser window:
+   - Homepage: `https://digilearn-af86d.firebaseapp.com`
+   - Privacy policy: `https://digilearn-af86d.firebaseapp.com/terms-and-policies`
+2. In [Google Search Console](https://search.google.com/search-console), add
+   the homepage as a **URL-prefix property** and complete ownership
+   verification. A Firebase Hosting URL can be difficult to verify as a DNS
+   property because `firebaseapp.com` is owned by Google; a custom domain that
+   you control is the most reliable option.
+3. In Google Auth Platform, use the exact verified homepage and privacy-policy
+   URLs. The homepage must visibly say **DigiLearn** and explain that it is an
+   educational platform for students and teachers; it must not redirect signed-
+   out web visitors to login.
+4. Click **Save** and submit the branding for verification again. Google may
+   cache the previous page, so allow time for the new deployment to be crawled.
+
+If Search Console cannot verify the Firebase subdomain, connect a custom domain
+you own to Firebase Hosting and use that domain for the OAuth homepage and
+privacy-policy URLs instead.
+
 ### Facebook Login Setup
 
 Facebook Login uses the Firebase web OAuth flow. Configure it before testing:
