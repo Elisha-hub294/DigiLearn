@@ -376,9 +376,8 @@ export const FeaturedNoteItem = ({
   const { user, profile } = useProfile();
   const { colors: themeColors, isDark } = useTheme();
   const [hovered, setHovered] = useState(false);
-  const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(
-    null,
-  );
+  const [readingProgress, setReadingProgress] =
+    useState<ReadingProgress | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<{
     x: number;
     y: number;
@@ -882,6 +881,9 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
     backgroundColor: colors.white,
+    transitionDuration: "180ms",
+    transitionProperty: "background-color",
+    transitionTimingFunction: "ease-in-out",
     marginBottom: spacing.xl,
     borderRadius: 10,
     overflow: "hidden",
