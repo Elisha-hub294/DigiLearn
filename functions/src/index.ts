@@ -229,6 +229,7 @@ const ownedCollections = [
 const storagePrefixes = [
   "book-covers/",
   "page-covers/",
+  "past-paper-covers/",
   "docs/",
   "post-covers/",
   "post-documents/",

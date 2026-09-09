@@ -1121,7 +1121,7 @@ export function AddItemModal({
               .toString(36)
               .substring(2, 9)}_${sanitizedFileName}.jpg`;
             coverUrl = await uploadAssetToStorage(
-              `page-covers/${userId}/${uniqueCoverId}`,
+              `past-paper-covers/${userId}/${uniqueCoverId}`,
               coverBlob,
               "",
               updatePreviewProgress,
