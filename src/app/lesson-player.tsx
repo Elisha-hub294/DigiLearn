@@ -729,16 +729,19 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
+    boxSizing: "border-box",
     borderBottomWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 12,
     backdropFilter: "blur(10px)",
+    width: "100%",
   },
   iconButton: {
     alignItems: "center",
     borderRadius: 999,
     borderWidth: 1,
+    flexShrink: 0,
     height: 40,
     justifyContent: "center",
     width: 40,
@@ -750,6 +753,7 @@ const styles = StyleSheet.create({
   },
   headerRightActions: {
     flexDirection: "row",
+    flexShrink: 0,
     gap: 8,
   },
   scroll: {
@@ -757,10 +761,8 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   scrollContent: {
-    alignSelf: "center",
     paddingBottom: 40,
     paddingTop: 16,
-    width: "100%",
   },
   heroCardContainer: {
     aspectRatio: 1.6,
