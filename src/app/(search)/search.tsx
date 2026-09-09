@@ -197,22 +197,22 @@ export default function SearchScreen() {
 
         case "pastPaper":
           if (auth.currentUser?.uid) {
-            recordUserActivity(auth.currentUser.uid, "page", item.id);
+            recordUserActivity(auth.currentUser.uid, "paper", item.id);
           }
-          if (item.doc) {
-            router.push({
-              pathname: "./pdf-reader",
-              params: {
-                uri: encodeURIComponent(item.doc),
-                title: item.title,
-              },
-            } as never);
-          } else {
-            router.push({
-              pathname: "./page-preview",
-              params: { id: item.id },
-            } as never);
-          }
+          router.push({
+            pathname: "/paper-preview",
+            params: {
+              id: item.id,
+              title: item.title,
+              subject: Array.isArray(item.subject)
+                ? item.subject.join(", ")
+                : item.subject,
+              description: item.description,
+              image: item.previewImage,
+              document: item.doc,
+              type: "Past Paper",
+            },
+          } as never);
           break;
 
         case "topicalNote":

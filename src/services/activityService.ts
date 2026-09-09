@@ -21,6 +21,12 @@ const ACTIVITY_FIELD_MAP: Record<ActivityType, string> = {
   paper: "activity-pages",
 };
 
+async function getActivityProfileRef(userId: string) {
+  const teacherRef = doc(db, "teachers", userId);
+  const teacherSnap = await getDoc(teacherRef);
+  return teacherSnap.exists() ? teacherRef : doc(db, "users", userId);
+}
+
 /**
  * Formats ISO timestamp or Date string into clean display format:
  * "Today", "Yesterday", "18 July", "12 June 2025"
@@ -103,8 +109,8 @@ export async function recordUserActivity(
   if (!fieldName) return;
 
   try {
-    const userRef = doc(db, "users", userId);
-    const userSnap = await getDoc(userRef);
+    const profileRef = await getActivityProfileRef(userId);
+    const userSnap = await getDoc(profileRef);
 
     let currentList: ActivityRecord[] = [];
     if (userSnap.exists()) {
@@ -142,7 +148,7 @@ export async function recordUserActivity(
       ...filteredList,
     ].slice(0, MAX_ACTIVITY_ITEMS);
 
-    await setDoc(userRef, { [fieldName]: updatedList }, { merge: true });
+    await setDoc(profileRef, { [fieldName]: updatedList }, { merge: true });
 
     await addDoc(collection(db, "activityEvents"), {
       userId,
@@ -256,8 +262,8 @@ export async function fetchUserActivity(
 
   try {
     const fetchActivity = async (): Promise<ActivityItem[]> => {
-      const userRef = doc(db, "users", userId);
-      const userSnap = await getDoc(userRef);
+      const profileRef = await getActivityProfileRef(userId);
+      const userSnap = await getDoc(profileRef);
 
       if (!userSnap.exists()) return [];
 

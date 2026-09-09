@@ -244,6 +244,13 @@ export default function PagesScreen() {
   const [viewOptions, setViewOptions] =
     useState<PageViewOptions>(DEFAULT_VIEW_OPTIONS);
   const [isLoadedFilters, setIsLoadedFilters] = useState(false);
+  const [initialFilters, setInitialFilters] =
+    useState<FilterState>(DEFAULT_FILTERS);
+  const [initialViewOptions, setInitialViewOptions] =
+    useState<PageViewOptions>(DEFAULT_VIEW_OPTIONS);
+  const [loadedFilterPageTitle, setLoadedFilterPageTitle] = useState<
+    string | null
+  >(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [subjectAccent, setSubjectAccent] = useState("#000000");
   const [hasMoreNotes, setHasMoreNotes] = useState(true);
@@ -258,12 +265,27 @@ export default function PagesScreen() {
   const contentMaxWidth = Math.min(1080, width - horizontalPadding * 2);
 
   const activeFilterCount = useMemo(() => {
-    const chipCount = Object.values(filters).filter(
-      (option) => option !== "All" && option !== "Newest",
-    ).length;
-    const optionCount = Object.values(viewOptions).filter(Boolean).length;
-    return chipCount + optionCount;
-  }, [filters, viewOptions]);
+    if (!isLoadedFilters || loadedFilterPageTitle !== pageTitle) return 0;
+
+    const filterChanged = Object.keys(DEFAULT_FILTERS).some((key) => {
+      const filterKey = key as keyof FilterState;
+      return filters[filterKey] !== initialFilters[filterKey];
+    });
+    const viewOptionChanged = Object.keys(DEFAULT_VIEW_OPTIONS).some((key) => {
+      const viewOptionKey = key as keyof PageViewOptions;
+      return viewOptions[viewOptionKey] !== initialViewOptions[viewOptionKey];
+    });
+
+    return filterChanged || viewOptionChanged ? 1 : 0;
+  }, [
+    filters,
+    initialFilters,
+    initialViewOptions,
+    isLoadedFilters,
+    loadedFilterPageTitle,
+    pageTitle,
+    viewOptions,
+  ]);
   const readNoteIds = useMemo(
     () => new Set(getMarkedReadItemIds(profile)),
     [profile],
@@ -394,7 +416,7 @@ export default function PagesScreen() {
         if (saved) {
           const parsed = JSON.parse(saved) as FilterState & PageViewOptions;
           const restored = { ...DEFAULT_FILTERS, ...parsed };
-          setFilters({
+          const restoredFilters = {
             ...restored,
             sortBy:
               restored.sortBy === "Most Progress"
@@ -403,16 +425,24 @@ export default function PagesScreen() {
             level: ["Primary", "O level", "A level"].includes(restored.level)
               ? DEFAULT_FILTERS.level
               : restored.level,
-          });
-          setViewOptions({
+          };
+          const restoredViewOptions = {
             showHiddenItems: Boolean(parsed.showHiddenItems),
             followPreferences: Boolean(parsed.followPreferences),
-          });
+          };
+          setInitialFilters(restoredFilters);
+          setInitialViewOptions(restoredViewOptions);
+          setFilters(restoredFilters);
+          setViewOptions(restoredViewOptions);
+        } else {
+          setInitialFilters(DEFAULT_FILTERS);
+          setInitialViewOptions(DEFAULT_VIEW_OPTIONS);
         }
       } catch (error) {
         console.error("Failed to load persisted page filters", error);
       } finally {
         setIsLoadedFilters(true);
+        setLoadedFilterPageTitle(pageTitle);
       }
     };
 
@@ -420,14 +450,14 @@ export default function PagesScreen() {
   }, [pageTitle]);
 
   useEffect(() => {
-    if (!isLoadedFilters) return;
+    if (!isLoadedFilters || loadedFilterPageTitle !== pageTitle) return;
     AsyncStorage.setItem(
       `digilearn-pages-filters:${pageTitle}`,
       JSON.stringify({ ...filters, ...viewOptions }),
     ).catch((error) => {
       console.error("Failed to save page filters", error);
     });
-  }, [filters, isLoadedFilters, pageTitle, viewOptions]);
+  }, [filters, isLoadedFilters, loadedFilterPageTitle, pageTitle, viewOptions]);
 
   const visibleNotes = useMemo(() => {
     let filtered = [...notes];
