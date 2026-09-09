@@ -1,8 +1,9 @@
-import * as SecureStore from 'expo-secure-store';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import * as SecureStore from "expo-secure-store";
 import { collection, getDocs, limit, query } from "firebase/firestore";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
 import { db } from "../../firebaseConfig";
+import { getFirebaseStorageUrl } from "../utils/firebaseStorage";
 
 const ASSISTANT_ENABLED_KEY = "digilearn.assistant.enabled"; // retained for backward compatibility
 
@@ -20,7 +21,10 @@ export async function isAssistantEnabled(): Promise<boolean> {
 
 export async function setAssistantEnabled(enabled: boolean): Promise<void> {
   try {
-    await SecureStore.setItemAsync(ASSISTANT_ENABLED_KEY, enabled ? "true" : "false");
+    await SecureStore.setItemAsync(
+      ASSISTANT_ENABLED_KEY,
+      enabled ? "true" : "false",
+    );
   } catch (error) {
     console.warn("Unable to save assistant enabled state", error);
   }
@@ -30,6 +34,7 @@ export type AssistantContent = {
   messages: string[];
   suggestions: string[];
   avatar: string | null;
+  gif: string | null;
   geminiApiKey: string | null;
 };
 
@@ -64,11 +69,31 @@ const DEFAULT_SUGGESTIONS = [
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
 
-const getAvatarFromData = (data: Record<string, unknown>): string | null => {
-  const candidates = [data.avatar, data.gif];
-
-  return candidates.find(isNonEmptyString) ?? null;
+const getAssistantAssetName = (
+  data: Record<string, unknown>,
+  field: "avatar" | "gif",
+): string | null => {
+  const value = data[field];
+  return isNonEmptyString(value) ? value.trim() : null;
 };
+
+async function resolveAssistantAsset(
+  fileName: string | null,
+): Promise<string | null> {
+  if (!fileName) {
+    return null;
+  }
+
+  const storagePath =
+    fileName.startsWith("icons/ai/") ||
+    fileName.startsWith("http://") ||
+    fileName.startsWith("https://") ||
+    fileName.startsWith("gs://")
+      ? fileName
+      : `icons/ai/${fileName.replace(/^\/+/, "")}`;
+
+  return getFirebaseStorageUrl(storagePath);
+}
 
 const normalizeKnowledgeKey = (value: unknown): string => {
   if (!isNonEmptyString(value)) {
@@ -144,12 +169,19 @@ async function generateAIContentFromKnowledge(
     const functions = getFunctions();
     const generate = httpsCallable(functions, "generateAssistantReply");
     const prompt = `Generate two JSON arrays named 'floatingMessages' and 'suggestions' based on the following app overview: ${_appOverview ?? ""}`;
-    const response = await generate({ prompt, conversation: "", systemPrompt: "" });
+    const response = await generate({
+      prompt,
+      conversation: "",
+      systemPrompt: "",
+    });
     const text = (response?.data as any)?.text as string | undefined;
     if (text) {
       // Expecting the assistant to return a JSON string.
       const parsed = JSON.parse(text);
-      if (Array.isArray(parsed.floatingMessages) && Array.isArray(parsed.suggestions)) {
+      if (
+        Array.isArray(parsed.floatingMessages) &&
+        Array.isArray(parsed.suggestions)
+      ) {
         return {
           floatingMessages: parsed.floatingMessages,
           suggestions: parsed.suggestions,
@@ -186,18 +218,27 @@ export async function getAssistantContent(
     const assistantEntries = assistantSnapshot.docs
       .map((doc) => {
         const data = doc.data() as Record<string, unknown>;
-        return { avatar: getAvatarFromData(data) };
+        return {
+          avatar: getAssistantAssetName(data, "avatar"),
+          gif: getAssistantAssetName(data, "gif"),
+        };
       })
-      .filter((entry) => entry.avatar);
+      .filter((entry) => entry.avatar || entry.gif);
 
     const firstAvatar =
       assistantEntries.find((entry) => entry.avatar)?.avatar ?? null;
+    const firstGif = assistantEntries.find((entry) => entry.gif)?.gif ?? null;
+    const [avatar, gif] = await Promise.all([
+      resolveAssistantAsset(firstAvatar),
+      resolveAssistantAsset(firstGif),
+    ]);
 
     const { floatingMessages, suggestions } =
       await generateAIContentFromKnowledge(null, knowledgeContext.appOverview);
 
     const content = {
-      avatar: firstAvatar,
+      avatar,
+      gif,
       messages: floatingMessages,
       suggestions,
       geminiApiKey: null,
@@ -230,7 +271,9 @@ export async function getDigiLearnKnowledgeContext(
   }
 
   appKnowledgePromise = (async () => {
-    const snapshot = await getDocs(query(collection(db, "ai knowledge"), limit(20)));
+    const snapshot = await getDocs(
+      query(collection(db, "ai knowledge"), limit(20)),
+    );
 
     const knowledge: Record<string, string> = {};
     snapshot.docs.forEach((doc) => {

@@ -102,7 +102,7 @@ export function FloatingAssistantButton() {
         setMessages(content.messages);
         setActiveMessage(initialMessage);
         currentMessage.value = initialMessage;
-        setAvatarUri(content.avatar ?? null);
+        setAvatarUri(content.avatar ?? content.gif ?? null);
         setIsVisible(true);
 
         opacity.value = withSpring(1, { damping: 18, stiffness: 120 });
@@ -314,12 +314,14 @@ export function FloatingAssistantButton() {
             <View style={styles.avatarFrame}>
               <Image
                 source={avatarUri ? { uri: avatarUri } : fallbackAvatar}
+                placeholder={fallbackAvatar}
                 contentFit="contain"
                 style={[styles.avatar, styles.avatarShadow]}
                 blurRadius={10}
               />
               <Image
                 source={avatarUri ? { uri: avatarUri } : fallbackAvatar}
+                placeholder={fallbackAvatar}
                 contentFit="contain"
                 style={styles.avatar}
               />

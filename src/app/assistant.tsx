@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import {
   useFocusEffect,
   useLocalSearchParams,
@@ -7,7 +8,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackHandler,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -75,7 +75,10 @@ export default function AssistantScreen() {
   >(null);
   const [assistantAvatar, setAssistantAvatar] = useState<string | null>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [quota, setQuota] = useState<{ remaining: number; limit: number } | null>(null);
+  const [quota, setQuota] = useState<{
+    remaining: number;
+    limit: number;
+  } | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
@@ -96,15 +99,16 @@ export default function AssistantScreen() {
           return;
         }
 
-        const resolvedAvatar = content.avatar ?? fallbackAvatar;
+        const resolvedAvatar = content.avatar ?? content.gif ?? fallbackAvatar;
         setAssistantAvatar(resolvedAvatar);
         setSuggestions(content.suggestions ?? content.messages.slice(0, 6));
-        setGifUri(typeof resolvedAvatar === "string" ? resolvedAvatar : null);
+        setGifUri(content.gif ?? content.avatar);
         const history = await loadConversationHistory();
         if (active) {
           setConversations(history);
         }
-        const { getAiQuotaStatus } = await import("../services/aiUsageGuardrailsService");
+        const { getAiQuotaStatus } =
+          await import("../services/aiUsageGuardrailsService");
         const quotaStatus = await getAiQuotaStatus();
         if (active) {
           setQuota(quotaStatus);
@@ -225,7 +229,8 @@ export default function AssistantScreen() {
         savedConversation,
         ...previous.filter((item) => item.id !== savedConversation.id),
       ]);
-      const { getAiQuotaStatus } = await import("../services/aiUsageGuardrailsService");
+      const { getAiQuotaStatus } =
+        await import("../services/aiUsageGuardrailsService");
       const updatedQuota = await getAiQuotaStatus();
       setQuota(updatedQuota);
     } catch (error) {
@@ -321,7 +326,9 @@ export default function AssistantScreen() {
           <AssistantHeader
             title="DigiLearn AI"
             subtitle="Study support"
-            quotaBadge={quota ? `${quota.remaining}/${quota.limit} left` : undefined}
+            quotaBadge={
+              quota ? `${quota.remaining}/${quota.limit} left` : undefined
+            }
             onBack={handleBackToMain}
           />
 
@@ -348,8 +355,9 @@ export default function AssistantScreen() {
                     <View style={styles.avatarGlow} />
                     <Image
                       source={gifUri ? { uri: gifUri } : fallbackAvatar}
+                      placeholder={fallbackAvatar}
                       style={styles.avatar}
-                      resizeMode="contain"
+                      contentFit="contain"
                     />
                     <Text style={styles.greeting}>
                       How can I help you today?
@@ -398,8 +406,9 @@ export default function AssistantScreen() {
                                 ? { uri: assistantAvatar }
                                 : fallbackAvatar
                             }
+                            placeholder={fallbackAvatar}
                             style={styles.avatarSmall}
-                            resizeMode="contain"
+                            contentFit="contain"
                           />
                         </View>
                         <View style={styles.typingBubble}>

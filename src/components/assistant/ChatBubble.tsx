@@ -644,6 +644,7 @@ export function ChatBubble({
         <View style={styles.avatarWrap}>
           <Image
             source={avatar ? { uri: avatar } : fallbackAvatar}
+            placeholder={fallbackAvatar}
             style={styles.avatar}
             contentFit="cover"
           />
