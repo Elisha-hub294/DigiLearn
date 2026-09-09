@@ -73,7 +73,7 @@ export function ContinueLearningShelf() {
         renderItem={({ item }) => {
           const thumbSource = item.cover
             ? { uri: item.cover }
-            : getThemeAsset("thumbDefault", isDark);
+            : getThemeAsset("pdfPreview", isDark);
 
           return (
             <Pressable
@@ -89,12 +89,14 @@ export function ContinueLearningShelf() {
                 },
               ]}
               onPress={() => {
+                if (!item.documentUri) return;
+
                 router.push({
                   pathname: "/pdf-reader",
                   params: {
                     pageId: item.pageId,
                     title: item.title,
-                    document: item.documentUri,
+                    uri: encodeURIComponent(item.documentUri),
                     initialPage: String(item.lastPage),
                   },
                 } as never);
