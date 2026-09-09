@@ -20,6 +20,7 @@ import {
   View,
 } from "react-native";
 
+import userDefault from "../../assets/images/user-default.png";
 import { auth, db } from "../../firebaseConfig";
 import { NotifyToggle } from "../components/library/add-item/SharedFormControls";
 import { FirebaseImage } from "../components/ui/FirebaseImage";
@@ -27,8 +28,6 @@ import { Skeleton } from "../components/ui/Skeleton";
 import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
-import { getThemeAsset } from "../constants/themeAssets";
-import { useTheme } from "../contexts/ThemeContext";
 import { loadSubjects } from "../services/subjectsService";
 import { resubmitTeacherApplication } from "../services/teacherApplications";
 import { saveProfilePicture } from "../services/userProfile";
@@ -180,8 +179,7 @@ function InfoMessage({
 }
 
 export default function TeacherAccountQuickSettingsScreen() {
-  const { isDark } = useTheme();
-  const fallbackAvatar = getThemeAsset("userDefault", isDark);
+  const fallbackAvatar = userDefault;
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [user, setUser] = useState<User | null>(null);
