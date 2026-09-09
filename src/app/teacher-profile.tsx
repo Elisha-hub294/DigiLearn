@@ -933,7 +933,11 @@ export default function TeacherProfileScreen() {
             showBack={false}
             value={search}
             onChangeText={setSearch}
-            placeholder={`Search ${teacher?.name?.split(" ")[0] || "teacher"}'s resources`}
+            placeholder={
+              isOwnProfile
+                ? "Search your resources"
+                : `Search ${teacher?.name?.split(" ")[0] || "teacher"}'s resources`
+            }
             autoFocus={false}
             searchIconColor={accentColor}
             inputContainerStyle={{ borderColor: accentColor }}

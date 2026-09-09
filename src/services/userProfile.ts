@@ -286,6 +286,9 @@ const PROFILE_PICTURE_TYPES = new Set([
   "image/webp",
 ]);
 
+const createProfilePictureName = () =>
+  `profile-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
 export async function saveProfilePicture(
   user: User,
   uri: string,
@@ -313,7 +316,7 @@ export async function saveProfilePicture(
 
   const imageRef = ref(
     storage,
-    `profile-pics/${user.uid}/profile-${Date.now()}`,
+    `profile-pics/${user.uid}/${createProfilePictureName()}`,
   );
   await uploadBytes(imageRef, image, { contentType });
   const downloadUrl = await getDownloadURL(imageRef);
