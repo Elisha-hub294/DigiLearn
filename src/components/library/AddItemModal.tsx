@@ -2485,6 +2485,7 @@ const styles = StyleSheet.create({
   },
   attachmentRow: {
     flexDirection: "row",
+    alignItems: "flex-start",
     gap: 10,
     marginBottom: spacing.md,
   },
