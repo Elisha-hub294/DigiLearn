@@ -22,36 +22,63 @@ function needsResolution(value: string) {
   );
 }
 
-export function FirebaseImage({ source, ...props }: ImageProps) {
-  const [resolvedSource, setResolvedSource] = useState<any>(source);
+type FirebaseImageProps = ImageProps & {
+  fallbackSource?: ImageProps["source"];
+};
+
+export function FirebaseImage({
+  source,
+  fallbackSource,
+  onError,
+  placeholder,
+  ...props
+}: FirebaseImageProps) {
+  const rawString =
+    typeof source === "string"
+      ? source
+      : typeof source === "object" && source && "uri" in source
+        ? (source as any).uri
+        : null;
+  const sourceKey = rawString ?? JSON.stringify(source);
+  const [resolvedState, setResolvedState] = useState<{
+    key: string;
+    source: any;
+  }>({ key: sourceKey, source });
+  const [failedSourceKey, setFailedSourceKey] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
-    const uri =
-      typeof source === "object" && source && "uri" in source
-        ? (source as any).uri
-        : null;
-
-    const rawString = typeof source === "string" ? source : uri;
-
     if (rawString && needsResolution(rawString)) {
       getFirebaseStorageUrl(rawString).then((url) => {
         if (!active) return;
-        if (typeof source === "string") {
-          setResolvedSource(url);
-        } else {
-          setResolvedSource({ ...(source as object), uri: url });
-        }
+        const nextSource =
+          typeof source === "string"
+            ? url
+            : { ...(source as object), uri: url };
+        setResolvedState({ key: sourceKey, source: nextSource });
       });
-    } else {
-      setResolvedSource(source);
     }
 
     return () => {
       active = false;
     };
-  }, [source]);
+  }, [rawString, source, sourceKey]);
 
-  return <Image source={resolvedSource} {...props} />;
+  const resolvedSource =
+    resolvedState.key === sourceKey ? resolvedState.source : source;
+  const imageSource =
+    failedSourceKey === sourceKey ? fallbackSource : resolvedSource;
+
+  return (
+    <Image
+      source={imageSource}
+      placeholder={placeholder ?? fallbackSource}
+      onError={(event) => {
+        setFailedSourceKey(sourceKey);
+        onError?.(event);
+      }}
+      {...props}
+    />
+  );
 }

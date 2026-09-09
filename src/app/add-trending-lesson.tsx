@@ -27,6 +27,7 @@ import {
 import { auth, db, functions } from "../../firebaseConfig";
 import { getTitleDocId } from "../components/library/add-item/utils";
 import { AdminPublishHeader } from "../components/library/AdminPublishHeader";
+import { FirebaseImage } from "../components/ui/FirebaseImage";
 import { useSubjects } from "../components/ui/SubjectFilter";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
@@ -120,7 +121,10 @@ export default function AddTrendingLessonScreen() {
     setLinkError("");
     setMetaLoading(true);
     try {
-      const meta = await fetchYoutubeVideoMeta(value.trim(), callServerDuration);
+      const meta = await fetchYoutubeVideoMeta(
+        value.trim(),
+        callServerDuration,
+      );
       setDuration(meta.duration || "");
       setThumbnail(meta.thumbnail || "");
       setDescription(meta.description || "");
@@ -492,18 +496,13 @@ export default function AddTrendingLessonScreen() {
               },
             ]}
           >
-            {teacherAvatar ? (
-              <Image
-                source={{ uri: teacherAvatar }}
-                style={styles.teacherAvatar}
-              />
-            ) : (
-              <View style={styles.teacherAvatarFallback}>
-                <Text style={styles.teacherAvatarFallbackText}>
-                  {teacherName.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            )}
+            <FirebaseImage
+              source={teacherAvatar ? { uri: teacherAvatar } : undefined}
+              fallbackSource={getThemeAsset("userDefault", isDark)}
+              placeholder={getThemeAsset("userDefault", isDark)}
+              style={styles.teacherAvatar}
+              contentFit="cover"
+            />
             <Text style={[styles.teacherChipText, { color: themeColors.text }]}>
               {teacherName}
             </Text>
@@ -815,14 +814,6 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     backgroundColor: "#E5E7EB",
-  },
-  teacherAvatarFallback: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
   },
   teacherAvatarFallbackText: {
     color: colors.white,

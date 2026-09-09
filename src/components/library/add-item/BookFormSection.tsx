@@ -1,7 +1,9 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import { Image, Pressable, Text, TextInput, View } from "react-native";
 import { colors } from "../../../constants/theme";
+import { getThemeAsset } from "../../../constants/themeAssets";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { FirebaseImage } from "../../ui/FirebaseImage";
 import type { FormState } from "../AddItemModal";
 
 type BookFormSectionProps = {
@@ -35,7 +37,8 @@ export function BookFormSection({
   getWebDropHandlers,
   styles,
 }: BookFormSectionProps) {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
+  const fallbackAvatar = getThemeAsset("userDefault", isDark);
   return (
     <>
       <Text style={[styles.fieldLabel, { color: themeColors.subtitle }]}>
@@ -105,7 +108,13 @@ export function BookFormSection({
           },
         ]}
       >
-        <Image source={authorAvatarSource} style={styles.authorAvatar} />
+        <FirebaseImage
+          source={authorAvatarSource}
+          fallbackSource={fallbackAvatar}
+          placeholder={fallbackAvatar}
+          style={styles.authorAvatar}
+          contentFit="cover"
+        />
         <Text style={[styles.readOnlyFieldText, { color: themeColors.text }]}>
           {authorName}
         </Text>

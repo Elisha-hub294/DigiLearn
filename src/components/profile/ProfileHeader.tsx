@@ -1,8 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -14,6 +12,7 @@ import { colors } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import type { UserProfile } from "../../services/userProfile";
+import { FirebaseImage } from "../ui/FirebaseImage";
 
 export function ProfileHeader({
   profile,
@@ -28,9 +27,7 @@ export function ProfileHeader({
   const accentColor = profile.accent || themeColors.primaryDark;
   const { width } = useWindowDimensions();
   const requestedUri = photoURL || profile.photoURL;
-  const [uri, setUri] = useState(requestedUri);
   const avatarSize = Math.min(150, Math.max(104, width * 0.32));
-  useEffect(() => setUri(requestedUri), [requestedUri]);
   return (
     <View style={[s.wrap, { backgroundColor: themeColors.white }]}>
       <View style={[s.banner, { backgroundColor: accentColor }]}>
@@ -81,10 +78,10 @@ export function ProfileHeader({
             },
           ]}
         >
-          <Image
-            source={uri ? { uri } : fallbackAvatar}
+          <FirebaseImage
+            source={requestedUri ? { uri: requestedUri } : undefined}
+            fallbackSource={fallbackAvatar}
             placeholder={fallbackAvatar}
-            onError={() => setUri("")}
             style={s.avatar}
             contentFit="cover"
             accessibilityLabel="User profile picture"

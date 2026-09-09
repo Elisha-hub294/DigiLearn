@@ -11,7 +11,6 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -21,8 +20,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import userDefault from "../../assets/images/user-default.png";
 import { db } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
+import { FirebaseImage } from "../components/ui/FirebaseImage";
 import { Skeleton } from "../components/ui/Skeleton";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
@@ -238,18 +239,15 @@ export default function TeacherApplicationReviewScreen() {
         </View>
 
         <View style={styles.hero}>
-          {application.photoURL ? (
-            <Image
-              source={{ uri: application.photoURL }}
-              style={styles.avatarImage}
-            />
-          ) : (
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {(application.name || "T").slice(0, 1).toUpperCase()}
-              </Text>
-            </View>
-          )}
+          <FirebaseImage
+            source={
+              application.photoURL ? { uri: application.photoURL } : undefined
+            }
+            fallbackSource={userDefault}
+            placeholder={userDefault}
+            style={styles.avatarImage}
+            contentFit="cover"
+          />
           <View style={styles.heroCopy}>
             <Text style={styles.name}>
               {application.name || "Unnamed applicant"}

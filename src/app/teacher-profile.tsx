@@ -632,6 +632,7 @@ export default function TeacherProfileScreen() {
                   ? { uri: teacher.avatar }
                   : fallbackAvatar
               }
+              fallbackSource={fallbackAvatar}
               placeholder={fallbackAvatar}
               onError={() => {
                 if (teacher?.avatar) setFailedAvatarUri(teacher.avatar);

@@ -7,7 +7,6 @@ import { httpsCallable } from "firebase/functions";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -23,6 +22,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db, functions } from "../../firebaseConfig";
 import WebProfilePictureCropper from "../components/profile/WebProfilePictureCropper";
 import { ActionDialog } from "../components/ui/ActionDialog";
+import { FirebaseImage } from "../components/ui/FirebaseImage";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { getThemeAsset } from "../constants/themeAssets";
@@ -401,12 +401,12 @@ export default function MyProfileScreen() {
               </View>
             ) : (
               <>
-                <Image
-                  source={
-                    user.photoURL ? { uri: user.photoURL } : defaultUserAvatar
-                  }
+                <FirebaseImage
+                  source={user.photoURL ? { uri: user.photoURL } : undefined}
+                  fallbackSource={defaultUserAvatar}
+                  placeholder={defaultUserAvatar}
                   style={styles.avatar}
-                  resizeMode="cover"
+                  contentFit="cover"
                   accessibilityLabel="Your profile picture"
                 />
                 <Pressable

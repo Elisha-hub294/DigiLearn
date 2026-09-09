@@ -6,7 +6,6 @@ import { doc, getDoc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -23,10 +22,13 @@ import {
 
 import { auth, db } from "../../firebaseConfig";
 import { NotifyToggle } from "../components/library/add-item/SharedFormControls";
+import { FirebaseImage } from "../components/ui/FirebaseImage";
 import { Skeleton } from "../components/ui/Skeleton";
 import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { getThemeAsset } from "../constants/themeAssets";
+import { useTheme } from "../contexts/ThemeContext";
 import { loadSubjects } from "../services/subjectsService";
 import { resubmitTeacherApplication } from "../services/teacherApplications";
 import { saveProfilePicture } from "../services/userProfile";
@@ -178,6 +180,8 @@ function InfoMessage({
 }
 
 export default function TeacherAccountQuickSettingsScreen() {
+  const { isDark } = useTheme();
+  const fallbackAvatar = getThemeAsset("userDefault", isDark);
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [user, setUser] = useState<User | null>(null);
@@ -570,16 +574,13 @@ export default function TeacherAccountQuickSettingsScreen() {
                   pressed && styles.buttonPressed,
                 ]}
               >
-                {profilePicture ? (
-                  <Image
-                    source={{ uri: profilePicture }}
-                    style={styles.profilePicturePreview}
-                  />
-                ) : (
-                  <View style={styles.profilePictureFallback}>
-                    <Feather name="camera" size={24} color="#3B5B8F" />
-                  </View>
-                )}
+                <FirebaseImage
+                  source={profilePicture ? { uri: profilePicture } : undefined}
+                  fallbackSource={fallbackAvatar}
+                  placeholder={fallbackAvatar}
+                  style={styles.profilePicturePreview}
+                  contentFit="cover"
+                />
                 <Text style={styles.profilePictureText}>
                   {pictureSaving
                     ? "Saving picture..."
