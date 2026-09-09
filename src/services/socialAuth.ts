@@ -1,9 +1,11 @@
 import Constants from "expo-constants";
 import {
+  deleteUser,
   FacebookAuthProvider,
   GoogleAuthProvider,
   signInWithCredential,
   signInWithPopup,
+  User,
   UserCredential,
 } from "firebase/auth";
 import { NativeModules, Platform, TurboModuleRegistry } from "react-native";
@@ -14,6 +16,22 @@ export interface SocialAuthResult {
   user?: UserCredential["user"];
   error?: string;
   cancelled?: boolean;
+}
+
+async function requireVerifiedUser(
+  user: User,
+): Promise<SocialAuthResult | null> {
+  if (user.emailVerified) return null;
+
+  try {
+    await deleteUser(user);
+  } catch {}
+
+  return {
+    success: false,
+    error:
+      "Your email must be verified before you can create a DigiLearn account.",
+  };
 }
 
 /**
@@ -132,6 +150,8 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
       provider.addScope("profile");
       provider.addScope("email");
       const credential = await signInWithPopup(auth, provider);
+      const verificationError = await requireVerifiedUser(credential.user);
+      if (verificationError) return verificationError;
       return { success: true, user: credential.user };
     }
 
@@ -179,6 +199,8 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
 
     const credential = GoogleAuthProvider.credential(idToken);
     const userCredential = await signInWithCredential(auth, credential);
+    const verificationError = await requireVerifiedUser(userCredential.user);
+    if (verificationError) return verificationError;
     return { success: true, user: userCredential.user };
   } catch (error: any) {
     const googleModule = getNativeGoogleSigninModule();
@@ -231,6 +253,8 @@ export async function signInWithFacebook(): Promise<SocialAuthResult> {
     provider.addScope("email");
     provider.addScope("public_profile");
     const credential = await signInWithPopup(auth, provider);
+    const verificationError = await requireVerifiedUser(credential.user);
+    if (verificationError) return verificationError;
     return { success: true, user: credential.user };
   } catch (error: any) {
     const errorMsg = parseAuthError(error);

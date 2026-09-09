@@ -19,6 +19,21 @@ const adminAuth = getAuth();
 const messaging = getMessaging();
 const storage = getStorage();
 
+function requireVerifiedAuth(request: {
+  auth?: { uid: string; token?: Record<string, unknown> } | null;
+}) {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+  if (request.auth.token?.email_verified !== true) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Verify your email before creating an account.",
+    );
+  }
+  return request.auth;
+}
+
 const profileAccentPalette = [
   "#0F766E",
   "#1D4ED8",
@@ -67,12 +82,10 @@ const defaultProfileFields = (request: {
 };
 
 export const initializeUserProfile = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Sign in required.");
-  }
+  const verifiedAuth = requireVerifiedAuth(request);
 
-  const userRef = db.doc(`users/${request.auth.uid}`);
-  const teacherRef = db.doc(`teachers/${request.auth.uid}`);
+  const userRef = db.doc(`users/${verifiedAuth.uid}`);
+  const teacherRef = db.doc(`teachers/${verifiedAuth.uid}`);
   const [snapshot, teacherSnapshot] = await Promise.all([
     userRef.get(),
     teacherRef.get(),
@@ -615,8 +628,7 @@ export const reviewTeacherApplication = onCall(async (request) => {
 });
 
 export const changeAccountType = onCall(async (request) => {
-  if (!request.auth)
-    throw new HttpsError("unauthenticated", "Sign in required.");
+  const verifiedAuth = requireVerifiedAuth(request);
 
   const accountType = request.data?.accountType;
   if (accountType !== "student" && accountType !== "teacher") {
@@ -626,7 +638,7 @@ export const changeAccountType = onCall(async (request) => {
     );
   }
 
-  const userId = request.auth.uid;
+  const userId = verifiedAuth.uid;
   const userRef = db.doc(`users/${userId}`);
   const teacherRef = db.doc(`teachers/${userId}`);
   const applicationRef = db.doc(`teacherApplications/${userId}`);

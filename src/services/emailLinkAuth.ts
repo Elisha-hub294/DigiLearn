@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   ActionCodeSettings,
+  deleteUser,
   isSignInWithEmailLink,
   sendSignInLinkToEmail,
   signInWithEmailLink,
@@ -52,12 +53,17 @@ export async function getPendingEmailAddress() {
 export async function completeEmailLink(url: string, emailOverride?: string) {
   if (!isSignInWithEmailLink(auth, url)) return null;
 
-  const email = emailOverride?.trim().toLowerCase() || (await getPendingEmailAddress());
+  const email =
+    emailOverride?.trim().toLowerCase() || (await getPendingEmailAddress());
   if (!email) {
     throw new Error("EMAIL_LINK_ADDRESS_MISSING");
   }
 
   const credential = await signInWithEmailLink(auth, email, url);
+  if (!credential.user.emailVerified) {
+    await deleteUser(credential.user);
+    throw new Error("EMAIL_NOT_VERIFIED");
+  }
   await AsyncStorage.removeItem(EMAIL_LINK_ADDRESS_KEY);
   return credential.user;
 }

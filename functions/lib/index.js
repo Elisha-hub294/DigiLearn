@@ -17,6 +17,15 @@ const db = (0, firestore_1.getFirestore)();
 const adminAuth = (0, auth_1.getAuth)();
 const messaging = (0, messaging_1.getMessaging)();
 const storage = (0, storage_1.getStorage)();
+function requireVerifiedAuth(request) {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
+    }
+    if (request.auth.token?.email_verified !== true) {
+        throw new https_1.HttpsError("failed-precondition", "Verify your email before creating an account.");
+    }
+    return request.auth;
+}
 const profileAccentPalette = [
     "#0F766E",
     "#1D4ED8",
@@ -58,11 +67,9 @@ const defaultProfileFields = (request) => {
     };
 };
 exports.initializeUserProfile = (0, https_1.onCall)(async (request) => {
-    if (!request.auth) {
-        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
-    }
-    const userRef = db.doc(`users/${request.auth.uid}`);
-    const teacherRef = db.doc(`teachers/${request.auth.uid}`);
+    const verifiedAuth = requireVerifiedAuth(request);
+    const userRef = db.doc(`users/${verifiedAuth.uid}`);
+    const teacherRef = db.doc(`teachers/${verifiedAuth.uid}`);
     const [snapshot, teacherSnapshot] = await Promise.all([
         userRef.get(),
         teacherRef.get(),
@@ -402,6 +409,7 @@ exports.reviewTeacherApplication = (0, https_1.onCall)(async (request) => {
         ? data.decision
         : "";
     const reason = typeof data.reason === "string" ? data.reason.trim() : "";
+    const allowReapply = data.allowReapply === true;
     if (!applicationId || !decision)
         throw new https_1.HttpsError("invalid-argument", "Application and decision are required.");
     if (decision === "reject" && reason.length < 5)
@@ -425,12 +433,13 @@ exports.reviewTeacherApplication = (0, https_1.onCall)(async (request) => {
         const status = decision === "approve" ? "approved" : "rejected";
         const notification = applicantNotification(decision === "approve"
             ? "Your teacher application has been approved. You can now publish books, lessons, pages, announcements, and past papers on DigiLearn."
-            : `Your teacher application needs updates: ${reason}`, decision === "approve"
+            : `Your teacher application needs updates: ${reason}. Please resolve the issue and resend your request.`, decision === "approve"
             ? "Teacher account approved"
             : applicant?.name || application?.name || "Teacher application");
         transaction.update(applicationRef, {
             status,
             rejectionReason: decision === "reject" ? reason : firestore_1.FieldValue.delete(),
+            allowReapply: decision === "reject" ? allowReapply : firestore_1.FieldValue.delete(),
             reviewedAt: now,
             reviewedBy: adminId,
             updatedAt: now,
@@ -440,6 +449,7 @@ exports.reviewTeacherApplication = (0, https_1.onCall)(async (request) => {
             type: "teacher",
             teacherApprovalStatus: status,
             teacherReviewReason: decision === "reject" ? reason : firestore_1.FieldValue.delete(),
+            allowReapply: decision === "reject" ? allowReapply : firestore_1.FieldValue.delete(),
             notifications: firestore_1.FieldValue.arrayUnion(notification),
             ...(decision === "approve" ? { approvedAt: now } : {}),
         }, { merge: true });
@@ -459,13 +469,12 @@ exports.reviewTeacherApplication = (0, https_1.onCall)(async (request) => {
     return { status: decision === "approve" ? "approved" : "rejected" };
 });
 exports.changeAccountType = (0, https_1.onCall)(async (request) => {
-    if (!request.auth)
-        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
+    const verifiedAuth = requireVerifiedAuth(request);
     const accountType = request.data?.accountType;
     if (accountType !== "student" && accountType !== "teacher") {
         throw new https_1.HttpsError("invalid-argument", "A valid account type is required.");
     }
-    const userId = request.auth.uid;
+    const userId = verifiedAuth.uid;
     const userRef = db.doc(`users/${userId}`);
     const teacherRef = db.doc(`teachers/${userId}`);
     const applicationRef = db.doc(`teacherApplications/${userId}`);
@@ -522,14 +531,18 @@ exports.resubmitTeacherApplication = (0, https_1.onCall)(async (request) => {
     }
     await db.runTransaction(async (transaction) => {
         const applicationSnapshot = await transaction.get(applicationRef);
-        if (!applicationSnapshot.exists ||
-            applicationSnapshot.data()?.status !== "rejected") {
+        const applicationData = applicationSnapshot.data();
+        if (!applicationSnapshot.exists || applicationData?.status !== "rejected") {
             throw new https_1.HttpsError("failed-precondition", "Only rejected applications can be resubmitted.");
+        }
+        if (applicationData?.allowReapply !== true) {
+            throw new https_1.HttpsError("failed-precondition", "This application cannot be resubmitted until an admin allows it again.");
         }
         const now = firestore_1.FieldValue.serverTimestamp();
         transaction.update(applicationRef, {
             status: "pending",
             rejectionReason: firestore_1.FieldValue.delete(),
+            allowReapply: firestore_1.FieldValue.delete(),
             updatedAt: now,
             resubmittedAt: now,
         });
@@ -537,6 +550,7 @@ exports.resubmitTeacherApplication = (0, https_1.onCall)(async (request) => {
             type: "teacher",
             teacherApprovalStatus: "pending",
             teacherReviewReason: firestore_1.FieldValue.delete(),
+            allowReapply: firestore_1.FieldValue.delete(),
         });
         transaction.set(auditRef, {
             applicationId,
