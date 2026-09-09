@@ -1,7 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
+import {
+  FieldPath,
+  FieldValue,
+  getFirestore,
+  Timestamp,
+} from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { getStorage } from "firebase-admin/storage";
 import { defineSecret } from "firebase-functions/params";
@@ -340,6 +345,161 @@ function collectStoragePaths(value: unknown, paths: Set<string>) {
   }
 }
 
+async function collectResourceTreePaths(
+  reference: FirebaseFirestore.DocumentReference,
+  paths: Set<string>,
+) {
+  const snapshot = await reference.get();
+  if (!snapshot.exists) return;
+
+  collectStoragePaths(snapshot.data(), paths);
+  const subcollections = await reference.listCollections();
+  await Promise.all(
+    subcollections.map(async (subcollection) => {
+      const documents = await subcollection.get();
+      await Promise.all(
+        documents.docs.map((document) =>
+          collectResourceTreePaths(document.ref, paths),
+        ),
+      );
+    }),
+  );
+}
+
+function removeResourceReferences(
+  data: Record<string, any>,
+  collectionName: string,
+  resourceId: string,
+) {
+  const savedFieldByCollection: Record<string, string> = {
+    pages: "saved-pages",
+    books: "saved-books",
+    pastPaper: "saved-papers",
+    trendingLessons: "saved-lessons",
+    teacherPosts: "saved-posts",
+  };
+  const savedField = savedFieldByCollection[collectionName];
+  const updates: Record<string, unknown> = {};
+
+  if (savedField && Array.isArray(data[savedField])) {
+    const filtered = data[savedField].filter(
+      (value: unknown) => value !== resourceId,
+    );
+    if (filtered.length !== data[savedField].length)
+      updates[savedField] = filtered;
+  }
+
+  for (const field of ["marked-as-read", "hidden-pages"]) {
+    if (!Array.isArray(data[field])) continue;
+    const filtered = data[field].filter((value: unknown) =>
+      typeof value === "string"
+        ? value !== resourceId
+        : !value ||
+          typeof value !== "object" ||
+          (value as { id?: unknown }).id !== resourceId,
+    );
+    if (filtered.length !== data[field].length) updates[field] = filtered;
+  }
+
+  if (data.savedAt && typeof data.savedAt === "object") {
+    const savedAt = { ...data.savedAt };
+    delete savedAt[`${savedField}:${resourceId}`];
+    if (Object.keys(savedAt).length !== Object.keys(data.savedAt).length) {
+      updates.savedAt = savedAt;
+    }
+  }
+
+  if (data["paper-revision-status"]?.[resourceId] !== undefined) {
+    const revisionStatus = { ...data["paper-revision-status"] };
+    delete revisionStatus[resourceId];
+    updates["paper-revision-status"] = revisionStatus;
+  }
+
+  if (Array.isArray(data.notifications)) {
+    const notifications = data.notifications.filter(
+      (notification: any) =>
+        notification?.itemId !== resourceId ||
+        notification?.collection !== collectionName,
+    );
+    if (notifications.length !== data.notifications.length) {
+      updates.notifications = notifications;
+    }
+  }
+
+  return updates;
+}
+
+async function cleanResourceReferences(
+  collectionName: string,
+  resourceId: string,
+) {
+  const activityTypeByCollection: Record<string, string> = {
+    pages: "page",
+    books: "book",
+    pastPaper: "paper",
+    trendingLessons: "lesson",
+    teacherPosts: "post",
+  };
+  let batch = db.batch();
+  let writes = 0;
+  const flush = async () => {
+    if (!writes) return;
+    await batch.commit();
+    batch = db.batch();
+    writes = 0;
+  };
+
+  for (const profileCollection of ["users", "teachers"]) {
+    let lastDocument: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+    while (true) {
+      let profileQuery = db
+        .collection(profileCollection)
+        .orderBy(FieldPath.documentId())
+        .limit(250);
+      if (lastDocument) profileQuery = profileQuery.startAfter(lastDocument);
+
+      const profilePage = await profileQuery.get();
+      for (const document of profilePage.docs) {
+        const updates = removeResourceReferences(
+          document.data(),
+          collectionName,
+          resourceId,
+        );
+        if (Object.keys(updates).length) {
+          batch.update(document.ref, updates);
+          writes += 1;
+          if (writes === 450) await flush();
+        }
+      }
+
+      if (profilePage.size < 250) break;
+      lastDocument = profilePage.docs[profilePage.docs.length - 1];
+    }
+  }
+
+  let activityQuery = db
+    .collection("activityEvents")
+    .where("resourceId", "==", resourceId)
+    .orderBy(FieldPath.documentId())
+    .limit(250);
+  while (true) {
+    const activityPage = await activityQuery.get();
+    for (const document of activityPage.docs) {
+      if (document.data().type === activityTypeByCollection[collectionName]) {
+        batch.delete(document.ref);
+        writes += 1;
+        if (writes === 450) await flush();
+      }
+    }
+
+    if (activityPage.size < 250) break;
+    activityQuery = activityQuery.startAfter(
+      activityPage.docs[activityPage.docs.length - 1],
+    );
+  }
+  await flush();
+}
+
 export const deleteResource = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Sign in required.");
@@ -372,7 +532,7 @@ export const deleteResource = onCall(async (request) => {
   }
 
   const paths = new Set<string>();
-  collectStoragePaths(resource, paths);
+  await collectResourceTreePaths(resourceRef, paths);
   const bucket = storage.bucket();
   await Promise.all(
     Array.from(paths, async (path) => {
@@ -383,7 +543,8 @@ export const deleteResource = onCall(async (request) => {
       }
     }),
   );
-  await resourceRef.delete();
+  await cleanResourceReferences(collectionName, resourceId);
+  await db.recursiveDelete(resourceRef);
   return { deleted: true };
 });
 

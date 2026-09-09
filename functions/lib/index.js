@@ -269,6 +269,126 @@ function collectStoragePaths(value, paths) {
         Object.values(value).forEach((item) => collectStoragePaths(item, paths));
     }
 }
+async function collectResourceTreePaths(reference, paths) {
+    const snapshot = await reference.get();
+    if (!snapshot.exists)
+        return;
+    collectStoragePaths(snapshot.data(), paths);
+    const subcollections = await reference.listCollections();
+    await Promise.all(subcollections.map(async (subcollection) => {
+        const documents = await subcollection.get();
+        await Promise.all(documents.docs.map((document) => collectResourceTreePaths(document.ref, paths)));
+    }));
+}
+function removeResourceReferences(data, collectionName, resourceId) {
+    const savedFieldByCollection = {
+        pages: "saved-pages",
+        books: "saved-books",
+        pastPaper: "saved-papers",
+        trendingLessons: "saved-lessons",
+        teacherPosts: "saved-posts",
+    };
+    const savedField = savedFieldByCollection[collectionName];
+    const updates = {};
+    if (savedField && Array.isArray(data[savedField])) {
+        const filtered = data[savedField].filter((value) => value !== resourceId);
+        if (filtered.length !== data[savedField].length)
+            updates[savedField] = filtered;
+    }
+    for (const field of ["marked-as-read", "hidden-pages"]) {
+        if (!Array.isArray(data[field]))
+            continue;
+        const filtered = data[field].filter((value) => typeof value === "string"
+            ? value !== resourceId
+            : !value ||
+                typeof value !== "object" ||
+                value.id !== resourceId);
+        if (filtered.length !== data[field].length)
+            updates[field] = filtered;
+    }
+    if (data.savedAt && typeof data.savedAt === "object") {
+        const savedAt = { ...data.savedAt };
+        delete savedAt[`${savedField}:${resourceId}`];
+        if (Object.keys(savedAt).length !== Object.keys(data.savedAt).length) {
+            updates.savedAt = savedAt;
+        }
+    }
+    if (data["paper-revision-status"]?.[resourceId] !== undefined) {
+        const revisionStatus = { ...data["paper-revision-status"] };
+        delete revisionStatus[resourceId];
+        updates["paper-revision-status"] = revisionStatus;
+    }
+    if (Array.isArray(data.notifications)) {
+        const notifications = data.notifications.filter((notification) => notification?.itemId !== resourceId ||
+            notification?.collection !== collectionName);
+        if (notifications.length !== data.notifications.length) {
+            updates.notifications = notifications;
+        }
+    }
+    return updates;
+}
+async function cleanResourceReferences(collectionName, resourceId) {
+    const activityTypeByCollection = {
+        pages: "page",
+        books: "book",
+        pastPaper: "paper",
+        trendingLessons: "lesson",
+        teacherPosts: "post",
+    };
+    let batch = db.batch();
+    let writes = 0;
+    const flush = async () => {
+        if (!writes)
+            return;
+        await batch.commit();
+        batch = db.batch();
+        writes = 0;
+    };
+    for (const profileCollection of ["users", "teachers"]) {
+        let lastDocument;
+        while (true) {
+            let profileQuery = db
+                .collection(profileCollection)
+                .orderBy(firestore_1.FieldPath.documentId())
+                .limit(250);
+            if (lastDocument)
+                profileQuery = profileQuery.startAfter(lastDocument);
+            const profilePage = await profileQuery.get();
+            for (const document of profilePage.docs) {
+                const updates = removeResourceReferences(document.data(), collectionName, resourceId);
+                if (Object.keys(updates).length) {
+                    batch.update(document.ref, updates);
+                    writes += 1;
+                    if (writes === 450)
+                        await flush();
+                }
+            }
+            if (profilePage.size < 250)
+                break;
+            lastDocument = profilePage.docs[profilePage.docs.length - 1];
+        }
+    }
+    let activityQuery = db
+        .collection("activityEvents")
+        .where("resourceId", "==", resourceId)
+        .orderBy(firestore_1.FieldPath.documentId())
+        .limit(250);
+    while (true) {
+        const activityPage = await activityQuery.get();
+        for (const document of activityPage.docs) {
+            if (document.data().type === activityTypeByCollection[collectionName]) {
+                batch.delete(document.ref);
+                writes += 1;
+                if (writes === 450)
+                    await flush();
+            }
+        }
+        if (activityPage.size < 250)
+            break;
+        activityQuery = activityQuery.startAfter(activityPage.docs[activityPage.docs.length - 1]);
+    }
+    await flush();
+}
 exports.deleteResource = (0, https_1.onCall)(async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Sign in required.");
@@ -292,7 +412,7 @@ exports.deleteResource = (0, https_1.onCall)(async (request) => {
         throw new https_1.HttpsError("permission-denied", "You cannot delete this resource.");
     }
     const paths = new Set();
-    collectStoragePaths(resource, paths);
+    await collectResourceTreePaths(resourceRef, paths);
     const bucket = storage.bucket();
     await Promise.all(Array.from(paths, async (path) => {
         try {
@@ -303,7 +423,8 @@ exports.deleteResource = (0, https_1.onCall)(async (request) => {
                 throw error;
         }
     }));
-    await resourceRef.delete();
+    await cleanResourceReferences(collectionName, resourceId);
+    await db.recursiveDelete(resourceRef);
     return { deleted: true };
 });
 exports.sendLibraryNotification = (0, https_1.onCall)(async (request) => {
