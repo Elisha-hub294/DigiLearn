@@ -113,7 +113,7 @@ export function BookPreviewScreen() {
 
   const [bookmarked, setBookmarked] = useState(false);
   const { width } = useWindowDimensions();
-  const horizontalPadding = width < 600 ? 0 : getHorizontalPadding(width);
+  const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
   const [gradient] = useState(
     () => gradients[Math.floor(Math.random() * gradients.length)],
