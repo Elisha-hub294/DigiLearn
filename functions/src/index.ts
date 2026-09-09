@@ -667,7 +667,43 @@ export const manageTeacherCommunity = onCall(async (request) => {
     `teachers/${teacherId}/followers/${request.auth.uid}`,
   );
   if (action === "join") {
+    const alreadyJoined = (await followerRef.get()).exists;
     await followerRef.set({ joinedAt: Timestamp.now() });
+
+    if (!alreadyJoined && teacherId !== request.auth.uid) {
+      const [userSnapshot, followerTeacherSnapshot] = await Promise.all([
+        db.doc(`users/${request.auth.uid}`).get(),
+        db.doc(`teachers/${request.auth.uid}`).get(),
+      ]);
+      const followerData =
+        userSnapshot.data() ?? followerTeacherSnapshot.data() ?? {};
+      const followerName =
+        typeof followerData.name === "string" && followerData.name.trim()
+          ? followerData.name.trim()
+          : (request.auth.token?.name ?? "A DigiLearn user");
+      const followerAvatar =
+        typeof followerData.photoURL === "string"
+          ? followerData.photoURL
+          : typeof followerData.avatar === "string"
+            ? followerData.avatar
+            : "";
+
+      await db.doc(`teachers/${teacherId}`).set(
+        {
+          notifications: FieldValue.arrayUnion({
+            id: `teacher-community-${request.auth.uid}-${Date.now()}`,
+            type: "announcement",
+            notificationKind: "teacher-community",
+            publisherName: followerName,
+            publisherAvatar: followerAvatar,
+            message: "Joined your community",
+            createdAt: Timestamp.now(),
+            read: false,
+          }),
+        },
+        { merge: true },
+      );
+    }
   } else if (action === "leave") {
     await followerRef.delete();
   }

@@ -121,6 +121,11 @@ export default function NotificationsScreen() {
 
   const openItem = useCallback(
     async (notification: NotificationRecord) => {
+      if (notification.notificationKind === "teacher-community") {
+        if (user && !notification.read) await markRead(notification.id);
+        return;
+      }
+
       const isTeacherApplicationUpdate =
         notification.notificationKind === "teacher-review" ||
         (notification.type === "announcement" &&

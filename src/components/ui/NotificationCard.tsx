@@ -166,7 +166,8 @@ export function NotificationCard({
               <MaterialCommunityIcons
                 name={
                   teacherApplicationNotification ||
-                  notification.notificationKind === "teacher-review"
+                  notification.notificationKind === "teacher-review" ||
+                  notification.notificationKind === "teacher-community"
                     ? "school-outline"
                     : adminNotification
                       ? "flag"

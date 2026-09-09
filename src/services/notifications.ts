@@ -23,7 +23,7 @@ export type NotificationRecord = {
   itemId?: string;
   collection?: string;
   navigation?: string;
-  notificationKind?: "teacher-review";
+  notificationKind?: "teacher-review" | "teacher-community";
   storage?: "admin";
   adminKind?: "report" | "teacher-application";
 };
@@ -153,7 +153,8 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
         ? candidate.navigation
         : undefined,
     notificationKind:
-      candidate.notificationKind === "teacher-review"
+      candidate.notificationKind === "teacher-review" ||
+      candidate.notificationKind === "teacher-community"
         ? candidate.notificationKind
         : undefined,
     storage: candidate.storage === "admin" ? "admin" : undefined,
