@@ -84,6 +84,7 @@ export default function VerifyEmailScreen() {
 
       await initializeUserProfile();
       const onboarding = await getUserOnboardingState(user.uid);
+      router.dismissAll();
       router.replace(
         onboarding.accountTypeCompleted && onboarding.type
           ? ("/" as never)

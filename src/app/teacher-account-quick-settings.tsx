@@ -423,6 +423,7 @@ export default function TeacherAccountQuickSettingsScreen() {
         batch.set(teacherRef, payload, { merge: true });
 
         await batch.commit();
+        router.dismissAll();
         router.replace("/" as never);
       } catch (error) {
         setSaveError(

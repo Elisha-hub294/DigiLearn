@@ -128,6 +128,7 @@ export default function LoginScreen() {
         return;
       }
       if (result.success && result.user) {
+        router.dismissAll();
         router.replace("/");
       } else if (result.error) {
         setGeneralError(result.error);
@@ -150,6 +151,7 @@ export default function LoginScreen() {
         return;
       }
       if (result.success && result.user) {
+        router.dismissAll();
         router.replace("/");
       } else if (result.error) {
         setGeneralError(result.error);

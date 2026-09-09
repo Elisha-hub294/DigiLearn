@@ -199,6 +199,7 @@ export default function AccountQuickSettingsScreen() {
       payload.filterFeedByInterests = filterFeedByInterests;
 
       await setDoc(doc(db, "users", user.uid), payload, { merge: true });
+      router.dismissAll();
       router.replace("/" as never);
     } catch {
       setSaveError(

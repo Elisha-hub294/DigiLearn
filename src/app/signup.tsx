@@ -143,8 +143,10 @@ export default function SignUpScreen() {
         await saveGoogleProfilePicture(result.user);
         const onboarding = await getUserOnboardingState(result.user.uid);
         if (onboarding.accountTypeCompleted && onboarding.type) {
+          router.dismissAll();
           router.replace("/" as never);
         } else {
+          router.dismissAll();
           router.replace("/account-type" as never);
         }
       } else if (result.error) {
@@ -172,8 +174,10 @@ export default function SignUpScreen() {
         await saveFacebookProfilePicture(result.user);
         const onboarding = await getUserOnboardingState(result.user.uid);
         if (onboarding.accountTypeCompleted && onboarding.type) {
+          router.dismissAll();
           router.replace("/" as never);
         } else {
+          router.dismissAll();
           router.replace("/account-type" as never);
         }
       } else if (result.error) {

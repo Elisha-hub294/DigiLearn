@@ -141,6 +141,7 @@ export default function AccountTypeScreen() {
       } else if (selectedAccountType === "teacher") {
         router.replace("/teacher-account-quick-settings" as never);
       } else {
+        router.dismissAll();
         router.replace("/" as never);
       }
     } catch {
@@ -160,6 +161,7 @@ export default function AccountTypeScreen() {
 
     try {
       await saveAccountTypeDecision(user, "");
+      router.dismissAll();
       router.replace("/" as never);
     } catch {
       setErrorMessage(mapSaveError());
