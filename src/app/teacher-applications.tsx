@@ -3,15 +3,15 @@ import { useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Modal,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
@@ -118,6 +118,12 @@ export default function TeacherApplicationsScreen() {
     approved: applications.filter((item) => item.status === "approved").length,
     rejected: applications.filter((item) => item.status === "rejected").length,
   };
+  const statusLabel = (status?: string) =>
+    status === "approved"
+      ? "APPROVED"
+      : status === "rejected"
+        ? "REJECTED"
+        : "PENDING";
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -212,8 +218,22 @@ export default function TeacherApplicationsScreen() {
                   {item.email || "No email provided"}
                 </Text>
               </View>
-              <View style={styles.pending}>
-                <Text style={styles.pendingText}>PENDING</Text>
+              <View
+                style={[
+                  styles.statusChip,
+                  item.status === "approved" && styles.approvedChip,
+                  item.status === "rejected" && styles.rejectedChip,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusText,
+                    item.status === "approved" && styles.approvedText,
+                    item.status === "rejected" && styles.rejectedText,
+                  ]}
+                >
+                  {statusLabel(item.status)}
+                </Text>
               </View>
             </View>
             {!!item.school && <Text style={styles.detail}>{item.school}</Text>}
@@ -402,13 +422,17 @@ const styles = StyleSheet.create({
   identity: { flex: 1 },
   name: { color: colors.text, fontSize: 16, fontWeight: "700" },
   email: { color: colors.subtitle, fontSize: 13, marginTop: 3 },
-  pending: {
+  statusChip: {
     backgroundColor: "#FFF4D6",
     borderRadius: radius.pill,
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
-  pendingText: { color: "#9A6700", fontSize: 10, fontWeight: "800" },
+  approvedChip: { backgroundColor: "#DCFCE7" },
+  rejectedChip: { backgroundColor: "#FEE2E2" },
+  statusText: { color: "#9A6700", fontSize: 10, fontWeight: "800" },
+  approvedText: { color: "#15803D" },
+  rejectedText: { color: "#B91C1C" },
   detail: { color: colors.subtitle, fontSize: 13, marginTop: spacing.md },
   viewButton: {
     flexDirection: "row",
