@@ -60,7 +60,6 @@ export default function AssistantScreen() {
   const { user, profile } = useProfile();
   const params = useLocalSearchParams<{ initialPrompt?: string }>();
   const [isLoading, setIsLoading] = useState(true);
-  const [gifUri, setGifUri] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [message, setMessage] = useState(
     typeof params.initialPrompt === "string" ? params.initialPrompt : "",
@@ -99,10 +98,8 @@ export default function AssistantScreen() {
           return;
         }
 
-        const resolvedAvatar = content.avatar ?? content.gif ?? fallbackAvatar;
-        setAssistantAvatar(resolvedAvatar);
+        setAssistantAvatar(content.avatar);
         setSuggestions(content.suggestions ?? content.messages.slice(0, 6));
-        setGifUri(content.gif ?? content.avatar);
         const history = await loadConversationHistory();
         if (active) {
           setConversations(history);
@@ -120,7 +117,6 @@ export default function AssistantScreen() {
             "Revise Quadratic Equations",
             "Help me prepare for UNEB",
           ]);
-          setGifUri(null);
         }
       } finally {
         if (active) {
@@ -354,7 +350,11 @@ export default function AssistantScreen() {
                   <View style={styles.heroArea}>
                     <View style={styles.avatarGlow} />
                     <Image
-                      source={gifUri ? { uri: gifUri } : fallbackAvatar}
+                      source={
+                        assistantAvatar
+                          ? { uri: assistantAvatar }
+                          : fallbackAvatar
+                      }
                       placeholder={fallbackAvatar}
                       style={styles.avatar}
                       contentFit="contain"

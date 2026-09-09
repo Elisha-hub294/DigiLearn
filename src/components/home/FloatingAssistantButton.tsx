@@ -102,7 +102,7 @@ export function FloatingAssistantButton() {
         setMessages(content.messages);
         setActiveMessage(initialMessage);
         currentMessage.value = initialMessage;
-        setAvatarUri(content.avatar ?? content.gif ?? null);
+        setAvatarUri(content.avatar ?? null);
         setIsVisible(true);
 
         opacity.value = withSpring(1, { damping: 18, stiffness: 120 });

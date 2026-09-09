@@ -34,7 +34,6 @@ export type AssistantContent = {
   messages: string[];
   suggestions: string[];
   avatar: string | null;
-  gif: string | null;
   geminiApiKey: string | null;
 };
 
@@ -71,7 +70,7 @@ const isNonEmptyString = (value: unknown): value is string =>
 
 const getAssistantAssetName = (
   data: Record<string, unknown>,
-  field: "avatar" | "gif",
+  field: "avatar",
 ): string | null => {
   const value = data[field];
   return isNonEmptyString(value) ? value.trim() : null;
@@ -220,25 +219,19 @@ export async function getAssistantContent(
         const data = doc.data() as Record<string, unknown>;
         return {
           avatar: getAssistantAssetName(data, "avatar"),
-          gif: getAssistantAssetName(data, "gif"),
         };
       })
-      .filter((entry) => entry.avatar || entry.gif);
+      .filter((entry) => entry.avatar);
 
     const firstAvatar =
       assistantEntries.find((entry) => entry.avatar)?.avatar ?? null;
-    const firstGif = assistantEntries.find((entry) => entry.gif)?.gif ?? null;
-    const [avatar, gif] = await Promise.all([
-      resolveAssistantAsset(firstAvatar),
-      resolveAssistantAsset(firstGif),
-    ]);
+    const avatar = await resolveAssistantAsset(firstAvatar);
 
     const { floatingMessages, suggestions } =
       await generateAIContentFromKnowledge(null, knowledgeContext.appOverview);
 
     const content = {
       avatar,
-      gif,
       messages: floatingMessages,
       suggestions,
       geminiApiKey: null,
@@ -272,31 +265,24 @@ export async function getDigiLearnKnowledgeContext(
 
   appKnowledgePromise = (async () => {
     const snapshot = await getDocs(
-      query(collection(db, "ai knowledge"), limit(20)),
+      query(collection(db, "ai assistant"), limit(5)),
     );
 
     const knowledge: Record<string, string> = {};
     snapshot.docs.forEach((doc) => {
       const data = doc.data() as Record<string, unknown>;
-      Object.entries(data).forEach(([key, value]) => {
-        const normalizedKey = normalizeKnowledgeKey(key);
-        if (!normalizedKey) {
-          return;
-        }
+      const appKnowledge = extractKnowledgeValue(data, [
+        "app knowledge",
+        "app_knowledge",
+        "appKnowledge",
+      ]);
 
-        const text = coerceKnowledgeText(value);
-        if (text && !knowledge[normalizedKey]) {
-          knowledge[normalizedKey] = text;
-        }
-      });
+      if (appKnowledge && !knowledge["app knowledge"]) {
+        knowledge["app knowledge"] = appKnowledge;
+      }
     });
 
-    const appOverview = extractKnowledgeValue({ ...knowledge }, [
-      "app overview",
-      "app overview text",
-      "app_overview",
-      "appOverview",
-    ]);
+    const appOverview = knowledge["app knowledge"] ?? null;
 
     const context = {
       appOverview,
