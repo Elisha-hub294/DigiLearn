@@ -9,11 +9,13 @@ export function BottomActionBar({
   bookmarked,
   onGetYours,
   onBookmark,
+  onShare,
 }: {
   gradient: readonly [string, string];
   bookmarked: boolean;
   onGetYours: () => void;
   onBookmark: () => void;
+  onShare: () => void;
 }) {
   const { colors } = useTheme();
   return (
@@ -22,6 +24,7 @@ export function BottomActionBar({
         accessibilityRole="button"
         accessibilityLabel="Share book"
         style={[styles.icon, { backgroundColor: colors.lightBackground }]}
+        onPress={onShare}
       >
         <Feather name="share-2" size={21} color={colors.primary} />
       </Pressable>

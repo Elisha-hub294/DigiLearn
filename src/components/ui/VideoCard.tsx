@@ -8,7 +8,7 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { auth } from "../../../firebaseConfig";
 import { useProfile } from "../../contexts/ProfileContext";
@@ -19,6 +19,7 @@ import {
   submitReport,
 } from "../../services/reportService";
 import { deleteResource } from "../../services/resourceDeletion";
+import { shareResource } from "../../services/shareLinks";
 import { toggleSavedItem } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "./ActionDialog";
@@ -194,14 +195,8 @@ export function VideoCard({
   };
 
   const handleShare = async () => {
-    const shareUrl = item.link?.trim() || "";
-
     try {
-      await Share.share({
-        title: item.title,
-        message: `Watch "${item.title}" by ${item.teacher} on DigiLearn.`,
-        url: shareUrl,
-      });
+      await shareResource("lesson", item.id, item.title);
     } catch (error) {
       console.error("Failed to share lesson:", error);
       setDialogState({

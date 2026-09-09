@@ -6,6 +6,10 @@
       {
         "source": "/finishSignIn",
         "destination": "/index.html"
+      },
+      {
+        "source": "/share/**",
+        "destination": "/index.html"
       }
     ]
   },

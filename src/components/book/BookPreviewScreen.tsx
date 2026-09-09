@@ -18,6 +18,7 @@ import {
   recordUserActivity,
 } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
+import { shareResource } from "../../services/shareLinks";
 import {
   getSavedItemsProfile,
   toggleSavedItem,
@@ -386,6 +387,9 @@ export function BookPreviewScreen() {
             gradient={gradient}
             bookmarked={bookmarked}
             onGetYours={() => setShowGetYoursDialog(true)}
+            onShare={() => {
+              if (book) void shareResource("book", book.id, book.title);
+            }}
             onBookmark={async () => {
               if (!book) return;
 

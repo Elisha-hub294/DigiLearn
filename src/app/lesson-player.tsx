@@ -4,12 +4,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Pressable,
   SafeAreaView,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -38,6 +37,7 @@ import {
   saveLessonProgress,
   type PlaybackProgress,
 } from "../services/playbackProgressService";
+import { shareResource } from "../services/shareLinks";
 import { getSavedItemsProfile, toggleSavedItem } from "../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../utils/nativeToast";
 import { getYoutubeEmbedUrl, validateVideoLink } from "../utils/videoUtils";
@@ -152,11 +152,6 @@ export default function LessonPlayerScreen() {
     transform: [{ scale: playScale.value }],
   }));
 
-  const embedUrl = useMemo(
-    () => getYoutubeEmbedUrl(params.link),
-    [params.link],
-  );
-
   async function launchVideo(resume: boolean = false) {
     setShowExternalVideoDialog(false);
     const startSec =
@@ -204,13 +199,7 @@ export default function LessonPlayerScreen() {
 
   async function handleShare() {
     try {
-      await Share.share({
-        title: params.title ?? "Lesson Preview",
-        message: `Check out this lesson: "${params.title ?? "Lesson"}" by ${
-          params.teacher ?? "Teacher"
-        } on DigiLearn!`,
-        url: params.link ?? embedUrl,
-      });
+      await shareResource("lesson", lessonId, params.title ?? "Lesson Preview");
     } catch {
       // Ignored
     }

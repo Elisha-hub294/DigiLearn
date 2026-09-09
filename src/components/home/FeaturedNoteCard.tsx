@@ -26,6 +26,7 @@ import {
   submitReport,
 } from "../../services/reportService";
 import { deleteResource } from "../../services/resourceDeletion";
+import { shareResource } from "../../services/shareLinks";
 import {
   getHiddenPageEntries,
   getMarkedReadItemIds,
@@ -803,7 +804,13 @@ export const FeaturedNoteItem = ({
                 color={isSaved ? themeColors.primary : themeColors.subtitle}
               />
             </Pressable>
-            <Action icon="share-2" label="Share" />
+            <Action
+              icon="share-2"
+              label="Share"
+              onPress={() => {
+                void shareResource("page", note.id, title);
+              }}
+            />
           </View>
         </View>
       </Animated.View>
@@ -847,12 +854,24 @@ export const FeaturedNoteItem = ({
   );
 };
 
-const Action = ({ icon }: { icon: any; label: string }) => {
+const Action = ({
+  icon,
+  onPress,
+}: {
+  icon: any;
+  label: string;
+  onPress?: () => void;
+}) => {
   const { colors: themeColors } = useTheme();
   return (
-    <View style={styles.actionItem}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Share"
+      onPress={onPress}
+      style={styles.actionItem}
+    >
       <Icon name={icon} size={20} color={themeColors.subtitle} />
-    </View>
+    </Pressable>
   );
 };
 

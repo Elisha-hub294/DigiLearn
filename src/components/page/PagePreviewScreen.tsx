@@ -3,7 +3,6 @@ import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
   ScrollView,
-  Share,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -19,6 +18,7 @@ import {
   getPageReadingProgress,
   ReadingProgress,
 } from "../../services/readingProgressService";
+import { shareResource } from "../../services/shareLinks";
 import {
   getHiddenPageEntries,
   getSavedItemsProfile,
@@ -522,11 +522,7 @@ export function PagePreviewScreen() {
 
   const handleShare = async () => {
     try {
-      await Share.share({
-        title: note.title || "Page Preview",
-        message: `Check out this study note: "${note.title || "Note"}" on DigiLearn!`,
-        url: note.document || note.preview,
-      });
+      await shareResource("page", id, note.title || "Study note");
     } catch (e) {
       console.error(e);
     }

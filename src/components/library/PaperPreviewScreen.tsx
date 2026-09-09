@@ -15,7 +15,6 @@ import {
   FlatList,
   Pressable,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -27,6 +26,7 @@ import { colors, radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
+import { shareResource } from "../../services/shareLinks";
 import {
   getSavedItemsProfile,
   PaperRevisionStatus,
@@ -383,15 +383,9 @@ export function PaperPreviewScreen() {
 
   const sharePaper = async () => {
     if (!paper) return;
-    const shareText = [paper.title, paper.subject, paperRef, paper.document]
-      .filter(Boolean)
-      .join(" • ");
 
     try {
-      await Share.share({
-        message: shareText,
-        title: paper.title,
-      });
+      await shareResource("paper", paper.id, paper.title);
     } catch (error) {
       console.warn("Share cancelled", error);
     }
