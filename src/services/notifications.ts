@@ -15,6 +15,7 @@ export type NotificationRecord = {
   type: NotificationType;
   publisherName: string;
   publisherAvatar: string;
+  publisherSchool?: string;
   message: string;
   resourceTitle?: string;
   previewImage?: string;
@@ -127,6 +128,11 @@ export function normalizeNotification(raw: unknown): NotificationRecord | null {
       candidate.publisherAvatar.trim()
         ? candidate.publisherAvatar
         : DIGILEARN_PUBLISHER_AVATAR,
+    publisherSchool:
+      typeof candidate.publisherSchool === "string" &&
+      candidate.publisherSchool.trim()
+        ? candidate.publisherSchool.trim()
+        : undefined,
     message:
       typeof candidate.message === "string" && candidate.message.trim()
         ? candidate.message

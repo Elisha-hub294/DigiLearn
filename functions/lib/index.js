@@ -513,12 +513,15 @@ exports.manageTeacherCommunity = (0, https_1.onCall)(async (request) => {
             const followerData = userSnapshot.data() ?? followerTeacherSnapshot.data() ?? {};
             const followerName = typeof followerData.name === "string" && followerData.name.trim()
                 ? followerData.name.trim()
-                : request.auth.token?.name ?? "A DigiLearn user";
+                : (request.auth.token?.name ?? "A DigiLearn user");
             const followerAvatar = typeof followerData.photoURL === "string"
                 ? followerData.photoURL
                 : typeof followerData.avatar === "string"
                     ? followerData.avatar
                     : "";
+            const followerSchool = typeof followerData.school === "string" && followerData.school.trim()
+                ? followerData.school.trim()
+                : undefined;
             await db.doc(`teachers/${teacherId}`).set({
                 notifications: firestore_1.FieldValue.arrayUnion({
                     id: `teacher-community-${request.auth.uid}-${Date.now()}`,
@@ -526,6 +529,7 @@ exports.manageTeacherCommunity = (0, https_1.onCall)(async (request) => {
                     notificationKind: "teacher-community",
                     publisherName: followerName,
                     publisherAvatar: followerAvatar,
+                    publisherSchool: followerSchool,
                     message: "Joined your community",
                     createdAt: firestore_1.Timestamp.now(),
                     read: false,

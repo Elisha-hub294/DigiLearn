@@ -27,6 +27,8 @@ export function NotificationCard({
   const adminNotification = notification.storage === "admin";
   const teacherApplicationNotification =
     adminNotification && notification.adminKind === "teacher-application";
+  const teacherCommunityNotification =
+    notification.notificationKind === "teacher-community";
   const resourceTitle = notification.resourceTitle?.trim();
   const previewImage = notification.previewImage?.trim();
   const [failedPreviewUrl, setFailedPreviewUrl] = useState<string | null>(null);
@@ -112,6 +114,14 @@ export function NotificationCard({
               {formatRelativeNotificationTime(notification.createdAt)}
             </Text>
           </Text>
+          {teacherCommunityNotification && notification.publisherSchool ? (
+            <Text
+              style={[styles.school, { color: themeColors.subtitle }]}
+              numberOfLines={1}
+            >
+              {notification.publisherSchool}
+            </Text>
+          ) : null}
           <Text
             style={[styles.message, { color: themeColors.text }]}
             numberOfLines={1}
@@ -287,6 +297,11 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     fontWeight: "600",
     color: "#1F2937",
+  },
+  school: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 2,
   },
   resourceTitle: {
     maxWidth: "86%",

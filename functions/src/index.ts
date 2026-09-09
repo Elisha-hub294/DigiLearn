@@ -687,6 +687,10 @@ export const manageTeacherCommunity = onCall(async (request) => {
           : typeof followerData.avatar === "string"
             ? followerData.avatar
             : "";
+      const followerSchool =
+        typeof followerData.school === "string" && followerData.school.trim()
+          ? followerData.school.trim()
+          : undefined;
 
       await db.doc(`teachers/${teacherId}`).set(
         {
@@ -696,6 +700,7 @@ export const manageTeacherCommunity = onCall(async (request) => {
             notificationKind: "teacher-community",
             publisherName: followerName,
             publisherAvatar: followerAvatar,
+            publisherSchool: followerSchool,
             message: "Joined your community",
             createdAt: Timestamp.now(),
             read: false,
