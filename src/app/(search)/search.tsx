@@ -43,6 +43,8 @@ const CATEGORIES: SearchCategory[] = [
   "Past Papers",
 ];
 
+const POPULAR_SUBJECTS = ["Mathematics", "Biology", "Physics", "English"];
+
 export default function SearchScreen() {
   const { colors } = useTheme();
   const router = useRouter();
@@ -94,7 +96,7 @@ export default function SearchScreen() {
         cancelAnimationFrame(frame);
         // Do not clear the search query on blur; it will be cleared only when back button is pressed.
       };
-    }, [setQuery]),
+    }, []),
   );
 
   // Intercept the Android system/gesture back button so it runs the same
@@ -408,6 +410,25 @@ export default function SearchScreen() {
             </Animated.View>
           )}
 
+          {!hideChips && !isActivelySearching ? (
+            <View style={styles.popularSection}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Popular subjects
+              </Text>
+              <View style={styles.chipsWrap}>
+                {POPULAR_SUBJECTS.map((subject) => (
+                  <RecentSearchChip
+                    key={subject}
+                    term={subject}
+                    onSelect={handleChipSelect}
+                    onRemove={() => undefined}
+                    hideRemove
+                  />
+                ))}
+              </View>
+            </View>
+          ) : null}
+
           {/* Results / Skeleton / Empty State */}
           {loading ? (
             <SearchSkeleton />
@@ -483,6 +504,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   recentSection: {
+    marginBottom: 20,
+  },
+  popularSection: {
     marginBottom: 20,
   },
   sectionTitle: {

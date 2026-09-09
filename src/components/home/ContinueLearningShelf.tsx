@@ -19,6 +19,7 @@ import {
   getRecentReadingProgressList,
   type ReadingProgress,
 } from "../../services/readingProgressService";
+import { ActionDialog } from "../ui/ActionDialog";
 import { SectionHeader } from "../ui/SectionHeader";
 
 const MAX_CONTINUE_ITEMS = 5;
@@ -28,6 +29,7 @@ export function ContinueLearningShelf() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [recents, setRecents] = useState<ReadingProgress[]>([]);
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
   const loadRecents = useCallback(() => {
     void getRecentReadingProgressList().then((items) => {
@@ -38,6 +40,7 @@ export function ContinueLearningShelf() {
   const clearRecents = useCallback(async () => {
     const itemsToClear = recents;
     setRecents([]);
+    setShowClearDialog(false);
     await Promise.all(
       itemsToClear.map((item) => clearPageReadingProgress(item.pageId)),
     );
@@ -60,7 +63,7 @@ export function ContinueLearningShelf() {
         title="Continue Learning"
         actionLabel="Clear"
         onSeeAll={() => {
-          void clearRecents();
+          setShowClearDialog(true);
         }}
       />
 
@@ -150,6 +153,29 @@ export function ContinueLearningShelf() {
                   {item.documentUri ? "DigiLearn Page" : "Page document"}
                 </Text>
 
+                {item.totalPages && item.totalPages > 0 ? (
+                  <View
+                    accessibilityLabel={`${Math.min(
+                      100,
+                      Math.round((item.lastPage / item.totalPages) * 100),
+                    )}% complete`}
+                    style={styles.progressTrack}
+                  >
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          width: `${Math.min(
+                            100,
+                            Math.round((item.lastPage / item.totalPages) * 100),
+                          )}%`,
+                          backgroundColor: colors.primary,
+                        },
+                      ]}
+                    />
+                  </View>
+                ) : null}
+
                 <View
                   style={[
                     styles.resumeButton,
@@ -168,6 +194,16 @@ export function ContinueLearningShelf() {
             </Pressable>
           );
         }}
+      />
+      <ActionDialog
+        visible={showClearDialog}
+        title="Clear continue learning?"
+        message="This removes your saved reading positions from this device. Your bookmarks and downloaded files will stay untouched."
+        primaryText="Clear all"
+        secondaryText="Cancel"
+        onPrimary={() => void clearRecents()}
+        onSecondary={() => setShowClearDialog(false)}
+        onClose={() => setShowClearDialog(false)}
       />
     </Animated.View>
   );
@@ -253,6 +289,18 @@ const styles = StyleSheet.create({
   teacher: {
     fontSize: 12,
     marginBottom: 10,
+  },
+  progressTrack: {
+    height: 5,
+    width: "100%",
+    borderRadius: 3,
+    backgroundColor: "#E5E7EB",
+    overflow: "hidden",
+    marginBottom: 10,
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 3,
   },
   resumeButton: {
     flexDirection: "row",

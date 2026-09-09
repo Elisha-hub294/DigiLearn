@@ -1,56 +1,47 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from "react-native-reanimated";
-const A = Animated.createAnimatedComponent(Pressable);
 export function PublishButton({
   onPress,
   disabled = false,
+  disabledReason,
 }: {
   onPress: () => void;
   disabled?: boolean;
+  disabledReason?: string;
 }) {
-  const scale = useSharedValue(1);
-  const style = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
   return (
-    <A
-      accessibilityLabel="Publish"
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={disabled ? undefined : onPress}
-      onPressIn={() => {
-        scale.value = withSpring(0.97);
-      }}
-      onPressOut={() => {
-        scale.value = withSpring(1);
-      }}
-      style={[s.button, disabled && s.disabledButton, style]}
-    >
-      <LinearGradient
-        colors={disabled ? ["#9CA3AF", "#6B7280"] : ["#3F7BEB", "#E500C7"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={s.gradient}
+    <View>
+      <Pressable
+        accessibilityLabel="Publish"
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={disabled ? undefined : onPress}
+        style={[s.button, disabled && s.disabledButton]}
       >
-        <View style={s.content}>
-          <View style={s.iconCircle}>
-            <Feather name="plus" size={16} color="#3F7BEB" />
+        <LinearGradient
+          colors={disabled ? ["#9CA3AF", "#6B7280"] : ["#3F7BEB", "#E500C7"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={s.gradient}
+        >
+          <View style={s.content}>
+            <View style={s.iconCircle}>
+              <Feather name="plus" size={16} color="#3F7BEB" />
+            </View>
+            <View>
+              <Text style={s.eyebrow}>ADMIN STUDIO</Text>
+              <Text style={s.text}>Publish a learning update</Text>
+            </View>
+            <Feather name="arrow-up-right" size={19} color="#FFFFFF" />
           </View>
-          <View>
-            <Text style={s.eyebrow}>ADMIN STUDIO</Text>
-            <Text style={s.text}>Publish a learning update</Text>
-          </View>
-          <Feather name="arrow-up-right" size={19} color="#FFFFFF" />
-        </View>
-      </LinearGradient>
-    </A>
+        </LinearGradient>
+      </Pressable>
+      {disabled && disabledReason ? (
+        <Text style={s.disabledReason}>{disabledReason}</Text>
+      ) : null}
+    </View>
   );
 }
 const s = StyleSheet.create({
@@ -91,4 +82,10 @@ const s = StyleSheet.create({
     letterSpacing: 1.4,
   },
   text: { color: "#fff", fontSize: 16, fontWeight: "700", marginTop: 2 },
+  disabledReason: {
+    color: "#6B7280",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 8,
+  },
 });

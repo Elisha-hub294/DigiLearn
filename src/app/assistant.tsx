@@ -1,3 +1,4 @@
+import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 import {
   useFocusEffect,
@@ -44,6 +45,25 @@ import {
   type ConversationRecord,
 } from "../services/assistantChatService";
 
+const INTENT_GROUPS = [
+  {
+    title: "Understand a topic",
+    prompts: ["Explain this topic simply", "Give me a real-world example"],
+  },
+  {
+    title: "Practice questions",
+    prompts: ["Create 5 practice questions", "Quiz me one question at a time"],
+  },
+  {
+    title: "Exam revision",
+    prompts: ["Help me revise for an exam", "Summarize the key exam points"],
+  },
+  {
+    title: "Summarize notes",
+    prompts: ["Summarize these notes", "Turn this into flashcards"],
+  },
+] as const;
+
 function createMessageId(role: ChatMessage["role"]) {
   return `${Date.now()}-${role}`;
 }
@@ -60,7 +80,6 @@ export default function AssistantScreen() {
   const { user, profile } = useProfile();
   const params = useLocalSearchParams<{ initialPrompt?: string }>();
   const [isLoading, setIsLoading] = useState(true);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [message, setMessage] = useState(
     typeof params.initialPrompt === "string" ? params.initialPrompt : "",
   );
@@ -99,7 +118,6 @@ export default function AssistantScreen() {
         }
 
         setAssistantAvatar(content.avatar);
-        setSuggestions(content.suggestions ?? content.messages.slice(0, 6));
         const history = await loadConversationHistory();
         if (active) {
           setConversations(history);
@@ -111,13 +129,6 @@ export default function AssistantScreen() {
           setQuota(quotaStatus);
         }
       } catch {
-        if (active) {
-          setSuggestions([
-            "Explain Osmosis",
-            "Revise Quadratic Equations",
-            "Help me prepare for UNEB",
-          ]);
-        }
       } finally {
         if (active) {
           setIsLoading(false);
@@ -362,13 +373,27 @@ export default function AssistantScreen() {
                     <Text style={styles.greeting}>
                       How can I help you today?
                     </Text>
-                    <View style={styles.suggestionWrap}>
-                      {suggestions.map((suggestion) => (
-                        <PromptChip
-                          key={suggestion}
-                          label={suggestion}
-                          onPress={() => handlePromptChipPress(suggestion)}
-                        />
+                    <View style={styles.intentList}>
+                      {INTENT_GROUPS.map((group) => (
+                        <View key={group.title} style={styles.intentGroup}>
+                          <Text
+                            style={[
+                              styles.intentTitle,
+                              { color: themeColors.subtitle },
+                            ]}
+                          >
+                            {group.title}
+                          </Text>
+                          <View style={styles.suggestionWrap}>
+                            {group.prompts.map((prompt) => (
+                              <PromptChip
+                                key={prompt}
+                                label={prompt}
+                                onPress={() => handlePromptChipPress(prompt)}
+                              />
+                            ))}
+                          </View>
+                        </View>
                       ))}
                     </View>
                   </View>
@@ -388,13 +413,94 @@ export default function AssistantScreen() {
                     contentContainerStyle={styles.messagesContent}
                     showsVerticalScrollIndicator={false}
                   >
-                    {messages.map((item) => (
-                      <ChatBubble
-                        key={item.id}
-                        role={item.role}
-                        message={item.content}
-                        avatar={assistantAvatar}
-                      />
+                    {messages.map((item, index) => (
+                      <View key={item.id}>
+                        <ChatBubble
+                          role={item.role}
+                          message={item.content}
+                          avatar={assistantAvatar}
+                        />
+                        {item.role === "assistant" &&
+                        index === messages.length - 1 &&
+                        !isTyping ? (
+                          <View style={styles.answerActions}>
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel="Explain answer more simply"
+                              onPress={() =>
+                                void handleSend(
+                                  "Explain your last answer more simply",
+                                )
+                              }
+                              style={styles.answerAction}
+                            >
+                              <Text
+                                style={[
+                                  styles.answerActionText,
+                                  { color: themeColors.primary },
+                                ]}
+                              >
+                                Explain simpler
+                              </Text>
+                            </Pressable>
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel="Create a quiz from this answer"
+                              onPress={() =>
+                                void handleSend(
+                                  "Create a short quiz from your last answer",
+                                )
+                              }
+                              style={styles.answerAction}
+                            >
+                              <Text
+                                style={[
+                                  styles.answerActionText,
+                                  { color: themeColors.primary },
+                                ]}
+                              >
+                                Create quiz
+                              </Text>
+                            </Pressable>
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel="Copy answer"
+                              onPress={() =>
+                                void Clipboard.setStringAsync(item.content)
+                              }
+                              style={styles.answerAction}
+                            >
+                              <Text
+                                style={[
+                                  styles.answerActionText,
+                                  { color: themeColors.primary },
+                                ]}
+                              >
+                                Save answer
+                              </Text>
+                            </Pressable>
+                            <Pressable
+                              accessibilityRole="button"
+                              accessibilityLabel="Ask another question about this resource"
+                              onPress={() =>
+                                void handleSend(
+                                  "Ask another question about the current study resource",
+                                )
+                              }
+                              style={styles.answerAction}
+                            >
+                              <Text
+                                style={[
+                                  styles.answerActionText,
+                                  { color: themeColors.primary },
+                                ]}
+                              >
+                                Ask about this page
+                              </Text>
+                            </Pressable>
+                          </View>
+                        ) : null}
+                      </View>
                     ))}
                     {isTyping ? (
                       <View style={styles.typingRow}>
@@ -434,6 +540,12 @@ export default function AssistantScreen() {
             </>
           )}
 
+          {quota && quota.remaining <= 2 ? (
+            <Text style={[styles.quotaNotice, { color: themeColors.subtitle }]}>
+              You have {quota.remaining} AI{" "}
+              {quota.remaining === 1 ? "question" : "questions"} left today.
+            </Text>
+          ) : null}
           <MessageComposer
             value={message}
             onChangeText={setMessage}
@@ -535,6 +647,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: spacing.md,
   },
+  intentList: {
+    width: "100%",
+    marginTop: spacing.md,
+  },
+  intentGroup: {
+    marginBottom: spacing.sm,
+  },
+  intentTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    marginBottom: 6,
+    textAlign: "left",
+  },
   chatArea: {
     flex: 1,
     minHeight: 240,
@@ -571,6 +696,31 @@ const styles = StyleSheet.create({
   conversationSection: {
     marginTop: spacing.md,
     width: "100%",
+  },
+  answerActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginLeft: 40,
+    marginTop: -6,
+    marginBottom: spacing.md,
+  },
+  answerAction: {
+    minHeight: 36,
+    justifyContent: "center",
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 18,
+  },
+  answerActionText: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  quotaNotice: {
+    textAlign: "center",
+    fontSize: 12,
+    marginBottom: 4,
   },
   errorCard: {
     backgroundColor: "#FEF2F2",

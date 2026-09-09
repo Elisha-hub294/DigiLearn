@@ -11,12 +11,14 @@ type RecentSearchChipProps = {
   term: string;
   onSelect: (term: string) => void;
   onRemove: (term: string) => void;
+  hideRemove?: boolean;
 };
 
 export function RecentSearchChip({
   term,
   onSelect,
   onRemove,
+  hideRemove = false,
 }: RecentSearchChipProps) {
   const { colors } = useTheme();
   const opacity = useSharedValue(1);
@@ -61,15 +63,17 @@ export function RecentSearchChip({
         </Text>
       </Pressable>
 
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Remove ${term} from recent searches`}
-        hitSlop={{ top: 10, bottom: 10, left: 6, right: 10 }}
-        onPress={handleRemove}
-        style={styles.closeButton}
-      >
-        <Feather name="x" size={14} color={colors.subtitle} />
-      </Pressable>
+      {!hideRemove ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Remove ${term} from recent searches`}
+          hitSlop={{ top: 10, bottom: 10, left: 6, right: 10 }}
+          onPress={handleRemove}
+          style={styles.closeButton}
+        >
+          <Feather name="x" size={14} color={colors.subtitle} />
+        </Pressable>
+      ) : null}
     </Animated.View>
   );
 }

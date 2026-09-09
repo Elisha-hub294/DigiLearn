@@ -479,6 +479,38 @@ export default function LibraryScreen() {
                 );
               })}
             </ScrollView>
+            {selectedCategory !== "all" ? (
+              <View style={styles.activeFilterRow}>
+                <Text
+                  style={[
+                    styles.activeFilterText,
+                    { color: themeColors.subtitle },
+                  ]}
+                >
+                  Filter:{" "}
+                  {categories.find((item) => item.key === selectedCategory)
+                    ?.label ?? "Selected"}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear library filter"
+                  onPress={() => {
+                    setSelectedCategory("all");
+                    setVisibleCount(INITIAL_BATCH_SIZE);
+                  }}
+                  style={styles.clearFilterButton}
+                >
+                  <Text
+                    style={[
+                      styles.clearFilterText,
+                      { color: themeColors.primary },
+                    ]}
+                  >
+                    Clear filters
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
           </Animated.View>
 
           {/* Dynamic Feed / Category View */}
@@ -720,6 +752,20 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   filterContent: { gap: spacing.sm, paddingRight: spacing.lg },
+  activeFilterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.xs,
+  },
+  activeFilterText: { fontSize: 12, fontWeight: "600" },
+  clearFilterButton: {
+    minHeight: 36,
+    justifyContent: "center",
+    paddingHorizontal: spacing.xs,
+  },
+  clearFilterText: { fontSize: 12, fontWeight: "700" },
   categoryChip: {
     minHeight: 36,
     flexDirection: "row",

@@ -127,6 +127,27 @@ export default function ProfileScreen() {
         ) : profile ? (
           <Animated.View entering={FadeIn.duration(220)} style={s.sections}>
             <ProfileHeader profile={profile} photoURL={user.photoURL} />
+            <View
+              style={[
+                s.roleStatus,
+                {
+                  backgroundColor: themeColors.lightBackground,
+                  borderColor: themeColors.border,
+                },
+              ]}
+              accessibilityLabel={`Account role: ${profile.type}`}
+            >
+              <Text style={[s.roleLabel, { color: themeColors.subtitle }]}>ACCOUNT ROLE</Text>
+              <Text style={[s.roleValue, { color: themeColors.text }]}>{profile.type === "admin" ? "Administrator" : profile.type === "teacher" ? "Teacher" : "Student"}</Text>
+              {profile.type === "teacher" && profile.teacherApprovalStatus ? (
+                <Text style={[s.roleStatusText, { color: themeColors.primary }]}>{profile.teacherApprovalStatus === "approved"
+                    ? "Publishing enabled"
+                    : profile.teacherApprovalStatus === "pending"
+                      ? "Application pending review"
+                      : "Application needs updates"}</Text>
+                </Text>
+              ) : null}
+            </View>
             {profile.teacherApprovalStatus === "pending" && (
               <View
                 style={[
@@ -190,6 +211,14 @@ export default function ProfileScreen() {
                 disabled={
                   profile.type === "teacher" &&
                   profile.teacherApprovalStatus !== "approved"
+                }
+                disabledReason={
+                  profile.type === "teacher" &&
+                  profile.teacherApprovalStatus !== "approved"
+                    ? profile.teacherApprovalStatus === "rejected"
+                      ? "Update your application before publishing."
+                      : "Publishing unlocks after admin approval."
+                    : undefined
                 }
                 onPress={() => router.push("/publish")}
               />
@@ -270,6 +299,15 @@ const s = StyleSheet.create({
   resubmitText: { color: colors.white, fontWeight: "700", fontSize: 13 },
   guestContent: { flexGrow: 1, justifyContent: "center" },
   sections: { gap: 20 },
+  roleStatus: {
+    marginHorizontal: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  roleLabel: { fontSize: 10, fontWeight: "800", letterSpacing: 1.1 },
+  roleValue: { fontSize: 16, fontWeight: "700", marginTop: 4 },
+  roleStatusText: { fontSize: 12, fontWeight: "600", marginTop: 4 },
   skeleton: { gap: 20 },
   skeletonHero: { height: 280, borderRadius: 24 },
   skeletonIdentity: { flexDirection: "row", alignItems: "center", gap: 14 },
