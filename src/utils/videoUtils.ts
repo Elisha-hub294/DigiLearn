@@ -10,7 +10,10 @@ type FirestoreTimestampLike = {
 
 /** Converts Firestore timestamps to text that can safely be rendered in React. */
 export function formatVideoUploadedAt(value: unknown): string {
-  if (typeof value === "string") return value;
+  if (typeof value === "string") {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
+  }
 
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     return value.toLocaleDateString();
@@ -394,7 +397,12 @@ export async function fetchYoutubeVideoMeta(
   const fallbackThumb = "https://img.youtube.com/vi/unknown/hqdefault.jpg";
   const videoId = extractYoutubeId(videoUrl);
   if (!videoId) {
-    return { title: "", description: "", duration: "", thumbnail: fallbackThumb };
+    return {
+      title: "",
+      description: "",
+      duration: "",
+      thumbnail: fallbackThumb,
+    };
   }
 
   const defaultThumbnail = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
@@ -518,4 +526,3 @@ export async function fetchYoutubeVideoMeta(
     thumbnail: thumbnail || defaultThumbnail,
   };
 }
-

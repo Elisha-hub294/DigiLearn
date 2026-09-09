@@ -10,7 +10,12 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from "firebase/storage";
 import { app, db, storage } from "../../firebaseConfig";
 
 export type AccountType = "student" | "teacher" | "admin" | "";
@@ -281,6 +286,12 @@ async function saveSocialProfilePicture(
     { merge: true },
   );
 
+  await deletePreviousProfilePicture(
+    user.photoURL,
+    user.uid,
+    imageRef.fullPath,
+  );
+
   return downloadUrl;
 }
 
@@ -293,6 +304,26 @@ const PROFILE_PICTURE_TYPES = new Set([
 
 const createProfilePictureName = () =>
   `profile-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+async function deletePreviousProfilePicture(
+  previousUrl: string | null | undefined,
+  userId: string,
+  replacementPath: string,
+) {
+  if (!previousUrl?.trim()) return;
+
+  try {
+    const previousRef = ref(storage, previousUrl.trim());
+    const profilePicturePrefix = `profile-pics/${userId}/`;
+
+    if (
+      previousRef.fullPath.startsWith(profilePicturePrefix) &&
+      previousRef.fullPath !== replacementPath
+    ) {
+      await deleteObject(previousRef);
+    }
+  } catch {}
+}
 
 export async function saveProfilePicture(
   user: User,
@@ -331,6 +362,12 @@ export async function saveProfilePicture(
     doc(db, accountType === "teacher" ? "teachers" : "users", user.uid),
     { photoURL: downloadUrl },
     { merge: true },
+  );
+
+  await deletePreviousProfilePicture(
+    user.photoURL,
+    user.uid,
+    imageRef.fullPath,
   );
 
   return downloadUrl;
