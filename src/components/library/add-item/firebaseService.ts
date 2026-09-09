@@ -309,7 +309,8 @@ export const addPastPaper = async (
 };
 
 /**
- * Sends notifications to all users about a new library item
+ * Sends a new library item notification to its intended recipients.
+ * Teacher announcements go only to that teacher's community followers.
  */
 export const notifyUsersAboutNewItem = async (
   itemType: "book" | "page" | "lesson" | "announcement" | "paper",
@@ -348,6 +349,9 @@ export const notifyUsersAboutNewItem = async (
         resourceTitle,
         previewImage,
       ),
+      itemType === "announcement" && typeof item?.owner === "string"
+        ? item.owner
+        : undefined,
     );
   } catch (error) {
     console.error("Failed to send notifications:", error);

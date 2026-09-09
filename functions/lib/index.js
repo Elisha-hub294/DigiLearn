@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendTeacherNotifications = exports.sendUserNotifications = exports.sendLibraryNotification = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = exports.initializeUserProfile = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendTeacherNotifications = exports.sendUserNotifications = exports.manageTeacherCommunity = exports.sendLibraryNotification = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = exports.initializeUserProfile = void 0;
 const genai_1 = require("@google/genai");
 const app_1 = require("firebase-admin/app");
 const auth_1 = require("firebase-admin/auth");
@@ -446,27 +446,70 @@ exports.sendLibraryNotification = (0, https_1.onCall)(async (request) => {
     if (!input || typeof input !== "object" || Array.isArray(input)) {
         throw new https_1.HttpsError("invalid-argument", "Invalid notification.");
     }
+    const inputData = input;
+    const publisherId = typeof inputData.publisherId === "string" ? inputData.publisherId : "";
+    if (publisherId &&
+        inputData.type === "announcement" &&
+        publisherId !== request.auth.uid) {
+        throw new https_1.HttpsError("permission-denied", "You can only notify followers of your own teacher account.");
+    }
     const notification = {
-        ...input,
+        ...inputData,
+        publisherName: publisherId && inputData.type === "announcement"
+            ? (teacherData.name ?? inputData.publisherName)
+            : inputData.publisherName,
+        publisherAvatar: publisherId && inputData.type === "announcement"
+            ? (teacherData.avatar ?? inputData.publisherAvatar)
+            : inputData.publisherAvatar,
         createdAt: firestore_1.Timestamp.now(),
         read: false,
     };
-    const [usersSnapshot, teachersSnapshot] = await Promise.all([
-        db.collection("users").get(),
-        db.collection("teachers").get(),
-    ]);
-    const recipientDocs = [...usersSnapshot.docs, ...teachersSnapshot.docs];
+    const recipientDocs = publisherId && inputData.type === "announcement"
+        ? (await db.collection(`teachers/${publisherId}/followers`).get()).docs.flatMap((follower) => [
+            db.collection("users").doc(follower.id),
+            db.collection("teachers").doc(follower.id),
+        ])
+        : [
+            ...(await db.collection("users").get()).docs.map((document) => document.ref),
+            ...(await db.collection("teachers").get()).docs.map((document) => document.ref),
+        ];
     const batchSize = 450;
     for (let start = 0; start < recipientDocs.length; start += batchSize) {
         const batch = db.batch();
-        recipientDocs.slice(start, start + batchSize).forEach((userDoc) => {
-            batch.update(userDoc.ref, {
+        recipientDocs.slice(start, start + batchSize).forEach((userRef) => {
+            batch.set(userRef, {
                 notifications: firestore_1.FieldValue.arrayUnion(notification),
-            });
+            }, { merge: true });
         });
         await batch.commit();
     }
     return { sent: recipientDocs.length };
+});
+exports.manageTeacherCommunity = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
+    }
+    const teacherId = request.data?.teacherId;
+    const action = request.data?.action;
+    if (typeof teacherId !== "string" || !teacherId.trim()) {
+        throw new https_1.HttpsError("invalid-argument", "Teacher id is required.");
+    }
+    if (action !== "status" && action !== "join" && action !== "leave") {
+        throw new https_1.HttpsError("invalid-argument", "Invalid community action.");
+    }
+    const teacherSnapshot = await db.doc(`teachers/${teacherId}`).get();
+    if (!teacherSnapshot.exists || teacherSnapshot.data()?.type !== "teacher") {
+        throw new https_1.HttpsError("not-found", "Teacher not found.");
+    }
+    const followerRef = db.doc(`teachers/${teacherId}/followers/${request.auth.uid}`);
+    if (action === "join") {
+        await followerRef.set({ joinedAt: firestore_1.Timestamp.now() });
+    }
+    else if (action === "leave") {
+        await followerRef.delete();
+    }
+    const followerSnapshot = await followerRef.get();
+    return { joined: followerSnapshot.exists };
 });
 function getNewNotifications(before, after) {
     const previousIds = new Set((before ?? []).map((item) => item.id));

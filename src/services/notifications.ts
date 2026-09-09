@@ -329,9 +329,12 @@ export async function appendNotificationForUser(
 
 export async function appendNotificationToAllUsers(
   notification: NotificationRecord,
+  publisherId?: string,
 ) {
   const sendNotification = httpsCallable(functions, "sendLibraryNotification");
-  await sendNotification({ notification: stripUndefinedFields(notification) });
+  await sendNotification({
+    notification: stripUndefinedFields({ ...notification, publisherId }),
+  });
 }
 
 export async function markNotificationAsRead(

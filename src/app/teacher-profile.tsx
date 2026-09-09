@@ -30,6 +30,10 @@ import { colors, radius, spacing } from "../constants/theme";
 import { getThemeAsset } from "../constants/themeAssets";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
+import {
+  getTeacherCommunityStatus,
+  setTeacherCommunityMembership,
+} from "../services/teacherCommunity";
 
 type TeacherRecord = {
   id: string;
@@ -173,6 +177,8 @@ export default function TeacherProfileScreen() {
     null,
   );
   const [isCommunityDialogVisible, setCommunityDialogVisible] = useState(false);
+  const [isCommunityMember, setCommunityMember] = useState(false);
+  const [isCommunityActionPending, setCommunityActionPending] = useState(false);
   const [pulseAnim] = useState(() => new RNAnimated.Value(0.45));
   const fallbackAvatar = getThemeAsset("userDefault", isDark);
 
@@ -459,8 +465,18 @@ export default function TeacherProfileScreen() {
     setLoading(true);
     const loadedTeacher = await fetchTeacherProfile();
     await fetchTeacherResources(loadedTeacher?.id || params.id || "");
+    if (loadedTeacher?.id && user?.uid && loadedTeacher.id !== user.uid) {
+      try {
+        setCommunityMember(await getTeacherCommunityStatus(loadedTeacher.id));
+      } catch (err) {
+        console.error("Failed to load teacher community status:", err);
+        setCommunityMember(false);
+      }
+    } else {
+      setCommunityMember(false);
+    }
     setLoading(false);
-  }, [fetchTeacherProfile, fetchTeacherResources, params.id]);
+  }, [fetchTeacherProfile, fetchTeacherResources, params.id, user?.uid]);
 
   useEffect(() => {
     const runLoad = async () => {
@@ -583,6 +599,33 @@ export default function TeacherProfileScreen() {
   const openCommunityDialog = useCallback(() => {
     setCommunityDialogVisible(true);
   }, []);
+
+  const toggleCommunityMembership = useCallback(async () => {
+    if (!teacher) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    setCommunityActionPending(true);
+    try {
+      const joined = await setTeacherCommunityMembership(
+        teacher.id,
+        !isCommunityMember,
+      );
+      setCommunityMember(joined);
+    } catch (err) {
+      console.error("Failed to update teacher community membership:", err);
+      setContactDialog({
+        title: "Could not update community membership",
+        message: "Please try again in a moment.",
+        primaryText: "Close",
+        onPrimary: () => undefined,
+      });
+    } finally {
+      setCommunityActionPending(false);
+    }
+  }, [isCommunityMember, router, teacher, user]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -755,6 +798,45 @@ export default function TeacherProfileScreen() {
               <Text style={styles.statLabel}>Updates</Text>
             </View>
           </View>
+
+          {!isOwnProfile && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={
+                isCommunityMember
+                  ? "Leave teacher community"
+                  : "Join teacher community"
+              }
+              accessibilityState={{ disabled: isCommunityActionPending }}
+              disabled={isCommunityActionPending}
+              style={[
+                styles.communityButton,
+                {
+                  backgroundColor: isCommunityMember ? "#E5E7EB" : accentColor,
+                },
+              ]}
+              onPress={toggleCommunityMembership}
+            >
+              <Icon
+                name={isCommunityMember ? "check" : "users"}
+                size={17}
+                color={isCommunityMember ? accentColor : colors.white}
+                style={{ marginRight: 7 }}
+              />
+              <Text
+                style={[
+                  styles.communityButtonText,
+                  { color: isCommunityMember ? accentColor : colors.white },
+                ]}
+              >
+                {isCommunityActionPending
+                  ? "Updating..."
+                  : isCommunityMember
+                    ? "Joined Teacher Community"
+                    : "Join Teacher Community"}
+              </Text>
+            </Pressable>
+          )}
 
           <View style={[styles.contactRow, { gap: actionRowGap }]}>
             {viewerRole === "own" ? (
@@ -1004,6 +1086,9 @@ export default function TeacherProfileScreen() {
       viewerRole,
       profile?.teacherApprovalStatus,
       openCommunityDialog,
+      isCommunityActionPending,
+      isCommunityMember,
+      toggleCommunityMembership,
     ],
   );
 
@@ -1506,6 +1591,19 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 15,
     fontWeight: "600",
+  },
+  communityButton: {
+    minHeight: 48,
+    marginTop: spacing.md,
+    borderRadius: 10,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+  },
+  communityButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
   },
   contactSecondaryButton: {
     flex: 1,

@@ -583,29 +583,97 @@ export const sendLibraryNotification = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "Invalid notification.");
   }
 
+  const inputData = input as Record<string, unknown>;
+  const publisherId =
+    typeof inputData.publisherId === "string" ? inputData.publisherId : "";
+  if (
+    publisherId &&
+    inputData.type === "announcement" &&
+    publisherId !== request.auth.uid
+  ) {
+    throw new HttpsError(
+      "permission-denied",
+      "You can only notify followers of your own teacher account.",
+    );
+  }
   const notification = {
-    ...(input as Record<string, unknown>),
+    ...inputData,
+    publisherName:
+      publisherId && inputData.type === "announcement"
+        ? (teacherData.name ?? inputData.publisherName)
+        : inputData.publisherName,
+    publisherAvatar:
+      publisherId && inputData.type === "announcement"
+        ? (teacherData.avatar ?? inputData.publisherAvatar)
+        : inputData.publisherAvatar,
     createdAt: Timestamp.now(),
     read: false,
   };
-  const [usersSnapshot, teachersSnapshot] = await Promise.all([
-    db.collection("users").get(),
-    db.collection("teachers").get(),
-  ]);
-  const recipientDocs = [...usersSnapshot.docs, ...teachersSnapshot.docs];
+  const recipientDocs =
+    publisherId && inputData.type === "announcement"
+      ? (
+          await db.collection(`teachers/${publisherId}/followers`).get()
+        ).docs.flatMap((follower) => [
+          db.collection("users").doc(follower.id),
+          db.collection("teachers").doc(follower.id),
+        ])
+      : [
+          ...(await db.collection("users").get()).docs.map(
+            (document) => document.ref,
+          ),
+          ...(await db.collection("teachers").get()).docs.map(
+            (document) => document.ref,
+          ),
+        ];
 
   const batchSize = 450;
   for (let start = 0; start < recipientDocs.length; start += batchSize) {
     const batch = db.batch();
-    recipientDocs.slice(start, start + batchSize).forEach((userDoc) => {
-      batch.update(userDoc.ref, {
-        notifications: FieldValue.arrayUnion(notification),
-      });
+    recipientDocs.slice(start, start + batchSize).forEach((userRef) => {
+      batch.set(
+        userRef,
+        {
+          notifications: FieldValue.arrayUnion(notification),
+        },
+        { merge: true },
+      );
     });
     await batch.commit();
   }
 
   return { sent: recipientDocs.length };
+});
+
+export const manageTeacherCommunity = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+
+  const teacherId = request.data?.teacherId;
+  const action = request.data?.action;
+  if (typeof teacherId !== "string" || !teacherId.trim()) {
+    throw new HttpsError("invalid-argument", "Teacher id is required.");
+  }
+  if (action !== "status" && action !== "join" && action !== "leave") {
+    throw new HttpsError("invalid-argument", "Invalid community action.");
+  }
+
+  const teacherSnapshot = await db.doc(`teachers/${teacherId}`).get();
+  if (!teacherSnapshot.exists || teacherSnapshot.data()?.type !== "teacher") {
+    throw new HttpsError("not-found", "Teacher not found.");
+  }
+
+  const followerRef = db.doc(
+    `teachers/${teacherId}/followers/${request.auth.uid}`,
+  );
+  if (action === "join") {
+    await followerRef.set({ joinedAt: Timestamp.now() });
+  } else if (action === "leave") {
+    await followerRef.delete();
+  }
+
+  const followerSnapshot = await followerRef.get();
+  return { joined: followerSnapshot.exists };
 });
 
 function getNewNotifications(
