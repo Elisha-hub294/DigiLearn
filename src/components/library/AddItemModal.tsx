@@ -68,7 +68,6 @@ import {
 } from "./add-item/pdfService";
 import {
   cleanFileNameForTitle,
-  getTitleDocId,
   normalizeText,
   resolveUploadError,
   sanitizeFileName,
@@ -942,12 +941,12 @@ export function AddItemModal({
 
         if (selectedImage) {
           const blob = await uriToBlob(selectedImage.uri);
-          const itemId = `${getTitleDocId(sanitizedTitle)}-${Date.now()}-${Math.random()
+          const bookCoverName = `${sanitizeFileName(sanitizedTitle) || "untitled-book"}-${Date.now()}-${Math.random()
             .toString(36)
             .slice(2, 9)}`;
           const ext = selectedImage.mimeType?.split("/")[1] || "jpg";
           coverUrl = await uploadAssetToStorage(
-            `book-covers/${userId}/${itemId}.${ext}`,
+            `book-covers/${userId}/${bookCoverName}.${ext}`,
             blob,
             "",
             updatePreviewProgress,
