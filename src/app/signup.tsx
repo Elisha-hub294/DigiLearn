@@ -27,6 +27,7 @@ import {
 import {
   getUserOnboardingState,
   initializeUserProfile,
+  saveFacebookProfilePicture,
   saveGoogleProfilePicture,
 } from "../services/userProfile";
 
@@ -168,6 +169,7 @@ export default function SignUpScreen() {
       }
       if (result.success && result.user) {
         await initializeUserProfile();
+        await saveFacebookProfilePicture(result.user);
         const onboarding = await getUserOnboardingState(result.user.uid);
         if (onboarding.accountTypeCompleted && onboarding.type) {
           router.replace("/" as never);

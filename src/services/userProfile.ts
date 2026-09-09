@@ -230,25 +230,49 @@ export const defaultUserProfile = (user: User): UserProfile => ({
 });
 
 export async function saveGoogleProfilePicture(user: User) {
+  return saveSocialProfilePicture(user, "google");
+}
+
+export async function saveFacebookProfilePicture(user: User) {
+  return saveSocialProfilePicture(user, "facebook");
+}
+
+async function saveSocialProfilePicture(
+  user: User,
+  provider: "google" | "facebook",
+) {
   const sourceUrl = user.photoURL?.trim();
-  if (!sourceUrl) return null;
+  const displayName = user.displayName?.trim() || nameFromEmail(user.email);
+  const teacherSnapshot = await getDoc(doc(db, "teachers", user.uid));
+  const profileCollection = teacherSnapshot.exists() ? "teachers" : "users";
+
+  if (!sourceUrl) {
+    await updateProfile(user, { displayName });
+    await setDoc(
+      doc(db, profileCollection, user.uid),
+      { name: displayName },
+      { merge: true },
+    );
+    return null;
+  }
 
   const response = await fetch(sourceUrl);
   if (!response.ok) {
     throw new Error(
-      `Unable to download Google profile picture (${response.status}).`,
+      `Unable to download ${provider} profile picture (${response.status}).`,
     );
   }
 
   const image = await response.blob();
   const contentType = image.type || "image/jpeg";
-  const imageRef = ref(storage, `profile-pics/${user.uid}/google-profile`);
+  const imageRef = ref(storage, `profile-pics/${user.uid}/${provider}-profile`);
   await uploadBytes(imageRef, image, { contentType });
   const downloadUrl = await getDownloadURL(imageRef);
 
+  await updateProfile(user, { displayName, photoURL: downloadUrl });
   await setDoc(
-    doc(db, "users", user.uid),
-    { photoURL: downloadUrl },
+    doc(db, profileCollection, user.uid),
+    { name: displayName, photoURL: downloadUrl },
     { merge: true },
   );
 
@@ -282,7 +306,6 @@ export async function saveProfilePicture(
   if (!response.ok) {
     throw new Error("Unable to read the selected image.");
   }
-
   const image = await response.blob();
   if (image.size > PROFILE_PICTURE_MAX_BYTES) {
     throw new Error("Profile pictures must be 5 MB or smaller.");
