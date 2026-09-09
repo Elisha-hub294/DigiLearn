@@ -56,7 +56,11 @@ export const Header = ({
   const [authUser, setAuthUser] = useState<User | null>(auth.currentUser);
   const [greeting, setGreeting] = useState("Hi there");
 
-  const userName = getFirstName(authUser, profile?.type === "teacher");
+  const userName = getFirstName(
+    authUser,
+    profile?.name,
+    profile?.type === "teacher",
+  );
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -154,12 +158,33 @@ export const Header = ({
   );
 };
 
-function getFirstName(user: User | null, isTeacher: boolean) {
+function getFirstName(
+  user: User | null,
+  profileName: string | undefined,
+  isTeacher: boolean,
+) {
   if (!user) return null;
-  const name = user.displayName?.trim();
+  const name = profileName?.trim() || user.displayName?.trim();
   if (!name) return null;
-  const firstName = name.split(" ")[0];
-  return isTeacher ? `Tr. ${firstName}` : firstName;
+
+  const nameParts = name.split(/\s+/);
+  const firstName = nameParts[0];
+  const normalizedFirstName = firstName.toLowerCase().replace(/[.\s]/g, "");
+  const teacherLabelNames = new Set([
+    "teacher",
+    "teach",
+    "tr",
+    "tchr",
+    "tutor",
+    "educator",
+    "instructor",
+  ]);
+  const displayName =
+    isTeacher && teacherLabelNames.has(normalizedFirstName) && nameParts[1]
+      ? nameParts[1]
+      : firstName;
+
+  return isTeacher ? `Tr. ${displayName}` : displayName;
 }
 
 function generateGreeting() {
