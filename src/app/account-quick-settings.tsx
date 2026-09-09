@@ -26,14 +26,15 @@ import { SubjectChip } from "../components/ui/SubjectChip";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import {
+  MAX_PROFILE_FIELD_LENGTH,
   normalizeProfileText,
+  sanitizeProfileText,
   validateProfileText,
 } from "../utils/profileValidation";
 
 type Subject = { id: string; name: string };
 
 const LEVEL_OPTIONS = ["Ordinary level", "Advanced level"];
-const MAX_PROFILE_FIELD_LENGTH = 50;
 
 function getSubjectNames(items: unknown): string[] {
   if (!Array.isArray(items)) {
@@ -387,7 +388,14 @@ export default function AccountQuickSettingsScreen() {
                   <Text style={styles.fieldLabel}>Name</Text>
                   <TextInput
                     value={name}
-                    onChangeText={setName}
+                    onChangeText={(value) =>
+                      setName(
+                        sanitizeProfileText(value).slice(
+                          0,
+                          MAX_PROFILE_FIELD_LENGTH,
+                        ),
+                      )
+                    }
                     maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your name"
                     placeholderTextColor="#7A8FA8"
@@ -428,7 +436,14 @@ export default function AccountQuickSettingsScreen() {
                   <Text style={styles.fieldLabel}>School (Optional)</Text>
                   <TextInput
                     value={school}
-                    onChangeText={setSchool}
+                    onChangeText={(value) =>
+                      setSchool(
+                        sanitizeProfileText(value).slice(
+                          0,
+                          MAX_PROFILE_FIELD_LENGTH,
+                        ),
+                      )
+                    }
                     maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your school"
                     placeholderTextColor="#7A8FA8"
@@ -459,6 +474,7 @@ export default function AccountQuickSettingsScreen() {
                         return (
                           <SubjectChip
                             key={subject.id}
+                            variant="student"
                             item={{
                               id: subject.id,
                               label: subject.name,

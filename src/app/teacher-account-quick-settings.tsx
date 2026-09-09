@@ -32,7 +32,9 @@ import { loadSubjects } from "../services/subjectsService";
 import { resubmitTeacherApplication } from "../services/teacherApplications";
 import { saveProfilePicture } from "../services/userProfile";
 import {
+  MAX_PROFILE_FIELD_LENGTH,
   normalizeProfileText,
+  sanitizeProfileText,
   validateProfileText,
 } from "../utils/profileValidation";
 
@@ -301,11 +303,25 @@ export default function TeacherAccountQuickSettingsScreen() {
 
   const openSocialModal = useCallback(
     (option: SocialOption) => {
+      const fallbackKey =
+        option.key === "socials-phone"
+          ? "socials-whatsapp"
+          : option.key === "socials-whatsapp"
+            ? "socials-phone"
+            : null;
+
       setActiveSocial(option);
-      setSocialInput(socialValues[option.key] ?? "");
+      setSocialInput(
+        socialValues[option.key] ??
+          (option.key === "socials-email"
+            ? (user?.email ?? "")
+            : fallbackKey
+              ? (socialValues[fallbackKey] ?? "")
+              : ""),
+      );
       setSocialError("");
     },
-    [socialValues],
+    [socialValues, user],
   );
 
   const closeSocialModal = useCallback(() => {
@@ -628,7 +644,15 @@ export default function TeacherAccountQuickSettingsScreen() {
                   <Text style={styles.fieldLabel}>Name</Text>
                   <TextInput
                     value={name}
-                    onChangeText={setName}
+                    onChangeText={(value) =>
+                      setName(
+                        sanitizeProfileText(value).slice(
+                          0,
+                          MAX_PROFILE_FIELD_LENGTH,
+                        ),
+                      )
+                    }
+                    maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your name"
                     placeholderTextColor="#7A8FA8"
                     style={styles.input}
@@ -643,7 +667,15 @@ export default function TeacherAccountQuickSettingsScreen() {
                   <Text style={styles.fieldLabel}>Schools (Optional)</Text>
                   <TextInput
                     value={school}
-                    onChangeText={setSchool}
+                    onChangeText={(value) =>
+                      setSchool(
+                        sanitizeProfileText(value).slice(
+                          0,
+                          MAX_PROFILE_FIELD_LENGTH,
+                        ),
+                      )
+                    }
+                    maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your school"
                     placeholderTextColor="#7A8FA8"
                     style={styles.input}
@@ -673,6 +705,7 @@ export default function TeacherAccountQuickSettingsScreen() {
                         return (
                           <SubjectChip
                             key={subject.id}
+                            variant="teacher"
                             item={{
                               id: subject.id,
                               label: subject.name,

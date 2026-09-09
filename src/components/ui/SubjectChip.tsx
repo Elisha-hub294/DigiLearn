@@ -11,10 +11,23 @@ export type SubjectChipItem = {
 type SubjectChipProps = {
   item: SubjectChipItem;
   onPress?: () => void;
+  variant?: "teacher" | "student";
 };
 
-export const SubjectChip = ({ item, onPress }: SubjectChipProps) => {
+export const SubjectChip = ({ item, onPress, variant }: SubjectChipProps) => {
   const { colors } = useTheme();
+  const activeColor =
+    variant === "teacher"
+      ? "#FF6269"
+      : variant === "student"
+        ? "#55A9DF"
+        : colors.dark;
+  const inactiveColor =
+    variant === "teacher"
+      ? "#FFE0E2"
+      : variant === "student"
+        ? "#E6F3FC"
+        : colors.lightBackground;
   return (
     <Pressable
       accessibilityRole="button"
@@ -22,8 +35,8 @@ export const SubjectChip = ({ item, onPress }: SubjectChipProps) => {
       style={[
         styles.chip,
         {
-          backgroundColor: item.active ? colors.dark : colors.white,
-          borderColor: item.active ? colors.dark : colors.border,
+          backgroundColor: item.active ? activeColor : inactiveColor,
+          borderColor: item.active ? activeColor : colors.border,
         },
       ]}
     >
