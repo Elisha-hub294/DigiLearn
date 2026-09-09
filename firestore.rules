@@ -49,7 +49,9 @@ service cloud.firestore {
           'saved-pages',
           'saved-books',
           'saved-lessons',
+          'saved-papers',
           'saved-posts',
+          'savedAt',
           'notifications'
           ]
         )

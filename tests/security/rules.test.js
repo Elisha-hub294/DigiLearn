@@ -163,6 +163,18 @@ test("teachers can update their application photo URL", async () => {
   );
 });
 
+test("verified users can save pages and update saved timestamps", async () => {
+  await seedUser("student-1", "student", undefined);
+  const context = firestoreContext(auth("student-1"));
+
+  await assertSucceeds(
+    updateDoc(doc(context.firestore(), "users", "student-1"), {
+      "saved-pages": ["page-1"],
+      savedAt: { "saved-pages:page-1": new Date() },
+    }),
+  );
+});
+
 test("guests can read published teacher resources", async () => {
   const disabled = testEnv.withSecurityRulesDisabled();
   for (const collectionName of [

@@ -50,6 +50,32 @@ DigiLearn needs Firebase and Google OAuth credentials to run fully. Here's what 
    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<your-google-client-id>
    ```
 
+### Google Sign-In Branding
+
+The name and icon shown inside Google's sign-in or sign-up popup come from the
+Google OAuth consent-screen branding for the Firebase project. They cannot be
+changed from the React Native popup code because Google renders that window on
+its own domain.
+
+Configure the branding once for the project:
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/) and select
+   the same project as `EXPO_PUBLIC_FIREBASE_PROJECT_ID`.
+2. Go to **Google Auth Platform > Branding** (or **APIs & Services > OAuth
+   consent screen** in the older console) and set the app name to **DigiLearn**.
+3. Upload `assets/images/panda.png` as the app logo. Use a square PNG or JPG;
+   Google may require the logo to be reviewed before showing it to users.
+4. Add `digilearn-af86d.firebaseapp.com` to the authorized domains if it is not
+   already listed.
+5. Save the branding, then wait a few minutes and retry Google sign-in from the
+   web app. Google may continue showing cached branding briefly.
+
+Firebase's web OAuth redirect remains:
+
+```text
+https://digilearn-af86d.firebaseapp.com/__/auth/handler
+```
+
 ### Facebook Login Setup
 
 Facebook Login uses the Firebase web OAuth flow. Configure it before testing:

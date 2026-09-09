@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Linking from "expo-linking";
-import { Stack, useRouter } from "expo-router";
+import { Stack, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -25,18 +25,21 @@ void SplashScreen.preventAutoHideAsync();
 function AppShell() {
   const { isDark, isHydrated } = useTheme();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!isHydrated) return;
 
     void (async () => {
       await SplashScreen.hideAsync();
+      if (pathname === "/terms-and-policies") return;
+
       const seen = await AsyncStorage.getItem(ONBOARDING_KEY);
       if (!seen) {
         router.replace("/onboarding" as any);
       }
     })();
-  }, [isHydrated, router]);
+  }, [isHydrated, pathname, router]);
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof window === "undefined") return;
