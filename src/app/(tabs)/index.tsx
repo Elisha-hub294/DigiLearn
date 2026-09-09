@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useNavigation, useRoute } from "expo-router/react-navigation";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, User } from "firebase/auth";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   NativeScrollEvent,
@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  Platform,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -35,6 +36,7 @@ import {
 import { TopicalNotesSlider } from "../../components/home/TopicalNotesSlider";
 import { BookCard } from "../../components/library/BookCard";
 import { PaperCard } from "../../components/library/PaperCard";
+import { PublicHome } from "../../components/home/PublicHome";
 import { PaperCarousel } from "../../components/library/PaperCarousel";
 import { Header } from "../../components/ui/Header";
 import { SearchBar } from "../../components/ui/SearchBar";
@@ -127,8 +129,9 @@ export default function HomeScreen() {
   const { paperCollections, onRefresh: refreshLibraryData } = useLibraryData();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [showLoading, setShowLoading] = useState(true);
-  const [authCheckReady, setAuthCheckReady] = useState(false);
+  const [showLoading, setShowLoading] = useState(Platform.OS !== "web");
+  const [authCheckReady, setAuthCheckReady] = useState(Platform.OS === "web");
+  const [authUser, setAuthUser] = useState<User | null>(auth.currentUser);
   const [shuffleSeed, setShuffleSeed] = useState(() => Date.now());
   const scrollRef = useRef<ScrollView>(null);
 
@@ -203,10 +206,11 @@ export default function HomeScreen() {
   // Auth gate check
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setAuthUser(user);
       if (!user) {
         const guest = await isGuestMode();
         setAuthCheckReady(true);
-        if (!guest) {
+        if (!guest && Platform.OS !== "web") {
           router.replace("/welcome" as never);
         }
         return;
@@ -447,6 +451,10 @@ export default function HomeScreen() {
 
   if (showLoading || !authCheckReady) {
     return <LoadingScreen />;
+  }
+
+  if (Platform.OS === "web" && !authUser) {
+    return <PublicHome />;
   }
 
   const visibleFeed = feedItems.slice(0, visibleCount);

@@ -32,7 +32,12 @@ function AppShell() {
 
     void (async () => {
       await SplashScreen.hideAsync();
-      if (pathname === "/terms-and-policies") return;
+      if (
+        Platform.OS === "web" &&
+        (pathname === "/" || pathname === "/terms-and-policies")
+      ) {
+        return;
+      }
 
       const seen = await AsyncStorage.getItem(ONBOARDING_KEY);
       if (!seen) {
