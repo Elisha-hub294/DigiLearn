@@ -8,7 +8,11 @@ import Animated, {
 } from "react-native-reanimated";
 import { useTheme } from "../contexts/ThemeContext";
 
-export default function LoadingScreen() {
+export default function LoadingScreen({
+  autoRedirect = true,
+}: {
+  autoRedirect?: boolean;
+}) {
   const router = useRouter();
   const { colors } = useTheme();
   const opacity = useSharedValue(0);
@@ -18,9 +22,11 @@ export default function LoadingScreen() {
     opacity.value = withTiming(1, { duration: 600 });
     translateY.value = withTiming(0, { duration: 700 });
 
+    if (!autoRedirect) return;
+
     const timer = setTimeout(() => router.replace("/"), 1200);
     return () => clearTimeout(timer);
-  }, [opacity, router, translateY]);
+  }, [autoRedirect, opacity, router, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

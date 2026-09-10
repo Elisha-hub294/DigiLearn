@@ -62,11 +62,7 @@ const FAQ_DATA: Record<string, FaqDetail> = {
     message:
       "Want to revise different subjects? Update your selected subjects anytime in Preferences to tailor your recommended lessons, past papers, and teacher updates.",
   },
-  "Video guide": {
-    title: "Video Lessons & Playback",
-    message:
-      "DigiLearn lessons feature curated video sessions from experienced teachers. You can track your watch progress, adjust speed, and save lessons to your study list.",
-  },
+
   "Finding teachers": {
     title: "Finding Verified Teachers",
     message:

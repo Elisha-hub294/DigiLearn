@@ -3,7 +3,7 @@ import * as Linking from "expo-linking";
 import { Stack, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -27,6 +27,7 @@ import {
   getUserOnboardingState,
   initializeUserProfile,
 } from "../services/userProfile";
+import LoadingScreen from "./loading";
 
 const ONBOARDING_KEY = "onboarding_complete";
 
@@ -35,11 +36,15 @@ void SplashScreen.preventAutoHideAsync();
 function AppShell() {
   const { isDark, isHydrated } = useTheme();
   const { isDeletingAccount } = useAccountDeletion();
+  const [showStartupLoading, setShowStartupLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     if (!isHydrated) return;
+
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
     void (async () => {
       await SplashScreen.hideAsync();
@@ -47,14 +52,25 @@ function AppShell() {
         Platform.OS === "web" &&
         (pathname === "/" || pathname === "/terms-and-policies")
       ) {
+        timer = setTimeout(() => {
+          if (active) setShowStartupLoading(false);
+        }, 1200);
         return;
       }
 
       const seen = await AsyncStorage.getItem(ONBOARDING_KEY);
-      if (!seen) {
+      if (active && !seen) {
         router.replace("/onboarding" as any);
       }
+      timer = setTimeout(() => {
+        if (active) setShowStartupLoading(false);
+      }, 1200);
     })();
+
+    return () => {
+      active = false;
+      if (timer) clearTimeout(timer);
+    };
   }, [isHydrated, pathname, router]);
 
   useEffect(() => {
@@ -180,6 +196,11 @@ function AppShell() {
           </Text>
         </View>
       ) : null}
+      {showStartupLoading ? (
+        <View style={styles.startupLoading} pointerEvents="auto">
+          <LoadingScreen autoRedirect={false} />
+        </View>
+      ) : null}
     </ErrorBoundary>
   );
 }
@@ -205,6 +226,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(0, 9, 29, 0.92)",
     padding: 32,
+  },
+  startupLoading: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 10,
   },
   deletionText: {
     color: "#FFFFFF",
