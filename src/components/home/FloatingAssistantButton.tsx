@@ -22,7 +22,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { colors, radius, shadows, spacing } from "../../constants/theme";
+import { colors, radius, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
@@ -324,13 +324,6 @@ export function FloatingAssistantButton() {
                 source={avatarUri ? { uri: avatarUri } : fallbackAvatar}
                 placeholder={fallbackAvatar}
                 contentFit="contain"
-                style={[styles.avatar, styles.avatarShadow]}
-                blurRadius={10}
-              />
-              <Image
-                source={avatarUri ? { uri: avatarUri } : fallbackAvatar}
-                placeholder={fallbackAvatar}
-                contentFit="contain"
                 style={styles.avatar}
               />
             </View>
@@ -375,11 +368,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: radius.xl,
     backgroundColor: colors.primary,
-    ...shadows.soft,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
+    boxShadow: `0px 8px 16px ${colors.primary}40`,
   },
   messageText: {
     color: colors.white,

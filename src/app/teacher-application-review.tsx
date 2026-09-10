@@ -244,12 +244,7 @@ export default function TeacherApplicationReviewScreen() {
             </Text>
           </View>
           <View style={styles.status}>
-            <Text
-              style={[
-                styles.statusText,
-                { color: isDark ? "#FCD34D" : "#946200" },
-              ]}
-            >
+            <Text style={[styles.statusText, { color: themeColors.warning }]}>
               {application.status?.toUpperCase() || "UNKNOWN"}
             </Text>
           </View>
@@ -287,31 +282,17 @@ export default function TeacherApplicationReviewScreen() {
           style={[
             styles.slaCard,
             {
-              backgroundColor: isDark ? "#3A2F16" : "#FFF8E6",
-              borderColor: isDark ? "#6B5522" : "#F2D48A",
+              backgroundColor: themeColors.warningBackground,
+              borderColor: themeColors.warningBorder,
             },
           ]}
         >
-          <Feather
-            name="clock"
-            size={18}
-            color={isDark ? "#FCD34D" : "#946200"}
-          />
+          <Feather name="clock" size={18} color={themeColors.warning} />
           <View style={styles.slaCopy}>
-            <Text
-              style={[
-                styles.slaTitle,
-                { color: isDark ? "#FDE68A" : "#6B4B00" },
-              ]}
-            >
+            <Text style={[styles.slaTitle, { color: themeColors.warning }]}>
               {ageLabel}
             </Text>
-            <Text
-              style={[
-                styles.slaText,
-                { color: isDark ? "#F5D98A" : "#80621A" },
-              ]}
-            >
+            <Text style={[styles.slaText, { color: themeColors.warning }]}>
               Applications older than 3 days are highlighted for admin
               follow-up.
             </Text>
@@ -361,8 +342,8 @@ export default function TeacherApplicationReviewScreen() {
             style={[
               styles.decisionPanel,
               {
-                backgroundColor: isDark ? "#172B46" : "#EEF6FF",
-                borderColor: isDark ? "#2D5A8D" : "#C9DFFF",
+                backgroundColor: themeColors.primaryLight,
+                borderColor: themeColors.infoBorder,
               },
             ]}
           >

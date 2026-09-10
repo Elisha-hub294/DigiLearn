@@ -960,10 +960,7 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     overflow: "hidden",
     padding: 20,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
+    boxShadow: "0px 12px 18px rgba(15, 23, 42, 0.12)",
     width: "100%",
   },
   modalTitle: {

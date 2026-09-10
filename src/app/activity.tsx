@@ -160,14 +160,10 @@ export default function ActivityScreen() {
           <View
             style={[
               styles.emptyIconCircle,
-              { backgroundColor: isDark ? "#3A1F25" : "#FEE2E2" },
+              { backgroundColor: themeColors.dangerBackground },
             ]}
           >
-            <Icon
-              name="alert-circle"
-              size={32}
-              color={isDark ? "#FCA5A5" : "#EF4444"}
-            />
+            <Icon name="alert-circle" size={32} color={themeColors.danger} />
           </View>
           <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
             Something went wrong

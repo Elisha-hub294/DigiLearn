@@ -74,10 +74,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     backgroundColor: "rgba(37, 99, 235, 0.05)",
     justifyContent: "center",
-    shadowColor: "#2563EB",
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
+    boxShadow: "0px 8px 12px rgba(37, 99, 235, 0.04)",
     cursor: "pointer",
   },
   filePickerPressed: {

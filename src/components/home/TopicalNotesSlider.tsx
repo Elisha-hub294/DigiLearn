@@ -395,10 +395,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.primary,
     flexShrink: 0,
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    boxShadow: "0px 2px 8px rgba(15, 23, 42, 0.5)",
   },
   arrowLeft: {
     marginRight: spacing.sm,

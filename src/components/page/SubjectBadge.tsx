@@ -113,10 +113,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: 18,
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
+    boxShadow: "0px 4px 8px rgba(15, 23, 42, 0.12)",
     elevation: 4,
   },
   avatar: {

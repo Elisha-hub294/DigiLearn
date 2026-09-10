@@ -342,10 +342,7 @@ export default function PreferencesScreen() {
                 )}
                 {saved ? (
                   <Text
-                    style={[
-                      styles.success,
-                      { color: isDark ? "#86EFAC" : "#238636" },
-                    ]}
+                    style={[styles.success, { color: themeColors.success }]}
                   >
                     Preferences saved.
                   </Text>

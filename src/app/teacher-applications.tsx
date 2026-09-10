@@ -3,15 +3,15 @@ import { useRouter } from "expo-router";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Modal,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
@@ -171,7 +171,7 @@ export default function TeacherApplicationsScreen() {
             onPress={() => setFilter(item)}
             style={[
               styles.metric,
-              { backgroundColor: isDark ? "#243247" : "#F4F6F8" },
+              { backgroundColor: themeColors.surfaceMuted },
               filter === item && styles.metricActive,
             ]}
           >
@@ -206,10 +206,10 @@ export default function TeacherApplicationsScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Feather name="check-circle" size={34} color={colors.green} />
-            <Text style={styles.emptyTitle}>
+            <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
               {filter === "pending" ? "All caught up" : "No applications found"}
             </Text>
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyText, { color: themeColors.subtitle }]}>
               There are no teacher applications waiting for review.
             </Text>
           </View>
@@ -257,15 +257,31 @@ export default function TeacherApplicationsScreen() {
               <View
                 style={[
                   styles.statusChip,
-                  item.status === "approved" && styles.approvedChip,
-                  item.status === "rejected" && styles.rejectedChip,
+                  {
+                    backgroundColor:
+                      item.status === "approved"
+                        ? themeColors.successBackground
+                        : item.status === "rejected"
+                          ? themeColors.dangerBackground
+                          : themeColors.warningBackground,
+                  },
                 ]}
               >
                 <Text
                   style={[
                     styles.statusText,
-                    item.status === "approved" && styles.approvedText,
-                    item.status === "rejected" && styles.rejectedText,
+                    item.status === "approved" && {
+                      color: themeColors.success,
+                    },
+                    item.status === "rejected" && { color: themeColors.danger },
+                    {
+                      color:
+                        item.status === "approved"
+                          ? themeColors.success
+                          : item.status === "rejected"
+                            ? themeColors.danger
+                            : themeColors.warning,
+                    },
                   ]}
                 >
                   {statusLabel(item.status)}
@@ -322,7 +338,15 @@ export default function TeacherApplicationsScreen() {
       />
       {filter !== "pending" && audit.length > 0 && (
         <View
-          style={[styles.history, { paddingHorizontal: padding, maxWidth }]}
+          style={[
+            styles.history,
+            {
+              paddingHorizontal: padding,
+              maxWidth,
+              backgroundColor: themeColors.white,
+              borderColor: themeColors.border,
+            },
+          ]}
         >
           <Text style={[styles.historyTitle, { color: themeColors.text }]}>
             Audit history
@@ -401,13 +425,15 @@ export default function TeacherApplicationsScreen() {
             />
             <View style={styles.actions}>
               <Pressable
-                style={styles.reject}
+                style={[styles.reject, { borderColor: themeColors.border }]}
                 onPress={() => {
                   setRejecting(null);
                   setAllowReapply(false);
                 }}
               >
-                <Text style={styles.rejectText}>Cancel</Text>
+                <Text style={[styles.rejectText, { color: themeColors.text }]}>
+                  Cancel
+                </Text>
               </Pressable>
               <Pressable
                 disabled={
@@ -458,12 +484,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: "center",
     borderRadius: 10,
-    backgroundColor: "#F4F6F8",
   },
   metricActive: { backgroundColor: colors.primary },
-  metricValue: { color: colors.text, fontSize: 18, fontWeight: "800" },
+  metricValue: { fontSize: 18, fontWeight: "800" },
   metricValueActive: { color: colors.white },
-  metricLabel: { color: colors.subtitle, fontSize: 11, marginTop: 2 },
+  metricLabel: { fontSize: 11, marginTop: 2 },
   metricLabelActive: { color: colors.white },
   eyebrow: {
     color: colors.primary,
@@ -499,16 +524,11 @@ const styles = StyleSheet.create({
   name: { color: colors.text, fontSize: 16, fontWeight: "700" },
   email: { color: colors.subtitle, fontSize: 13, marginTop: 3 },
   statusChip: {
-    backgroundColor: "#FFF4D6",
     borderRadius: radius.pill,
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
-  approvedChip: { backgroundColor: "#DCFCE7" },
-  rejectedChip: { backgroundColor: "#FEE2E2" },
-  statusText: { color: "#9A6700", fontSize: 10, fontWeight: "800" },
-  approvedText: { color: "#15803D" },
-  rejectedText: { color: "#B91C1C" },
+  statusText: { fontSize: 10, fontWeight: "800" },
   detail: { color: colors.subtitle, fontSize: 13, marginTop: spacing.md },
   viewButton: {
     flexDirection: "row",

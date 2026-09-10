@@ -1,5 +1,10 @@
 import { Feather } from "@expo/vector-icons";
-import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from "expo-router";
 import { useCallback, useState } from "react";
 import {
   BackHandler,
@@ -94,7 +99,7 @@ export default function TermsAndPoliciesScreen() {
               style={[
                 styles.tabBar,
                 {
-                  backgroundColor: isDark ? "#1E293B" : "#F1F5F9",
+                  backgroundColor: themeColors.surface,
                   borderColor: themeColors.border,
                 },
               ]}
@@ -198,7 +203,10 @@ export default function TermsAndPoliciesScreen() {
             {activeTab === "privacy" ? (
               <PrivacyPolicyContent themeColors={themeColors} isDark={isDark} />
             ) : (
-              <TermsOfServiceContent themeColors={themeColors} isDark={isDark} />
+              <TermsOfServiceContent
+                themeColors={themeColors}
+                isDark={isDark}
+              />
             )}
 
             <View style={styles.footerSpacing} />
@@ -232,7 +240,10 @@ function Section({
     >
       <View style={styles.sectionHeader}>
         <View
-          style={[styles.iconBadge, { backgroundColor: themeColors.primaryLight }]}
+          style={[
+            styles.iconBadge,
+            { backgroundColor: themeColors.primaryLight },
+          ]}
         >
           <Feather name={icon} size={18} color={colors.primary} />
         </View>
@@ -254,10 +265,11 @@ function PrivacyPolicyContent({
   return (
     <View style={styles.contentWrapper}>
       <Text style={[styles.introText, { color: themeColors.text }]}>
-        DigiLearn (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) is dedicated to safeguarding your
-        privacy and ensuring your educational experience is secure. This
-        Privacy Policy explains what personal data we collect, why we collect
-        it, how we handle it, and your complete rights to your information.
+        DigiLearn (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) is
+        dedicated to safeguarding your privacy and ensuring your educational
+        experience is secure. This Privacy Policy explains what personal data we
+        collect, why we collect it, how we handle it, and your complete rights
+        to your information.
       </Text>
 
       <Section
@@ -272,19 +284,19 @@ function PrivacyPolicyContent({
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • <Text style={styles.bold}>Profile & Media:</Text> Optional profile
-          pictures chosen from your photo library (we only access selected photos
-          upon your explicit permission; we do not access your full library or
-          microphone).
+          pictures chosen from your photo library (we only access selected
+          photos upon your explicit permission; we do not access your full
+          library or microphone).
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • <Text style={styles.bold}>Educational & Study Activity:</Text> Books,
-          past papers, and lessons you view, bookmark, or download for offline
-          study, alongside reading progress and learning streaks.
+          • <Text style={styles.bold}>Educational & Study Activity:</Text>{" "}
+          Books, past papers, and lessons you view, bookmark, or download for
+          offline study, alongside reading progress and learning streaks.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • <Text style={styles.bold}>Educator Submissions:</Text> For teachers,
-          professional qualifications, subject specialties, contact phone/WhatsApp,
-          and resources you publish to the platform.
+          professional qualifications, subject specialties, contact
+          phone/WhatsApp, and resources you publish to the platform.
         </Text>
       </Section>
 
@@ -326,8 +338,8 @@ function PrivacyPolicyContent({
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • Your queries are handled strictly for generating real-time study
-          responses. Your conversations and private data are NOT sold or used
-          to train public AI foundation models.
+          responses. Your conversations and private data are NOT sold or used to
+          train public AI foundation models.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • You can disable AI Assistant features at any time in App Settings.
@@ -345,9 +357,13 @@ function PrivacyPolicyContent({
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • <Text style={styles.bold}>Self-Service Account Deletion:</Text> You
-          can permanently delete your account and all associated data at any time
-          by navigating to:
-          {"\n"}<Text style={styles.codeQuote}>Settings &gt; Account &gt; Delete Account</Text>.
+          can permanently delete your account and all associated data at any
+          time by navigating to:
+          {"\n"}
+          <Text style={styles.codeQuote}>
+            Settings &gt; Account &gt; Delete Account
+          </Text>
+          .
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • <Text style={styles.bold}>What gets deleted:</Text> Deleting your
@@ -374,8 +390,8 @@ function PrivacyPolicyContent({
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • All communication between the app and our database is encrypted in
-          transit using Transport Layer Security (TLS 1.3) and encrypted at
-          rest using Google Cloud Firebase security architecture.
+          transit using Transport Layer Security (TLS 1.3) and encrypted at rest
+          using Google Cloud Firebase security architecture.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • Mandatory email verification ensures accounts belong to genuine
@@ -409,9 +425,9 @@ function TermsOfServiceContent({
   return (
     <View style={styles.contentWrapper}>
       <Text style={[styles.introText, { color: themeColors.text }]}>
-        These Terms of Service (&quot;Terms&quot;) govern your access to and use of
-        DigiLearn. By creating an account or accessing learning materials on the
-        platform, you agree to be bound by these Terms.
+        These Terms of Service (&quot;Terms&quot;) govern your access to and use
+        of DigiLearn. By creating an account or accessing learning materials on
+        the platform, you agree to be bound by these Terms.
       </Text>
 
       <Section
@@ -424,7 +440,8 @@ function TermsOfServiceContent({
           registration and maintain the security of your login credentials.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • You are responsible for all activities that occur under your account.
+          • You are responsible for all activities that occur under your
+          account.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • You may not share your account or impersonate any student, teacher,
@@ -496,9 +513,10 @@ function TermsOfServiceContent({
         themeColors={themeColors}
       >
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • DigiLearn is provided on an &quot;as is&quot; and &quot;as available&quot; basis.
-          While we strive for 100% curriculum accuracy, we do not warrant that
-          study materials will guarantee specific examination grades.
+          • DigiLearn is provided on an &quot;as is&quot; and &quot;as
+          available&quot; basis. While we strive for 100% curriculum accuracy,
+          we do not warrant that study materials will guarantee specific
+          examination grades.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • DigiLearn shall not be liable for indirect, incidental, or
@@ -518,7 +536,8 @@ function TermsOfServiceContent({
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • We may update these Terms periodically. Continued use of DigiLearn
-          following notice of changes constitutes agreement to the updated Terms.
+          following notice of changes constitutes agreement to the updated
+          Terms.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           For inquiries regarding these Terms, contact{" "}
@@ -559,10 +578,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   tabButtonActive: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
+    boxShadow: "0px 1px 2px rgba(0, 0, 0, 0.08)",
     elevation: 2,
   },
   tabIcon: { marginRight: 6 },

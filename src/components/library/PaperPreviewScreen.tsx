@@ -441,10 +441,30 @@ export function PaperPreviewScreen() {
           { backgroundColor: themeColors.background },
         ]}
       >
-        <Skeleton style={styles.loadingHeroSkeleton} />
-        <Skeleton style={styles.loadingTitleSkeleton} />
-        <Skeleton style={styles.loadingLineSkeleton} />
-        <Skeleton style={styles.loadingLineShortSkeleton} />
+        <Skeleton
+          style={[
+            styles.loadingHeroSkeleton,
+            { backgroundColor: themeColors.surface },
+          ]}
+        />
+        <Skeleton
+          style={[
+            styles.loadingTitleSkeleton,
+            { backgroundColor: themeColors.surface },
+          ]}
+        />
+        <Skeleton
+          style={[
+            styles.loadingLineSkeleton,
+            { backgroundColor: themeColors.surface },
+          ]}
+        />
+        <Skeleton
+          style={[
+            styles.loadingLineShortSkeleton,
+            { backgroundColor: themeColors.surface },
+          ]}
+        />
       </View>
     );
   }
@@ -476,10 +496,13 @@ export function PaperPreviewScreen() {
     >
       <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
         <ScrollView
-          style={styles.screen}
+          style={[styles.screen, { backgroundColor: themeColors.background }]}
           contentContainerStyle={[
             styles.content,
-            { paddingHorizontal: horizontalPadding },
+            {
+              paddingHorizontal: horizontalPadding,
+              backgroundColor: themeColors.background,
+            },
           ]}
           showsVerticalScrollIndicator={false}
         >
@@ -597,7 +620,11 @@ export function PaperPreviewScreen() {
                   onPress={sharePaper}
                 >
                   <View style={styles.buttonContent}>
-                    <Feather name="share-2" size={15} color={colors.text} />
+                    <Feather
+                      name="share-2"
+                      size={15}
+                      color={themeColors.text}
+                    />
                     <Text style={styles.secondaryButtonText}>Share</Text>
                   </View>
                 </Pressable>
@@ -623,7 +650,9 @@ export function PaperPreviewScreen() {
                     <Ionicons
                       name={bookmarked ? "bookmark" : "bookmark-outline"}
                       size={15}
-                      color={bookmarked ? colors.primary : colors.text}
+                      color={
+                        bookmarked ? themeColors.primary : themeColors.text
+                      }
                     />
                     <Text style={styles.secondaryButtonText}>
                       {bookmarked ? "Saved" : "Save"}
@@ -1193,12 +1222,4 @@ const styles = StyleSheet.create({
   relatedTitle: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 4,
-    minHeight: 36,
-  },
-  relatedMeta: {
-    color: colors.subtitle,
-    fontSize: 11,
-  },
-});
+    fontWeight: "

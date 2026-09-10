@@ -151,7 +151,7 @@ type ContactDialogState = {
 export default function TeacherProfileScreen() {
   const router = useRouter();
   const { user, profile } = useProfile();
-  const { isDark } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const params = useLocalSearchParams<{
     id?: string;
     name?: string;
@@ -704,7 +704,10 @@ export default function TeacherProfileScreen() {
             ) : null}
           </View>
 
-          <Text style={styles.bioText} numberOfLines={3}>
+          <Text
+            style={[styles.bioText, { color: themeColors.subtitle }]}
+            numberOfLines={3}
+          >
             {teacher?.bio || "Teacher at DigiLearn."}
           </Text>
 
@@ -744,9 +747,22 @@ export default function TeacherProfileScreen() {
           ) : null}
 
           {isOwnProfile && profile?.teacherApprovalStatus === "pending" && (
-            <View style={styles.reviewNotice}>
-              <Icon name="clock" size={16} color="#946200" />
-              <Text style={styles.reviewNoticeText}>
+            <View
+              style={[
+                styles.reviewNotice,
+                {
+                  backgroundColor: themeColors.warningBackground,
+                  borderColor: themeColors.warningBorder,
+                },
+              ]}
+            >
+              <Icon name="clock" size={16} color={themeColors.warning} />
+              <Text
+                style={[
+                  styles.reviewNoticeText,
+                  { color: themeColors.warning },
+                ]}
+              >
                 Your teacher account is awaiting admin approval. Teacher
                 features will be available once your application is approved.
               </Text>
@@ -769,29 +785,57 @@ export default function TeacherProfileScreen() {
             )}
 
           <View style={styles.statsRow}>
-            <View style={styles.statChip}>
-              <Text style={styles.statValue}>
+            <View
+              style={[
+                styles.statChip,
+                { backgroundColor: themeColors.surfaceMuted },
+              ]}
+            >
+              <Text style={[styles.statValue, { color: themeColors.text }]}>
                 {formatRelativeCount(stats.pages)}
               </Text>
-              <Text style={styles.statLabel}>Pages</Text>
+              <Text style={[styles.statLabel, { color: themeColors.subtitle }]}>
+                Pages
+              </Text>
             </View>
-            <View style={styles.statChip}>
-              <Text style={styles.statValue}>
+            <View
+              style={[
+                styles.statChip,
+                { backgroundColor: themeColors.surfaceMuted },
+              ]}
+            >
+              <Text style={[styles.statValue, { color: themeColors.text }]}>
                 {formatRelativeCount(stats.books)}
               </Text>
-              <Text style={styles.statLabel}>Books</Text>
+              <Text style={[styles.statLabel, { color: themeColors.subtitle }]}>
+                Books
+              </Text>
             </View>
-            <View style={styles.statChip}>
-              <Text style={styles.statValue}>
+            <View
+              style={[
+                styles.statChip,
+                { backgroundColor: themeColors.surfaceMuted },
+              ]}
+            >
+              <Text style={[styles.statValue, { color: themeColors.text }]}>
                 {formatRelativeCount(stats.lessons)}
               </Text>
-              <Text style={styles.statLabel}>Lessons</Text>
+              <Text style={[styles.statLabel, { color: themeColors.subtitle }]}>
+                Lessons
+              </Text>
             </View>
-            <View style={styles.statChip}>
-              <Text style={styles.statValue}>
+            <View
+              style={[
+                styles.statChip,
+                { backgroundColor: themeColors.surfaceMuted },
+              ]}
+            >
+              <Text style={[styles.statValue, { color: themeColors.text }]}>
                 {formatRelativeCount(stats.announcements)}
               </Text>
-              <Text style={styles.statLabel}>Updates</Text>
+              <Text style={[styles.statLabel, { color: themeColors.subtitle }]}>
+                Updates
+              </Text>
             </View>
           </View>
 
@@ -808,7 +852,9 @@ export default function TeacherProfileScreen() {
               style={[
                 styles.communityButton,
                 {
-                  backgroundColor: isCommunityMember ? "#E5E7EB" : accentColor,
+                  backgroundColor: isCommunityMember
+                    ? themeColors.surfaceMuted
+                    : accentColor,
                 },
               ]}
               onPress={toggleCommunityMembership}
@@ -868,11 +914,11 @@ export default function TeacherProfileScreen() {
                       borderColor:
                         profile?.teacherApprovalStatus === "approved"
                           ? accentColor
-                          : "#D1D5DB",
+                          : themeColors.border,
                       backgroundColor:
                         profile?.teacherApprovalStatus === "approved"
                           ? `${accentColor}12`
-                          : "#F3F4F6",
+                          : themeColors.surfaceMuted,
                     },
                   ]}
                   onPress={
@@ -887,7 +933,7 @@ export default function TeacherProfileScreen() {
                     color={
                       profile?.teacherApprovalStatus === "approved"
                         ? accentColor
-                        : "#9CA3AF"
+                        : themeColors.inactive
                     }
                     style={{ marginRight: 6 }}
                   />
@@ -898,7 +944,7 @@ export default function TeacherProfileScreen() {
                         color:
                           profile?.teacherApprovalStatus === "approved"
                             ? accentColor
-                            : "#9CA3AF",
+                            : themeColors.inactive,
                       },
                     ]}
                   >
@@ -911,6 +957,10 @@ export default function TeacherProfileScreen() {
                   accessibilityLabel="Account settings"
                   style={[
                     styles.iconButton,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                    },
                     { width: actionIconSize, height: actionIconSize },
                   ]}
                   onPress={() => router.push("/settings")}
@@ -930,7 +980,9 @@ export default function TeacherProfileScreen() {
                   style={[
                     styles.contactButton,
                     {
-                      backgroundColor: hasPhone ? accentColor : "#D1D5DB",
+                      backgroundColor: hasPhone
+                        ? accentColor
+                        : themeColors.border,
                     },
                   ]}
                   disabled={!hasPhone}
@@ -953,6 +1005,10 @@ export default function TeacherProfileScreen() {
                   style={[
                     styles.iconButton,
                     !hasYoutube && styles.disabledIconButton,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                    },
                     { width: actionIconSize, height: actionIconSize },
                   ]}
                   disabled={!hasYoutube}
@@ -961,7 +1017,7 @@ export default function TeacherProfileScreen() {
                   <Icon
                     name="youtube"
                     size={22}
-                    color={hasYoutube ? accentColor : "#9CA3AF"}
+                    color={hasYoutube ? accentColor : themeColors.inactive}
                   />
                 </Pressable>
 
@@ -971,6 +1027,10 @@ export default function TeacherProfileScreen() {
                   style={[
                     styles.iconButton,
                     !hasEmail && styles.disabledIconButton,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                    },
                     { width: actionIconSize, height: actionIconSize },
                   ]}
                   disabled={!hasEmail}
@@ -979,7 +1039,7 @@ export default function TeacherProfileScreen() {
                   <Icon
                     name="mail"
                     size={22}
-                    color={hasEmail ? accentColor : "#9CA3AF"}
+                    color={hasEmail ? accentColor : themeColors.inactive}
                   />
                 </Pressable>
 
@@ -989,6 +1049,10 @@ export default function TeacherProfileScreen() {
                   style={[
                     styles.iconButton,
                     !hasCommunityLink && styles.disabledIconButton,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                    },
                     { width: actionIconSize, height: actionIconSize },
                   ]}
                   disabled={!hasCommunityLink}
@@ -997,14 +1061,18 @@ export default function TeacherProfileScreen() {
                   <Icon
                     name="users"
                     size={22}
-                    color={hasCommunityLink ? accentColor : "#9CA3AF"}
+                    color={
+                      hasCommunityLink ? accentColor : themeColors.inactive
+                    }
                   />
                 </Pressable>
               </>
             )}
           </View>
 
-          <Text style={styles.sectionTitle}>Resources</Text>
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+            Resources
+          </Text>
 
           <SearchBar
             isInput={true}
@@ -1045,6 +1113,7 @@ export default function TeacherProfileScreen() {
                     <Text
                       style={[
                         styles.tabButtonText,
+                        { color: themeColors.subtitle },
                         isActive ? styles.tabButtonTextActive : null,
                       ]}
                     >
@@ -1068,6 +1137,7 @@ export default function TeacherProfileScreen() {
       openYoutubePrompt,
       router,
       search,
+      themeColors.subtitle,
       stats.announcements,
       stats.books,
       stats.lessons,
@@ -1199,7 +1269,9 @@ export default function TeacherProfileScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
         <Animated.View
           entering={FadeInUp.duration(420)}
           style={[
@@ -1216,15 +1288,24 @@ export default function TeacherProfileScreen() {
               <>
                 <View style={styles.headerWrap}>
                   <RNAnimated.View
-                    style={[styles.skeletonHeaderPanel, { opacity: pulseAnim }]}
+                    style={[
+                      styles.skeletonHeaderPanel,
+                      { backgroundColor: themeColors.surface },
+                      { opacity: pulseAnim },
+                    ]}
                   />
                   <RNAnimated.View
-                    style={[styles.skeletonBackButton, { opacity: pulseAnim }]}
+                    style={[
+                      styles.skeletonBackButton,
+                      { backgroundColor: themeColors.surfaceMuted },
+                      { opacity: pulseAnim },
+                    ]}
                   />
                   {isOwnProfile && (
                     <RNAnimated.View
                       style={[
                         styles.skeletonSettingsButton,
+                        { backgroundColor: themeColors.surfaceMuted },
                         { opacity: pulseAnim },
                       ]}
                     />
@@ -1233,6 +1314,7 @@ export default function TeacherProfileScreen() {
                     <RNAnimated.View
                       style={[
                         styles.skeletonAvatar,
+                        { backgroundColor: themeColors.surfaceMuted },
                         {
                           width: avatarSize,
                           height: avatarSize,
@@ -1246,10 +1328,18 @@ export default function TeacherProfileScreen() {
 
                 <View style={styles.profileBody}>
                   <RNAnimated.View
-                    style={[styles.skeletonTitle, { opacity: pulseAnim }]}
+                    style={[
+                      styles.skeletonTitle,
+                      { backgroundColor: themeColors.surfaceMuted },
+                      { opacity: pulseAnim },
+                    ]}
                   />
                   <RNAnimated.View
-                    style={[styles.skeletonBio, { opacity: pulseAnim }]}
+                    style={[
+                      styles.skeletonBio,
+                      { backgroundColor: themeColors.surfaceMuted },
+                      { opacity: pulseAnim },
+                    ]}
                   />
                   <View style={styles.statsRow}>
                     {Array.from({ length: 4 }, (_, index) => (
@@ -1315,12 +1405,18 @@ export default function TeacherProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <Animated.View
         entering={FadeInUp.duration(420)}
         style={[
           styles.container,
-          { maxWidth: contentMaxWidth, paddingHorizontal: horizontalPadding },
+          {
+            maxWidth: contentMaxWidth,
+            paddingHorizontal: horizontalPadding,
+            backgroundColor: themeColors.background,
+          },
         ]}
       >
         <FlatList
@@ -1328,7 +1424,10 @@ export default function TeacherProfileScreen() {
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.resourceList}
+          contentContainerStyle={[
+            styles.resourceList,
+            { backgroundColor: themeColors.background },
+          ]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -1341,9 +1440,19 @@ export default function TeacherProfileScreen() {
             activeTab === "Saved" && canViewSaved ? (
               <SavedResources profile={profile} signedIn />
             ) : (
-              <View style={styles.emptyState}>
+              <View
+                style={[
+                  styles.emptyState,
+                  {
+                    backgroundColor: themeColors.surface,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
                 <Icon name="inbox" size={38} color={accentColor} />
-                <Text style={styles.emptyText}>
+                <Text
+                  style={[styles.emptyText, { color: themeColors.subtitle }]}
+                >
                   {errorMessage ||
                     "No matching resources found for this teacher."}
                 </Text>
@@ -1479,7 +1588,6 @@ const styles = StyleSheet.create({
   },
   bioText: {
     marginTop: spacing.sm,
-    color: "#6B7280",
     fontSize: 14,
     textAlign: "center",
     lineHeight: 20,
@@ -1516,13 +1624,10 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     padding: spacing.md,
     borderRadius: 12,
-    backgroundColor: "#FFF8E6",
     borderWidth: 1,
-    borderColor: "#F2D48A",
   },
   reviewNoticeText: {
     flex: 1,
-    color: "#6B4B00",
     fontSize: 12,
     lineHeight: 18,
   },
@@ -1550,7 +1655,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingVertical: spacing.sm,
-    backgroundColor: "#e9e9e9",
     borderRadius: 16,
   },
   statValue: {
@@ -1664,14 +1768,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 24,
     minHeight: 180,
-    backgroundColor: "#F8FAFC",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
   emptyText: {
     marginTop: 10,
-    color: colors.subtitle,
     fontSize: 14,
     textAlign: "center",
     paddingHorizontal: spacing.xl,

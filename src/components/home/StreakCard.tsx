@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { radius, spacing } from "../../constants/theme";
@@ -40,19 +40,24 @@ export function StreakCard() {
       style={[
         styles.card,
         {
-          backgroundColor: isDark ? "#1E293B" : "#FFF7ED",
-          borderColor: isDark ? "#334155" : "#FED7AA",
+          backgroundColor: colors.warmSurface,
+          borderColor: colors.warmBorder,
         },
       ]}
     >
       <View style={styles.topRow}>
         <View style={styles.badgeRow}>
-          <View style={[styles.fireCircle, { backgroundColor: isDark ? "#431407" : "#FFEDD5" }]}>
+          <View
+            style={[
+              styles.fireCircle,
+              { backgroundColor: colors.warmAccentBackground },
+            ]}
+          >
             <Text style={styles.fireEmoji}>🔥</Text>
           </View>
           <View>
             <View style={styles.streakTitleRow}>
-              <Text style={[styles.streakCount, { color: isDark ? "#F97316" : "#EA580C" }]}>
+              <Text style={[styles.streakCount, { color: colors.warmAccent }]}>
                 {streak.currentStreak}
               </Text>
               <Text style={[styles.streakLabel, { color: colors.text }]}>
@@ -68,7 +73,7 @@ export function StreakCard() {
         </View>
 
         {streak.longestStreak > 0 && (
-          <View style={[styles.bestPill, { backgroundColor: isDark ? "#0F172A" : "#FFFFFF" }]}>
+          <View style={[styles.bestPill, { backgroundColor: colors.white }]}>
             <Feather name="award" size={12} color="#F59E0B" />
             <Text style={[styles.bestText, { color: colors.subtitle }]}>
               Best: {streak.longestStreak}d
@@ -93,11 +98,7 @@ export function StreakCard() {
                 style={[
                   styles.dayLetter,
                   {
-                    color: isToday
-                      ? isDark
-                        ? "#F97316"
-                        : "#EA580C"
-                      : colors.subtitle,
+                    color: isToday ? colors.warmAccent : colors.subtitle,
                     fontWeight: isToday ? "700" : "500",
                   },
                 ]}
@@ -110,7 +111,7 @@ export function StreakCard() {
                   isActive
                     ? { backgroundColor: "#F97316" }
                     : {
-                        backgroundColor: isDark ? "#334155" : "#E2E8F0",
+                        backgroundColor: colors.surfaceBorder,
                       },
                   isToday && !isActive && styles.todayPendingDot,
                 ]}

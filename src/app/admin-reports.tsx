@@ -143,12 +143,7 @@ export default function AdminReportsScreen() {
               Review, track, and resolve reported content.
             </Text>
             {error ? (
-              <Text
-                style={[
-                  styles.error,
-                  { color: isDark ? "#FCA5A5" : "#B42318" },
-                ]}
-              >
+              <Text style={[styles.error, { color: themeColors.danger }]}>
                 {error}
               </Text>
             ) : null}

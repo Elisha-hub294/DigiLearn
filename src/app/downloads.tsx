@@ -121,10 +121,7 @@ export default function DownloadsScreen() {
           onPress={() =>
             router.canGoBack() ? router.back() : router.replace("/library")
           }
-          style={[
-            styles.backBtn,
-            { backgroundColor: isDark ? "#1E293B" : "#F1F5F9" },
-          ]}
+          style={[styles.backBtn, { backgroundColor: themeColors.surface }]}
           accessibilityLabel="Go back"
         >
           <Feather name="arrow-left" size={20} color={themeColors.text} />
@@ -144,10 +141,10 @@ export default function DownloadsScreen() {
             onPress={() => setShowClearAllDialog(true)}
             style={[
               styles.clearAllBtn,
-              { backgroundColor: isDark ? "#3B1818" : "#FEE2E2" },
+              { backgroundColor: themeColors.dangerBackground },
             ]}
           >
-            <Feather name="trash-2" size={16} color="#DC2626" />
+            <Feather name="trash-2" size={16} color={themeColors.danger} />
             <Text style={styles.clearAllText}>Clear All</Text>
           </Pressable>
         )}
@@ -165,8 +162,8 @@ export default function DownloadsScreen() {
             style={[
               styles.searchBox,
               {
-                backgroundColor: isDark ? "#1E293B" : "#F8FAFC",
-                borderColor: isDark ? "#334155" : "#E2E8F0",
+                backgroundColor: themeColors.surface,
+                borderColor: themeColors.surfaceBorder,
               },
             ]}
           >
@@ -201,8 +198,8 @@ export default function DownloadsScreen() {
               style={[
                 styles.card,
                 {
-                  backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
-                  borderColor: isDark ? "#334155" : "#E2E8F0",
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.surfaceBorder,
                 },
               ]}
             >
@@ -221,7 +218,7 @@ export default function DownloadsScreen() {
           <View
             style={[
               styles.emptyIconCircle,
-              { backgroundColor: isDark ? "#1E293B" : "#F1F5F9" },
+              { backgroundColor: themeColors.surface },
             ]}
           >
             <Feather name="download-cloud" size={40} color={colors.primary} />
@@ -264,8 +261,8 @@ export default function DownloadsScreen() {
               style={[
                 styles.card,
                 {
-                  backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
-                  borderColor: isDark ? "#334155" : "#E2E8F0",
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.surfaceBorder,
                 },
               ]}
             >
@@ -278,7 +275,7 @@ export default function DownloadsScreen() {
                 <View
                   style={[
                     styles.fileIconWrap,
-                    { backgroundColor: isDark ? "#0F172A" : "#EFF6FF" },
+                    { backgroundColor: themeColors.primaryLight },
                   ]}
                 >
                   <Feather name="file-text" size={24} color={colors.primary} />

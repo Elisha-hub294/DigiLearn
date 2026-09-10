@@ -68,10 +68,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: "hidden",
     position: "relative",
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.12,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
+    boxShadow: "0px 2px 5px rgba(15, 23, 42, 0.12)",
     elevation: 2,
   },
   preview: {

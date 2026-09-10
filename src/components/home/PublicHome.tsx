@@ -160,7 +160,7 @@ export function PublicHome() {
                 styles.heroArt,
                 isCompact && styles.compactHeroArt,
                 { width: isCompact ? heroArtSize : 330, height: heroArtSize },
-                { backgroundColor: isDark ? "#10223d" : colors.primaryLight },
+                { backgroundColor: colors.primaryLight },
               ]}
             >
               <Image

@@ -74,7 +74,11 @@ function ProfileSettingRow({ icon, label, value, onPress, about }: RowProps) {
           accessibilityLabel={`${hasValue ? "Edit" : "Set"} ${label}`}
         >
           <Text
-            style={[styles.rowValue, !hasValue && styles.setAction]}
+            style={[
+              styles.rowValue,
+              { color: hasValue ? themeColors.text : themeColors.primary },
+              !hasValue && styles.setAction,
+            ]}
             numberOfLines={about && expanded ? undefined : 2}
           >
             {hasValue ? value : `Set ${label}`}
@@ -85,7 +89,9 @@ function ProfileSettingRow({ icon, label, value, onPress, about }: RowProps) {
             onPress={() => setExpanded(true)}
             accessibilityLabel="See all about text"
           >
-            <Text style={styles.seeMore}>...See more</Text>
+            <Text style={[styles.seeMore, { color: themeColors.primary }]}>
+              ... See more
+            </Text>
           </Pressable>
         ) : null}
       </View>
@@ -332,7 +338,11 @@ export default function MyProfileScreen() {
                   style={styles.backButton}
                   accessibilityLabel="Back to settings"
                 >
-                  <Feather name="arrow-left" size={22} color={colors.dark} />
+                  <Feather
+                    name="arrow-left"
+                    size={22}
+                    color={themeColors.text}
+                  />
                 </Pressable>
                 <Text style={[styles.title, { color: themeColors.dark }]}>
                   My Profile
@@ -343,7 +353,11 @@ export default function MyProfileScreen() {
                 style={styles.headerButton}
                 accessibilityLabel="Profile actions"
               >
-                <Feather name="more-horizontal" size={25} color={colors.dark} />
+                <Feather
+                  name="more-horizontal"
+                  size={25}
+                  color={themeColors.text}
+                />
               </Pressable>
             </View>
             {menuOpen ? (
@@ -514,6 +528,10 @@ export default function MyProfileScreen() {
                     <Text
                       style={[
                         styles.choiceText,
+                        { color: themeColors.text },
+                        draft === choice && {
+                          color: themeColors.primary,
+                        },
                         draft === choice && styles.choiceTextSelected,
                       ]}
                     >
@@ -538,6 +556,10 @@ export default function MyProfileScreen() {
                     <Text
                       style={[
                         styles.choiceText,
+                        { color: themeColors.text },
+                        draft === choice && {
+                          color: themeColors.primary,
+                        },
                         draft === choice && styles.choiceTextSelected,
                       ]}
                     >
@@ -572,16 +594,27 @@ export default function MyProfileScreen() {
                   accessibilityLabel={`Enter ${field ? fieldLabels[field] : "value"}`}
                 />
                 {field === "bio" ? (
-                  <Text style={styles.charCounter}>
+                  <Text
+                    style={[
+                      styles.charCounter,
+                      { color: themeColors.inactive },
+                    ]}
+                  >
                     {draft.length}/{MAX_BIO_LENGTH}
                   </Text>
                 ) : null}
               </>
             )}
-            {error ? <Text style={styles.validation}>{error}</Text> : null}
+            {error ? (
+              <Text style={[styles.validation, { color: themeColors.danger }]}>
+                {error}
+              </Text>
+            ) : null}
             <View style={styles.sheetActions}>
               <Pressable onPress={() => setField(null)} style={styles.cancel}>
-                <Text style={styles.cancelText}>Cancel</Text>
+                <Text style={[styles.cancelText, { color: themeColors.text }]}>
+                  Cancel
+                </Text>
               </Pressable>
               <Pressable
                 onPress={save}
@@ -634,10 +667,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
     backgroundColor: "#fff",
     borderRadius: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.16,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 5 },
+    boxShadow: "0px 5px 12px rgba(0, 0, 0, 0.16)",
     elevation: 5,
   },
   overlay: {
@@ -687,8 +717,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", minHeight: 60 },
   iconArea: { width: 48, paddingTop: 2, alignItems: "center" },
   rowContent: { flex: 1 },
-  rowLabel: { fontSize: 16, fontWeight: "600", color: "#111", marginBottom: 5 },
-  rowValue: { fontSize: 15, color: "#6B6B6B", lineHeight: 21 },
+  rowLabel: { fontSize: 16, fontWeight: "600", marginBottom: 5 },
+  rowValue: { fontSize: 15, lineHeight: 21 },
   setAction: { color: "#3B82F6", fontWeight: "600" },
   seeMore: { color: "#3B82F6", fontSize: 14, fontWeight: "600", marginTop: 3 },
   loading: { alignItems: "center", gap: 28, marginTop: 28 },
@@ -705,11 +735,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#EDF2F8",
   },
   authPrompt: { paddingTop: 86, alignItems: "center" },
-  authTitle: { fontSize: 22, fontWeight: "700", color: "#111", marginTop: 14 },
+  authTitle: { fontSize: 22, fontWeight: "700", marginTop: 14 },
   authCopy: {
     fontSize: 15,
     lineHeight: 22,
-    color: "#6B6B6B",
     textAlign: "center",
     marginTop: 8,
     maxWidth: 330,
@@ -757,7 +786,6 @@ const styles = StyleSheet.create({
   sheetTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#111",
     marginBottom: 18,
   },
   input: {
@@ -772,7 +800,6 @@ const styles = StyleSheet.create({
   bioInput: { minHeight: 110, paddingTop: 13, textAlignVertical: "top" },
   charCounter: {
     fontSize: 12,
-    color: "#9CA3AF",
     marginTop: 6,
     textAlign: "right",
   },
@@ -786,9 +813,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   choiceSelected: { borderColor: "#3B82F6", backgroundColor: "#EFF6FF" },
-  choiceText: { color: "#111", fontSize: 16 },
+  choiceText: { fontSize: 16 },
   choiceTextSelected: { color: "#3B82F6", fontWeight: "700" },
-  validation: { color: "#FF3B30", fontSize: 13, marginTop: 8 },
+  validation: { fontSize: 13, marginTop: 8 },
   sheetActions: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -801,7 +828,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  cancelText: { color: "#6B6B6B", fontWeight: "600" },
+  cancelText: { fontWeight: "600" },
   confirm: {
     minWidth: 100,
     minHeight: 44,

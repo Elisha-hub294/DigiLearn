@@ -17,6 +17,21 @@ const darkColors = {
   white: "#1D2939",
   dark: "#F8FAFC",
   inactive: "#94A3B8",
+  surface: "#1E293B",
+  surfaceMuted: "#243247",
+  surfaceBorder: "#334155",
+  danger: "#FCA5A5",
+  dangerBackground: "#3A1F25",
+  warning: "#FCD34D",
+  warningBackground: "#3A2F16",
+  warningBorder: "#6B5522",
+  infoBorder: "#2D5A8D",
+  warmSurface: "#1E293B",
+  warmBorder: "#334155",
+  warmAccent: "#F97316",
+  warmAccentBackground: "#431407",
+  success: "#86EFAC",
+  successBackground: "#14532D",
 } as const;
 
 export type ThemeMode = "light" | "dark";

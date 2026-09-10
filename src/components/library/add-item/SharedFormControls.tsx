@@ -257,10 +257,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 22,
     borderWidth: 1,
-    shadowColor: "#0F172A",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
+    boxShadow: "0px 12px 18px rgba(15, 23, 42, 0.12)",
     elevation: 8,
   },
   uploadDialogIconWrap: {
