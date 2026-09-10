@@ -144,7 +144,7 @@ export default function NotificationsScreen() {
           visible: true,
           title: isRejected
             ? "Teacher application needs updates"
-            : "Teacher application approved",
+            : "Teacher application",
           message: notification.message,
         });
         return;

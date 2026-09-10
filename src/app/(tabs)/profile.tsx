@@ -137,14 +137,25 @@ export default function ProfileScreen() {
               ]}
               accessibilityLabel={`Account role: ${profile.type}`}
             >
-              <Text style={[s.roleLabel, { color: themeColors.subtitle }]}>ACCOUNT ROLE</Text>
-              <Text style={[s.roleValue, { color: themeColors.text }]}>{profile.type === "admin" ? "Administrator" : profile.type === "teacher" ? "Teacher" : "Student"}</Text>
+              <Text style={[s.roleLabel, { color: themeColors.subtitle }]}>
+                ACCOUNT ROLE
+              </Text>
+              <Text style={[s.roleValue, { color: themeColors.text }]}>
+                {profile.type === "admin"
+                  ? "Administrator"
+                  : profile.type === "teacher"
+                    ? "Teacher"
+                    : "Student"}
+              </Text>
               {profile.type === "teacher" && profile.teacherApprovalStatus ? (
-                <Text style={[s.roleStatusText, { color: themeColors.primary }]}>{profile.teacherApprovalStatus === "approved"
+                <Text
+                  style={[s.roleStatusText, { color: themeColors.primary }]}
+                >
+                  {profile.teacherApprovalStatus === "approved"
                     ? "Publishing enabled"
                     : profile.teacherApprovalStatus === "pending"
                       ? "Application pending review"
-                      : "Application needs updates"}</Text>
+                      : "Application needs updates"}
                 </Text>
               ) : null}
             </View>
