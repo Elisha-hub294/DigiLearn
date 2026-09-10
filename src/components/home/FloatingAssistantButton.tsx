@@ -391,6 +391,7 @@ const styles = StyleSheet.create({
     position: "relative",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "transparent",
   },
   avatarShadow: {
     position: "absolute",
@@ -402,5 +403,6 @@ const styles = StyleSheet.create({
   avatar: {
     width: 84,
     height: 84,
+    backgroundColor: "transparent",
   },
 });

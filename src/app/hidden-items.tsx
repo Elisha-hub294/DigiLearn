@@ -116,24 +116,38 @@ export default function HiddenItemsScreen() {
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={containerStyle}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
+        <View
+          style={[
+            ...containerStyle,
+            { backgroundColor: themeColors.background },
+          ]}
+        >
           <View style={styles.headerRow}>
             <Pressable
               onPress={() => router.replace("/settings" as never)}
               style={styles.backButton}
               accessibilityLabel="Back to settings"
             >
-              <Icon name="arrow-left" size={22} color={colors.dark} />
+              <Icon name="arrow-left" size={22} color={themeColors.text} />
             </Pressable>
-            <Text style={styles.title}>Hidden Items</Text>
+            <Text style={[styles.title, { color: themeColors.text }]}>
+              Hidden Items
+            </Text>
           </View>
-          <View style={styles.emptyStateCard}>
-            <Icon name="eye-off" size={42} color={colors.dark} />
-            <Text style={styles.emptyTitle}>
+          <View
+            style={[
+              styles.emptyStateCard,
+              { backgroundColor: themeColors.surface },
+            ]}
+          >
+            <Icon name="eye-off" size={42} color={themeColors.text} />
+            <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
               Sign in to manage hidden items
             </Text>
-            <Text style={styles.emptyCopy}>
+            <Text style={[styles.emptyCopy, { color: themeColors.subtitle }]}>
               Log in or create an account to hide pages and keep your
               preferences across devices.
             </Text>
@@ -145,10 +159,23 @@ export default function HiddenItemsScreen() {
                 <Text style={styles.primaryButtonText}>Log in</Text>
               </Pressable>
               <Pressable
-                style={styles.secondaryButton}
+                style={[
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: themeColors.surface,
+                    borderColor: themeColors.border,
+                  },
+                ]}
                 onPress={() => router.push("/signup" as never)}
               >
-                <Text style={styles.secondaryButtonText}>Sign up</Text>
+                <Text
+                  style={[
+                    styles.secondaryButtonText,
+                    { color: themeColors.text },
+                  ]}
+                >
+                  Sign up
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -161,27 +188,40 @@ export default function HiddenItemsScreen() {
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: themeColors.background }]}
     >
-      <View style={containerStyle}>
+      <View
+        style={[...containerStyle, { backgroundColor: themeColors.background }]}
+      >
         <View style={styles.headerRow}>
           <Pressable
             onPress={() => router.replace("/settings" as never)}
             style={styles.backButton}
             accessibilityLabel="Back to settings"
           >
-            <Icon name="arrow-left" size={22} color={colors.dark} />
+            <Icon name="arrow-left" size={22} color={themeColors.text} />
           </Pressable>
-          <Text style={styles.title}>Hidden Items</Text>
+          <Text style={[styles.title, { color: themeColors.text }]}>
+            Hidden Items
+          </Text>
         </View>
 
         {loading ? (
           <View style={styles.loadingWrap}>
-            <Text style={styles.loadingText}>Loading hidden items…</Text>
+            <Text style={[styles.loadingText, { color: themeColors.subtitle }]}>
+              Loading hidden items…
+            </Text>
           </View>
         ) : hiddenNotes.length === 0 ? (
-          <View style={styles.emptyStateCard}>
-            <Icon name="eye-off" size={42} color={colors.dark} />
-            <Text style={styles.emptyTitle}>No hidden items</Text>
-            <Text style={styles.emptyCopy}>
+          <View
+            style={[
+              styles.emptyStateCard,
+              { backgroundColor: themeColors.surface },
+            ]}
+          >
+            <Icon name="eye-off" size={42} color={themeColors.text} />
+            <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
+              No hidden items
+            </Text>
+            <Text style={[styles.emptyCopy, { color: themeColors.subtitle }]}>
               Pages you hide will appear here, so you can restore them whenever
               you want.
             </Text>

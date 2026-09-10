@@ -101,7 +101,7 @@ function HelpSection({ title, items, onSelectItem }: HelpSectionProps) {
   const { colors: themeColors } = useTheme();
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: themeColors.dark }]}>
+      <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
         {title}
       </Text>
       <View
@@ -208,9 +208,9 @@ export default function HelpScreen() {
               style={styles.backButton}
               accessibilityLabel="Back to Settings"
             >
-              <Feather name="arrow-left" size={22} color={themeColors.dark} />
+              <Feather name="arrow-left" size={22} color={themeColors.text} />
             </Pressable>
-            <Text style={[styles.title, { color: themeColors.dark }]}>
+            <Text style={[styles.title, { color: themeColors.text }]}>
               How can we help?
             </Text>
           </View>
@@ -260,11 +260,7 @@ export default function HelpScreen() {
               accessibilityRole="button"
               accessibilityLabel="Chat with us"
             >
-              <Feather
-                name="message-circle"
-                size={20}
-                color={themeColors.white}
-              />
+              <Feather name="message-circle" size={20} color={colors.white} />
               <Text style={styles.chatText}>Chat with us</Text>
             </Pressable>
           </View>

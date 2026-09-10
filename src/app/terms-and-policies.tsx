@@ -83,7 +83,7 @@ export default function TermsAndPoliciesScreen() {
             >
               <Feather name="arrow-left" size={22} color={themeColors.text} />
             </Pressable>
-            <Text style={[styles.headerTitle, { color: themeColors.dark }]}>
+            <Text style={[styles.headerTitle, { color: themeColors.text }]}>
               Legal & Policies
             </Text>
           </View>
@@ -186,9 +186,13 @@ export default function TermsAndPoliciesScreen() {
 
           {/* Policy / Terms Content */}
           <ScrollView
+            style={{ backgroundColor: themeColors.background }}
             contentContainerStyle={[
               styles.scroll,
-              { paddingHorizontal: horizontalPadding },
+              {
+                paddingHorizontal: horizontalPadding,
+                backgroundColor: themeColors.background,
+              },
             ]}
             showsVerticalScrollIndicator={false}
           >
@@ -278,25 +282,38 @@ function PrivacyPolicyContent({
         themeColors={themeColors}
       >
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • <Text style={styles.bold}>Account Credentials:</Text> Your full
-          name, verified email address, account type (Student or Teacher),
-          grade/academic level, school name, and chosen study subjects.
+          •{" "}
+          <Text style={[styles.bold, { color: themeColors.text }]}>
+            Account Credentials:
+          </Text>{" "}
+          Your full name, verified email address, account type (Student or
+          Teacher), grade/academic level, school name, and chosen study
+          subjects.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • <Text style={styles.bold}>Profile & Media:</Text> Optional profile
-          pictures chosen from your photo library (we only access selected
-          photos upon your explicit permission; we do not access your full
-          library or microphone).
+          •{" "}
+          <Text style={[styles.bold, { color: themeColors.text }]}>
+            Profile & Media:
+          </Text>{" "}
+          Optional profile pictures chosen from your photo library (we only
+          access selected photos upon your explicit permission; we do not access
+          your full library or microphone).
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • <Text style={styles.bold}>Educational & Study Activity:</Text>{" "}
+          •{" "}
+          <Text style={[styles.bold, { color: themeColors.text }]}>
+            Educational & Study Activity:
+          </Text>{" "}
           Books, past papers, and lessons you view, bookmark, or download for
           offline study, alongside reading progress and learning streaks.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • <Text style={styles.bold}>Educator Submissions:</Text> For teachers,
-          professional qualifications, subject specialties, contact
-          phone/WhatsApp, and resources you publish to the platform.
+          •{" "}
+          <Text style={[styles.bold, { color: themeColors.text }]}>
+            Educator Submissions:
+          </Text>{" "}
+          For teachers, professional qualifications, subject specialties,
+          contact phone/WhatsApp, and resources you publish to the platform.
         </Text>
       </Section>
 
@@ -356,8 +373,11 @@ function PrivacyPolicyContent({
           compliance with Google Play and Apple App Store policies:
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • <Text style={styles.bold}>Self-Service Account Deletion:</Text> You
-          can permanently delete your account and all associated data at any
+          •{" "}
+          <Text style={[styles.bold, { color: themeColors.text }]}>
+            Self-Service Account Deletion:
+          </Text>{" "}
+          You can permanently delete your account and all associated data at any
           time by navigating to:
           {"\n"}
           <Text style={styles.codeQuote}>
@@ -366,10 +386,14 @@ function PrivacyPolicyContent({
           .
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • <Text style={styles.bold}>What gets deleted:</Text> Deleting your
-          account immediately and irrevocably erases your authentication record,
-          profile data, uploaded books, notes, past papers, bookmarks, study
-          history, AI chat transcripts, and storage files from our servers.
+          •{" "}
+          <Text style={[styles.bold, { color: themeColors.text }]}>
+            What gets deleted:
+          </Text>{" "}
+          Deleting your account immediately and irrevocably erases your
+          authentication record, profile data, uploaded books, notes, past
+          papers, bookmarks, study history, AI chat transcripts, and storage
+          files from our servers.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • Alternatively, you can email our privacy team at{" "}
@@ -633,7 +657,6 @@ const styles = StyleSheet.create({
   },
   bold: {
     fontWeight: "700",
-    color: "#0F172A",
   },
   codeQuote: {
     fontFamily: "monospace",
