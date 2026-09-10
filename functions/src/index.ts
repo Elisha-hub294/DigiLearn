@@ -2,17 +2,17 @@ import { GoogleGenAI } from "@google/genai";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import {
-  FieldPath,
-  FieldValue,
-  getFirestore,
-  Timestamp,
+    FieldPath,
+    FieldValue,
+    getFirestore,
+    Timestamp,
 } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { getStorage } from "firebase-admin/storage";
 import { defineSecret } from "firebase-functions/params";
 import {
-  onDocumentCreated,
-  onDocumentWritten,
+    onDocumentCreated,
+    onDocumentWritten,
 } from "firebase-functions/v2/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
@@ -597,6 +597,7 @@ export const sendLibraryNotification = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Sign in required.");
   }
+  const publisherUid = request.auth.uid;
 
   const userSnapshot = await db.doc(`users/${request.auth.uid}`).get();
   const teacherSnapshot = await db.doc(`teachers/${request.auth.uid}`).get();
@@ -647,12 +648,12 @@ export const sendLibraryNotification = onCall(async (request) => {
   };
   const recipientDocs =
     publisherId && inputData.type === "announcement"
-      ? (
-          await db.collection(`teachers/${publisherId}/followers`).get()
-        ).docs.flatMap((follower) => [
-          db.collection("users").doc(follower.id),
-          db.collection("teachers").doc(follower.id),
-        ])
+      ? (await db.collection(`teachers/${publisherId}/followers`).get()).docs
+          .flatMap((follower) => [
+            db.collection("users").doc(follower.id),
+            db.collection("teachers").doc(follower.id),
+          ])
+          .filter((userRef) => userRef.id !== publisherUid)
       : [
           ...(await db.collection("users").get()).docs.map(
             (document) => document.ref,
@@ -660,7 +661,7 @@ export const sendLibraryNotification = onCall(async (request) => {
           ...(await db.collection("teachers").get()).docs.map(
             (document) => document.ref,
           ),
-        ];
+        ].filter((userRef) => userRef.id !== publisherUid);
 
   const batchSize = 450;
   for (let start = 0; start < recipientDocs.length; start += batchSize) {

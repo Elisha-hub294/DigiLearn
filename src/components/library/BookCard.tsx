@@ -23,6 +23,7 @@ type BookCardItem = {
   author: string;
   description: string;
   image?: ImageSourcePropType | string | null;
+  badge?: string;
   progress?: number;
   owner?: string;
 };
