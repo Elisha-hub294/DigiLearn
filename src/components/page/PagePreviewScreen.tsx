@@ -26,6 +26,7 @@ import {
 } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
+import { MissingResourceDialog } from "../ui/MissingResourceDialog";
 import { Skeleton } from "../ui/Skeleton";
 import { BottomActionBar } from "./BottomActionBar";
 import { OverviewSection } from "./OverviewSection";
@@ -191,37 +192,36 @@ export function PagePreviewScreen() {
         if (!active) return;
 
         let currentDoc: TopicalNote | undefined;
-        if (selectedSnap.exists()) {
-          const data = selectedSnap.data() as Record<string, unknown>;
-          currentDoc = {
-            id: selectedSnap.id,
-            title:
-              typeof data.title === "string" ? data.title : "Untitled note",
-            description:
-              typeof data.description === "string" ? data.description : "",
-            preview:
-              typeof data.preview === "string" ? data.preview : undefined,
-            cover: typeof data.cover === "string" ? data.cover : undefined,
-            document:
-              [data.doc, data.document, data.pdf, data.url].find(
-                (v): v is string => typeof v === "string" && v.length > 0,
-              ) ?? undefined,
-            createdAt: data.createdAt,
-            updatedAt: data.updatedAt,
-            subject: normalizeArray(data.subject),
-            book: normalizeArray(data.book),
-            pages: (data.pages ?? data.pageCount ?? data.pagesCount) as
-              | string
-              | number,
-            level: typeof data.level === "string" ? data.level : undefined,
-            schoolClass:
-              typeof data.schoolClass === "string"
-                ? data.schoolClass
-                : undefined,
-            isRecommended: Boolean(data.isRecommended || data.featured),
-          };
-          setNote(currentDoc);
+        if (!selectedSnap.exists()) {
+          setNote(undefined);
+          return;
         }
+
+        const data = selectedSnap.data() as Record<string, unknown>;
+        currentDoc = {
+          id: selectedSnap.id,
+          title: typeof data.title === "string" ? data.title : "Untitled note",
+          description:
+            typeof data.description === "string" ? data.description : "",
+          preview: typeof data.preview === "string" ? data.preview : undefined,
+          cover: typeof data.cover === "string" ? data.cover : undefined,
+          document:
+            [data.doc, data.document, data.pdf, data.url].find(
+              (v): v is string => typeof v === "string" && v.length > 0,
+            ) ?? undefined,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+          subject: normalizeArray(data.subject),
+          book: normalizeArray(data.book),
+          pages: (data.pages ?? data.pageCount ?? data.pagesCount) as
+            | string
+            | number,
+          level: typeof data.level === "string" ? data.level : undefined,
+          schoolClass:
+            typeof data.schoolClass === "string" ? data.schoolClass : undefined,
+          isRecommended: Boolean(data.isRecommended || data.featured),
+        };
+        setNote(currentDoc);
 
         // Map all notes for Similar Pages
         const mappedNotes: TopicalNote[] = notesSnap.docs.map((d) => {
@@ -407,7 +407,7 @@ export function PagePreviewScreen() {
     return false;
   }, [currentTime, note?.createdAt]);
 
-  if (loading || !note) {
+  if (loading) {
     return (
       <View
         style={[
@@ -479,6 +479,24 @@ export function PagePreviewScreen() {
             />
           </View>
         </View>
+      </View>
+    );
+  }
+
+  if (!note) {
+    return (
+      <View
+        style={[
+          styles.loadingContainer,
+          { alignItems: "center", backgroundColor: themeColors.background },
+        ]}
+      >
+        <MissingResourceDialog
+          resourceType="page"
+          resourceId={id}
+          resourceName={title || "Study note"}
+          onGoBack={() => router.back()}
+        />
       </View>
     );
   }

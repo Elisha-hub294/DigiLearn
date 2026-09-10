@@ -35,6 +35,7 @@ import {
 } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
+import { MissingResourceDialog } from "../ui/MissingResourceDialog";
 import { Skeleton } from "../ui/Skeleton";
 
 type PaperPreviewData = {
@@ -188,6 +189,9 @@ export function PaperPreviewScreen() {
             );
             return;
           }
+
+          setPaper(null);
+          return;
         }
 
         const fallback: PaperPreviewData = {
@@ -453,9 +457,12 @@ export function PaperPreviewScreen() {
           { backgroundColor: themeColors.background },
         ]}
       >
-        <Text style={[styles.title, { color: themeColors.text }]}>
-          Paper unavailable
-        </Text>
+        <MissingResourceDialog
+          resourceType="paper"
+          resourceId={params.id ?? "unknown"}
+          resourceName={params.title ?? "Past paper"}
+          onGoBack={() => router.back()}
+        />
       </View>
     );
   }

@@ -26,6 +26,7 @@ import {
 } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
+import { MissingResourceDialog } from "../ui/MissingResourceDialog";
 import { Skeleton } from "../ui/Skeleton";
 import { AuthorsCarousel } from "./AuthorsCarousel";
 import { BookHero } from "./BookHero";
@@ -158,6 +159,12 @@ export function BookPreviewScreen() {
 
         if (!active) return;
 
+        if (!selected.exists()) {
+          setBook(undefined);
+          setAllBooks([]);
+          return;
+        }
+
         // Extract default user avatar from 'default' collection
         let defaultAvatar = "";
         defaultSnapshot.docs.forEach((docSnap) => {
@@ -190,9 +197,7 @@ export function BookPreviewScreen() {
 
         // Set Book Data
         setBook(
-          selected.exists()
-            ? mapBook(selected.id, selected.data() as Record<string, unknown>)
-            : undefined,
+          mapBook(selected.id, selected.data() as Record<string, unknown>),
         );
         setAllBooks(
           booksSnapshot.docs.map((d) =>
@@ -275,7 +280,7 @@ export function BookPreviewScreen() {
     } as any);
   };
 
-  if (loading || !book)
+  if (loading)
     return (
       <View
         style={[styles.loading, { backgroundColor: themeColors.background }]}
@@ -300,6 +305,21 @@ export function BookPreviewScreen() {
         </View>
       </View>
     );
+
+  if (!book) {
+    return (
+      <View
+        style={[styles.loading, { backgroundColor: themeColors.background }]}
+      >
+        <MissingResourceDialog
+          resourceType="book"
+          resourceId={id}
+          resourceName="Book"
+          onGoBack={() => router.back()}
+        />
+      </View>
+    );
+  }
   const goBack = () => {
     if (typeof returnTo === "string" && returnTo.trim() === "/profile") {
       router.back();
