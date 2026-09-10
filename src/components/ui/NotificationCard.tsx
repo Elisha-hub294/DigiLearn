@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
+  DIGILEARN_PUBLISHER_AVATAR,
   formatRelativeNotificationTime,
   NOTIFICATION_TYPE_META,
   NotificationRecord,
@@ -76,7 +77,19 @@ export function NotificationCard({
             teacherApplicationNotification && styles.teacherApplicationAvatar,
           ]}
         >
-          {adminNotification ? (
+          {adminNotification &&
+          teacherApplicationNotification &&
+          notification.publisherAvatar &&
+          notification.publisherAvatar !== DIGILEARN_PUBLISHER_AVATAR ? (
+            <Image
+              source={resolveNotificationAvatarSource(
+                notification.publisherAvatar,
+                isDark,
+              )}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+          ) : adminNotification ? (
             <MaterialCommunityIcons
               name={
                 teacherApplicationNotification

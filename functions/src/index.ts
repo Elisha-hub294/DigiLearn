@@ -1318,7 +1318,10 @@ export const notifyAdminsOfTeacherApplication = onDocumentWritten(
             id: applicationId,
             type: "announcement",
             publisherName: "DigiLearn",
-            publisherAvatar: "@/assets/images/panda.png",
+            publisherAvatar:
+              typeof application.photoURL === "string"
+                ? application.photoURL
+                : "@/assets/images/panda.png",
             message: "A new teacher account is waiting for your review.",
             resourceTitle: application.name || "Teacher application",
             itemId: applicationId,
