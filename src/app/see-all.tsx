@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, FontAwesome } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  LayoutChangeEvent,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -76,14 +77,12 @@ export default function SeeAllScreen() {
       ? params.type
       : "books";
   const pages = useMemo(() => parsePages(params.pages), [params.pages]);
-  const columns =
-    contentMaxWidth >= 900
-      ? 4
-      : contentMaxWidth >= 620
-        ? 3
-        : contentMaxWidth >= 360
-          ? 2
-          : 1;
+  const minimumCardWidth =
+    contentMaxWidth >= 900 ? 220 : contentMaxWidth >= 600 ? 180 : 145;
+  const columns = Math.max(
+    1,
+    Math.min(3, Math.floor(contentMaxWidth / minimumCardWidth)),
+  );
   const { paperCollections, loading: papersLoading } = useLibraryData();
 
   // Pagination hooks
@@ -386,7 +385,10 @@ export default function SeeAllScreen() {
             accessibilityLabel={`Loading ${title.toLowerCase()}`}
           >
             {[0, 1, 2, 3, 4, 5].map((item) => (
-              <View key={item} style={styles.skeletonCard}>
+              <View
+                key={item}
+                style={[styles.skeletonCard, { width: `${100 / columns}%` }]}
+              >
                 <Skeleton style={styles.skeletonImage} />
                 <Skeleton style={styles.skeletonCardTitle} />
                 <Skeleton style={styles.skeletonCardLine} />
@@ -555,8 +557,22 @@ export default function SeeAllScreen() {
 function BookTile({ item, onPress }: { item: Book; onPress: () => void }) {
   const { colors: themeColors } = useTheme();
   const [imageFailed, setImageFailed] = useState(false);
+  const [cardWidth, setCardWidth] = useState(0);
+  const [coverRatio, setCoverRatio] = useState<number | null>(null);
+  const imageHeight =
+    coverRatio !== null && coverRatio >= 1
+      ? Math.min(220, Math.max(140, cardWidth * 0.52))
+      : Math.min(360, Math.max(190, cardWidth / 0.72));
+  const imageStyle = [styles.bookImage, { height: imageHeight }];
+
+  const handleLayout = (event: LayoutChangeEvent) => {
+    const nextWidth = event.nativeEvent.layout.width;
+    if (nextWidth > 0 && nextWidth !== cardWidth) setCardWidth(nextWidth);
+  };
+
   return (
     <View
+      onLayout={handleLayout}
       style={[
         styles.card,
         { backgroundColor: themeColors.white, borderColor: themeColors.border },
@@ -572,24 +588,36 @@ function BookTile({ item, onPress }: { item: Book; onPress: () => void }) {
         accessibilityRole="button"
         accessibilityLabel={`Open ${item.title}`}
       >
-        {imageFailed ? (
-          <View
-            style={[
-              styles.bookImage,
-              styles.imageFallback,
-              { backgroundColor: themeColors.border },
-            ]}
-          >
-            <Feather name="book" size={28} color={themeColors.white} />
+        <View style={styles.bookCoverFrame}>
+          {imageFailed ? (
+            <View
+              style={[
+                imageStyle,
+                styles.imageFallback,
+                { backgroundColor: themeColors.border },
+              ]}
+            >
+              <Feather name="book-open" size={30} color={themeColors.white} />
+            </View>
+          ) : (
+            <Image
+              source={item.image}
+              style={imageStyle}
+              contentFit="cover"
+              onLoad={(event) => {
+                const { width: imageWidth, height: imageHeight } = event.source;
+                const nextRatio = imageWidth / imageHeight;
+                setCoverRatio((current) =>
+                  current === nextRatio ? current : nextRatio,
+                );
+              }}
+              onError={() => setImageFailed(true)}
+            />
+          )}
+          <View style={styles.bookTypeBadge}>
+            <Feather name="book" size={12} color={themeColors.white} />
           </View>
-        ) : (
-          <Image
-            source={item.image}
-            style={styles.bookImage}
-            contentFit="cover"
-            onError={() => setImageFailed(true)}
-          />
-        )}
+        </View>
         <View style={styles.cardContent}>
           <Text
             style={[styles.cardTitle, { color: themeColors.text }]}
@@ -597,19 +625,24 @@ function BookTile({ item, onPress }: { item: Book; onPress: () => void }) {
           >
             {item.title}
           </Text>
-          <Text
-            style={[styles.cardMeta, { color: themeColors.subtitle }]}
-            numberOfLines={1}
-          >
-            {item.author}
-          </Text>
+          <View style={styles.authorRow}>
+            <Feather name="user" size={13} color={themeColors.subtitle} />
+            <Text
+              style={[styles.cardMeta, { color: themeColors.subtitle }]}
+              numberOfLines={1}
+            >
+              {item.author || "Unknown author"}
+            </Text>
+          </View>
         </View>
       </Pressable>
-      <SaveButton
-        itemId={item.id}
-        itemType="saved-books"
-        label={`Save ${item.title}`}
-      />
+      <View style={styles.saveRow}>
+        <SaveButton
+          itemId={item.id}
+          itemType="saved-books"
+          label={`Save ${item.title}`}
+        />
+      </View>
     </View>
   );
 }
@@ -863,11 +896,11 @@ function SaveButton({
       ]}
       onPress={handleSave}
     >
-      <Feather
-        name={saved ? "bookmark" : "bookmark"}
-        size={16}
-        color={themeColors.primary}
-      />
+      {saved ? (
+        <FontAwesome name="bookmark" size={16} color={themeColors.primary} />
+      ) : (
+        <Feather name="bookmark" size={16} color={themeColors.primary} />
+      )}
       <Text style={[styles.saveText, { color: themeColors.primary }]}>
         {saved ? "Saved" : "Save"}
       </Text>
@@ -970,33 +1003,61 @@ const styles = StyleSheet.create({
   cell: { paddingHorizontal: spacing.xs, marginBottom: spacing.lg },
   card: {
     backgroundColor: colors.white,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "transparent",
-    minHeight: 270,
-    paddingBottom: spacing.sm,
   },
   cardPressable: {
-    flex: 1,
+    flexGrow: 1,
   },
   cardContent: {
-    flex: 1,
-    padding: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
   cardHovered: {
     borderColor: "rgba(0, 110, 255, 0.25)",
-    shadowColor: "#0F172A",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
   },
   cardPressed: {
     opacity: 0.9,
     transform: [{ scale: 0.99 }],
   },
-  bookImage: { width: "100%", aspectRatio: 0.72 },
+  bookCoverFrame: {
+    width: "100%",
+    position: "relative",
+    backgroundColor: colors.lightBackground,
+  },
+  bookImage: { width: "100%", backgroundColor: colors.lightBackground },
+  bookTypeBadge: {
+    position: "absolute",
+    top: spacing.sm,
+    left: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    backgroundColor: "rgba(15, 23, 42, 0.78)",
+  },
+  bookTypeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.6,
+  },
+  authorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    minHeight: 22,
+  },
+  saveRow: {
+    marginHorizontal: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(15, 23, 42, 0.08)",
+  },
   imageFallback: {
     alignItems: "center",
     justifyContent: "center",
@@ -1046,16 +1107,16 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     color: colors.text,
-    fontSize: 14,
-    fontWeight: "600",
-    lineHeight: 19,
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: spacing.xs,
+    lineHeight: 20,
     minHeight: 38,
   },
   cardMeta: {
     color: colors.subtitle,
     fontSize: 12,
     lineHeight: 17,
-    marginTop: spacing.xs,
     minHeight: 17,
   },
   saveButton: {

@@ -47,7 +47,9 @@ export const BookCarousel = () => {
   const { colors: themeColors, isDark } = useTheme();
   const [books, setBooks] = useState<BookItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const cardWidth = Math.min(300, Math.max(190, width - 40));
+  const [coverRatios, setCoverRatios] = useState<Record<string, number>>({});
+  const maxCardWidth = Math.min(320, Math.max(190, width - 40));
+  const defaultCardWidth = Math.min(maxCardWidth, 220);
 
   useEffect(() => {
     let isMounted = true;
@@ -114,10 +116,10 @@ export const BookCarousel = () => {
             <View
               style={[
                 styles.card,
-                { backgroundColor: themeColors.white, width: cardWidth },
+                { backgroundColor: themeColors.white, width: defaultCardWidth },
               ]}
             >
-              <Skeleton style={styles.image} />
+              <Skeleton style={[styles.image, { height: 300 }]} />
               <View style={styles.body}>
                 <Skeleton style={styles.titleSkeleton} />
                 <Skeleton style={styles.authorSkeleton} />
@@ -146,67 +148,89 @@ export const BookCarousel = () => {
         data={displayedBooks}
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.card,
-              { backgroundColor: themeColors.white, width: cardWidth },
-            ]}
-          >
-            <Pressable
-              style={styles.cardAction}
-              accessibilityRole="button"
-              accessibilityLabel={`Open ${item.title}`}
-              onPress={() => {
-                if (auth.currentUser?.uid) {
-                  recordUserActivity(auth.currentUser.uid, "book", item.id);
-                }
-                router.push({
-                  pathname: "/book-preview",
-                  params: { id: item.id, source: "home", returnTo: "/" },
-                } as any);
-              }}
-            />
-            <View style={styles.menu}>
-              <ResourceDeleteMenu
-                collection="books"
-                id={item.id}
-                title={item.title}
-                data={{ owner: item.owner, cover: item.image }}
-                onDeleted={() =>
-                  setBooks((current) =>
-                    current.filter((book) => book.id !== item.id),
-                  )
-                }
-                light
-              />
-            </View>
-            <Image
-              source={item.image}
-              style={styles.image}
-              contentFit="contain"
-            />
-            <View style={styles.body}>
-              <Text style={[styles.title, { color: themeColors.text }]}>
-                {item.title}
-              </Text>
+        renderItem={({ item }) => {
+          const coverRatio = coverRatios[item.id] ?? 0.72;
+          const isLandscape = coverRatio >= 1;
+          const imageHeight = isLandscape ? 180 : 300;
+          const cardWidth = Math.min(
+            maxCardWidth,
+            Math.max(160, imageHeight * coverRatio),
+          );
+
+          return (
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: themeColors.white, width: cardWidth },
+              ]}
+            >
               <Pressable
+                style={styles.cardAction}
                 accessibilityRole="button"
-                accessibilityLabel={`Open teacher profile: ${item.author}`}
+                accessibilityLabel={`Open ${item.title}`}
                 onPress={() => {
+                  if (auth.currentUser?.uid) {
+                    recordUserActivity(auth.currentUser.uid, "book", item.id);
+                  }
                   router.push({
-                    pathname: "/teacher-profile",
-                    params: { name: item.author },
-                  } as never);
+                    pathname: "/book-preview",
+                    params: { id: item.id, source: "home", returnTo: "/" },
+                  } as any);
                 }}
-              >
-                <Text style={[styles.author, { color: themeColors.subtitle }]}>
-                  {item.author}
+              />
+              <View style={styles.menu}>
+                <ResourceDeleteMenu
+                  collection="books"
+                  id={item.id}
+                  title={item.title}
+                  data={{ owner: item.owner, cover: item.image }}
+                  onDeleted={() =>
+                    setBooks((current) =>
+                      current.filter((book) => book.id !== item.id),
+                    )
+                  }
+                  light
+                />
+              </View>
+              <Image
+                source={item.image}
+                style={[styles.image, { height: imageHeight }]}
+                contentFit="contain"
+                onLoad={(event) => {
+                  const { width: imageWidth, height: imageHeight } =
+                    event.source;
+                  const nextRatio = imageWidth / imageHeight;
+                  setCoverRatios((current) =>
+                    current[item.id] === nextRatio
+                      ? current
+                      : { ...current, [item.id]: nextRatio },
+                  );
+                }}
+              />
+              <View style={styles.body}>
+                <Text style={[styles.title, { color: themeColors.text }]}>
+                  {item.title}
                 </Text>
-              </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open teacher profile: ${item.author}`}
+                  onPress={() => {
+                    router.push({
+                      pathname: "/teacher-profile",
+                      params: { name: item.author },
+                    } as never);
+                  }}
+                >
+                  <Text
+                    style={[styles.author, { color: themeColors.subtitle }]}
+                  >
+                    {item.author}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
-        )}
+          );
+        }}
         contentContainerStyle={styles.list}
       />
     </Animated.View>
@@ -227,7 +251,7 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   menu: { position: "absolute", top: 6, right: 6, zIndex: 2 },
-  image: { width: "100%", aspectRatio: 0.72 },
+  image: { width: "100%" },
   body: { padding: spacing.sm, minHeight: 72 },
   title: {
     fontSize: 14,

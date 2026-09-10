@@ -1,11 +1,14 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
+import { useState } from "react";
 import {
   DimensionValue,
   ImageSourcePropType,
+  LayoutChangeEvent,
   Pressable,
   StyleProp,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   ViewStyle,
 } from "react-native";
@@ -21,7 +24,6 @@ type BookCardItem = {
   description: string;
   image?: ImageSourcePropType | string | null;
   progress?: number;
-  badge?: string;
   owner?: string;
 };
 
@@ -41,12 +43,45 @@ export function BookCard({
   style,
 }: BookCardProps) {
   const { colors, isDark } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const fallbackCover = getThemeAsset("bookCoverDefault", isDark);
+  const [cardWidth, setCardWidth] = useState(0);
+  const [coverRatio, setCoverRatio] = useState<number | null>(null);
+
+  const handleCardLayout = (event: LayoutChangeEvent) => {
+    const nextWidth = event.nativeEvent.layout.width;
+    if (nextWidth > 0 && nextWidth !== cardWidth) setCardWidth(nextWidth);
+  };
+  const responsiveWidth =
+    cardWidth || (typeof width === "number" ? width : screenWidth * 0.9);
+  const coverOrientation =
+    coverRatio === null
+      ? "unknown"
+      : coverRatio >= 1
+        ? "landscape"
+        : "portrait";
+  const imageHeight =
+    coverOrientation === "portrait"
+      ? Math.min(420, Math.max(260, responsiveWidth / 0.72))
+      : coverOrientation === "landscape"
+        ? Math.min(300, Math.max(160, responsiveWidth * 0.52))
+        : Math.min(340, Math.max(210, responsiveWidth * 0.65));
+  const imageWidth = coverRatio
+    ? Math.min(responsiveWidth, Math.max(160, imageHeight * coverRatio))
+    : responsiveWidth;
+  const imageFrameStyle = [styles.imageFrame, { height: imageHeight }];
+
   return (
     <View
+      onLayout={handleCardLayout}
       style={[
         styles.card,
-        { width, marginRight, backgroundColor: colors.white },
+        {
+          width,
+          marginRight,
+          backgroundColor: colors.white,
+          borderColor: colors.border,
+        },
         style,
       ]}
     >
@@ -59,35 +94,51 @@ export function BookCard({
         ]}
         onPress={onPress}
       >
-        <Image
-          source={item.image || fallbackCover}
-          style={styles.image}
-          contentFit="cover"
-        />
+        <View style={imageFrameStyle}>
+          <Image
+            source={item.image || fallbackCover}
+            style={[styles.image, { width: imageWidth }]}
+            contentFit="contain"
+            onLoad={(event) => {
+              const { width: imageWidth, height: imageHeight } = event.source;
+              const nextRatio = imageWidth / imageHeight;
+              setCoverRatio((current) =>
+                current === nextRatio ? current : nextRatio,
+              );
+            }}
+          />
+        </View>
         <View style={styles.content}>
-          <View style={styles.badgeRow}>
-            {item.badge ? (
-              <View
-                style={[styles.badge, { backgroundColor: colors.primaryLight }]}
-              >
-                <Text style={[styles.badgeText, { color: colors.primary }]}>
-                  {item.badge}
-                </Text>
-              </View>
-            ) : null}
-            {typeof item.progress === "number" ? (
-              <View
-                style={[
-                  styles.progressLabel,
-                  { backgroundColor: colors.lightBackground },
-                ]}
-              >
-                <Text style={[styles.progressText, { color: colors.primary }]}>
-                  {item.progress}%
-                </Text>
-              </View>
-            ) : null}
-          </View>
+          {item.badge || typeof item.progress === "number" ? (
+            <View style={styles.badgeRow}>
+              {item.badge ? (
+                <View
+                  style={[
+                    styles.badge,
+                    { backgroundColor: colors.primaryLight },
+                  ]}
+                >
+                  <Text style={[styles.badgeText, { color: colors.primary }]}>
+                    {item.badge}
+                  </Text>
+                </View>
+              ) : null}
+              {typeof item.progress === "number" ? (
+                <View
+                  style={[
+                    styles.progressLabel,
+                    { backgroundColor: colors.lightBackground },
+                  ]}
+                >
+                  <Text
+                    style={[styles.progressText, { color: colors.primary }]}
+                  >
+                    {item.progress}%
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
           <Text
             style={[styles.title, { color: colors.text }]}
             numberOfLines={2}
@@ -124,6 +175,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: spacing.md,
     position: "relative",
+    borderWidth: 1,
   },
   cardContent: {
     flex: 1,
@@ -141,15 +193,21 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.995 }],
   },
   menu: { position: "absolute", top: 6, right: 6, zIndex: 2 },
+  imageFrame: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F3F4F6",
+  },
   image: {
     width: "100%",
-    aspectRatio: 0.72,
+    height: "100%",
   },
   badgeRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   badge: {
     borderRadius: radius.pill,
@@ -172,14 +230,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 13,
     fontWeight: "700",
-    marginBottom: 4,
+    lineHeight: 18,
+    marginBottom: spacing.xs,
   },
   author: {
     fontSize: 12,
-    marginBottom: 6,
+    fontWeight: "600",
+    marginBottom: spacing.sm,
   },
   description: {
     fontSize: 11,
-    lineHeight: 16,
+    lineHeight: 17,
   },
 });
