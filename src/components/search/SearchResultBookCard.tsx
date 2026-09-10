@@ -1,4 +1,5 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
+import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -15,7 +16,7 @@ type SearchResultBookCardProps = {
   onPress: (item: SearchResult) => void;
 };
 
-export function SearchResultBookCard({
+export const SearchResultBookCard = memo(function SearchResultBookCard({
   item,
   query,
   onPress,
@@ -149,7 +150,7 @@ export function SearchResultBookCard({
       </Pressable>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

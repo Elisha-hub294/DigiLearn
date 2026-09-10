@@ -66,9 +66,6 @@ export function BookCard({
       : coverOrientation === "landscape"
         ? Math.min(300, Math.max(160, responsiveWidth * 0.52))
         : Math.min(340, Math.max(210, responsiveWidth * 0.65));
-  const imageWidth = coverRatio
-    ? Math.min(responsiveWidth, Math.max(160, imageHeight * coverRatio))
-    : responsiveWidth;
   const imageFrameStyle = [styles.imageFrame, { height: imageHeight }];
 
   return (
@@ -97,7 +94,7 @@ export function BookCard({
         <View style={imageFrameStyle}>
           <Image
             source={item.image || fallbackCover}
-            style={[styles.image, { width: imageWidth }]}
+            style={styles.image}
             contentFit="contain"
             onLoad={(event) => {
               const { width: imageWidth, height: imageHeight } = event.source;

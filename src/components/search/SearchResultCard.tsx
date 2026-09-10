@@ -1,4 +1,5 @@
 import { Image } from "expo-image";
+import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -25,7 +26,7 @@ const BADGE_COLORS: Record<
   teacher: { bg: "#10B981", text: "#FFFFFF", label: "Teacher" },
 };
 
-export function SearchResultCard({
+export const SearchResultCard = memo(function SearchResultCard({
   item,
   query,
   onPress,
@@ -148,7 +149,7 @@ export function SearchResultCard({
       </Pressable>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrapper: {

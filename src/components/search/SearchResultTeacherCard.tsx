@@ -1,4 +1,5 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
+import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -16,7 +17,7 @@ type SearchResultTeacherCardProps = {
 
 const DEFAULT_TEACHER_AVATAR = "TeacherProfile/tr-default.png";
 
-export function SearchResultTeacherCard({
+export const SearchResultTeacherCard = memo(function SearchResultTeacherCard({
   item,
   query,
   onPress,
@@ -127,7 +128,7 @@ export function SearchResultTeacherCard({
       </View>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

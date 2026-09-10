@@ -20,6 +20,7 @@ const FALLBACK_TEACHER_AVATAR = "TeacherProfile/tr-default.png";
 const SEARCH_CACHE_KEY = LOCAL_CACHE_KEYS.search;
 const SEARCH_CACHE_VERSION = 3;
 const SEARCH_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+const MAX_SEARCH_RESULTS = 50;
 
 type SearchCache = {
   topicalNotes: any[];
@@ -623,7 +624,9 @@ export function useGlobalSearch(
     // Apply category filter if active
     const mapped = scored.map((s) => s.item);
     if (selectedCategory === "All") {
-      return isSuggestionMode ? mapped.slice(0, 6) : mapped;
+      return isSuggestionMode
+        ? mapped.slice(0, 6)
+        : mapped.slice(0, MAX_SEARCH_RESULTS);
     }
 
     const categoryMap: Record<SearchCategory, SearchResultType | null> = {
@@ -636,10 +639,16 @@ export function useGlobalSearch(
     };
 
     const targetType = categoryMap[selectedCategory];
-    if (!targetType) return isSuggestionMode ? mapped.slice(0, 6) : mapped;
+    if (!targetType) {
+      return isSuggestionMode
+        ? mapped.slice(0, 6)
+        : mapped.slice(0, MAX_SEARCH_RESULTS);
+    }
 
     const filtered = mapped.filter((i) => i.type === targetType);
-    return isSuggestionMode ? filtered.slice(0, 6) : filtered;
+    return isSuggestionMode
+      ? filtered.slice(0, 6)
+      : filtered.slice(0, MAX_SEARCH_RESULTS);
   }, [
     debouncedQuery,
     hasSubmittedSearch,

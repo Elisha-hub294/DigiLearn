@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -16,7 +17,7 @@ type SearchResultVideoCardProps = {
   onPress: (item: SearchResult) => void;
 };
 
-export function SearchResultVideoCard({
+export const SearchResultVideoCard = memo(function SearchResultVideoCard({
   item,
   query,
   onPress,
@@ -163,7 +164,7 @@ export function SearchResultVideoCard({
       </Pressable>
     </Animated.View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
