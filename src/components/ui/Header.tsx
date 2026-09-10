@@ -243,15 +243,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
+    boxShadow: `0px 6px 10px ${colors.primary}40`,
     elevation: 4,
   },
   publishDisabled: {
     backgroundColor: colors.inactive,
-    shadowOpacity: 0,
+    boxShadow: "none",
     elevation: 0,
   },
   notificationButton: {

@@ -187,10 +187,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     overflow: "hidden",
     elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
+    boxShadow: "0px 3px 6px rgba(0, 0, 0, 0.1)",
   },
   coverImage: {
     width: "100%",

@@ -430,16 +430,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 2,
     borderColor: "rgba(15, 23, 42, 0.08)",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 6 },
+    boxShadow: "0px 6px 10px rgba(0, 0, 0, 0.08)",
     elevation: 3,
   },
   cardSelected: {
     borderColor: "rgba(15, 23, 42, 0.5)",
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
+    boxShadow: "0px 0px 12px rgba(0, 0, 0, 0.12)",
     transform: [{ scale: 1.015 }],
   },
   cardPressed: {
