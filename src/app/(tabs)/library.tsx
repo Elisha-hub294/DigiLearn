@@ -725,8 +725,7 @@ const styles = StyleSheet.create({
   stickyFilter: {
     backgroundColor: colors.background,
     marginTop: 0,
-    paddingTop: 0,
-    paddingBottom: spacing.md,
+    paddingVertical: spacing.md,
   },
   filterContent: { gap: spacing.sm, paddingRight: spacing.lg },
   activeFilterRow: {
