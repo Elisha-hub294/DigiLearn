@@ -18,8 +18,14 @@ export function PublicHome() {
   const { colors: themeColors, isDark } = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const horizontalPadding = width >= 900 ? 64 : width >= 600 ? 36 : 20;
-  const contentMaxWidth = Math.min(1080, width - horizontalPadding * 2);
+  const horizontalPadding = width >= 1200 ? 64 : width >= 600 ? 36 : 20;
+  const contentMaxWidth = 1200;
+  const isCompact = width < 760;
+  const heroArtSize = Math.min(
+    330,
+    Math.max(220, width - horizontalPadding * 2),
+  );
+  const titleSize = width < 420 ? 38 : 46;
 
   return (
     <SafeAreaView
@@ -35,7 +41,7 @@ export function PublicHome() {
             { maxWidth: contentMaxWidth, paddingHorizontal: horizontalPadding },
           ]}
         >
-          <View style={styles.navbar}>
+          <View style={[styles.navbar, isCompact && styles.compactNavbar]}>
             <View style={styles.brandRow}>
               <Image
                 source={require("../../../assets/images/panda.png")}
@@ -77,12 +83,21 @@ export function PublicHome() {
             </View>
           </View>
 
-          <View style={styles.hero}>
+          <View style={[styles.hero, isCompact && styles.compactHero]}>
             <View style={styles.heroCopy}>
               <Text style={[styles.eyebrow, { color: colors.primary }]}>
                 LEARN WITH CONFIDENCE
               </Text>
-              <Text style={[styles.title, { color: themeColors.dark }]}>
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    color: themeColors.dark,
+                    fontSize: titleSize,
+                    lineHeight: titleSize + 8,
+                  },
+                ]}
+              >
                 A better way to study.
               </Text>
               <Text
@@ -125,6 +140,8 @@ export function PublicHome() {
             <View
               style={[
                 styles.heroArt,
+                isCompact && styles.compactHeroArt,
+                { width: isCompact ? heroArtSize : 330, height: heroArtSize },
                 { backgroundColor: isDark ? "#10223d" : colors.primaryLight },
               ]}
             >
@@ -257,6 +274,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: spacing.lg,
   },
+  compactNavbar: {
+    flexWrap: "wrap",
+    rowGap: spacing.md,
+  },
   brandRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   logo: { width: 38, height: 38 },
   brand: { fontSize: 22, fontWeight: "800" },
@@ -274,6 +295,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.xxl,
     paddingVertical: 70,
+  },
+  compactHero: {
+    flexDirection: "column",
+    gap: spacing.xl,
+    paddingVertical: spacing.xxl,
   },
   heroCopy: { flex: 1, minWidth: 0 },
   eyebrow: {
@@ -314,6 +340,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  compactHeroArt: { alignSelf: "center" },
   heroImage: { width: "86%", height: "86%" },
   section: { paddingVertical: spacing.xxl },
   sectionTitle: {
@@ -350,6 +377,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   footerText: { fontSize: 13, lineHeight: 20, flex: 1, minWidth: 240 },
-  footerLinks: { flexDirection: "row", gap: spacing.lg },
+  footerLinks: { flexDirection: "row", flexWrap: "wrap", gap: spacing.lg },
   footerLink: { fontSize: 13, fontWeight: "700" },
 });
