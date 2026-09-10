@@ -166,14 +166,14 @@ export default function AdminActivityScreen() {
     <SafeAreaView
       style={[styles.safe, { backgroundColor: themeColors.background }]}
     >
-      <View style={styles.page}>
+      <View style={[styles.page, { backgroundColor: themeColors.background }]}>
         <View style={[styles.contentContainer, { maxWidth }]}>
           <ScrollView
             contentContainerStyle={[
               styles.container,
               { paddingHorizontal: horizontalPadding },
             ]}
-            style={styles.scroll}
+            style={[styles.scroll, { backgroundColor: themeColors.background }]}
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.header}>
@@ -182,11 +182,13 @@ export default function AdminActivityScreen() {
                 style={styles.back}
                 accessibilityLabel="Back to settings"
               >
-                <Icon name="arrow-left" size={22} color={colors.dark} />
+                <Icon name="arrow-left" size={22} color={themeColors.text} />
               </Pressable>
               <View>
                 <Text style={styles.eyebrow}>ADMIN INSIGHTS</Text>
-                <Text style={styles.title}>App usage</Text>
+                <Text style={[styles.title, { color: themeColors.text }]}>
+                  App usage
+                </Text>
               </View>
               <Pressable
                 onPress={load}
@@ -206,7 +208,7 @@ export default function AdminActivityScreen() {
                 </Text>
               </Pressable>
             </View>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
               Understand who is learning and which resources deserve attention.
             </Text>
 
@@ -217,12 +219,21 @@ export default function AdminActivityScreen() {
                   onPress={() => setRange(item)}
                   style={[
                     styles.rangeButton,
+                    {
+                      backgroundColor:
+                        range === item ? themeColors.text : themeColors.white,
+                      borderColor: themeColors.border,
+                    },
                     range === item && styles.rangeSelected,
                   ]}
                 >
                   <Text
                     style={[
                       styles.rangeText,
+                      {
+                        color:
+                          range === item ? themeColors.white : themeColors.text,
+                      },
                       range === item && styles.rangeTextSelected,
                     ]}
                   >
@@ -235,14 +246,22 @@ export default function AdminActivityScreen() {
                 </Pressable>
               ))}
             </View>
-            <View style={styles.searchBox}>
-              <Icon name="search" size={17} color={colors.subtitle} />
+            <View
+              style={[
+                styles.searchBox,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                },
+              ]}
+            >
+              <Icon name="search" size={17} color={themeColors.subtitle} />
               <TextInput
                 value={search}
                 onChangeText={setSearch}
                 placeholder="Search users or resources"
-                placeholderTextColor={colors.subtitle}
-                style={styles.searchInput}
+                placeholderTextColor={themeColors.subtitle}
+                style={[styles.searchInput, { color: themeColors.text }]}
                 accessibilityLabel="Search activity"
               />
             </View>
@@ -259,12 +278,28 @@ export default function AdminActivityScreen() {
                   onPress={() => setActivityFilter(item)}
                   style={[
                     styles.filterButton,
+                    {
+                      backgroundColor:
+                        activityFilter === item
+                          ? themeColors.primaryLight
+                          : themeColors.white,
+                      borderColor:
+                        activityFilter === item
+                          ? themeColors.primary
+                          : themeColors.border,
+                    },
                     activityFilter === item && styles.filterSelected,
                   ]}
                 >
                   <Text
                     style={[
                       styles.filterText,
+                      {
+                        color:
+                          activityFilter === item
+                            ? themeColors.primary
+                            : themeColors.text,
+                      },
                       activityFilter === item && styles.filterTextSelected,
                     ]}
                   >
@@ -280,7 +315,13 @@ export default function AdminActivityScreen() {
                 accessibilityLabel="Loading activity"
               >
                 {[0, 1, 2, 3].map((item) => (
-                  <View key={item} style={styles.skeletonRow}>
+                  <View
+                    key={item}
+                    style={[
+                      styles.skeletonRow,
+                      { backgroundColor: themeColors.surface },
+                    ]}
+                  >
                     <Skeleton style={styles.skeletonIcon} />
                     <View style={styles.skeletonCopy}>
                       <Skeleton style={styles.skeletonTitle} />
@@ -291,7 +332,17 @@ export default function AdminActivityScreen() {
                 ))}
               </View>
             ) : error ? (
-              <Text style={styles.error}>{error}</Text>
+              <Text
+                style={[
+                  styles.error,
+                  {
+                    color: themeColors.danger,
+                    backgroundColor: themeColors.dangerBackground,
+                  },
+                ]}
+              >
+                {error}
+              </Text>
             ) : (
               <>
                 <View style={styles.metricsGrid}>
@@ -330,14 +381,29 @@ export default function AdminActivityScreen() {
                     color="#E9C46A"
                   />
                 </View>
-                <Text style={styles.sectionTitle}>Average actions per day</Text>
-                <View style={styles.averageRow}>
+                <Text
+                  style={[styles.sectionTitle, { color: themeColors.text }]}
+                >
+                  Average actions per day
+                </Text>
+                <View
+                  style={[
+                    styles.averageRow,
+                    { backgroundColor: themeColors.surface },
+                  ]}
+                >
                   <Average label="Daily" value={metrics.average(1)} />
                   <Average label="Weekly" value={metrics.average(7)} />
                   <Average label="Monthly" value={metrics.average(30)} />
                 </View>
-                <Text style={styles.sectionTitle}>Activity trend</Text>
-                <View style={styles.chart}>
+                <Text
+                  style={[styles.sectionTitle, { color: themeColors.text }]}
+                >
+                  Activity trend
+                </Text>
+                <View
+                  style={[styles.chart, { backgroundColor: themeColors.white }]}
+                >
                   {metrics.dailyTrend.map((day) => {
                     const max = Math.max(
                       ...metrics.dailyTrend.map((entry) => entry.count),
@@ -351,36 +417,92 @@ export default function AdminActivityScreen() {
                             { height: Math.max(4, (day.count / max) * 78) },
                           ]}
                         />
-                        <Text style={styles.barLabel}>{day.label}</Text>
-                        <Text style={styles.barCount}>{day.count}</Text>
+                        <Text
+                          style={[
+                            styles.barLabel,
+                            { color: themeColors.subtitle },
+                          ]}
+                        >
+                          {day.label}
+                        </Text>
+                        <Text
+                          style={[styles.barCount, { color: themeColors.text }]}
+                        >
+                          {day.count}
+                        </Text>
                       </View>
                     );
                   })}
                 </View>
-                <Text style={styles.sectionTitle}>Most accessed resources</Text>
+                <Text
+                  style={[styles.sectionTitle, { color: themeColors.text }]}
+                >
+                  Most accessed resources
+                </Text>
                 {metrics.topResources.length === 0 ? (
-                  <Text style={styles.empty}>
+                  <Text
+                    style={[
+                      styles.empty,
+                      {
+                        color: themeColors.subtitle,
+                        backgroundColor: themeColors.white,
+                      },
+                    ]}
+                  >
                     No resources opened in this period.
                   </Text>
                 ) : (
                   metrics.topResources.map(([resourceId, count], index) => (
-                    <View key={resourceId} style={styles.resourceRow}>
+                    <View
+                      key={resourceId}
+                      style={[
+                        styles.resourceRow,
+                        {
+                          backgroundColor: themeColors.white,
+                          borderBottomColor: themeColors.border,
+                        },
+                      ]}
+                    >
                       <Text style={styles.resourceRank}>{index + 1}</Text>
-                      <Text style={styles.resourceId} numberOfLines={1}>
+                      <Text
+                        style={[styles.resourceId, { color: themeColors.text }]}
+                        numberOfLines={1}
+                      >
                         {resourceId}
                       </Text>
                       <Text style={styles.resourceCount}>{count} opens</Text>
                     </View>
                   ))
                 )}
-                <Text style={styles.sectionTitle}>Recent activity</Text>
+                <Text
+                  style={[styles.sectionTitle, { color: themeColors.text }]}
+                >
+                  Recent activity
+                </Text>
                 {visibleEvents.length === 0 ? (
-                  <Text style={styles.empty}>
+                  <Text
+                    style={[
+                      styles.empty,
+                      {
+                        color: themeColors.subtitle,
+                        backgroundColor: themeColors.white,
+                      },
+                    ]}
+                  >
                     No activity events have been recorded yet.
                   </Text>
                 ) : (
                   visibleEvents.slice(0, 40).map((event) => (
-                    <View key={event.id} style={styles.eventRow}>
+                    <View
+                      key={event.id}
+                      style={[
+                        styles.eventRow,
+                        {
+                          backgroundColor: themeColors.white,
+                          borderBottomColor: themeColors.border,
+                        },
+                      ]}
+                    >
                       <View style={styles.eventIcon}>
                         <Icon
                           name={
@@ -395,14 +517,29 @@ export default function AdminActivityScreen() {
                         />
                       </View>
                       <View style={styles.eventCopy}>
-                        <Text style={styles.eventName}>
+                        <Text
+                          style={[
+                            styles.eventName,
+                            { color: themeColors.text },
+                          ]}
+                        >
                           {event.userName || event.userEmail || event.userId}
                         </Text>
-                        <Text style={styles.eventDetail}>
+                        <Text
+                          style={[
+                            styles.eventDetail,
+                            { color: themeColors.subtitle },
+                          ]}
+                        >
                           {labelForType(event.type)} opened · {event.resourceId}
                         </Text>
                       </View>
-                      <Text style={styles.eventTime}>
+                      <Text
+                        style={[
+                          styles.eventTime,
+                          { color: themeColors.subtitle },
+                        ]}
+                      >
                         {formatTime(event.openedAt)}
                       </Text>
                     </View>
@@ -428,22 +565,33 @@ function Metric({
   value: string;
   color: string;
 }) {
+  const { colors: themeColors } = useTheme();
   return (
-    <View style={styles.metric}>
+    <View style={[styles.metric, { backgroundColor: themeColors.white }]}>
       <Icon name={icon} size={19} color={color} />
-      <Text style={styles.metricValue} numberOfLines={1}>
+      <Text
+        style={[styles.metricValue, { color: themeColors.text }]}
+        numberOfLines={1}
+      >
         {value}
       </Text>
-      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={[styles.metricLabel, { color: themeColors.subtitle }]}>
+        {label}
+      </Text>
     </View>
   );
 }
 
 function Average({ label, value }: { label: string; value: number }) {
+  const { colors: themeColors } = useTheme();
   return (
     <View style={styles.average}>
-      <Text style={styles.averageValue}>{value}</Text>
-      <Text style={styles.averageLabel}>{label}</Text>
+      <Text style={[styles.averageValue, { color: themeColors.white }]}>
+        {value}
+      </Text>
+      <Text style={[styles.averageLabel, { color: themeColors.inactive }]}>
+        {label}
+      </Text>
     </View>
   );
 }

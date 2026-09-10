@@ -237,12 +237,21 @@ export default function AdminReportsScreen() {
                         styles.statusButton,
                         { borderColor: themeColors.border },
                         report.status === status && styles.statusButtonSelected,
+                        report.status === status && {
+                          backgroundColor: themeColors.primaryLight,
+                          borderColor: themeColors.primary,
+                        },
                       ]}
                     >
                       <Text
                         style={[
                           styles.statusButtonText,
-                          { color: themeColors.text },
+                          {
+                            color:
+                              report.status === status
+                                ? themeColors.primary
+                                : themeColors.text,
+                          },
                         ]}
                       >
                         {status.replace("_", " ")}

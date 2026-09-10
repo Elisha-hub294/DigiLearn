@@ -135,6 +135,7 @@ export function NotifyToggle({
   onToggle: () => void;
   accessibilityLabel?: string;
 }) {
+  const { colors: themeColors } = useTheme();
   const [transition] = useState(() => new Animated.Value(checked ? 1 : 0));
 
   useEffect(() => {
@@ -159,7 +160,7 @@ export function NotifyToggle({
           {
             backgroundColor: transition.interpolate({
               inputRange: [0, 1],
-              outputRange: ["#DCE3ED", colors.primary],
+              outputRange: [themeColors.surfaceMuted, themeColors.primary],
             }),
           },
         ]}
