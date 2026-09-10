@@ -4,11 +4,21 @@ import { Stack, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
-import { Platform } from "react-native";
+import {
+  ActivityIndicator,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "../components/ui/ErrorBoundary";
 import { NetworkStatusBanner } from "../components/ui/NetworkStatusBanner";
+import {
+  AccountDeletionProvider,
+  useAccountDeletion,
+} from "../contexts/AccountDeletionContext";
 import { ProfileProvider } from "../contexts/ProfileContext";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { completeEmailLink } from "../services/emailLinkAuth";
@@ -24,6 +34,7 @@ void SplashScreen.preventAutoHideAsync();
 
 function AppShell() {
   const { isDark, isHydrated } = useTheme();
+  const { isDeletingAccount } = useAccountDeletion();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -156,6 +167,19 @@ function AppShell() {
         </Stack>
       </ProfileProvider>
       <NetworkStatusBanner />
+      {isDeletingAccount ? (
+        <View
+          style={styles.deletionBarrier}
+          pointerEvents="auto"
+          onStartShouldSetResponder={() => true}
+        >
+          <ActivityIndicator size="large" color="#FFFFFF" />
+          <Text style={styles.deletionText}>Deleting your account...</Text>
+          <Text style={styles.deletionSubtext}>
+            Please keep the app open until deletion is complete.
+          </Text>
+        </View>
+      ) : null}
     </ErrorBoundary>
   );
 }
@@ -165,9 +189,34 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <AppShell />
+          <AccountDeletionProvider>
+            <AppShell />
+          </AccountDeletionProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  deletionBarrier: {
+    ...StyleSheet.absoluteFill,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 9, 29, 0.92)",
+    padding: 32,
+  },
+  deletionText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
+    marginTop: 18,
+    textAlign: "center",
+  },
+  deletionSubtext: {
+    color: "#DDEBFF",
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: "center",
+  },
+});

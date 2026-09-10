@@ -167,6 +167,23 @@ const ownedCollections = [
     "pastPaper",
     "trendingLessons",
     "teacherPosts",
+    "teacherPostsCards",
+    "teacherUpdates",
+];
+const userScopedCollections = [
+    "activityEvents",
+    "reports",
+    "teacherApplicationAudit",
+    "adminNotifications",
+    "teacherApplications",
+];
+const userReferenceFields = [
+    "userId",
+    "owner",
+    "createdBy",
+    "applicantId",
+    "reporterId",
+    "uid",
 ];
 const storagePrefixes = [
     "book-covers/",
@@ -200,6 +217,22 @@ exports.deleteAccount = (0, https_1.onCall)(async (request) => {
             collectStoragePaths(document.data(), paths);
         });
     });
+    const topLevelCollections = await db.listCollections();
+    const relatedCollectionNames = Array.from(new Set([
+        ...userScopedCollections,
+        ...topLevelCollections.map((collection) => collection.id),
+    ]));
+    const relatedDocuments = await Promise.all(relatedCollectionNames.flatMap((collectionName) => userReferenceFields.map(async (fieldName) => {
+        const snapshot = await db
+            .collection(collectionName)
+            .where(fieldName, "==", userId)
+            .get();
+        snapshot.docs.forEach((document) => collectStoragePaths(document.data(), paths));
+        return snapshot.docs;
+    })));
+    const relatedDocumentRefs = new Map(relatedDocuments
+        .flat()
+        .map((document) => [document.ref.path, document.ref]));
     const bucket = storage.bucket();
     const userStoragePrefixes = [
         `profile-pics/${userId}/`,
@@ -218,25 +251,16 @@ exports.deleteAccount = (0, https_1.onCall)(async (request) => {
                 throw error;
         }
     }));
-    const [activity, reports, applicationAudit] = await Promise.all([
-        db.collection("activityEvents").where("userId", "==", userId).get(),
-        db.collection("reports").where("userId", "==", userId).get(),
-        db
-            .collection("teacherApplicationAudit")
-            .where("applicantId", "==", userId)
-            .get(),
-    ]);
     const adminNotificationRefs = [
         db.doc(`adminNotifications/${userId}`),
-        ...reports.docs.map((report) => db.doc(`adminNotifications/report-${report.id}`)),
-        ...applicationAudit.docs.map((audit) => db.doc(`adminNotifications/${audit.data().applicationId ?? userId}`)),
     ];
+    const assistantUsage = getAssistantUsageRef(userId, request.auth.token?.email);
     await Promise.all([
         ...ownedResourceSnapshots.flatMap((snapshot) => snapshot.docs.map((document) => db.recursiveDelete(document.ref))),
-        ...activity.docs.map((document) => document.ref.delete()),
-        ...reports.docs.map((document) => document.ref.delete()),
-        ...applicationAudit.docs.map((document) => document.ref.delete()),
+        ...Array.from(relatedDocumentRefs.values(), (reference) => db.recursiveDelete(reference)),
         ...adminNotificationRefs.map((reference) => reference.delete()),
+        assistantUsage.ref.delete(),
+        assistantUsage.legacyRef.delete(),
         db.recursiveDelete(db.doc(`users/${userId}`)),
         db.recursiveDelete(db.doc(`teachers/${userId}`)),
         db.recursiveDelete(db.doc(`teacherApplications/${userId}`)),
@@ -983,7 +1007,9 @@ exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentWritten)("t
             id: applicationId,
             type: "announcement",
             publisherName: "DigiLearn",
-            publisherAvatar: "@/assets/images/panda.png",
+            publisherAvatar: typeof application.photoURL === "string"
+                ? application.photoURL
+                : "@/assets/images/panda.png",
             message: "A new teacher account is waiting for your review.",
             resourceTitle: application.name || "Teacher application",
             itemId: applicationId,

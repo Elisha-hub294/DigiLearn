@@ -51,7 +51,7 @@ export function PaperCarousel({ items }: PaperCarouselProps) {
           image={item.image}
           document={item.document}
           width={cardWidth}
-          marginRight={0}
+          marginRight={15}
         />
       )}
     />

@@ -26,6 +26,7 @@ import { FirebaseImage } from "../components/ui/FirebaseImage";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { getThemeAsset } from "../constants/themeAssets";
+import { useAccountDeletion } from "../contexts/AccountDeletionContext";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { clearLocalAccountState } from "../services/guestService";
@@ -142,6 +143,7 @@ export default function MyProfileScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, profile, loading } = useProfile();
+  const { setIsDeletingAccount } = useAccountDeletion();
   const [menuOpen, setMenuOpen] = useState(false);
   const [field, setField] = useState<Field | null>(null);
   const [draft, setDraft] = useState("");
@@ -287,23 +289,26 @@ export default function MyProfileScreen() {
       <ActionDialog
         visible={deleteDialogVisible}
         title="Delete account?"
-        message="This permanently deletes your account. This action cannot be undone."
+        message="This permanently deletes your Firebase account, profile, uploaded files, downloads, and local account data. This action cannot be undone."
         primaryText="Delete Account"
         secondaryText="Cancel"
         primaryButtonColor="#DC2626"
         onPrimary={async () => {
           setDeleteDialogVisible(false);
           if (!auth.currentUser) return;
+          setIsDeletingAccount(true);
           try {
             const deleteAccount = httpsCallable(functions, "deleteAccount");
             await deleteAccount({});
             await clearLocalAccountState();
             await signOut(auth);
             router.replace("/welcome" as never);
+            setIsDeletingAccount(false);
           } catch (reason) {
             setUpdateErrorMessage(
               `Account not deleted: ${friendlyError(reason)}`,
             );
+            setIsDeletingAccount(false);
           }
         }}
         onSecondary={() => setDeleteDialogVisible(false)}

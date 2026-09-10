@@ -1,5 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
 import { invalidateLocalCaches, LOCAL_CACHE_KEYS } from "../utils/localCache";
+import { clearAllDownloadedFiles } from "./downloadService";
 
 const GUEST_MODE_KEY = "@digilearn_guest_mode";
 
@@ -48,9 +50,25 @@ export async function clearGuestMode(): Promise<void> {
  */
 export async function clearLocalAccountState(): Promise<void> {
   try {
+    const allKeys = await AsyncStorage.getAllKeys();
+    const accountKeys = allKeys.filter(
+      (key) =>
+        key.startsWith("@digilearn/") ||
+        key.startsWith("@digilearn_") ||
+        key.startsWith("digilearn.") ||
+        key.startsWith("digilearn_") ||
+        key === "email_link_signup_address",
+    );
+    const scheduledNotifications =
+      await Notifications.getAllScheduledNotificationsAsync();
     await Promise.all([
       clearGuestMode(),
       invalidateLocalCaches(...Object.values(LOCAL_CACHE_KEYS)),
+      clearAllDownloadedFiles(),
+      AsyncStorage.multiRemove(accountKeys),
+      ...scheduledNotifications.map(({ identifier }) =>
+        Notifications.cancelScheduledNotificationAsync(identifier),
+      ),
     ]);
   } catch (error) {
     console.error("Error clearing local account state:", error);

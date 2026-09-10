@@ -224,6 +224,25 @@ const ownedCollections = [
   "pastPaper",
   "trendingLessons",
   "teacherPosts",
+  "teacherPostsCards",
+  "teacherUpdates",
+];
+
+const userScopedCollections = [
+  "activityEvents",
+  "reports",
+  "teacherApplicationAudit",
+  "adminNotifications",
+  "teacherApplications",
+];
+
+const userReferenceFields = [
+  "userId",
+  "owner",
+  "createdBy",
+  "applicantId",
+  "reporterId",
+  "uid",
 ];
 
 const storagePrefixes = [
@@ -267,6 +286,33 @@ export const deleteAccount = onCall(async (request) => {
     });
   });
 
+  const topLevelCollections = await db.listCollections();
+  const relatedCollectionNames = Array.from(
+    new Set([
+      ...userScopedCollections,
+      ...topLevelCollections.map((collection) => collection.id),
+    ]),
+  );
+  const relatedDocuments = await Promise.all(
+    relatedCollectionNames.flatMap((collectionName) =>
+      userReferenceFields.map(async (fieldName) => {
+        const snapshot = await db
+          .collection(collectionName)
+          .where(fieldName, "==", userId)
+          .get();
+        snapshot.docs.forEach((document) =>
+          collectStoragePaths(document.data(), paths),
+        );
+        return snapshot.docs;
+      }),
+    ),
+  );
+  const relatedDocumentRefs = new Map(
+    relatedDocuments
+      .flat()
+      .map((document) => [document.ref.path, document.ref]),
+  );
+
   const bucket = storage.bucket();
   const userStoragePrefixes = [
     `profile-pics/${userId}/`,
@@ -288,31 +334,21 @@ export const deleteAccount = onCall(async (request) => {
     }),
   );
 
-  const [activity, reports, applicationAudit] = await Promise.all([
-    db.collection("activityEvents").where("userId", "==", userId).get(),
-    db.collection("reports").where("userId", "==", userId).get(),
-    db
-      .collection("teacherApplicationAudit")
-      .where("applicantId", "==", userId)
-      .get(),
-  ]);
-  const adminNotificationRefs = [
-    db.doc(`adminNotifications/${userId}`),
-    ...reports.docs.map((report) =>
-      db.doc(`adminNotifications/report-${report.id}`),
-    ),
-    ...applicationAudit.docs.map((audit) =>
-      db.doc(`adminNotifications/${audit.data().applicationId ?? userId}`),
-    ),
-  ];
+  const adminNotificationRefs = [db.doc(`adminNotifications/${userId}`)];
+  const assistantUsage = getAssistantUsageRef(
+    userId,
+    request.auth.token?.email,
+  );
   await Promise.all([
     ...ownedResourceSnapshots.flatMap((snapshot) =>
       snapshot.docs.map((document) => db.recursiveDelete(document.ref)),
     ),
-    ...activity.docs.map((document) => document.ref.delete()),
-    ...reports.docs.map((document) => document.ref.delete()),
-    ...applicationAudit.docs.map((document) => document.ref.delete()),
+    ...Array.from(relatedDocumentRefs.values(), (reference) =>
+      db.recursiveDelete(reference),
+    ),
     ...adminNotificationRefs.map((reference) => reference.delete()),
+    assistantUsage.ref.delete(),
+    assistantUsage.legacyRef.delete(),
     db.recursiveDelete(db.doc(`users/${userId}`)),
     db.recursiveDelete(db.doc(`teachers/${userId}`)),
     db.recursiveDelete(db.doc(`teacherApplications/${userId}`)),
