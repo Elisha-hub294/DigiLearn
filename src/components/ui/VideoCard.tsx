@@ -390,8 +390,8 @@ const styles = StyleSheet.create({
   card: { marginBottom: 48 },
   gridCard: { marginHorizontal: 8 },
   thumbnail: {
+    aspectRatio: 16 / 9,
     borderRadius: radius.sm,
-    height: 200,
     width: "100%",
     overflow: "hidden",
     position: "relative",
