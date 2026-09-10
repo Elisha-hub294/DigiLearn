@@ -160,6 +160,7 @@ const styles = StyleSheet.create({
   },
   centerInfo: {
     flex: 1,
+    minWidth: 0,
     justifyContent: "center",
     gap: 4,
   },

@@ -44,7 +44,10 @@ import { SectionHeader } from "../../components/ui/SectionHeader";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { VideoLesson } from "../../components/ui/TrendingVideoCard";
 import { VideoCard } from "../../components/ui/VideoCard";
-import { getHorizontalPadding } from "../../constants/layout";
+import {
+  getHorizontalPadding,
+  getTabContentWidth,
+} from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -159,7 +162,11 @@ export default function HomeScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
 
   const horizontalPadding = getHorizontalPadding(width);
-  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
+  const tabContentWidth = getTabContentWidth(width);
+  const contentMaxWidth = Math.min(
+    1100,
+    tabContentWidth - horizontalPadding * 2,
+  );
 
   // Fetch all pool data
   const loadAllFeedPools = useCallback(async (force = false) => {

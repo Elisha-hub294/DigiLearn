@@ -18,12 +18,18 @@ import {
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getHorizontalPadding } from "../../constants/layout";
+import {
+  getHorizontalPadding,
+  getTabContentWidth,
+} from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import { loadTrendingLessons } from "../../services/trendingLessonsService";
-import { alternateByProperty, shuffleWithSeed } from "../../utils/feedAlgorithm";
+import {
+  alternateByProperty,
+  shuffleWithSeed,
+} from "../../utils/feedAlgorithm";
 
 type FirestoreLesson = {
   id?: string;
@@ -160,8 +166,12 @@ export default function VideosScreen() {
   const trendingSectionY = useRef<number>(0);
   const isTablet = width >= 768;
   const horizontalPadding = getHorizontalPadding(width);
-  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
-  const contentWidth = Math.min(width, contentMaxWidth) - horizontalPadding * 2;
+  const tabContentWidth = getTabContentWidth(width);
+  const contentMaxWidth = Math.min(
+    1100,
+    tabContentWidth - horizontalPadding * 2,
+  );
+  const contentWidth = contentMaxWidth;
   const cardWidth = getTrendingCardWidth(width, contentWidth);
 
   const loadVideos = useCallback(async (force = false) => {

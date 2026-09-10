@@ -1,11 +1,11 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import {
-  Dimensions,
   Modal,
   Pressable,
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { radius } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -41,11 +41,11 @@ export function CardActionMenu({
   onClose,
 }: CardActionMenuProps) {
   const { colors: themeColors } = useTheme();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   if (!visible || !anchor) {
     return null;
   }
 
-  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
   const menuWidth = Math.min(
     Math.max(
       MENU_MIN_WIDTH,

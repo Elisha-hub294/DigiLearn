@@ -4,7 +4,6 @@ import LottieView from "lottie-react-native";
 import { useCallback, useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
   FlatList,
   Platform,
   Pressable,
@@ -21,7 +20,6 @@ import { getHorizontalPadding } from "../constants/layout";
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const ONBOARDING_KEY = "onboarding_complete";
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const VIEWABILITY_CONFIG = { viewAreaCoveragePercentThreshold: 50 };
 
 // ─── Slide Data ────────────────────────────────────────────────────────────────
@@ -91,10 +89,18 @@ function DotIndicator({
 
 type Slide = (typeof SLIDES)[number];
 
-function SlideItem({ item }: { item: Slide }) {
+function SlideItem({ item, width }: { item: Slide; width: number }) {
   return (
-    <View style={styles.slide}>
-      <View style={styles.animationWrapper}>
+    <View style={[styles.slide, { width }]}>
+      <View
+        style={[
+          styles.animationWrapper,
+          {
+            width: Math.min(280, width - 64),
+            height: Math.min(280, width - 64),
+          },
+        ]}
+      >
         <LottieView
           source={item.animation}
           autoPlay
@@ -185,10 +191,10 @@ export default function OnboardingScreen() {
           ref={flatListRef}
           data={SLIDES}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <SlideItem item={item} />}
+          renderItem={({ item }) => <SlideItem item={item} width={width} />}
           getItemLayout={(_, index) => ({
-            length: SCREEN_WIDTH,
-            offset: SCREEN_WIDTH * index,
+            length: width,
+            offset: width * index,
             index,
           })}
           horizontal
@@ -293,7 +299,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   slide: {
-    width: SCREEN_WIDTH,
     flex: 1,
     alignItems: "center",
     justifyContent: "center",

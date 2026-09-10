@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.sm,
   },
-  textWrap: { flex: 1, paddingRight: spacing.md },
+  textWrap: { flex: 1, minWidth: 0, paddingRight: spacing.md },
   date: {
     color: colors.subtitle,
     fontSize: 13,
@@ -233,6 +233,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     alignItems: "center",
+    flexShrink: 0,
     gap: 10,
   },
   publishButton: {

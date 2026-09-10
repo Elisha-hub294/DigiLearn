@@ -197,6 +197,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
+    minWidth: 0,
     gap: 4,
   },
   titleText: {

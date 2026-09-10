@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  textContainer: { flex: 1 },
+  textContainer: { flex: 1, minWidth: 0, paddingRight: 8 },
   title: {
     fontSize: 20,
     fontWeight: "600",
@@ -66,5 +66,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 50,
   },
-  actionText: { fontSize: 13 },
+  actionText: { fontSize: 13, flexShrink: 1 },
 });

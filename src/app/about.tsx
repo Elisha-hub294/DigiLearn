@@ -99,8 +99,8 @@ export default function AboutScreen() {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
 
-  const horizontalPadding = getHorizontalPadding(width);
-  const maxWidth = Math.min(1100, width - horizontalPadding * 2);
+  const horizontalPadding = width >= 1200 ? 72 : getHorizontalPadding(width);
+  const maxWidth = Math.min(1400, width);
   const pandaSize = Math.min(210, Math.max(170, width * 0.48));
 
   const [version, setVersion] = useState<string | null>(null);
@@ -153,7 +153,8 @@ export default function AboutScreen() {
 
   const handleRateApp = useCallback(async () => {
     const playStoreUrl = "market://details?id=com.digilearn.app";
-    const webFallback = "https://play.google.com/store/apps/details?id=com.digilearn.app";
+    const webFallback =
+      "https://play.google.com/store/apps/details?id=com.digilearn.app";
     try {
       const canOpen = await Linking.canOpenURL(playStoreUrl);
       if (canOpen) {
@@ -167,11 +168,13 @@ export default function AboutScreen() {
   }, []);
 
   const handleFeedback = useCallback(() => {
-    Linking.openURL("mailto:support@digilearn.com?subject=DigiLearn%20Feedback%20%26%20Support");
+    Linking.openURL(
+      "mailto:support@digilearn.com?subject=DigiLearn%20Feedback%20%26%20Support",
+    );
   }, []);
 
   const handleWebsite = useCallback(() => {
-    Linking.openURL("https://digilearn.com");
+    Linking.openURL("https://digilearn-af86d.firebaseapp.com/");
   }, []);
 
   const handleLegal = useCallback(() => {
@@ -269,7 +272,7 @@ export default function AboutScreen() {
                 icon="globe"
                 iconColor={BRAND_BLUE}
                 title="Official Website"
-                subtitle="digilearn.com"
+                subtitle="https://digilearn-af86d.firebaseapp.com/"
                 onPress={handleWebsite}
               />
               <AboutRow

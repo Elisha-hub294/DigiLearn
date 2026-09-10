@@ -81,8 +81,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
   },
   left: { width: 28, alignItems: "center", marginRight: 12 },
-  title: { flex: 1, fontSize: 14 },
-  right: { marginLeft: 12 },
+  title: { flex: 1, minWidth: 0, fontSize: 14 },
+  right: { marginLeft: 12, flexShrink: 0 },
   separator: { height: 1, marginLeft: 58 },
 });
 

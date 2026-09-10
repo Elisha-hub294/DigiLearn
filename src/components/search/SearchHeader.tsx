@@ -88,6 +88,7 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
     height: 52,
@@ -98,6 +99,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    minWidth: 0,
     height: "100%",
     fontSize: 16,
     fontWeight: "500",

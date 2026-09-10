@@ -179,6 +179,7 @@ const styles = StyleSheet.create({
   previewFallback: { flex: 1 },
   textContainer: {
     flex: 1,
+    minWidth: 0,
     justifyContent: "center",
     gap: 4,
   },

@@ -34,7 +34,10 @@ import { Header } from "../../components/ui/Header";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { SectionHeader } from "../../components/ui/SectionHeader";
 import { Skeleton } from "../../components/ui/Skeleton";
-import { getHorizontalPadding } from "../../constants/layout";
+import {
+  getHorizontalPadding,
+  getTabContentWidth,
+} from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -209,7 +212,11 @@ export default function LibraryScreen() {
   );
 
   const horizontalPadding = getHorizontalPadding(width);
-  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
+  const tabContentWidth = getTabContentWidth(width);
+  const contentMaxWidth = Math.min(
+    1100,
+    tabContentWidth - horizontalPadding * 2,
+  );
 
   // Interest filtered collections
   const filterActive = shouldFilterByInterests(profile);
