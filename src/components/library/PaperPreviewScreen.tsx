@@ -625,7 +625,14 @@ export function PaperPreviewScreen() {
                       size={15}
                       color={themeColors.text}
                     />
-                    <Text style={styles.secondaryButtonText}>Share</Text>
+                    <Text
+                      style={[
+                        styles.secondaryButtonText,
+                        { color: themeColors.text },
+                      ]}
+                    >
+                      Share
+                    </Text>
                   </View>
                 </Pressable>
                 <Pressable
@@ -654,7 +661,12 @@ export function PaperPreviewScreen() {
                         bookmarked ? themeColors.primary : themeColors.text
                       }
                     />
-                    <Text style={styles.secondaryButtonText}>
+                    <Text
+                      style={[
+                        styles.secondaryButtonText,
+                        { color: themeColors.text },
+                      ]}
+                    >
                       {bookmarked ? "Saved" : "Save"}
                     </Text>
                   </View>
@@ -1075,7 +1087,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(15, 23, 42, 0.06)",
   },
   secondaryButtonText: {
-    color: colors.text,
     fontSize: 14,
     fontWeight: "700",
   },
@@ -1165,6 +1176,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(15, 23, 42, 0.06)",
     marginBottom: spacing.lg,
+    marginTop: spacing.lg,
   },
   relatedHint: {
     color: colors.subtitle,
@@ -1222,4 +1234,13 @@ const styles = StyleSheet.create({
   relatedTitle: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: "
+    fontWeight: "600",
+    marginBottom: 4,
+    minHeight: 36,
+    textTransform: "capitalize",
+  },
+  relatedMeta: {
+    color: colors.subtitle,
+    fontSize: 11,
+  },
+});

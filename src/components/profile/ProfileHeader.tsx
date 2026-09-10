@@ -60,9 +60,15 @@ export function ProfileHeader({
           onPress={() => router.push("/settings")}
           accessibilityRole="button"
           accessibilityLabel="Open settings"
-          style={[s.settings, { backgroundColor: themeColors.dark }]}
+          style={[
+            s.settings,
+            {
+              backgroundColor: themeColors.surface,
+              borderColor: themeColors.border,
+            },
+          ]}
         >
-          <Feather name="settings" size={20} color={themeColors.white} />
+          <Feather name="settings" size={20} color={themeColors.text} />
         </Pressable>
       </View>
       <View style={[s.sheet, { backgroundColor: themeColors.white }]}>
@@ -185,7 +191,7 @@ const s = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "rgba(0, 28, 81, 0.48)",
+    borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },

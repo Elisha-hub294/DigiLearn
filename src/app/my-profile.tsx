@@ -350,7 +350,13 @@ export default function MyProfileScreen() {
               </View>
               <Pressable
                 onPress={() => setMenuOpen((v) => !v)}
-                style={styles.headerButton}
+                style={[
+                  styles.headerButton,
+                  {
+                    backgroundColor: themeColors.surface,
+                    borderColor: themeColors.border,
+                  },
+                ]}
                 accessibilityLabel="Profile actions"
               >
                 <Feather
@@ -656,6 +662,8 @@ const styles = StyleSheet.create({
   headerButton: {
     width: 44,
     height: 44,
+    borderWidth: 1,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },

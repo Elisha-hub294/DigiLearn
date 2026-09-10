@@ -23,6 +23,7 @@ import { auth } from "../../firebaseConfig";
 import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   AccountType,
   getUserOnboardingState,
@@ -39,6 +40,7 @@ export default function AccountTypeScreen() {
   const { from } = useLocalSearchParams<{ from?: string }>();
   const openedFromSettings = from === "settings";
   const { width } = useWindowDimensions();
+  const { colors: themeColors } = useTheme();
 
   const [user, setUser] = useState<User | null>(null);
   const [selectedAccountType, setSelectedAccountType] =
@@ -195,9 +197,21 @@ export default function AccountTypeScreen() {
 
   if (isCheckingAuth) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.loadingWrap}>
-          <Skeleton style={styles.loadingSkeleton} />
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
+        <View
+          style={[
+            styles.loadingWrap,
+            { backgroundColor: themeColors.background },
+          ]}
+        >
+          <Skeleton
+            style={[
+              styles.loadingSkeleton,
+              { backgroundColor: themeColors.surface },
+            ]}
+          />
         </View>
       </SafeAreaView>
     );
@@ -205,11 +219,25 @@ export default function AccountTypeScreen() {
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={[styles.page, { paddingHorizontal: horizontalPadding }]}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
+        <View
+          style={[
+            styles.page,
+            {
+              paddingHorizontal: horizontalPadding,
+              backgroundColor: themeColors.background,
+            },
+          ]}
+        >
           <View style={[styles.authState, { maxWidth: contentMaxWidth }]}>
-            <Text style={styles.title}>You are not signed in</Text>
-            <Text style={styles.authSubtitle}>
+            <Text style={[styles.title, { color: themeColors.text }]}>
+              You are not signed in
+            </Text>
+            <Text
+              style={[styles.authSubtitle, { color: themeColors.subtitle }]}
+            >
               Log in or create an account to set up your DigiLearn profile.
             </Text>
 
@@ -217,7 +245,10 @@ export default function AccountTypeScreen() {
               <Pressable
                 onPress={handleLogin}
                 style={({ pressed }) => [
-                  styles.primaryButton,
+                  [
+                    styles.primaryButton,
+                    { backgroundColor: themeColors.primary },
+                  ],
                   pressed && styles.buttonPressed,
                 ]}
                 accessibilityRole="button"
@@ -229,13 +260,26 @@ export default function AccountTypeScreen() {
               <Pressable
                 onPress={handleSignup}
                 style={({ pressed }) => [
-                  styles.secondaryButton,
+                  [
+                    styles.secondaryButton,
+                    {
+                      backgroundColor: themeColors.surface,
+                      borderColor: themeColors.border,
+                    },
+                  ],
                   pressed && styles.buttonPressed,
                 ]}
                 accessibilityRole="button"
                 accessibilityLabel="Sign up"
               >
-                <Text style={styles.secondaryButtonText}>Sign up</Text>
+                <Text
+                  style={[
+                    styles.secondaryButtonText,
+                    { color: themeColors.text },
+                  ]}
+                >
+                  Sign up
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -245,19 +289,29 @@ export default function AccountTypeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={[styles.page, { paddingHorizontal: horizontalPadding }]}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
+      <View
+        style={[
+          styles.page,
+          {
+            paddingHorizontal: horizontalPadding,
+            backgroundColor: themeColors.background,
+          },
+        ]}
+      >
         <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: themeColors.text }]}>
             {openedFromSettings ? "Choose your account type" : "Account type"}
           </Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
             Choose the experience that fits how you use DigiLearn. Compare the
             features before deciding.
           </Text>
 
           {isReviewPending ? (
-            <Text style={styles.reviewNotice}>
+            <Text style={[styles.reviewNotice, { color: themeColors.warning }]}>
               Your teacher account is under review. Account type changes are
               unavailable until the application is decided.
             </Text>
@@ -321,7 +375,9 @@ export default function AccountTypeScreen() {
           </View>
 
           {errorMessage ? (
-            <Text style={styles.errorText}>{errorMessage}</Text>
+            <Text style={[styles.errorText, { color: themeColors.danger }]}>
+              {errorMessage}
+            </Text>
           ) : null}
 
           <Pressable
@@ -330,7 +386,7 @@ export default function AccountTypeScreen() {
             accessibilityLabel="Confirm account type"
             onPress={handleSave}
             style={({ pressed }) => [
-              styles.primaryButton,
+              [styles.primaryButton, { backgroundColor: themeColors.primary }],
               styles.confirmButton,
               (!selectedAccountType || isSubmitting || isReviewPending) &&
                 styles.primaryButtonDisabled,
@@ -356,7 +412,11 @@ export default function AccountTypeScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Skip account type selection"
               >
-                <Text style={styles.skipText}>Skip →</Text>
+                <Text
+                  style={[styles.skipText, { color: themeColors.subtitle }]}
+                >
+                  Skip →
+                </Text>
               </Pressable>
             </View>
           ) : null}

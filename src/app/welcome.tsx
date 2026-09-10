@@ -42,7 +42,15 @@ export default function WelcomeScreen() {
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: themeColors.background }]}
     >
-      <View style={[styles.page, { paddingHorizontal: contentPadding }]}>
+      <View
+        style={[
+          styles.page,
+          {
+            paddingHorizontal: contentPadding,
+            backgroundColor: themeColors.background,
+          },
+        ]}
+      >
         <View style={[styles.content, { maxWidth: contentMaxWidth }]}>
           <View style={styles.topSection}>
             <Image
@@ -85,12 +93,23 @@ export default function WelcomeScreen() {
               onPress={handleLogin}
               style={({ pressed }) => [
                 styles.secondaryButton,
+                {
+                  backgroundColor: themeColors.surface,
+                  borderColor: themeColors.border,
+                },
                 pressed && styles.buttonPressed,
               ]}
               accessibilityRole="button"
               accessibilityLabel="Log in to DigiLearn"
             >
-              <Text style={styles.secondaryButtonText}>Log in</Text>
+              <Text
+                style={[
+                  styles.secondaryButtonText,
+                  { color: themeColors.text },
+                ]}
+              >
+                Log in
+              </Text>
             </Pressable>
 
             <Pressable
@@ -122,7 +141,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.white,
   },
   content: {
     width: "100%",
@@ -179,7 +197,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   secondaryButtonText: {
-    color: colors.dark,
     fontSize: 16,
     fontWeight: "600",
   },
@@ -189,7 +206,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   guestText: {
-    color: "#333333",
     fontSize: 13,
     fontWeight: "500",
     textDecorationLine: "underline",
