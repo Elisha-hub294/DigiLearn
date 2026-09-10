@@ -18,20 +18,11 @@ import { PublishButton } from "../../components/profile/PublishButton";
 import { SavedResources } from "../../components/profile/SavedResources";
 import { UserInfoCard } from "../../components/profile/UserInfoCard";
 import { Skeleton as UiSkeleton } from "../../components/ui/Skeleton";
+import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAdminReviewSignals } from "../../hooks/useAdminReviewSignals";
-const paddingFor = (width: number) =>
-  width >= 1200
-    ? 150
-    : width >= 900
-      ? 50
-      : width >= 600
-        ? 30
-        : width >= 400
-          ? 5
-          : 3;
 function Skeleton() {
   return (
     <View style={s.skeleton}>
@@ -93,7 +84,7 @@ export default function ProfileScreen() {
       void onRefresh();
     });
   }, [navigation, onRefresh, route.key]);
-  const padding = paddingFor(width);
+  const padding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - padding * 2);
   return (
     <SafeAreaView

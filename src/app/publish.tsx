@@ -8,9 +8,11 @@ import {
   StyleSheet,
   Text,
   type TextStyle,
+  useWindowDimensions,
   View,
   type ViewStyle,
 } from "react-native";
+import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -55,6 +57,9 @@ const publishOptions = [
 export default function PublishScreen() {
   const { colors: themeColors } = useTheme();
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const horizontalPadding = getHorizontalPadding(width);
+  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   const openComposer = (route: string) => {
     if (route === "page") {
@@ -84,7 +89,10 @@ export default function PublishScreen() {
       style={[styles.safe, { backgroundColor: themeColors.background }]}
     >
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingHorizontal: horizontalPadding, maxWidth: contentMaxWidth },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.header}>

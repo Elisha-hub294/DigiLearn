@@ -40,6 +40,7 @@ const AUTO_SCROLL_INTERVAL_MS = 5000;
 const RESUME_DELAY_MS = 5000;
 const CARD_GAP = 0; // marginRight on each card
 const MIN_LOOP_COPIES = 5;
+const DESKTOP_BREAKPOINT = 900;
 
 export function normalizeCarouselOffset(
   offset: number,
@@ -60,7 +61,7 @@ export const TopicalNotesSlider = () => {
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
   const reducedMotion = useReducedMotion();
-  const cardWidth = width >= 900 ? 96 : 88;
+  const cardWidth = width >= DESKTOP_BREAKPOINT ? 96 : 88;
   const itemStep = cardWidth + CARD_GAP;
   const [subjects, setSubjects] = useState<
     { id: string; title: string; image: string | any }[]
@@ -225,7 +226,7 @@ export const TopicalNotesSlider = () => {
     [itemStep, normalizeOffset, reducedMotion, stopAutoScroll, startAutoScroll],
   );
 
-  const isWeb = Platform.OS === "web";
+  const showArrows = Platform.OS === "web" && width >= DESKTOP_BREAKPOINT;
 
   const normalizeKey = (s?: string) => (s ?? "").trim().toLowerCase();
 
@@ -280,7 +281,7 @@ export const TopicalNotesSlider = () => {
       style={styles.wrapper}
     >
       {/* Left arrow — web only */}
-      {isWeb && (
+      {showArrows && (
         <Pressable
           style={[styles.arrow, styles.arrowLeft]}
           onPress={() => scrollByStep(-1)}
@@ -346,7 +347,7 @@ export const TopicalNotesSlider = () => {
       />
 
       {/* Right arrow — web only */}
-      {isWeb && (
+      {showArrows && (
         <Pressable
           style={[styles.arrow, styles.arrowRight]}
           onPress={() => scrollByStep(1)}

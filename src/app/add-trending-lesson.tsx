@@ -22,6 +22,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { auth, db, functions } from "../../firebaseConfig";
@@ -29,7 +30,9 @@ import { getTitleDocId } from "../components/library/add-item/utils";
 import { AdminPublishHeader } from "../components/library/AdminPublishHeader";
 import { FirebaseImage } from "../components/ui/FirebaseImage";
 import { useSubjects } from "../components/ui/SubjectFilter";
+import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
+import { getThemeAsset } from "../constants/themeAssets";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { invalidateFirestoreReadCache } from "../services/firestoreReadCache";
@@ -48,6 +51,9 @@ export default function AddTrendingLessonScreen() {
   const router = useRouter();
   const { profile } = useProfile();
   const { subjects } = useSubjects();
+  const { width } = useWindowDimensions();
+  const horizontalPadding = getHorizontalPadding(width);
+  const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [subject, setSubject] = useState("Mathematics");
@@ -259,7 +265,10 @@ export default function AddTrendingLessonScreen() {
         <AdminPublishHeader title="Add Lesson" onBack={() => router.back()} />
 
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[
+            styles.content,
+            { paddingHorizontal: horizontalPadding, maxWidth: contentMaxWidth },
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >

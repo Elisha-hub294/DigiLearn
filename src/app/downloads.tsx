@@ -1,9 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   FlatList,
-  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -16,6 +15,7 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { Skeleton } from "../components/ui/Skeleton";
+import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import {
@@ -109,15 +109,22 @@ export default function DownloadsScreen() {
     setShowClearAllDialog(false);
   };
 
-  const horizontalPadding = Math.min(24, Math.max(16, width * 0.04));
+  const horizontalPadding = getHorizontalPadding(width);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: themeColors.background }]}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       {/* Header */}
       <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace("/library"))}
-          style={[styles.backBtn, { backgroundColor: isDark ? "#1E293B" : "#F1F5F9" }]}
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace("/library")
+          }
+          style={[
+            styles.backBtn,
+            { backgroundColor: isDark ? "#1E293B" : "#F1F5F9" },
+          ]}
           accessibilityLabel="Go back"
         >
           <Feather name="arrow-left" size={20} color={themeColors.text} />
@@ -127,14 +134,18 @@ export default function DownloadsScreen() {
             Offline Downloads
           </Text>
           <Text style={[styles.headerSub, { color: themeColors.subtitle }]}>
-            {files.length} {files.length === 1 ? "file" : "files"} • {formatFileSize(totalStorageBytes)}
+            {files.length} {files.length === 1 ? "file" : "files"} •{" "}
+            {formatFileSize(totalStorageBytes)}
           </Text>
         </View>
 
         {files.length > 0 && (
           <Pressable
             onPress={() => setShowClearAllDialog(true)}
-            style={[styles.clearAllBtn, { backgroundColor: isDark ? "#3B1818" : "#FEE2E2" }]}
+            style={[
+              styles.clearAllBtn,
+              { backgroundColor: isDark ? "#3B1818" : "#FEE2E2" },
+            ]}
           >
             <Feather name="trash-2" size={16} color="#DC2626" />
             <Text style={styles.clearAllText}>Clear All</Text>
@@ -144,7 +155,12 @@ export default function DownloadsScreen() {
 
       {/* Search Filter */}
       {files.length > 0 && (
-        <View style={[styles.searchBoxWrapper, { paddingHorizontal: horizontalPadding }]}>
+        <View
+          style={[
+            styles.searchBoxWrapper,
+            { paddingHorizontal: horizontalPadding },
+          ]}
+        >
           <View
             style={[
               styles.searchBox,
@@ -173,7 +189,12 @@ export default function DownloadsScreen() {
 
       {/* Main Content */}
       {loading ? (
-        <View style={[styles.listContainer, { paddingHorizontal: horizontalPadding }]}>
+        <View
+          style={[
+            styles.listContainer,
+            { paddingHorizontal: horizontalPadding },
+          ]}
+        >
           {[1, 2, 3, 4].map((i) => (
             <View
               key={i}
@@ -187,7 +208,9 @@ export default function DownloadsScreen() {
             >
               <Skeleton style={styles.skeletonIcon} />
               <View style={styles.cardContent}>
-                <Skeleton style={{ width: "80%", height: 16, marginBottom: 8 }} />
+                <Skeleton
+                  style={{ width: "80%", height: 16, marginBottom: 8 }}
+                />
                 <Skeleton style={{ width: "40%", height: 12 }} />
               </View>
             </View>
@@ -273,12 +296,24 @@ export default function DownloadsScreen() {
                       <Feather name="check-circle" size={11} color="#16A34A" />
                       <Text style={styles.badgeOfflineText}>Offline</Text>
                     </View>
-                    <Text style={[styles.metaDot, { color: themeColors.subtitle }]}>•</Text>
-                    <Text style={[styles.metaText, { color: themeColors.subtitle }]}>
+                    <Text
+                      style={[styles.metaDot, { color: themeColors.subtitle }]}
+                    >
+                      •
+                    </Text>
+                    <Text
+                      style={[styles.metaText, { color: themeColors.subtitle }]}
+                    >
                       {formatFileSize(item.fileSize)}
                     </Text>
-                    <Text style={[styles.metaDot, { color: themeColors.subtitle }]}>•</Text>
-                    <Text style={[styles.metaText, { color: themeColors.subtitle }]}>
+                    <Text
+                      style={[styles.metaDot, { color: themeColors.subtitle }]}
+                    >
+                      •
+                    </Text>
+                    <Text
+                      style={[styles.metaText, { color: themeColors.subtitle }]}
+                    >
                       {formatDate(item.downloadedAt)}
                     </Text>
                   </View>

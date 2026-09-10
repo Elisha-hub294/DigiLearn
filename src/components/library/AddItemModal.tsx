@@ -15,9 +15,11 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from "react-native";
 import WebView from "react-native-webview";
 import { auth, db } from "../../../firebaseConfig";
+import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useProfile } from "../../contexts/ProfileContext";
@@ -205,6 +207,7 @@ export function AddItemModal({
   screen = false,
 }: AddItemModalProps) {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const { profile, user } = useProfile();
   const { colors: themeColors, isDark } = useTheme();
   const defaultUserAvatar = getThemeAsset("userDefault", isDark);
@@ -1286,7 +1289,18 @@ export function AddItemModal({
       {isAuthorizedPublisher ? (
         <View
           style={[
-            screen ? styles.screenCard : styles.modalCard,
+            screen
+              ? [
+                  styles.screenCard,
+                  {
+                    maxWidth: Math.max(
+                      0,
+                      width - getHorizontalPadding(width) * 2,
+                    ),
+                    paddingHorizontal: 0,
+                  },
+                ]
+              : styles.modalCard,
             {
               backgroundColor: screen
                 ? themeColors.background
