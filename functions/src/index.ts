@@ -179,7 +179,7 @@ export const generateAssistantReply = onCall(
         ? usageSnapshot.data()
         : legacySnapshot.data();
       const requestCount = usage?.day === today ? Number(usage.count ?? 0) : 0;
-      if (requestCount >= 30) {
+      if (requestCount >= 15) {
         throw new HttpsError(
           "resource-exhausted",
           "Daily assistant usage limit reached.",

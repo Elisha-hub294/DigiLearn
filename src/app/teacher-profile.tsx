@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Linking,
+  Platform,
   Pressable,
   RefreshControl,
   Animated as RNAnimated,
@@ -490,12 +491,12 @@ export default function TeacherProfileScreen() {
         RNAnimated.timing(pulseAnim, {
           toValue: 1,
           duration: 900,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }),
         RNAnimated.timing(pulseAnim, {
           toValue: 0.45,
           duration: 900,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }),
       ]),
     );

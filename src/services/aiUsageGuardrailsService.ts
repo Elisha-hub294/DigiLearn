@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const DAILY_AI_LIMIT = 25;
+export const DAILY_AI_LIMIT = 15;
 const COOLDOWN_SECONDS = 4;
 
 const USAGE_PREFIX = "@digilearn_ai_usage_";
@@ -100,7 +100,10 @@ export async function recordAiPromptSent(): Promise<number> {
 /**
  * Gets the current daily quota status for UI display.
  */
-export async function getAiQuotaStatus(): Promise<{ remaining: number; limit: number }> {
+export async function getAiQuotaStatus(): Promise<{
+  remaining: number;
+  limit: number;
+}> {
   try {
     const todayKey = getTodayKey();
     const rawCount = await AsyncStorage.getItem(todayKey);

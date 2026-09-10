@@ -1,6 +1,12 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
-import { Animated, StyleProp, StyleSheet, ViewStyle } from "react-native";
+import {
+  Animated,
+  Platform,
+  StyleProp,
+  StyleSheet,
+  ViewStyle,
+} from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
 
 const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
@@ -19,12 +25,12 @@ export function Skeleton({ style }: SkeletonProps) {
         Animated.timing(opacity, {
           toValue: 0.85,
           duration: 700,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }),
         Animated.timing(opacity, {
           toValue: 0.4,
           duration: 700,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== "web",
         }),
       ]),
     );
