@@ -1,3 +1,4 @@
+import { getNetworkStateAsync } from "expo-network";
 import { ImageSourcePropType } from "react-native";
 import { getThemeAsset } from "../constants/themeAssets";
 
@@ -164,9 +165,16 @@ export async function validateVideoLink(
       return { valid: true };
     }
   } catch {
+    const networkState = await getNetworkStateAsync();
+    const isOffline =
+      networkState.isConnected === false ||
+      networkState.isInternetReachable === false;
+
     return {
       valid: false,
-      message: "We couldn't verify this YouTube video. Please try again.",
+      message: isOffline
+        ? "This video can't be verified without an internet connection. Please reconnect and try again."
+        : "We couldn't verify this YouTube video. Please try again.",
     };
   }
 

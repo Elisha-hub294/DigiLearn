@@ -1,3 +1,4 @@
+import { useNetworkState } from "expo-network";
 import { useState } from "react";
 import { auth } from "../../../firebaseConfig";
 import {
@@ -20,6 +21,7 @@ export function MissingResourceDialog({
   resourceName,
   onGoBack,
 }: MissingResourceDialogProps) {
+  const networkState = useNetworkState();
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
@@ -50,13 +52,20 @@ export function MissingResourceDialog({
   };
 
   const reportDialogVisible = showReportDialog && !reportSent;
+  const isOffline =
+    networkState.isConnected === false ||
+    networkState.isInternetReachable === false;
 
   return (
     <>
       <ActionDialog
         visible={!showReportDialog && !reportSent}
-        title="Resource unavailable"
-        message="This resource may have been deleted or is no longer available. Please go back and try another resource, or report the problem so we can investigate."
+        title={isOffline ? "You're offline" : "Resource unavailable"}
+        message={
+          isOffline
+            ? "This resource can't be opened without an internet connection. Please reconnect and try again."
+            : "This resource may have been deleted or is no longer available. Please go back and try another resource, or report the problem so we can investigate."
+        }
         primaryText="Report problem"
         secondaryText="Go back"
         onPrimary={() => {
