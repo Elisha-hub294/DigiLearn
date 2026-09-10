@@ -125,6 +125,24 @@ export function PublicHome() {
                   <Feather name="arrow-right" size={17} color={colors.white} />
                 </Pressable>
                 <Pressable
+                  onPress={() => router.push("/" as never)}
+                  style={[
+                    styles.exploreButton,
+                    { borderColor: colors.primary },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Explore DigiLearn"
+                >
+                  <Text
+                    style={[
+                      styles.exploreButtonText,
+                      { color: colors.primary },
+                    ]}
+                  >
+                    Explore DigiLearn
+                  </Text>
+                </Pressable>
+                <Pressable
                   onPress={() =>
                     router.push("/terms-and-policies?tab=privacy" as never)
                   }
@@ -332,6 +350,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   primaryButtonText: { color: colors.white, fontSize: 15, fontWeight: "700" },
+  exploreButton: {
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 13,
+  },
+  exploreButtonText: { fontSize: 15, fontWeight: "700" },
   policyLink: { fontSize: 14, fontWeight: "700" },
   heroArt: {
     width: 330,

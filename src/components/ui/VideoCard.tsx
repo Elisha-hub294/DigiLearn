@@ -327,6 +327,7 @@ export function VideoCard({
         <TeacherInfo
           name={item.teacher}
           uploadedAt={item.uploadedAt}
+          avatar={item.avatar}
           onPress={openTeacherProfile}
         />
         <Text numberOfLines={2} style={[styles.title, { color: colors.text }]}>

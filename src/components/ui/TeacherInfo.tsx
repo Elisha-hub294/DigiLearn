@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
-import { getTeacherAvatar } from "../../constants/teacherAvatar";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import { FirebaseImage } from "./FirebaseImage";
 // import { videoColors } from "./videoDesign";
@@ -8,13 +8,15 @@ import { FirebaseImage } from "./FirebaseImage";
 export function TeacherInfo({
   name,
   uploadedAt,
+  avatar,
   onPress,
 }: {
   name: string;
   uploadedAt: string;
+  avatar?: number | string;
   onPress?: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <Animated.View entering={FadeIn.duration(360)} style={styles.row}>
@@ -26,7 +28,14 @@ export function TeacherInfo({
         hitSlop={8}
       >
         <FirebaseImage
-          source={{ uri: getTeacherAvatar(name) }}
+          source={
+            typeof avatar === "number"
+              ? avatar
+              : avatar
+                ? { uri: avatar }
+                : undefined
+          }
+          fallbackSource={getThemeAsset("userDefault", isDark)}
           style={[styles.avatar, { backgroundColor: colors.lightBackground }]}
           contentFit="cover"
           transition={180}

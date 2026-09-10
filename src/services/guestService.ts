@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Notifications from "expo-notifications";
 import { invalidateLocalCaches, LOCAL_CACHE_KEYS } from "../utils/localCache";
 import { clearAllDownloadedFiles } from "./downloadService";
+import * as Notifications from "./notificationPlatform";
 
 const GUEST_MODE_KEY = "@digilearn_guest_mode";
 

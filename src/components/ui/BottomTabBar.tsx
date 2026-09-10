@@ -1,12 +1,16 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BottomTabBarProps } from "expo-router/js-tabs";
+import { onAuthStateChanged } from "firebase/auth";
+import { useEffect, useState } from "react";
 import {
+  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
   useWindowDimensions,
 } from "react-native";
+import { auth } from "../../../firebaseConfig";
 import { radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -44,8 +48,14 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
   const { colors } = useTheme();
+  const [authUser, setAuthUser] = useState(auth.currentUser);
   const isDesktop = width >= 768;
   const activeRoute = state.routes[state.index];
+
+  useEffect(() => onAuthStateChanged(auth, setAuthUser), []);
+
+  if (Platform.OS === "web" && !authUser) return null;
+
   const navigateToTab = (route: TabRoute) => {
     if (route.name === "teacher-profile" && profile?.type === "teacher") {
       navigation.navigate("teacher-profile", {

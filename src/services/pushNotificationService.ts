@@ -1,23 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Notifications from "expo-notifications";
 import { doc, updateDoc } from "firebase/firestore";
 import { Platform } from "react-native";
 import { db } from "../../firebaseConfig";
+import * as Notifications from "./notificationPlatform";
 import type { NotificationProfileCollection } from "./notifications";
 
 const PUSH_ENABLED_KEY = "digilearn.pushNotificationsEnabled";
 const REMINDERS_ENABLED_KEY = "digilearn.remindersEnabled";
 const REMINDER_ID_KEY = "digilearn.continueLearningReminderId";
 const REMINDER_CHANNEL_ID = "learning-reminders";
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
 
 export async function getPushNotificationSettings() {
   const [push, reminders] = await Promise.all([

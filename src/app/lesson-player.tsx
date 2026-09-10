@@ -24,7 +24,6 @@ import Animated, {
 import { auth } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { getHorizontalPadding } from "../constants/layout";
-import { getTeacherAvatar } from "../constants/teacherAvatar";
 import { getThemeAsset } from "../constants/themeAssets";
 import { useTheme } from "../contexts/ThemeContext";
 import {
@@ -446,7 +445,8 @@ export default function LessonPlayerScreen() {
               {/* Instructor Profile */}
               <View style={styles.instructorRow}>
                 <Image
-                  source={{ uri: getTeacherAvatar(params.teacher) }}
+                  source={params.avatar ? { uri: params.avatar } : undefined}
+                  fallbackSource={getThemeAsset("userDefault", isDark)}
                   style={[
                     styles.avatarImage,
                     { borderColor: themeColors.border },
