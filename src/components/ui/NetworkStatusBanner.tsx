@@ -89,8 +89,10 @@ export function NetworkStatusBanner() {
 
   return (
     <View
-      pointerEvents="none"
-      style={[styles.container, { paddingTop: insets.top + spacing.sm }]}
+      style={[
+        styles.container,
+        { paddingTop: insets.top + spacing.sm, pointerEvents: "none" },
+      ]}
     >
       <View
         style={[

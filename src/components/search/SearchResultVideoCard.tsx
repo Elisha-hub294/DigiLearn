@@ -121,7 +121,7 @@ export const SearchResultVideoCard = memo(function SearchResultVideoCard({
           <View style={styles.overlay} />
 
           {/* Perfectly centered white play button container */}
-          <View style={styles.playButtonContainer} pointerEvents="none">
+          <View style={[styles.playButtonContainer, { pointerEvents: "none" }]}>
             <View style={styles.playButton}>
               <Ionicons
                 name="play"

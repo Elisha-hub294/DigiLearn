@@ -234,7 +234,7 @@ export function PaperFormSection({
                 style={styles.documentPreviewPdf}
               />
             )}
-            <View style={styles.previewOverlay} pointerEvents="none" />
+            <View style={[styles.previewOverlay, { pointerEvents: "none" }]} />
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Remove selected file"

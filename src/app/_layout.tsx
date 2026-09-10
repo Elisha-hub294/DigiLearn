@@ -185,8 +185,7 @@ function AppShell() {
       <NetworkStatusBanner />
       {isDeletingAccount ? (
         <View
-          style={styles.deletionBarrier}
-          pointerEvents="auto"
+          style={[styles.deletionBarrier, { pointerEvents: "auto" }]}
           onStartShouldSetResponder={() => true}
         >
           <ActivityIndicator size="large" color="#FFFFFF" />
@@ -197,7 +196,7 @@ function AppShell() {
         </View>
       ) : null}
       {showStartupLoading ? (
-        <View style={styles.startupLoading} pointerEvents="auto">
+        <View style={[styles.startupLoading, { pointerEvents: "auto" }]}>
           <LoadingScreen autoRedirect={false} />
         </View>
       ) : null}

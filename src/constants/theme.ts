@@ -14,7 +14,7 @@ export const colors = {
   lightBackground: "#F8F9FC",
   text: "#414141",
   subtitle: "#777777",
-  border: "#a8a8a8",
+  border: "#d1d1d1",
   white: "#FFFFFF",
   dark: "#00091d",
   inactive: "#6d6d6d",

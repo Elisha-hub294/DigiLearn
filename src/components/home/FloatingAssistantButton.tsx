@@ -271,23 +271,31 @@ export function FloatingAssistantButton() {
     <Animated.View
       entering={FadeIn.duration(600)}
       exiting={FadeOut.duration(220)}
-      pointerEvents="box-none"
       style={[
         styles.wrapper,
+        { pointerEvents: "box-none" },
         { bottom: insets.bottom, right: 5, maxWidth: width - 32 },
       ]}
     >
       <Animated.View
-        pointerEvents="box-none"
-        style={[styles.container, animatedContainerStyle]}
+        style={[
+          styles.container,
+          { pointerEvents: "box-none" },
+          animatedContainerStyle,
+        ]}
       >
         <Animated.View
-          pointerEvents="none"
-          style={[styles.bubbleWrapper, animatedBubbleStyle]}
+          style={[
+            styles.bubbleWrapper,
+            { pointerEvents: "none" },
+            animatedBubbleStyle,
+          ]}
         >
           <View
-            pointerEvents="none"
-            style={[styles.messageBubble, { maxWidth: bubbleWidth }]}
+            style={[
+              styles.messageBubble,
+              { pointerEvents: "none", maxWidth: bubbleWidth },
+            ]}
           >
             <Text numberOfLines={2} style={styles.messageText}>
               {activeMessage}

@@ -55,8 +55,7 @@ export function PageHero({
       <LinearGradient
         colors={["rgba(0,0,0,0.25)", "rgba(0,0,0,0.35)", "rgba(0,0,0,0.82)"]}
         locations={[0, 0.45, 1]}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
+        style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]}
       />
 
       {/* Floating Navigation */}
@@ -79,8 +78,7 @@ export function PageHero({
       {/* Page Information anchored to bottom-left corner */}
       <Animated.View
         entering={FadeInUp.duration(480).delay(100)}
-        style={styles.copy}
-        pointerEvents="none"
+        style={[styles.copy, { pointerEvents: "none" }]}
       >
         <Text style={styles.title} numberOfLines={2}>
           {note.title || "Untitled Page"}

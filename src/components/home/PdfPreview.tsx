@@ -68,8 +68,7 @@ export default function PdfPreview({
 
   return (
     <View
-      pointerEvents="none"
-      style={[style, { justifyContent: "flex-start" }]}
+      style={[style, { justifyContent: "flex-start", pointerEvents: "none" }]}
     >
       <PdfComponent
         source={source}

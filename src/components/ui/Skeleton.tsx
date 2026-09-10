@@ -58,8 +58,11 @@ export function Skeleton({ style }: SkeletonProps) {
         locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
-        style={[StyleSheet.absoluteFill, styles.glow, { opacity }]}
-        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          styles.glow,
+          { opacity, pointerEvents: "none" },
+        ]}
       />
     </Animated.View>
   );

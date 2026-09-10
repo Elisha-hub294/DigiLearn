@@ -1755,8 +1755,10 @@ export function AddItemModal({
                         />
                       )}
                       <View
-                        style={styles.previewOverlay}
-                        pointerEvents="none"
+                        style={[
+                          styles.previewOverlay,
+                          { pointerEvents: "none" },
+                        ]}
                       />
                       <Pressable
                         accessibilityRole="button"
@@ -2276,8 +2278,10 @@ export function AddItemModal({
                         />
                       )}
                       <View
-                        style={styles.previewOverlay}
-                        pointerEvents="none"
+                        style={[
+                          styles.previewOverlay,
+                          { pointerEvents: "none" },
+                        ]}
                       />
                       <Pressable
                         accessibilityRole="button"

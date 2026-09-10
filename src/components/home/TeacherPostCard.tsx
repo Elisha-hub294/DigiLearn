@@ -485,7 +485,7 @@ export const TeacherPostItem = ({
               style={styles.preview}
               contentFit="cover"
             />
-            <View pointerEvents="none" style={styles.previewOverlay} />
+            <View style={[styles.previewOverlay, { pointerEvents: "none" }]} />
           </Pressable>
         ) : null}
 

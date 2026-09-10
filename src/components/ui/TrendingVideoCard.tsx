@@ -123,8 +123,8 @@ export function TrendingVideoCard({
               contentFit="cover"
               transition={250}
             />
-            <View pointerEvents="none" style={styles.overlay} />
-            <View pointerEvents="none" style={styles.play}>
+            <View style={[styles.overlay, { pointerEvents: "none" }]} />
+            <View style={[styles.play, { pointerEvents: "none" }]}>
               <View
                 style={[styles.playIcon, { backgroundColor: colors.primary }]}
               >
