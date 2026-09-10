@@ -268,16 +268,12 @@ export default function SeeAllScreen() {
             ]}
           >
             <View style={styles.filterGroup}>
-              <Text
-                style={[styles.filterLabel, { color: themeColors.subtitle }]}
-              >
-                Type
-              </Text>
               <FlatList
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 data={paperTypeOptions}
                 keyExtractor={(item) => item}
+                style={styles.filterOptions}
                 contentContainerStyle={styles.filterList}
                 renderItem={({ item }) => (
                   <Pressable
@@ -309,16 +305,12 @@ export default function SeeAllScreen() {
             </View>
 
             <View style={styles.filterGroup}>
-              <Text
-                style={[styles.filterLabel, { color: themeColors.subtitle }]}
-              >
-                Year
-              </Text>
               <FlatList
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 data={paperYearOptions}
                 keyExtractor={(item) => item}
+                style={styles.filterOptions}
                 contentContainerStyle={styles.filterList}
                 renderItem={({ item }) => (
                   <Pressable
@@ -347,33 +339,33 @@ export default function SeeAllScreen() {
                   </Pressable>
                 )}
               />
-            </View>
-            {(selectedPaperType !== "All" || selectedPaperYear !== "All") && (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Clear paper filters"
-                style={styles.clearFilters}
-                onPress={() => {
-                  setSelectedPaperType("All");
-                  setSelectedPaperYear("All");
-                  setFilterVersion((value) => value + 1);
-                }}
-              >
-                <Feather
-                  name="x-circle"
-                  size={15}
-                  color={themeColors.primary}
-                />
-                <Text
-                  style={[
-                    styles.clearFiltersText,
-                    { color: themeColors.primary },
-                  ]}
+              {(selectedPaperType !== "All" || selectedPaperYear !== "All") && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear paper filters"
+                  style={styles.clearFilters}
+                  onPress={() => {
+                    setSelectedPaperType("All");
+                    setSelectedPaperYear("All");
+                    setFilterVersion((value) => value + 1);
+                  }}
                 >
-                  Clear filters
-                </Text>
-              </Pressable>
-            )}
+                  <Feather
+                    name="x-circle"
+                    size={15}
+                    color={themeColors.primary}
+                  />
+                  <Text
+                    style={[
+                      styles.clearFiltersText,
+                      { color: themeColors.primary },
+                    ]}
+                  >
+                    Clear
+                  </Text>
+                </Pressable>
+              )}
+            </View>
           </View>
         )}
 
@@ -922,25 +914,23 @@ const styles = StyleSheet.create({
   },
   filterBar: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
     backgroundColor: colors.white,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(15, 23, 42, 0.06)",
   },
   filterGroup: {
-    marginBottom: spacing.sm,
-  },
-  filterLabel: {
-    color: colors.subtitle,
-    fontSize: 11,
-    fontWeight: "700",
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 38,
     marginBottom: spacing.xs,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+  },
+  filterOptions: {
+    flex: 1,
   },
   filterList: {
-    paddingRight: spacing.md,
+    paddingRight: spacing.sm,
     gap: spacing.xs,
   },
   filterChip: {
@@ -969,7 +959,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing.xs,
     alignSelf: "flex-start",
-    minHeight: 40,
+    minHeight: 34,
     paddingHorizontal: spacing.xs,
   },
   clearFiltersText: {
@@ -1010,6 +1000,7 @@ const styles = StyleSheet.create({
   },
   cardPressable: {
     flexGrow: 1,
+    width: "100%",
   },
   cardContent: {
     paddingHorizontal: spacing.md,
@@ -1025,10 +1016,15 @@ const styles = StyleSheet.create({
   },
   bookCoverFrame: {
     width: "100%",
+    alignSelf: "stretch",
     position: "relative",
     backgroundColor: colors.lightBackground,
   },
-  bookImage: { width: "100%", backgroundColor: colors.lightBackground },
+  bookImage: {
+    width: "100%",
+    alignSelf: "stretch",
+    backgroundColor: colors.lightBackground,
+  },
   bookTypeBadge: {
     position: "absolute",
     top: spacing.sm,
@@ -1064,13 +1060,14 @@ const styles = StyleSheet.create({
   },
   courseImageWrap: {
     width: "100%",
+    alignSelf: "stretch",
     aspectRatio: 1.45,
     position: "relative",
     overflow: "hidden",
   },
-  courseImage: { width: "100%", height: "100%" },
-  paperImage: { width: "100%", aspectRatio: 1.35 },
-  pageImage: { width: "100%", aspectRatio: 1.35 },
+  courseImage: { width: "100%", height: "100%", alignSelf: "stretch" },
+  paperImage: { width: "100%", alignSelf: "stretch", aspectRatio: 1.35 },
+  pageImage: { width: "100%", alignSelf: "stretch", aspectRatio: 1.35 },
   pageImageFallback: {
     backgroundColor: "#64748B",
     alignItems: "center",
