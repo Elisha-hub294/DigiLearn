@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   LayoutChangeEvent,
   Pressable,
@@ -17,6 +16,7 @@ import {
 import { auth } from "../../firebaseConfig";
 import { TopicalNote } from "../components/page/pageTypes";
 import { DownloadedResources } from "../components/profile/DownloadedResources";
+import { ActionDialog } from "../components/ui/ActionDialog";
 import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
@@ -842,6 +842,11 @@ function SaveButton({
   const { colors: themeColors } = useTheme();
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [dialog, setDialog] = useState<{
+    title: string;
+    message: string;
+    icon: "info" | "alert-circle";
+  } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -858,10 +863,11 @@ function SaveButton({
   const handleSave = async () => {
     const userId = auth.currentUser?.uid;
     if (!userId) {
-      Alert.alert(
-        "Sign in to save",
-        "Create an account to save resources for later.",
-      );
+      setDialog({
+        title: "Sign in to save",
+        message: "Create an account to save resources for later.",
+        icon: "info",
+      });
       return;
     }
     if (saving) return;
@@ -870,7 +876,11 @@ function SaveButton({
       await toggleSavedItem(userId, itemType, itemId, saved);
       setSaved((value) => !value);
     } catch {
-      Alert.alert("Could not save resource", "Please try again.");
+      setDialog({
+        title: "Could not save resource",
+        message: "Please try again.",
+        icon: "alert-circle",
+      });
     } finally {
       setSaving(false);
     }
@@ -896,6 +906,19 @@ function SaveButton({
       <Text style={[styles.saveText, { color: themeColors.primary }]}>
         {saved ? "Saved" : "Save"}
       </Text>
+      <ActionDialog
+        visible={dialog !== null}
+        title={dialog?.title ?? ""}
+        message={dialog?.message ?? ""}
+        primaryText="OK"
+        onPrimary={() => setDialog(null)}
+        onClose={() => setDialog(null)}
+        icon={
+          dialog ? (
+            <Feather name={dialog.icon} size={24} color={themeColors.primary} />
+          ) : undefined
+        }
+      />
     </Pressable>
   );
 }
@@ -1100,7 +1123,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     marginTop: spacing.sm,
-    marginHorizontal: spacing.sm,
   },
   cardTitle: {
     color: colors.text,
@@ -1119,9 +1141,8 @@ const styles = StyleSheet.create({
   saveButton: {
     alignItems: "center",
     flexDirection: "row",
-    gap: spacing.xs,
     minHeight: 40,
-    marginTop: spacing.xs,
+    marginHorizontal: spacing.md,
   },
   savePressed: {
     opacity: 0.65,

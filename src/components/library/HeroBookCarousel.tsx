@@ -16,7 +16,6 @@ import {
   matchesUserInterests,
   shouldFilterByInterests,
 } from "../../utils/interestFilter";
-import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
 
 type HeroBook = {
   id: string;
@@ -134,21 +133,9 @@ export function HeroBookCarousel({ data }: HeroBookCarouselProps) {
                       {item.title}
                     </Text>
                     <Text style={styles.author}>{item.author}</Text>
-                    {/* <Text style={styles.subtitle} numberOfLines={2}>
-                      {item.subtitle}
-                    </Text> */}
                   </View>
                 </View>
               </Pressable>
-              <View style={styles.menu}>
-                <ResourceDeleteMenu
-                  collection="books"
-                  id={item.id}
-                  title={item.title}
-                  data={{ owner: item.owner, cover: item.image }}
-                  light
-                />
-              </View>
             </View>
           );
         })}
@@ -190,7 +177,6 @@ const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFill,
   },
-  menu: { position: "absolute", top: 6, right: 6, zIndex: 3 },
   content: {
     flex: 1,
     justifyContent: "flex-end",
