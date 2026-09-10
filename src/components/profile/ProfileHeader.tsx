@@ -111,11 +111,8 @@ export function ProfileHeader({
           <Pressable
             onPress={() => {
               router.push({
-                pathname: "/teacher-profile",
-                params: {
-                  name: profile.name,
-                  openedFromAccount: "true",
-                },
+                pathname: "/(tabs)/teacher-profile",
+                params: { name: profile.name },
               } as any);
             }}
             style={[

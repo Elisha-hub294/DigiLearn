@@ -154,7 +154,6 @@ export default function TeacherProfileScreen() {
   const params = useLocalSearchParams<{
     id?: string;
     name?: string;
-    openedFromAccount?: string;
   }>();
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
@@ -163,8 +162,6 @@ export default function TeacherProfileScreen() {
   const compactActionRow = width < 390;
   const actionRowGap = compactActionRow ? 10 : 16;
   const actionIconSize = compactActionRow ? 46 : 54;
-  const openedFromAccount = params.openedFromAccount === "true";
-
   const [teacher, setTeacher] = useState<TeacherRecord | null>(null);
   const [resources, setResources] = useState<ResourceItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -640,22 +637,20 @@ export default function TeacherProfileScreen() {
           <View
             style={[styles.headerPanel, { backgroundColor: accentColor }]}
           />
-          {!openedFromAccount && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-              style={styles.backButton}
-              onPress={() => {
-                if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace("/" as any);
-                }
-              }}
-            >
-              <Icon name="chevron-left" size={20} color="#ffffff" />
-            </Pressable>
-          )}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            style={styles.backButton}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace("/" as any);
+              }
+            }}
+          >
+            <Icon name="chevron-left" size={20} color="#ffffff" />
+          </Pressable>
 
           {isOwnProfile && (
             <Pressable
@@ -1070,7 +1065,6 @@ export default function TeacherProfileScreen() {
       openContactSheet,
       openEmailPrompt,
       openYoutubePrompt,
-      openedFromAccount,
       router,
       search,
       stats.announcements,
@@ -1223,14 +1217,9 @@ export default function TeacherProfileScreen() {
                   <RNAnimated.View
                     style={[styles.skeletonHeaderPanel, { opacity: pulseAnim }]}
                   />
-                  {!openedFromAccount && (
-                    <RNAnimated.View
-                      style={[
-                        styles.skeletonBackButton,
-                        { opacity: pulseAnim },
-                      ]}
-                    />
-                  )}
+                  <RNAnimated.View
+                    style={[styles.skeletonBackButton, { opacity: pulseAnim }]}
+                  />
                   {isOwnProfile && (
                     <RNAnimated.View
                       style={[

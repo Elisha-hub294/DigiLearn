@@ -122,8 +122,8 @@ export default function SettingsScreen() {
   const goToAccount = useCallback(() => {
     if (profile?.type === "teacher") {
       router.replace({
-        pathname: "/teacher-profile",
-        params: { name: profile.name, openedFromAccount: "true" },
+        pathname: "/(tabs)/teacher-profile",
+        params: { name: profile.name },
       } as never);
       return;
     }
