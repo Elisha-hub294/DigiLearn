@@ -756,7 +756,7 @@ const styles = StyleSheet.create({
   bookContainer: { marginTop: spacing.sm },
   booksCategoryView: { width: "100%" },
   feedCardWrapper: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   badgeRow: {
     marginBottom: 6,

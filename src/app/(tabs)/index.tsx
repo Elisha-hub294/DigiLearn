@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   feedCardWrapper: {
-    marginBottom: spacing.xs,
+    marginBottom: spacing.lg,
   },
   breakWrapper: {
     marginVertical: spacing.md,
