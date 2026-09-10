@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -8,6 +7,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useTheme } from "../../contexts/ThemeContext";
 import { SearchResult } from "../../hooks/useGlobalSearch";
+import { FirebaseImage } from "../ui/FirebaseImage";
 
 type SearchResultCardProps = {
   item: SearchResult;
@@ -113,7 +113,7 @@ export const SearchResultCard = memo(function SearchResultCard({
       >
         <View style={styles.imageContainer}>
           {item.previewImage ? (
-            <Image
+            <FirebaseImage
               source={{ uri: item.previewImage }}
               style={styles.previewImage}
               contentFit="contain"

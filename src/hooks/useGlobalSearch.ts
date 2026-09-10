@@ -378,7 +378,12 @@ export function useGlobalSearch(
   // Helper to match subject image
   const getNotePreview = useCallback(
     (item: any): string => {
-      const resourcePreview = item.cover || item.preview || item.avatar;
+      const resourcePreview =
+        item.cover ||
+        item.image ||
+        item.previewImage ||
+        item.preview ||
+        item.avatar;
       if (resourcePreview) return resourcePreview;
 
       const sub = item.subject;
