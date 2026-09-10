@@ -5,6 +5,7 @@ export type Book = {
   title: string;
   description: string;
   cover: string;
+  sampleUri?: string;
   year?: string;
   edition?: string;
   author: string[];

@@ -1,18 +1,35 @@
 import { Feather } from "@expo/vector-icons";
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
 import { Book } from "./bookTypes";
 
 export function BookOverview({ book }: { book: Book }) {
   const { colors } = useTheme();
+  const [expanded, setExpanded] = useState(false);
+  const hasLongDescription = book.description.length > 230;
+  const description =
+    expanded || !hasLongDescription
+      ? book.description
+      : `${book.description.slice(0, 230).trim()}...`;
   return (
     <View>
       <Text style={[styles.heading, { color: colors.text }]}>
         Book Overview
       </Text>
       <Text style={[styles.description, { color: colors.subtitle }]}>
-        {book.description || "No overview is available for this book yet."}
+        {description || "No overview is available for this book yet."}
       </Text>
+      {hasLongDescription ? (
+        <Pressable
+          onPress={() => setExpanded((value) => !value)}
+          accessibilityRole="button"
+        >
+          <Text style={[styles.readMore, { color: colors.primary }]}>
+            {expanded ? "Show less" : "Read more"}
+          </Text>
+        </Pressable>
+      ) : null}
       <View style={styles.stats}>
         {book.pages ? (
           <Text style={[styles.stat, { color: colors.subtitle }]}>
@@ -53,6 +70,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   description: { fontSize: 16, lineHeight: 28 },
+  readMore: { fontSize: 14, fontWeight: "700", marginTop: 8 },
   stats: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 18 },
   stat: { fontSize: 13, fontWeight: "600" },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 16 },

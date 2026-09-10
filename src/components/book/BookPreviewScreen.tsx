@@ -10,6 +10,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -29,6 +30,7 @@ import { Skeleton } from "../ui/Skeleton";
 import { AuthorsCarousel } from "./AuthorsCarousel";
 import { BookHero } from "./BookHero";
 import { BookOverview } from "./BookOverview";
+import { BookQuickInfo } from "./BookQuickInfo";
 import { Book, normalizeKey, resolveAuthorAvatar } from "./bookTypes";
 import { BottomActionBar } from "./BottomActionBar";
 import { SimilarBooks } from "./SimilarBooks";
@@ -72,6 +74,16 @@ function mapBook(id: string, d: Record<string, unknown>): Book {
         : typeof d.image === "string" && d.image.trim()
           ? d.image.trim()
           : "",
+    sampleUri:
+      typeof d.sampleUri === "string"
+        ? d.sampleUri.trim()
+        : typeof d.previewUrl === "string"
+          ? d.previewUrl.trim()
+          : typeof d.sampleUrl === "string"
+            ? d.sampleUrl.trim()
+            : typeof d.pdfUrl === "string"
+              ? d.pdfUrl.trim()
+              : undefined,
     year:
       typeof d.year === "string" || typeof d.year === "number"
         ? String(d.year)
@@ -113,6 +125,7 @@ export function BookPreviewScreen() {
 
   const [bookmarked, setBookmarked] = useState(false);
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
   const [gradient] = useState(
@@ -242,13 +255,25 @@ export function BookPreviewScreen() {
               (candidate) =>
                 candidate.id !== book.id &&
                 candidate.subject.some((subject) =>
-                  book.subject.includes(subject),
+                  book.subject.some(
+                    (bookSubject) =>
+                      normalizeKey(bookSubject) === normalizeKey(subject),
+                  ),
                 ),
             )
+            .sort((a, b) => (b.saves ?? 0) - (a.saves ?? 0))
             .slice(0, 10)
         : [],
     [allBooks, book],
   );
+
+  const openSample = () => {
+    if (!book?.sampleUri) return;
+    router.push({
+      pathname: "/pdf-reader",
+      params: { uri: book.sampleUri, title: book.title, pageId: book.id },
+    } as any);
+  };
 
   if (loading || !book)
     return (
@@ -339,7 +364,10 @@ export function BookPreviewScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: 110, paddingHorizontal: horizontalPadding },
+            {
+              paddingBottom: 120 + insets.bottom,
+              paddingHorizontal: horizontalPadding,
+            },
           ]}
         >
           <BookHero book={book} onBack={goBack} />
@@ -350,8 +378,17 @@ export function BookPreviewScreen() {
               { paddingHorizontal: 10, backgroundColor: themeColors.white },
             ]}
           >
+            <BookQuickInfo book={book} />
             <BookOverview book={book} />
-            <AuthorsCarousel authors={authorsWithAvatars} />
+            <AuthorsCarousel
+              authors={authorsWithAvatars}
+              onAuthorPress={(name) =>
+                router.push({
+                  pathname: "/teacher-profile",
+                  params: { name },
+                } as any)
+              }
+            />
             <SimilarBooks
               books={similar}
               onSelect={(nextId) =>
@@ -380,13 +417,24 @@ export function BookPreviewScreen() {
             {
               maxWidth: contentMaxWidth,
               paddingHorizontal: horizontalPadding,
+              paddingBottom: Math.max(insets.bottom, 10),
             },
           ]}
         >
           <BottomActionBar
             gradient={gradient}
             bookmarked={bookmarked}
-            onGetYours={() => setShowGetYoursDialog(true)}
+            onPreview={book.sampleUri ? openSample : undefined}
+            onGetYours={() => {
+              const phone = book.author.length
+                ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
+                : "";
+              if (!phone.replace(/[^\d+]/g, "")) {
+                showNativeToast("Seller contact information is unavailable.");
+                return;
+              }
+              setShowGetYoursDialog(true);
+            }}
             onShare={() => {
               if (book) void shareResource("book", book.id, book.title);
             }}
@@ -464,6 +512,7 @@ export function BookPreviewScreen() {
             ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
             : "";
           const cleaned = phone.replace(/[^\d+]/g, "");
+          if (!cleaned) return;
           Linking.openURL(
             `https://wa.me/${cleaned}?text=${encodeURIComponent(`Hi, I'm interested in the book "${book?.title}" from DigiLearn.`)}`,
           );
@@ -473,6 +522,7 @@ export function BookPreviewScreen() {
             ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
             : "";
           const cleaned = phone.replace(/[^\d+]/g, "");
+          if (!cleaned) return;
           Linking.openURL(`tel:${cleaned}`);
         }}
         onClose={() => setShowGetYoursDialog(false)}

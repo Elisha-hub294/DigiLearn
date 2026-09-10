@@ -150,6 +150,7 @@ export const addBook = async (
   coverUrl: string,
   author: string,
   userId: string,
+  sampleUrl = "",
 ) => {
   const itemId = `${getTitleDocId(title)}-${Date.now()}-${Math.random()
     .toString(36)
@@ -162,6 +163,7 @@ export const addBook = async (
     subject: subject || "General",
     description: subtitle,
     cover: coverUrl,
+    ...(sampleUrl ? { sampleUrl } : {}),
     updatedAt: serverTimestamp(),
   });
   await invalidateLocalCaches(

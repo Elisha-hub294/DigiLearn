@@ -16,7 +16,9 @@ type BookFormSectionProps = {
   ) => void;
   onSelectSubject?: () => void;
   selectedImage: any;
+  selectedSampleFile: any;
   pickImage: () => void;
+  pickSampleDocument: () => void;
   authorName: string;
   authorAvatarSource: any;
   getWebDropHandlers: (type: "document" | "image") => any;
@@ -31,7 +33,9 @@ export function BookFormSection({
   setSubjectDropdownOpen,
   onSelectSubject,
   selectedImage,
+  selectedSampleFile,
   pickImage,
+  pickSampleDocument,
   authorName,
   authorAvatarSource,
   getWebDropHandlers,
@@ -178,6 +182,57 @@ export function BookFormSection({
           ]}
         />
       )}
+      <Text style={[styles.fieldLabel, { color: themeColors.subtitle }]}>
+        Sample file (optional)
+      </Text>
+      <View {...getWebDropHandlers("document")}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            selectedSampleFile?.assets?.[0]
+              ? "Change book sample file"
+              : "Choose book sample file"
+          }
+          style={({ pressed }) => [
+            styles.attachmentButton,
+            {
+              backgroundColor: themeColors.lightBackground,
+              borderColor: themeColors.border,
+            },
+            pressed && styles.attachmentButtonPressed,
+            selectedSampleFile && styles.attachmentButtonSelected,
+          ]}
+          onPress={pickSampleDocument}
+        >
+          <View style={styles.attachmentButtonInner}>
+            <View style={styles.attachmentButtonIcon}>
+              <Icon name="file-text" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.attachmentButtonTextWrap}>
+              <Text
+                style={[
+                  styles.attachmentButtonText,
+                  { color: themeColors.text },
+                ]}
+                numberOfLines={1}
+              >
+                {selectedSampleFile?.assets?.[0]?.name ||
+                  "Add a sample document"}
+              </Text>
+              <Text
+                style={[
+                  styles.attachmentButtonHint,
+                  { color: themeColors.subtitle },
+                ]}
+              >
+                {selectedSampleFile
+                  ? "Sample file ready to publish"
+                  : "PDF, DOCX, PPT, or PPTX • max 10 MB"}
+              </Text>
+            </View>
+          </View>
+        </Pressable>
+      </View>
     </>
   );
 }

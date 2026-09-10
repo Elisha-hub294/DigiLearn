@@ -100,10 +100,10 @@ export default function WelcomeScreen() {
                 pressed && styles.buttonPressed,
               ]}
               accessibilityRole="button"
-              accessibilityLabel="Continue as guest"
+              accessibilityLabel="Skip registration"
             >
               <Text style={[styles.guestText, { color: themeColors.subtitle }]}>
-                Continue as Guest
+                Skip registration
               </Text>
             </Pressable>
           </View>

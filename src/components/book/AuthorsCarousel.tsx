@@ -4,7 +4,13 @@ import { AuthorCard } from "./AuthorCard";
 
 type AuthorItem = string | { name: string; avatar?: string };
 
-export function AuthorsCarousel({ authors }: { authors: AuthorItem[] }) {
+export function AuthorsCarousel({
+  authors,
+  onAuthorPress,
+}: {
+  authors: AuthorItem[];
+  onAuthorPress?: (name: string) => void;
+}) {
   const { colors } = useTheme();
   const visibleAuthors = authors.length ? authors : ["Unknown author"];
 
@@ -26,6 +32,7 @@ export function AuthorsCarousel({ authors }: { authors: AuthorItem[] }) {
               name={name}
               avatar={avatar}
               index={index}
+              onPress={onAuthorPress ? () => onAuthorPress(name) : undefined}
             />
           );
         })}

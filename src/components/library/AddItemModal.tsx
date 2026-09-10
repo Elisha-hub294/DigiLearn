@@ -230,6 +230,8 @@ export function AddItemModal({
 
   const [selectedFile, setSelectedFile] =
     useState<DocumentPicker.DocumentPickerResult | null>(null);
+  const [selectedSampleFile, setSelectedSampleFile] =
+    useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [selectedImage, setSelectedImage] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
   const [activeWebDropType, setActiveWebDropType] = useState<
@@ -319,6 +321,7 @@ export function AddItemModal({
           // User confirmed cancellation
           setIsSubmitting(false);
           setSelectedFile(null);
+          setSelectedSampleFile(null);
           setSelectedImage(null);
           setFormData(INITIAL_FORM_STATE);
           setStatusDialog(null);
@@ -340,6 +343,7 @@ export function AddItemModal({
 
     // Clean up files and reset state on successful close
     setSelectedFile(null);
+    setSelectedSampleFile(null);
     setSelectedImage(null);
     setFormData(INITIAL_FORM_STATE);
     setPdfToProcess(null);
@@ -446,7 +450,7 @@ export function AddItemModal({
         return;
       }
 
-      setSelectedFile({
+      const documentResult = {
         canceled: false,
         assets: [
           {
@@ -456,9 +460,15 @@ export function AddItemModal({
             size: file.size,
           },
         ],
-      } as DocumentPicker.DocumentPickerResult);
-      setSelectedImage(null);
-      setTitleFromSelectedFile(fileName);
+      } as DocumentPicker.DocumentPickerResult;
+
+      if (formType === "book") {
+        setSelectedSampleFile(documentResult);
+      } else {
+        setSelectedFile(documentResult);
+        setSelectedImage(null);
+        setTitleFromSelectedFile(fileName);
+      }
     },
     [setTitleFromSelectedFile, showFileValidationError],
   );
@@ -581,6 +591,36 @@ export function AddItemModal({
       setTitleFromSelectedFile(file.name || "");
     } catch (e) {
       console.error("Error picking document", e);
+    }
+  };
+
+  const pickSampleDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/vnd.ms-powerpoint",
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        ],
+      });
+      if (result.canceled || !result.assets?.[0]) return;
+
+      const file = result.assets[0];
+      const error = getFileValidationError(
+        file.name || "",
+        file.size,
+        false,
+        file.mimeType,
+      );
+      if (error) {
+        showFileValidationError("Invalid Sample File", error);
+        return;
+      }
+
+      setSelectedSampleFile(result);
+    } catch (error) {
+      console.error("Error picking book sample file", error);
     }
   };
 
@@ -938,6 +978,7 @@ export function AddItemModal({
 
       if (formType === "book") {
         let coverUrl = "";
+        let sampleUrl = "";
 
         if (selectedImage) {
           const blob = await uriToBlob(selectedImage.uri);
@@ -954,6 +995,23 @@ export function AddItemModal({
           );
         }
 
+        const sampleAsset = selectedSampleFile?.assets?.[0];
+        if (sampleAsset) {
+          const sampleBlob = await uriToBlob(sampleAsset.uri);
+          const sampleName = sanitizeFileName(
+            sampleAsset.name || "book-sample",
+          );
+          sampleUrl = await uploadAssetToStorage(
+            `book-samples/${userId}/${Date.now()}_${Math.random()
+              .toString(36)
+              .slice(2, 9)}_${sampleName}`,
+            sampleBlob,
+            "Uploading book sample",
+            updateUploadProgress,
+            { contentType: sampleAsset.mimeType || undefined },
+          );
+        }
+
         createdItemId = await addBook(
           sanitizedTitle,
           sanitizedDescription,
@@ -961,6 +1019,7 @@ export function AddItemModal({
           coverUrl,
           sanitizedAuthor,
           userId,
+          sampleUrl,
         );
         notificationType = "book";
       } else if (formType === "banner") {
@@ -1173,6 +1232,7 @@ export function AddItemModal({
 
       setFormData(INITIAL_FORM_STATE);
       setSelectedFile(null);
+      setSelectedSampleFile(null);
       setSelectedImage(null);
       setUploadProgress({
         active: false,
@@ -1312,7 +1372,9 @@ export function AddItemModal({
                   )
                 }
                 selectedImage={selectedImage}
+                selectedSampleFile={selectedSampleFile}
                 pickImage={pickImage}
+                pickSampleDocument={pickSampleDocument}
                 authorName={
                   profile?.name ||
                   auth.currentUser?.displayName ||
