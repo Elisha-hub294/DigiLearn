@@ -1041,6 +1041,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     marginBottom: spacing.xl,
     position: "relative",
+    borderRadius: 15,
   },
   menu: { position: "absolute", top: 4, right: 4, zIndex: 4 },
   header: {

@@ -247,9 +247,10 @@ export const TeacherPostCard = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.white,
-    borderRadius: 22,
+    borderRadius: 50,
     marginBottom: spacing.md,
+    overflow: "hidden",
+    padding: spacing.md,
   },
   header: {
     flexDirection: "row",
