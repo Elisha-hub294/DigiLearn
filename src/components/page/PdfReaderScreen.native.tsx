@@ -145,6 +145,11 @@ export function PdfReaderScreen() {
   const [downloadProgressAnim] = useState(() => new Animated.Value(0));
   const [downloadScale] = useState(() => new Animated.Value(1));
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Guard against spurious page-1 saves that occur when the PDF first renders
+  // and the IntersectionObserver / onPageChanged fires before the viewer has
+  // scrolled to the real startPage. Only persist progress for pages that are
+  // at least as high as the page we opened to.
+  const minSavePageRef = useRef<number>(startPage);
   const networkState = useNetworkState();
 
   const rawUri = normalizeUriParam(uri ?? pdfDocument);
@@ -182,6 +187,7 @@ export function PdfReaderScreen() {
         if (prog && prog.lastPage > 1) {
           setStartPage(prog.lastPage);
           setCurrentPageNum(prog.lastPage);
+          minSavePageRef.current = prog.lastPage;
           if (prog.totalPages) setTotalPagesCount(prog.totalPages);
         }
       });
@@ -482,7 +488,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
         if (typeof total === "number" && total > 0) {
           setTotalPagesCount(total);
         }
-        if (pageId) {
+        if (pageId && p >= minSavePageRef.current) {
+          // Update the floor so future saves on this session are not filtered
+          minSavePageRef.current = p;
           void savePageReadingProgress(pageId, p, total, {
             title: title || "PDF",
             documentUri: decodedUri || rawUri || undefined,
@@ -962,7 +970,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
             onPageChanged={(page: number, numberOfPages: number) => {
               setCurrentPageNum(page);
               setTotalPagesCount(numberOfPages);
-              if (pageId) {
+              if (pageId && page >= minSavePageRef.current) {
+                // Update the floor so future saves on this session are not filtered
+                minSavePageRef.current = page;
                 void savePageReadingProgress(pageId, page, numberOfPages, {
                   title: title || "PDF",
                   documentUri: decodedUri || rawUri || undefined,

@@ -253,6 +253,10 @@ export function PdfReaderScreen() {
   });
   const [currentPage, setCurrentPage] = useState(startPage);
   const [progressReady, setProgressReady] = useState(false);
+  // Guard against spurious page-1 saves fired by IntersectionObserver when
+  // pages first render into view. Only persist progress for pages >= the page
+  // the reader was opened at.
+  const minSavePageRef = useRef<number>(startPage);
   const [iframeError, setIframeError] = useState(false);
   const [offlineNoticeVisible, setOfflineNoticeVisible] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -363,6 +367,7 @@ export function PdfReaderScreen() {
       if (prog && prog.lastPage > 1) {
         setStartPage(prog.lastPage);
         setCurrentPage(prog.lastPage);
+        minSavePageRef.current = prog.lastPage;
       }
       setProgressReady(true);
     };
@@ -375,7 +380,9 @@ export function PdfReaderScreen() {
 
   useEffect(() => {
     if (!progressReady || !pageId || !decodedUri || isOfficeFile) return;
-
+    if (currentPage < minSavePageRef.current) return;
+    // Update the floor so forward navigation is never blocked
+    minSavePageRef.current = currentPage;
     void savePageReadingProgress(pageId, currentPage, totalPages || undefined, {
       title: title || "PDF",
       documentUri: decodedUri,
