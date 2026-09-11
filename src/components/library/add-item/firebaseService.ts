@@ -1,21 +1,21 @@
 import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  serverTimestamp,
-  setDoc,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    serverTimestamp,
+    setDoc,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "../../../../firebaseConfig";
 import { invalidateFirestoreReadCache } from "../../../services/firestoreReadCache";
 import {
-  appendNotificationToAllUsers,
-  buildLibraryNotification,
+    appendNotificationToAllUsers,
+    buildLibraryNotification,
 } from "../../../services/notifications";
 import {
-  invalidateLocalCaches,
-  LOCAL_CACHE_KEYS,
+    invalidateLocalCaches,
+    LOCAL_CACHE_KEYS,
 } from "../../../utils/localCache";
 import { getVideoThumbnailUrl } from "../../../utils/videoUtils";
 import { getTitleDocId } from "./utils";
@@ -330,9 +330,7 @@ export const notifyUsersAboutNewItem = async (
           ? "pages"
           : itemType === "paper"
             ? "pastPaper"
-            : itemType === "announcement"
-              ? "teacherPosts"
-              : "trendingLessons";
+            : "trendingLessons";
     const itemSnapshot = await getDoc(doc(db, collectionName, itemId));
     const item = itemSnapshot.data();
     const previewImage =
@@ -354,9 +352,7 @@ export const notifyUsersAboutNewItem = async (
         resourceTitle,
         previewImage,
       ),
-      itemType === "announcement" && typeof item?.owner === "string"
-        ? item.owner
-        : undefined,
+      undefined,
     );
   } catch (error) {
     console.error("Failed to send notifications:", error);

@@ -396,7 +396,7 @@ export default function SearchScreen() {
               entering={FadeInUp.duration(280)}
               style={styles.recentSection}
             >
-              <Text style={styles.sectionTitle}>Recent</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent</Text>
               <View style={styles.chipsWrap}>
                 {recentSearches.map((term) => (
                   <RecentSearchChip

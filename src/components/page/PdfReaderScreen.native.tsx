@@ -17,7 +17,7 @@ import {
   View,
 } from "react-native";
 import { WebView } from "react-native-webview";
-import { colors, radius, spacing } from "../../constants/theme";
+import { radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordPageVisit } from "../../services/activityService";
 import {
@@ -636,17 +636,20 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
             onPress={goBack}
             accessibilityLabel="Close PDF"
           >
-            <Feather name="arrow-left" size={22} color={colors.text} />
+            <Feather name="arrow-left" size={22} color={themeColors.text} />
           </Pressable>
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle} numberOfLines={1}>
+            <Text
+              style={[styles.headerTitle, { color: themeColors.primary }]}
+              numberOfLines={1}
+            >
               {title || "PDF Reader"}
             </Text>
           </View>
         </View>
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingCard}>
-            <Feather name="file-text" size={36} color={colors.primary} />
+        <View style={[styles.loadingOverlay, { backgroundColor: themeColors.background }]}>
+          <View style={[styles.loadingCard, { backgroundColor: themeColors.white }]}>
+            <Feather name="file-text" size={36} color={themeColors.primary} />
             <Text style={[styles.loadingLabel, { color: themeColors.text }]}>
               Loading PDF…
             </Text>
@@ -676,7 +679,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
         <View
           style={[styles.center, { backgroundColor: themeColors.background }]}
         >
-          <Feather name="alert-circle" size={48} color="#CBD5E1" />
+          <Feather name="alert-circle" size={48} color={themeColors.inactive} />
         </View>
       </>
     );
@@ -743,15 +746,21 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
             onPress={goBack}
             accessibilityLabel="Close PDF"
           >
-            <Feather name="arrow-left" size={22} color={colors.text} />
+            <Feather name="arrow-left" size={22} color={themeColors.text} />
           </Pressable>
 
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle} numberOfLines={1}>
+            <Text
+              style={[styles.headerTitle, { color: themeColors.primary }]}
+              numberOfLines={1}
+            >
               {title || `${isOfficeFile ? "Office" : "PDF"} Reader`}
             </Text>
             {currentPageNum > 0 ? (
-              <Text style={styles.headerSubTitle} numberOfLines={1}>
+              <Text
+                style={[styles.headerSubTitle, { color: themeColors.subtitle }]}
+                numberOfLines={1}
+              >
                 Page {currentPageNum}
                 {totalPagesCount > 0 ? ` of ${totalPagesCount}` : ""}
               </Text>
@@ -836,7 +845,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
         {!loaded && !downloading && (
           <View style={styles.progressTrack}>
             <Animated.View
-              style={[styles.progressBar, { width: progressBarWidth }]}
+              style={[
+                styles.progressBar,
+                { width: progressBarWidth, backgroundColor: themeColors.primary },
+              ]}
             />
           </View>
         )}
@@ -855,7 +867,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
                 { backgroundColor: themeColors.white },
               ]}
             >
-              <Feather name="file-text" size={36} color={colors.primary} />
+              <Feather name="file-text" size={36} color={themeColors.primary} />
               <Text style={[styles.loadingLabel, { color: themeColors.text }]}>
                 Opening PDF…
               </Text>
@@ -866,7 +878,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
                 ]}
               >
                 <Animated.View
-                  style={[styles.loadingFill, { width: progressBarWidth }]}
+                  style={[
+                    styles.loadingFill,
+                    { width: progressBarWidth, backgroundColor: themeColors.primary },
+                  ]}
                 />
               </View>
             </View>
@@ -878,7 +893,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
           <View
             style={[styles.center, { backgroundColor: themeColors.background }]}
           >
-            <Feather name="alert-triangle" size={52} color="#F59E0B" />
+            <Feather name="alert-triangle" size={52} color={themeColors.warning} />
           </View>
         )}
 
@@ -963,7 +978,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#1A1A2E",
   },
 
   // Header
@@ -972,9 +986,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.md,
-    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
     ...Platform.select({
       ios: {
         boxShadow: "0px 2px 6px rgba(15, 23, 42, 0.06)",
@@ -988,7 +1000,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
   },
   headerCenter: {
     flex: 1,
@@ -998,11 +1009,9 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 15,
     fontWeight: "500",
-    color: colors.primary,
   },
   headerSubTitle: {
     fontSize: 11,
-    color: colors.subtitle,
     marginTop: 1,
   },
 
@@ -1031,11 +1040,9 @@ const styles = StyleSheet.create({
 
   // Download Progress Banner
   downloadProgressBanner: {
-    backgroundColor: "#FFFFFF",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
     gap: 6,
   },
   downloadProgressInfo: {
@@ -1046,11 +1053,9 @@ const styles = StyleSheet.create({
   downloadProgressLabel: {
     fontSize: 12,
     fontWeight: "600",
-    color: colors.text,
   },
   downloadTrack: {
     height: 4,
-    backgroundColor: "#E2E8F0",
     borderRadius: 2,
     overflow: "hidden",
   },
@@ -1063,21 +1068,18 @@ const styles = StyleSheet.create({
   // Progress bar
   progressTrack: {
     height: 3,
-    backgroundColor: "#E2E8F0",
   },
   progressBar: {
     height: 3,
-    backgroundColor: colors.primary,
   },
 
   // WebView
   webview: {
     flex: 1,
-    backgroundColor: "#1A1A2E",
+    backgroundColor: "transparent",
   },
   docxContent: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
   },
   docxContentContainer: {
     padding: spacing.lg,
@@ -1104,10 +1106,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1A1A2E",
   },
   loadingCard: {
-    backgroundColor: "#FFFFFF",
     borderRadius: radius.lg,
     padding: 32,
     alignItems: "center",
@@ -1116,20 +1116,17 @@ const styles = StyleSheet.create({
   },
   loadingLabel: {
     fontSize: 13,
-    color: colors.text,
     fontWeight: "600",
     textAlign: "center",
   },
   loadingTrack: {
     width: "100%",
     height: 6,
-    backgroundColor: "#E2E8F0",
     borderRadius: 3,
     overflow: "hidden",
   },
   loadingFill: {
     height: 6,
-    backgroundColor: colors.primary,
     borderRadius: 3,
   },
 
@@ -1140,16 +1137,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     padding: 32,
-    backgroundColor: "#FFFFFF",
   },
   errorTitle: {
     fontSize: 17,
     fontWeight: "700",
-    color: colors.text,
   },
   errorText: {
     fontSize: 13,
-    color: colors.subtitle,
     textAlign: "center",
   },
   backBtn: {
@@ -1157,7 +1151,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: radius.pill,
-    backgroundColor: colors.primary,
   },
   backBtnText: {
     color: "#FFFFFF",

@@ -3,11 +3,11 @@ import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Linking,
-  ScrollView,
-  StyleSheet,
-  View,
-  useWindowDimensions,
+    Linking,
+    ScrollView,
+    StyleSheet,
+    View,
+    useWindowDimensions,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,14 +15,14 @@ import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
-  recordBookVisit,
-  recordUserActivity,
+    recordBookVisit,
+    recordUserActivity,
 } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { shareResource } from "../../services/shareLinks";
 import {
-  getSavedItemsProfile,
-  toggleSavedItem,
+    getSavedItemsProfile,
+    toggleSavedItem,
 } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
@@ -105,13 +105,14 @@ function mapBook(id: string, d: Record<string, unknown>): Book {
 
 export function BookPreviewScreen() {
   const { colors: themeColors } = useTheme();
-  const { id, source, returnTo, teacherId, teacherName } = useLocalSearchParams<{
-    id: string;
-    source?: string;
-    returnTo?: string;
-    teacherId?: string;
-    teacherName?: string;
-  }>();
+  const { id, source, returnTo, teacherId, teacherName } =
+    useLocalSearchParams<{
+      id: string;
+      source?: string;
+      returnTo?: string;
+      teacherId?: string;
+      teacherName?: string;
+    }>();
   const [book, setBook] = useState<Book>();
   const [allBooks, setAllBooks] = useState<Book[]>([]);
   const [teacherAvatars, setTeacherAvatars] = useState<Record<string, string>>(
@@ -136,8 +137,8 @@ export function BookPreviewScreen() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     (async () => {
+      setLoading(true);
       try {
         if (auth.currentUser?.uid && id) {
           recordUserActivity(auth.currentUser.uid, "book", id);
@@ -296,12 +297,42 @@ export function BookPreviewScreen() {
             },
           ]}
         >
-          <Skeleton style={styles.skeletonHero} />
-          <View style={styles.skeletonSheet}>
-            <Skeleton style={styles.skeletonTitle} />
-            <Skeleton style={styles.skeletonLine} />
-            <Skeleton style={styles.skeletonLineShort} />
-            <Skeleton style={styles.skeletonAvatars} />
+          <Skeleton
+            style={[
+              styles.skeletonHero,
+              { backgroundColor: themeColors.surfaceMuted },
+            ]}
+          />
+          <View
+            style={[
+              styles.skeletonSheet,
+              { backgroundColor: themeColors.white },
+            ]}
+          >
+            <Skeleton
+              style={[
+                styles.skeletonTitle,
+                { backgroundColor: themeColors.surfaceMuted },
+              ]}
+            />
+            <Skeleton
+              style={[
+                styles.skeletonLine,
+                { backgroundColor: themeColors.surfaceMuted },
+              ]}
+            />
+            <Skeleton
+              style={[
+                styles.skeletonLineShort,
+                { backgroundColor: themeColors.surfaceMuted },
+              ]}
+            />
+            <Skeleton
+              style={[
+                styles.skeletonAvatars,
+                { backgroundColor: themeColors.surfaceMuted },
+              ]}
+            />
           </View>
         </View>
       </View>
@@ -565,44 +596,39 @@ export function BookPreviewScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#fff" },
+  screen: { flex: 1 },
   scrollContent: { flexGrow: 1 },
   contentContainer: { flex: 1, width: "100%" },
-  loading: { flex: 1, backgroundColor: "#fff", alignItems: "center" },
-  skeletonHero: { height: "46%", backgroundColor: "#DDE4E2" },
+  loading: { flex: 1, alignItems: "center" },
+  skeletonHero: { height: "46%" },
   skeletonSheet: {
     flex: 1,
     marginTop: -28,
     padding: 24,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    backgroundColor: "#fff",
   },
   skeletonTitle: {
     width: 150,
     height: 22,
     borderRadius: 8,
-    backgroundColor: "#E8EEEC",
     marginBottom: 20,
   },
   skeletonLine: {
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#EEF2F1",
     marginBottom: 11,
   },
   skeletonLineShort: {
     width: "62%",
     height: 14,
     borderRadius: 7,
-    backgroundColor: "#EEF2F1",
   },
   skeletonAvatars: {
     width: 250,
     height: 64,
     marginTop: 42,
     borderRadius: 32,
-    backgroundColor: "#E8EEEC",
   },
   loader: { position: "absolute", top: "50%", alignSelf: "center" },
   sheet: {
@@ -610,7 +636,6 @@ const styles = StyleSheet.create({
     paddingTop: 25,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    backgroundColor: "#fff",
     minHeight: 520,
   },
   action: {
@@ -618,7 +643,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "#fff",
     alignItems: "center",
   },
   actionContent: { width: "100%" },

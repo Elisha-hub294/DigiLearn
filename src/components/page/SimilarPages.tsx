@@ -1,4 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTheme } from "../../contexts/ThemeContext";
 import { TopicalNote } from "./pageTypes";
 import { SimilarPageCard } from "./SimilarPageCard";
 
@@ -13,6 +14,8 @@ export function SimilarPages({
   onSeeAll?: () => void;
   accentColor?: string;
 }) {
+  const { colors } = useTheme();
+
   if (!pages || pages.length === 0) return null;
 
   const activeAccent = accentColor || "#000000";
@@ -20,7 +23,9 @@ export function SimilarPages({
   return (
     <View style={styles.section}>
       <View style={styles.headerRow}>
-        <Text style={styles.heading}>Similar Pages</Text>
+        <Text style={[styles.heading, { color: colors.text }]}>
+          Similar Pages
+        </Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="See all similar pages"
@@ -62,7 +67,6 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 21,
-    color: "#1B2730",
     fontWeight: "600",
   },
   seeAllText: {

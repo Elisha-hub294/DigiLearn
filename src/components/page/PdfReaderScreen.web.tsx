@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { colors, radius, spacing } from "../../constants/theme";
+import { radius, spacing } from "../../constants/theme";
 import { recordPageVisit } from "../../services/activityService";
 import {
   getDownloadedFiles,
@@ -37,7 +37,8 @@ const PDF_WORKER_CDN =
 
 /** Load PDF.js once, even when a preview component loaded it before the reader. */
 function loadPdfJs(): Promise<any> {
-  if ((window as any).pdfjsLib) return Promise.resolve((window as any).pdfjsLib);
+  if ((window as any).pdfjsLib)
+    return Promise.resolve((window as any).pdfjsLib);
 
   return new Promise((resolve, reject) => {
     const existing = document.querySelector<HTMLScriptElement>(
@@ -55,9 +56,13 @@ function loadPdfJs(): Promise<any> {
 
     if (existing) {
       existing.addEventListener("load", onLoad, { once: true });
-      existing.addEventListener("error", () => reject(new Error("Failed to load PDF.js")), {
-        once: true,
-      });
+      existing.addEventListener(
+        "error",
+        () => reject(new Error("Failed to load PDF.js")),
+        {
+          once: true,
+        },
+      );
       return;
     }
 
@@ -123,7 +128,7 @@ function WebPdfPage({
         width: "100%",
         height: "auto",
         marginBottom: 8,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "transparent",
       }}
     />
   );
@@ -148,8 +153,9 @@ function WebPdfReader({
   useEffect(() => {
     let active = true;
     void loadPdfJs()
-      .then((pdfjsLib) =>
-        pdfjsLib.getDocument({ url: uri, withCredentials: false }).promise,
+      .then(
+        (pdfjsLib) =>
+          pdfjsLib.getDocument({ url: uri, withCredentials: false }).promise,
       )
       .then((document) => {
         if (!active) return;
@@ -174,7 +180,10 @@ function WebPdfReader({
 
   if (!pdf) return null;
   return (
-    <ScrollView style={styles.pdfScroll} contentContainerStyle={styles.pdfContent}>
+    <ScrollView
+      style={styles.pdfScroll}
+      contentContainerStyle={styles.pdfContent}
+    >
       {Array.from({ length: pdf.numPages }, (_, index) => (
         <WebPdfPage
           key={index + 1}
@@ -388,7 +397,10 @@ export function PdfReaderScreen() {
 
   const missingDocument = !isResolving && !decodedUri;
   const showReaderDialog =
-    offlineNoticeVisible || iframeError || missingDocument || Boolean(downloadError);
+    offlineNoticeVisible ||
+    iframeError ||
+    missingDocument ||
+    Boolean(downloadError);
   const readerDialogTitle = missingDocument
     ? isOfficeFile
       ? "Internet connection required"
@@ -400,7 +412,7 @@ export function PdfReaderScreen() {
     ? isOfficeFile
       ? "Office documents can only be read while online. Connect to the internet and try again."
       : "No document is available to open."
-    : downloadError ?? "The document could not be opened. Please try again.";
+    : (downloadError ?? "The document could not be opened. Please try again.");
 
   const closeReaderDialog = () => {
     setOfflineNoticeVisible(false);
@@ -542,11 +554,14 @@ export function PdfReaderScreen() {
           onPress={goBack}
           accessibilityLabel="Close PDF"
         >
-          <Feather name="chevron-left" size={22} color={colors.text} />
+          <Feather name="chevron-left" size={22} color={themeColors.text} />
         </Pressable>
 
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>
+          <Text
+            style={[styles.headerTitle, { color: themeColors.primary }]}
+            numberOfLines={1}
+          >
             {title || readerLabel}
           </Text>
         </View>
@@ -562,7 +577,11 @@ export function PdfReaderScreen() {
               accessibilityLabel="Open in new tab"
               onPress={() => window.open(decodedUri, "_blank")}
             >
-              <Feather name="external-link" size={18} color={colors.text} />
+              <Feather
+                name="external-link"
+                size={18}
+                color={themeColors.text}
+              />
             </Pressable>
           )}
 
@@ -647,15 +666,19 @@ export function PdfReaderScreen() {
         <View
           style={[styles.center, { backgroundColor: themeColors.background }]}
         >
-          <Feather name="file-text" size={48} color={colors.primary} />
-          <Text style={styles.errorTitle}>Loading PDF…</Text>
+          <Feather name="file-text" size={48} color={themeColors.primary} />
+          <Text style={[styles.errorTitle, { color: themeColors.text }]}>
+            Loading PDF…
+          </Text>
         </View>
       ) : isTextOfficeFile && officeText === null && !iframeError ? (
         <View
           style={[styles.center, { backgroundColor: themeColors.background }]}
         >
-          <Feather name="file-text" size={48} color={colors.primary} />
-          <Text style={styles.errorTitle}>Loading document...</Text>
+          <Feather name="file-text" size={48} color={themeColors.primary} />
+          <Text style={[styles.errorTitle, { color: themeColors.text }]}>
+            Loading document...
+          </Text>
         </View>
       ) : isTextOfficeFile && officeText !== null ? (
         <ScrollView
@@ -688,7 +711,7 @@ export function PdfReaderScreen() {
         <View
           style={[styles.center, { backgroundColor: themeColors.background }]}
         >
-          <Feather name="alert-circle" size={48} color="#CBD5E1" />
+          <Feather name="alert-circle" size={48} color={themeColors.inactive} />
         </View>
       ) : isOfficeFile ? (
         <iframe
@@ -703,7 +726,7 @@ export function PdfReaderScreen() {
             border: "none",
             width: "100%",
             height: "100%",
-            backgroundColor: "#1A1A2E",
+            backgroundColor: themeColors.background,
           }}
           onError={() => {
             setIframeError(true);
@@ -726,11 +749,9 @@ export function PdfReaderScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#1A1A2E",
   },
   docxContent: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
   },
   docxContentContainer: {
     padding: spacing.lg,
@@ -747,7 +768,7 @@ const styles = StyleSheet.create({
   },
   pdfScroll: {
     flex: 1,
-    backgroundColor: "#525659",
+    backgroundColor: "transparent",
   },
   pdfContent: {
     alignItems: "center",
@@ -760,9 +781,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.md,
-    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
   },
   headerBack: {
     width: 40,
@@ -770,7 +789,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
   },
   headerRightActions: {
     flexDirection: "row",
@@ -783,7 +801,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
   },
   downloadBtn: {
     borderRadius: radius.pill,
@@ -810,17 +827,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: colors.primary,
     textTransform: "capitalize",
   },
 
   // Download Progress Banner
   downloadProgressBanner: {
-    backgroundColor: "#FFFFFF",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
     gap: 6,
   },
   downloadProgressInfo: {
@@ -831,11 +845,9 @@ const styles = StyleSheet.create({
   downloadProgressLabel: {
     fontSize: 12,
     fontWeight: "600",
-    color: colors.text,
   },
   downloadTrack: {
     height: 4,
-    backgroundColor: "#E2E8F0",
     borderRadius: 2,
     overflow: "hidden",
   },
@@ -853,16 +865,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     padding: 32,
-    backgroundColor: "#FFFFFF",
   },
   errorTitle: {
     fontSize: 17,
     fontWeight: "700",
-    color: colors.text,
   },
   errorText: {
     fontSize: 13,
-    color: colors.subtitle,
     textAlign: "center",
   },
   backBtn: {
@@ -870,7 +879,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: radius.pill,
-    backgroundColor: colors.primary,
   },
   backBtnText: {
     color: "#FFFFFF",
