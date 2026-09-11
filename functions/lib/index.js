@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendTeacherNotifications = exports.sendUserNotifications = exports.manageTeacherCommunity = exports.sendLibraryNotification = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = exports.initializeUserProfile = void 0;
+exports.remindOverdueTeacherApplications = exports.notifyAdminsOfTeacherApplication = exports.updateReport = exports.listReports = exports.notifyAdminsOfReport = exports.submitReport = exports.getYoutubeVideoDuration = exports.resubmitTeacherApplication = exports.changeAccountType = exports.reviewTeacherApplication = exports.sendTeacherNotifications = exports.sendUserNotifications = exports.notifyTeacherFollowersOfNewPost = exports.getFollowedTeachers = exports.manageTeacherCommunity = exports.sendLibraryNotification = exports.deleteResource = exports.deleteAccount = exports.generateAssistantReply = exports.initializeUserProfile = void 0;
 const genai_1 = require("@google/genai");
 const app_1 = require("firebase-admin/app");
 const auth_1 = require("firebase-admin/auth");
@@ -530,11 +530,11 @@ exports.manageTeacherCommunity = (0, https_1.onCall)(async (request) => {
     if (action === "join") {
         const alreadyJoined = (await followerRef.get()).exists;
         await followerRef.set({ joinedAt: firestore_1.Timestamp.now() });
+        const [userSnapshot, followerTeacherSnapshot] = await Promise.all([
+            db.doc(`users/${request.auth.uid}`).get(),
+            db.doc(`teachers/${request.auth.uid}`).get(),
+        ]);
         if (!alreadyJoined && teacherId !== request.auth.uid) {
-            const [userSnapshot, followerTeacherSnapshot] = await Promise.all([
-                db.doc(`users/${request.auth.uid}`).get(),
-                db.doc(`teachers/${request.auth.uid}`).get(),
-            ]);
             const followerData = userSnapshot.data() ?? followerTeacherSnapshot.data() ?? {};
             const followerName = typeof followerData.name === "string" && followerData.name.trim()
                 ? followerData.name.trim()
@@ -561,12 +561,92 @@ exports.manageTeacherCommunity = (0, https_1.onCall)(async (request) => {
                 }),
             }, { merge: true });
         }
+        const followerProfileRef = userSnapshot.exists
+            ? db.doc(`users/${request.auth.uid}`)
+            : followerTeacherSnapshot.exists
+                ? db.doc(`teachers/${request.auth.uid}`)
+                : null;
+        if (followerProfileRef) {
+            await followerProfileRef.set({ followedTeacherIds: firestore_1.FieldValue.arrayUnion(teacherId) }, { merge: true });
+        }
     }
     else if (action === "leave") {
         await followerRef.delete();
+        const [userSnapshot, followerTeacherSnapshot] = await Promise.all([
+            db.doc(`users/${request.auth.uid}`).get(),
+            db.doc(`teachers/${request.auth.uid}`).get(),
+        ]);
+        const followerProfileRef = userSnapshot.exists
+            ? db.doc(`users/${request.auth.uid}`)
+            : followerTeacherSnapshot.exists
+                ? db.doc(`teachers/${request.auth.uid}`)
+                : null;
+        if (followerProfileRef) {
+            await followerProfileRef.set({ followedTeacherIds: firestore_1.FieldValue.arrayRemove(teacherId) }, { merge: true });
+        }
     }
     const followerSnapshot = await followerRef.get();
     return { joined: followerSnapshot.exists };
+});
+/** Returns memberships created both before and after profile mirroring. */
+exports.getFollowedTeachers = (0, https_1.onCall)(async (request) => {
+    if (!request.auth) {
+        throw new https_1.HttpsError("unauthenticated", "Sign in required.");
+    }
+    const followers = await db
+        .collectionGroup("followers")
+        .where(firestore_1.FieldPath.documentId(), "==", request.auth.uid)
+        .get();
+    const teacherIds = followers.docs
+        .map((follower) => follower.ref.parent.parent?.id)
+        .filter((teacherId) => Boolean(teacherId));
+    return { teacherIds: [...new Set(teacherIds)] };
+});
+/** New teacher posts always notify each follower of that teacher. */
+exports.notifyTeacherFollowersOfNewPost = (0, firestore_2.onDocumentCreated)("teacherPosts/{postId}", async (event) => {
+    const post = event.data?.data();
+    const teacherId = typeof post?.owner === "string" ? post.owner : "";
+    if (!teacherId)
+        return;
+    const teacherSnapshot = await db.doc(`teachers/${teacherId}`).get();
+    if (!teacherSnapshot.exists)
+        return;
+    const teacher = teacherSnapshot.data() ?? {};
+    const followers = await db.collection(`teachers/${teacherId}/followers`).get();
+    if (followers.empty)
+        return;
+    const title = typeof post?.title === "string" ? post.title.trim() : "";
+    const cover = typeof post?.cover === "string" ? post.cover.trim() : "";
+    const notification = {
+        id: `announcement-${event.params.postId}`,
+        type: "announcement",
+        publisherName: typeof teacher.name === "string" && teacher.name.trim()
+            ? teacher.name.trim()
+            : "Teacher",
+        publisherAvatar: typeof teacher.photoURL === "string"
+            ? teacher.photoURL
+            : typeof teacher.avatar === "string"
+                ? teacher.avatar
+                : "",
+        message: "Published a new announcement",
+        ...(title ? { resourceTitle: title } : {}),
+        ...(cover ? { previewImage: cover } : {}),
+        createdAt: firestore_1.Timestamp.now(),
+        read: false,
+        itemId: event.params.postId,
+        collection: "teacherPosts",
+        navigation: "/teacher-profile",
+    };
+    const recipients = followers.docs
+        .map((follower) => db.doc(`users/${follower.id}`))
+        .filter((recipient) => recipient.id !== teacherId);
+    for (let start = 0; start < recipients.length; start += 450) {
+        const batch = db.batch();
+        recipients.slice(start, start + 450).forEach((recipient) => {
+            batch.set(recipient, { notifications: firestore_1.FieldValue.arrayUnion(notification) }, { merge: true });
+        });
+        await batch.commit();
+    }
 });
 function getNewNotifications(before, after) {
     const previousIds = new Set((before ?? []).map((item) => item.id));

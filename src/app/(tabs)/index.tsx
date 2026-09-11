@@ -57,6 +57,7 @@ import { recordUserActivity } from "../../services/activityService";
 import { BookRecord, loadBooks } from "../../services/booksService";
 import { clearGuestMode, isGuestMode } from "../../services/guestService";
 import { loadTrendingLessons } from "../../services/trendingLessonsService";
+import { getFollowedTeacherIds } from "../../services/teacherCommunity";
 import { getUserOnboardingState } from "../../services/userProfile";
 import { interleaveFeedItems } from "../../utils/feedAlgorithm";
 import {
@@ -125,7 +126,7 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { width } = useWindowDimensions();
-  const { profile } = useProfile();
+  const { profile, user } = useProfile();
   const { paperCollections, onRefresh: refreshLibraryData } = useLibraryData();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -137,6 +138,7 @@ export default function HomeScreen() {
 
   // Raw Content Pools
   const [teacherPosts, setTeacherPosts] = useState<TeacherPost[]>([]);
+  const [followedTeacherIds, setFollowedTeacherIds] = useState<string[]>([]);
   const [teacherMeta, setTeacherMeta] = useState<{
     teacherAvatars: Record<string, string>;
     ownerProfiles: Record<string, { name: string; avatar?: string }>;
@@ -164,16 +166,23 @@ export default function HomeScreen() {
   // Fetch all pool data
   const loadAllFeedPools = useCallback(async (force = false) => {
     try {
-      const [posts, tMeta, lessons, notes, nMeta, bks] = await Promise.all([
+      const [posts, tMeta, lessons, notes, nMeta, bks, followedTeachers] = await Promise.all([
         loadTeacherPosts(),
         loadTeacherMetadata(),
         loadTrendingLessons(force),
         loadFeaturedNotes(),
         loadFeaturedNotesMetadata(),
         loadBooks(force),
+        user
+          ? getFollowedTeacherIds().catch((error) => {
+              console.warn("Failed to load followed teachers:", error);
+              return [];
+            })
+          : Promise.resolve([]),
       ]);
 
       setTeacherPosts(posts);
+      setFollowedTeacherIds(followedTeachers);
       setTeacherMeta(tMeta);
       setVideoLessons(
         lessons.map((lesson) => ({
@@ -187,7 +196,7 @@ export default function HomeScreen() {
     } catch (err) {
       console.warn("Failed to load feed pool data:", err);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     let active = true;
@@ -273,6 +282,15 @@ export default function HomeScreen() {
   }, [navigation, onRefresh, route.key]);
 
   // Filter Past Papers by user interests
+  const followedTeacherIdSet = useMemo(
+    () =>
+      new Set([
+        ...followedTeacherIds,
+        ...(profile?.followedTeacherIds ?? []),
+      ]),
+    [followedTeacherIds, profile?.followedTeacherIds],
+  );
+
   const filteredPaperCollections = useMemo(() => {
     if (!shouldFilterByInterests(profile)) return paperCollections;
 
@@ -280,11 +298,12 @@ export default function HomeScreen() {
       .map((section) => ({
         ...section,
         items: section.items.filter((paper) =>
+          (paper.owner && followedTeacherIdSet.has(paper.owner)) ||
           matchesUserInterests(paper.subject, profile?.subjects),
         ),
       }))
       .filter((section) => section.items.length > 0);
-  }, [paperCollections, profile]);
+  }, [followedTeacherIdSet, paperCollections, profile]);
 
   const allPastPaperItems = useMemo<PaperItem[]>(() => {
     return filteredPaperCollections.flatMap((sec) => sec.items);
@@ -294,32 +313,51 @@ export default function HomeScreen() {
   const filterByInterestsActive = shouldFilterByInterests(profile);
 
   const filteredTeacherPosts = useMemo(() => {
-    if (!filterByInterestsActive) return teacherPosts;
-    return teacherPosts.filter((post) =>
-      matchesUserInterests(post.subject, profile?.subjects),
-    );
-  }, [filterByInterestsActive, profile?.subjects, teacherPosts]);
+    return teacherPosts.filter((post) => {
+      const isFromFollowedTeacher = Boolean(
+        post.owner && followedTeacherIdSet.has(post.owner),
+      );
+      // Followed teachers remain visible with interest filtering enabled;
+      // preference-matching posts from other teachers remain eligible too.
+      return (
+        isFromFollowedTeacher ||
+        !filterByInterestsActive ||
+        matchesUserInterests(post.subject, profile?.subjects)
+      );
+    });
+  }, [
+    filterByInterestsActive,
+    followedTeacherIdSet,
+    profile?.subjects,
+    teacherPosts,
+  ]);
 
   const filteredVideoLessons = useMemo(() => {
     if (!filterByInterestsActive) return videoLessons;
-    return videoLessons.filter((lesson) =>
-      matchesUserInterests(lesson.subject, profile?.subjects),
+    return videoLessons.filter(
+      (lesson) =>
+        (lesson.owner && followedTeacherIdSet.has(lesson.owner)) ||
+        matchesUserInterests(lesson.subject, profile?.subjects),
     );
-  }, [filterByInterestsActive, profile?.subjects, videoLessons]);
+  }, [filterByInterestsActive, followedTeacherIdSet, profile?.subjects, videoLessons]);
 
   const filteredFeaturedNotes = useMemo(() => {
     if (!filterByInterestsActive) return featuredNotes;
-    return featuredNotes.filter((note) =>
-      matchesUserInterests(note.subject, profile?.subjects),
+    return featuredNotes.filter(
+      (note) =>
+        (note.owner && followedTeacherIdSet.has(note.owner)) ||
+        matchesUserInterests(note.subject, profile?.subjects),
     );
-  }, [filterByInterestsActive, featuredNotes, profile?.subjects]);
+  }, [filterByInterestsActive, featuredNotes, followedTeacherIdSet, profile?.subjects]);
 
   const filteredBooks = useMemo(() => {
     if (!filterByInterestsActive) return books;
-    return books.filter((book) =>
-      matchesUserInterests(book.subject || book.title, profile?.subjects),
+    return books.filter(
+      (book) =>
+        (book.owner && followedTeacherIdSet.has(book.owner)) ||
+        matchesUserInterests(book.subject || book.title, profile?.subjects),
     );
-  }, [books, filterByInterestsActive, profile?.subjects]);
+  }, [books, filterByInterestsActive, followedTeacherIdSet, profile?.subjects]);
 
   // Generate Break Items (Carousels)
   const breakModules: FeedItem[] = useMemo(() => {

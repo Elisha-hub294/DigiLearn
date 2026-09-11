@@ -38,6 +38,7 @@ export type UserProfile = {
   gender: string;
   subjects: string[];
   filterFeedByInterests?: boolean;
+  followedTeacherIds?: string[];
   joinedAt?: unknown;
   accountTypeCompleted?: boolean;
   type?: AccountType;
@@ -226,6 +227,7 @@ export const defaultUserProfile = (user: User): UserProfile => ({
   gender: "",
   subjects: [],
   filterFeedByInterests: false,
+  followedTeacherIds: [],
   accountTypeCompleted: false,
   type: "",
   "marked-as-read": [],
@@ -513,6 +515,7 @@ export async function ensureUserProfile(user: User) {
     "gender",
     "subjects",
     "filterFeedByInterests",
+    "followedTeacherIds",
     "marked-as-read",
     "hidden-pages",
     "saved-pages",

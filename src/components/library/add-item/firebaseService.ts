@@ -320,6 +320,9 @@ export const notifyUsersAboutNewItem = async (
   resourceTitle?: string,
 ) => {
   try {
+    // The server fan-outs announcements to followers on document creation.
+    // Do not also use the client callable path or followers receive duplicates.
+    if (itemType === "announcement") return;
     const collectionName =
       itemType === "book"
         ? "books"

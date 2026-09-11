@@ -5,10 +5,26 @@ type CommunityResponse = {
   joined: boolean;
 };
 
+type FollowedTeachersResponse = {
+  teacherIds: string[];
+};
+
 const manageTeacherCommunity = httpsCallable<
   { teacherId: string; action: "status" | "join" | "leave" },
   CommunityResponse
 >(functions, "manageTeacherCommunity");
+
+const getFollowedTeachers = httpsCallable<
+  Record<string, never>,
+  FollowedTeachersResponse
+>(functions, "getFollowedTeachers");
+
+export async function getFollowedTeacherIds() {
+  const result = await getFollowedTeachers({});
+  return Array.isArray(result.data.teacherIds)
+    ? result.data.teacherIds.filter((teacherId) => typeof teacherId === "string")
+    : [];
+}
 
 export async function getTeacherCommunityStatus(teacherId: string) {
   if (!teacherId) return false;

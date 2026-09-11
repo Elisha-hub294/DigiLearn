@@ -1225,7 +1225,11 @@ export function AddItemModal({
         notificationType = "paper";
       }
 
-      if (createdItemId && formData.notifyUsers) {
+      // Teacher post delivery is enforced by the server when the post is created.
+      if (
+        createdItemId &&
+        (notificationType === "announcement" || formData.notifyUsers)
+      ) {
         await notifyUsersAboutNewItem(
           notificationType,
           createdItemId,
