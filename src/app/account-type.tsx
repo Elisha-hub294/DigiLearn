@@ -6,11 +6,14 @@ import {
   useRouter,
 } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   BackHandler,
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -29,6 +32,30 @@ import {
   getUserOnboardingState,
   saveAccountTypeDecision,
 } from "../services/userProfile";
+
+const ACCOUNT_OPTIONS: {
+  type: AccountType;
+  label: string;
+  description: string;
+  image: number;
+  color: string;
+}[] = [
+  {
+    type: "student",
+    label: "Student Account",
+    description: "Learn, save resources, track progress, and join discussions.",
+    image: require("@/assets/images/learner.png"),
+    color: "#72B8E5",
+  },
+  {
+    type: "teacher",
+    label: "Teacher Account",
+    description:
+      "Everything in Student, plus publish resources and share lessons after approval.",
+    image: require("@/assets/images/tutor.png"),
+    color: "#FF6269",
+  },
+];
 
 function mapSaveError() {
   return "Couldn't save your account type. Please check your connection and try again.";
@@ -49,6 +76,8 @@ export default function AccountTypeScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReviewPending, setIsReviewPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const carouselRef = useRef<FlatList<(typeof ACCOUNT_OPTIONS)[number]>>(null);
 
   const horizontalPadding = useMemo(() => getHorizontalPadding(width), [width]);
   const contentMaxWidth = Math.min(500, width - horizontalPadding * 2);
@@ -118,6 +147,27 @@ export default function AccountTypeScreen() {
       setSelectedAccountType(accountType);
     },
     [isReviewPending],
+  );
+
+  const handleCarouselScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const index = Math.round(
+        event.nativeEvent.contentOffset.x / contentMaxWidth,
+      );
+      setCarouselIndex(
+        Math.max(0, Math.min(index, ACCOUNT_OPTIONS.length - 1)),
+      );
+    },
+    [contentMaxWidth],
+  );
+
+  const handleCardPress = useCallback(
+    (accountType: AccountType, index: number) => {
+      handleSelect(accountType);
+      setCarouselIndex(index);
+      carouselRef.current?.scrollToIndex({ index, animated: true });
+    },
+    [handleSelect],
   );
 
   const handleSave = useCallback(async () => {
@@ -317,61 +367,72 @@ export default function AccountTypeScreen() {
             </Text>
           ) : null}
 
-          <View style={styles.cardRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Select student account"
-              accessibilityState={{
-                selected: selectedAccountType === "student",
-                disabled: isReviewPending,
-              }}
-              disabled={isReviewPending}
-              onPress={() => handleSelect("student")}
-              style={({ pressed }) => [
-                styles.card,
-                styles.studentCard,
-                selectedAccountType === "student" && styles.cardSelected,
-                pressed && styles.cardPressed,
-              ]}
-            >
-              <Image
-                source={require("@/assets/images/learner.png")}
-                style={styles.cardImage}
-                contentFit="contain"
-              />
-              <Text style={styles.cardLabel}>Student Account</Text>
-              <Text style={styles.cardDescription}>
-                Learn, save resources, track progress, and join discussions.
+          <View style={styles.carouselWrap}>
+            <FlatList
+              ref={carouselRef}
+              data={ACCOUNT_OPTIONS}
+              horizontal
+              pagingEnabled
+              bounces={false}
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.type}
+              onMomentumScrollEnd={handleCarouselScrollEnd}
+              renderItem={({ item, index }) => (
+                <View style={[styles.carouselItem, { width: contentMaxWidth }]}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select ${item.type} account, option ${index + 1} of ${ACCOUNT_OPTIONS.length}`}
+                    accessibilityState={{
+                      selected: selectedAccountType === item.type,
+                      disabled: isReviewPending,
+                    }}
+                    disabled={isReviewPending}
+                    onPress={() => handleCardPress(item.type, index)}
+                    style={({ pressed }) => [
+                      styles.card,
+                      { backgroundColor: item.color },
+                      selectedAccountType === item.type && styles.cardSelected,
+                      pressed && styles.cardPressed,
+                    ]}
+                  >
+                    <Image
+                      source={item.image}
+                      style={styles.cardImage}
+                      contentFit="contain"
+                    />
+                    <Text style={styles.cardLabel}>{item.label}</Text>
+                    <Text style={styles.cardDescription}>
+                      {item.description}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+            />
+            <View style={styles.carouselControls}>
+              <Text
+                style={[
+                  styles.carouselPosition,
+                  { color: themeColors.subtitle },
+                ]}
+              >
+                {carouselIndex + 1} of {ACCOUNT_OPTIONS.length}
               </Text>
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Select teacher account"
-              accessibilityState={{
-                selected: selectedAccountType === "teacher",
-                disabled: isReviewPending,
-              }}
-              disabled={isReviewPending}
-              onPress={() => handleSelect("teacher")}
-              style={({ pressed }) => [
-                styles.card,
-                styles.teacherCard,
-                selectedAccountType === "teacher" && styles.cardSelected,
-                pressed && styles.cardPressed,
-              ]}
-            >
-              <Image
-                source={require("@/assets/images/tutor.png")}
-                style={styles.cardImage}
-                contentFit="contain"
-              />
-              <Text style={styles.cardLabel}>Teacher Account</Text>
-              <Text style={styles.cardDescription}>
-                Everything in Student, plus publish resources and share lessons
-                after approval.
-              </Text>
-            </Pressable>
+              <View style={styles.dots}>
+                {ACCOUNT_OPTIONS.map((item, index) => (
+                  <View
+                    key={item.type}
+                    style={[
+                      styles.dot,
+                      { backgroundColor: themeColors.border },
+                      index === carouselIndex && {
+                        backgroundColor: themeColors.primary,
+                        width: 20,
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
           </View>
 
           {errorMessage ? (
@@ -472,18 +533,15 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: "center",
   },
-  cardRow: {
+  carouselWrap: {
     width: "100%",
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "stretch",
-    gap: spacing.md,
     marginBottom: spacing.xl,
   },
+  carouselItem: {
+    paddingHorizontal: spacing.xs,
+  },
   card: {
-    flex: 1,
-    minHeight: 260,
-    maxWidth: 200,
+    minHeight: 280,
     borderRadius: 26,
     padding: spacing.lg,
     justifyContent: "space-between",
@@ -501,11 +559,24 @@ const styles = StyleSheet.create({
   cardPressed: {
     transform: [{ scale: 0.98 }],
   },
-  studentCard: {
-    backgroundColor: "#72B8E5",
+  carouselControls: {
+    alignItems: "center",
+    marginTop: spacing.md,
+    gap: spacing.xs,
   },
-  teacherCard: {
-    backgroundColor: "#FF6269",
+  carouselPosition: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  dots: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   cardImage: {
     width: 140,
