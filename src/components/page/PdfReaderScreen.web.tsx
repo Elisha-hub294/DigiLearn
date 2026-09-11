@@ -276,7 +276,9 @@ export function PdfReaderScreen() {
       }
 
       const blob = new Blob(chunks as unknown as BlobPart[], {
-        type: "application/octet-stream",
+        // The browser PDF viewer relies on this MIME type when the cached
+        // file is later opened from IndexedDB via a blob URL.
+        type: response.headers.get("content-type") || "application/pdf",
       });
       setDownloadProgress(1);
       await saveDownloadedFile({

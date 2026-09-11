@@ -79,7 +79,17 @@ export async function getWebDownloadedFileUrl(
     request.onerror = () => reject(request.error);
   });
   database.close();
-  return blob ? URL.createObjectURL(blob) : null;
+  if (!blob) return null;
+
+  // Earlier web downloads were stored as application/octet-stream. Chrome
+  // does not reliably hand such blob URLs to its PDF viewer, even when the
+  // bytes are a valid PDF. Preserve an explicit type when one exists and
+  // repair those legacy generic downloads on read.
+  const readableBlob =
+    !blob.type || blob.type === "application/octet-stream"
+      ? new Blob([blob], { type: "application/pdf" })
+      : blob;
+  return URL.createObjectURL(readableBlob);
 }
 
 async function isFileAvailable(file: DownloadedFile): Promise<boolean> {
