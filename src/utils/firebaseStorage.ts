@@ -270,6 +270,7 @@ export function useFirebaseStorageUrl(
     (url.startsWith("http://") ||
       url.startsWith("https://") ||
       url.startsWith("file://") ||
+      url.startsWith("content://") ||
       url.startsWith("data:") ||
       url.startsWith("blob:") ||
       url.startsWith("/"));

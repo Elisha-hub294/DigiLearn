@@ -47,6 +47,7 @@ export default function PdfPreview({
     (resolvedUri.startsWith("http://") ||
       resolvedUri.startsWith("https://") ||
       resolvedUri.startsWith("file://") ||
+      resolvedUri.startsWith("content://") ||
       resolvedUri.startsWith("data:") ||
       resolvedUri.startsWith("blob:"));
 
