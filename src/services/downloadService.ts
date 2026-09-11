@@ -134,24 +134,43 @@ export async function saveDownloadedFile(
       (f) => f.uri !== file.uri && f.localUri !== file.localUri,
     );
 
+    const id = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const localUri =
+      Platform.OS === "web" && file.webBlob
+        ? `indexeddb://${id}`
+        : file.localUri;
+
     const newEntry: DownloadedFile = {
       title: file.title,
       uri: file.uri,
-      localUri:
-        Platform.OS === "web" && file.webBlob
-          ? `indexeddb://${Date.now()}_${Math.random().toString(36).substring(2, 7)}`
-          : file.localUri,
+      localUri,
       fileSize: file.fileSize,
-      id: `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id,
       downloadedAt: Date.now(),
     };
 
+    // The Downloads screen validates every registry entry. Persist the web
+    // blob before publishing its entry so a focused Downloads screen never
+    // sees a temporarily missing file and removes the new download.
+    if (file.webBlob) {
+      await saveWebBlob(id, file.webBlob);
+    }
+
     const updated = [newEntry, ...filtered];
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    if (file.webBlob) {
-      await saveWebBlob(
-        newEntry.localUri.substring("indexeddb://".length),
-        file.webBlob,
+
+    // Remove blobs that were replaced by this download. This keeps the web
+    // cache aligned with the registry when a resource is downloaded again.
+    if (Platform.OS === "web" && typeof indexedDB !== "undefined") {
+      const replaced = existing.filter(
+        (entry) => entry.uri === file.uri || entry.localUri === file.localUri,
+      );
+      await Promise.all(
+        replaced.map((entry) =>
+          entry.localUri.startsWith("indexeddb://")
+            ? deleteWebBlob(entry.localUri.substring("indexeddb://".length))
+            : Promise.resolve(),
+        ),
       );
     }
     return newEntry;
@@ -159,6 +178,18 @@ export async function saveDownloadedFile(
     console.error("Error saving downloaded file:", error);
     throw error;
   }
+}
+
+async function deleteWebBlob(id: string): Promise<void> {
+  if (Platform.OS !== "web" || typeof indexedDB === "undefined") return;
+  const database = await openWebDatabase();
+  await new Promise<void>((resolve) => {
+    const transaction = database.transaction(WEB_STORE_NAME, "readwrite");
+    transaction.objectStore(WEB_STORE_NAME).delete(id);
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => resolve();
+  });
+  database.close();
 }
 
 export async function removeDownloadedFile(id: string): Promise<void> {
@@ -181,16 +212,7 @@ export async function removeDownloadedFile(id: string): Promise<void> {
       target?.localUri.startsWith("indexeddb://") &&
       typeof indexedDB !== "undefined"
     ) {
-      const database = await openWebDatabase();
-      await new Promise<void>((resolve) => {
-        const transaction = database.transaction(WEB_STORE_NAME, "readwrite");
-        transaction
-          .objectStore(WEB_STORE_NAME)
-          .delete(target.localUri.substring("indexeddb://".length));
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => resolve();
-      });
-      database.close();
+      await deleteWebBlob(target.localUri.substring("indexeddb://".length));
     }
 
     const updated = existing.filter((f) => f.id !== id);

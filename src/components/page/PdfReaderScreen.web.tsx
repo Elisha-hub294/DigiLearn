@@ -304,12 +304,12 @@ export function PdfReaderScreen() {
       if (!response.body) {
         // Fallback for browsers without stream reader support
         const blob = await response.blob();
-        triggerBlobDownload(blob);
         await saveDownloadedFile({
           title: title || "PDF Document",
           uri: decodedUri,
           localUri: "",
           webBlob: blob,
+          fileSize: blob.size,
         });
         setDownloaded(true);
         return;
@@ -336,60 +336,23 @@ export function PdfReaderScreen() {
         type: "application/octet-stream",
       });
       setDownloadProgress(1);
-      triggerBlobDownload(blob);
       await saveDownloadedFile({
         title: title || "PDF Document",
         uri: decodedUri,
         localUri: "",
         webBlob: blob,
+        fileSize: blob.size,
       });
       setDownloaded(true);
     } catch (err) {
-      console.warn("Web download error, falling back to direct link:", err);
-      let downloadUrl = decodedUri;
-      if (
-        downloadUrl.includes("firebasestorage.googleapis.com") ||
-        downloadUrl.includes(".firebasestorage.app") ||
-        downloadUrl.includes(".appspot.com")
-      ) {
-        const separator = downloadUrl.includes("?") ? "&" : "?";
-        const safeTitle =
-          (title
-            ? title.trim().replace(/[^a-zA-Z0-9_\- ]/g, "")
-            : "document") || "document";
-        downloadUrl = `${downloadUrl}${separator}response-content-disposition=attachment%3Bfilename%3D%22${encodeURIComponent(safeTitle)}.${fileExtension}%22`;
-      }
-
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download =
-        (title ? title.replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") +
-        `.${fileExtension}`;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      console.warn("Web download error:", err);
+      setOfflineNoticeVisible(true);
     } finally {
       setTimeout(() => {
         setDownloading(false);
         setDownloadProgress(0);
       }, 600);
     }
-  };
-
-  const triggerBlobDownload = (blob: Blob) => {
-    const fileName =
-      (title ? title.replace(/[^a-zA-Z0-9_\- ]/g, "") : "document") +
-      `.${fileExtension}`;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   };
 
   return (

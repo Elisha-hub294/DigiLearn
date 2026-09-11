@@ -71,6 +71,24 @@ function getFileExtension(uri: string | null): string {
   return match?.[1] ?? "pdf";
 }
 
+function getDownloadFileName(
+  title: string | string[] | undefined,
+  uri: string,
+  extension: string,
+): string {
+  const safeTitle =
+    (typeof title === "string"
+      ? title.trim().replace(/[^a-zA-Z0-9_\- ]/g, "")
+      : "Document") || "Document";
+  // A title alone is not unique. Include a stable suffix so two resources
+  // named alike cannot overwrite each other in the app documents directory.
+  let hash = 0;
+  for (let index = 0; index < uri.length; index += 1) {
+    hash = (hash * 31 + uri.charCodeAt(index)) >>> 0;
+  }
+  return `${safeTitle}_${hash.toString(36)}.${extension}`;
+}
+
 export function PdfReaderScreen() {
   const { colors: themeColors } = useTheme();
   const {
@@ -479,10 +497,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     ]).start();
 
     try {
-      const safeTitle =
-        (title ? title.trim().replace(/[^a-zA-Z0-9_\- ]/g, "") : "Document") ||
-        "Document";
-      const fileName = `${safeTitle}.${fileExtension}`;
+      const fileName = getDownloadFileName(title, decodedUri, fileExtension);
       const fileUri = `${FileSystem.documentDirectory}${fileName}`;
 
       const downloadResumable = FileSystem.createDownloadResumable(

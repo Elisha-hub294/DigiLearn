@@ -30,6 +30,7 @@ import { BookCard } from "../../components/library/BookCard";
 import { HeroBookCarousel } from "../../components/library/HeroBookCarousel";
 import { PaperCard } from "../../components/library/PaperCard";
 import { PaperCarousel } from "../../components/library/PaperCarousel";
+import { DownloadedResources } from "../../components/profile/DownloadedResources";
 import { Header } from "../../components/ui/Header";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { SectionHeader } from "../../components/ui/SectionHeader";
@@ -696,6 +697,13 @@ export default function LibraryScreen() {
                 </Text>
               </View>
             )}
+          </Animated.View>
+
+          <Animated.View
+            entering={FadeInUp.duration(520)}
+            style={styles.section}
+          >
+            <DownloadedResources />
           </Animated.View>
         </ScrollView>
       </View>
