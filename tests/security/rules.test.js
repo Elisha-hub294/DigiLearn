@@ -35,10 +35,13 @@ function firestoreContext(user) {
 }
 
 async function seedUser(uid, type, teacherApprovalStatus) {
-  const context = testEnv.withSecurityRulesDisabled();
-  await setDoc(doc(context.firestore(), "users", uid), {
-    type,
-    teacherApprovalStatus,
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const collectionName = type === "teacher" ? "teachers" : "users";
+    const data = { type };
+    if (teacherApprovalStatus !== undefined) {
+      data.teacherApprovalStatus = teacherApprovalStatus;
+    }
+    await setDoc(doc(context.firestore(), collectionName, uid), data);
   });
 }
 
@@ -126,9 +129,10 @@ test("users can upload to their own Storage path", async () => {
 });
 
 test("non-admin users cannot read admin notifications", async () => {
-  const disabled = testEnv.withSecurityRulesDisabled();
-  await setDoc(doc(disabled.firestore(), "adminNotifications", "notice-1"), {
-    read: false,
+  await testEnv.withSecurityRulesDisabled(async (disabled) => {
+    await setDoc(doc(disabled.firestore(), "adminNotifications", "notice-1"), {
+      read: false,
+    });
   });
   const context = firestoreContext(auth("student-1"));
   await assertFails(
@@ -138,9 +142,10 @@ test("non-admin users cannot read admin notifications", async () => {
 
 test("admin users can read admin notifications", async () => {
   await seedUser("admin-1", "admin", undefined);
-  const disabled = testEnv.withSecurityRulesDisabled();
-  await setDoc(doc(disabled.firestore(), "adminNotifications", "notice-1"), {
-    read: false,
+  await testEnv.withSecurityRulesDisabled(async (disabled) => {
+    await setDoc(doc(disabled.firestore(), "adminNotifications", "notice-1"), {
+      read: false,
+    });
   });
   const context = firestoreContext(auth("admin-1"));
   await assertSucceeds(
@@ -149,10 +154,14 @@ test("admin users can read admin notifications", async () => {
 });
 
 test("teachers can update their application photo URL", async () => {
-  const disabled = testEnv.withSecurityRulesDisabled();
-  await setDoc(doc(disabled.firestore(), "teacherApplications", "teacher-1"), {
-    applicantId: "teacher-1",
-    status: "pending",
+  await testEnv.withSecurityRulesDisabled(async (disabled) => {
+    await setDoc(
+      doc(disabled.firestore(), "teacherApplications", "teacher-1"),
+      {
+        applicantId: "teacher-1",
+        status: "pending",
+      },
+    );
   });
 
   const context = firestoreContext(auth("teacher-1", "teacher"));
@@ -176,23 +185,24 @@ test("verified users can save pages and update saved timestamps", async () => {
 });
 
 test("guests can read published teacher resources", async () => {
-  const disabled = testEnv.withSecurityRulesDisabled();
-  for (const collectionName of [
-    "pages",
-    "books",
-    "pastPaper",
-    "teacherPosts",
-    "teacherPostsCards",
-    "teacherUpdates",
-    "trendingLessons",
-  ]) {
-    await setDoc(
-      doc(disabled.firestore(), collectionName, `${collectionName}-1`),
-      {
-        owner: "teacher-1",
-      },
-    );
-  }
+  await testEnv.withSecurityRulesDisabled(async (disabled) => {
+    for (const collectionName of [
+      "pages",
+      "books",
+      "pastPaper",
+      "teacherPosts",
+      "teacherPostsCards",
+      "teacherUpdates",
+      "trendingLessons",
+    ]) {
+      await setDoc(
+        doc(disabled.firestore(), collectionName, `${collectionName}-1`),
+        {
+          owner: "teacher-1",
+        },
+      );
+    }
+  });
 
   const guest = testEnv.unauthenticatedContext();
   for (const collectionName of [
@@ -211,9 +221,10 @@ test("guests can read published teacher resources", async () => {
 });
 
 test("verified users can increment resource visits only by one", async () => {
-  const disabled = testEnv.withSecurityRulesDisabled();
-  await setDoc(doc(disabled.firestore(), "pages", "page-1"), {
-    owner: "teacher-1",
+  await testEnv.withSecurityRulesDisabled(async (disabled) => {
+    await setDoc(doc(disabled.firestore(), "pages", "page-1"), {
+      owner: "teacher-1",
+    });
   });
 
   const context = firestoreContext(auth("student-1"));
