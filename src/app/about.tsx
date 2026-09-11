@@ -169,7 +169,7 @@ export default function AboutScreen() {
 
   const handleFeedback = useCallback(() => {
     Linking.openURL(
-      "mailto:support@digilearn.com?subject=DigiLearn%20Feedback%20%26%20Support",
+      "mailto:elishabagalwa.dev@gmail.com?subject=DigiLearn%20Feedback%20%26%20Support",
     );
   }, []);
 

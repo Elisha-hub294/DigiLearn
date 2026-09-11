@@ -43,7 +43,7 @@ const FAQ_DATA: Record<string, FaqDetail> = {
     actionText: "Email Support",
     onAction: () => {
       Linking.openURL(
-        "mailto:support@digilearn.com?subject=DigiLearn%20Problem%20Report",
+        "mailto:elishabagalwa.dev@gmail.com?subject=DigiLearn%20Problem%20Report",
       );
     },
   },
@@ -171,7 +171,7 @@ export default function HelpScreen() {
       actionText: "Email Support",
       onAction: () => {
         Linking.openURL(
-          `mailto:support@digilearn.com?subject=Help%20Request:%20${encodeURIComponent(item)}`,
+          `mailto:elishabagalwa.dev@gmail.com?subject=Help%20Request:%20${encodeURIComponent(item)}`,
         );
       },
     };
@@ -189,7 +189,7 @@ export default function HelpScreen() {
   const handleOpenEmail = () => {
     setChatDialogOpen(false);
     Linking.openURL(
-      "mailto:support@digilearn.com?subject=DigiLearn%20Support%20Inquiry",
+      "mailto:elishabagalwa.dev@gmail.com?subject=DigiLearn%20Support%20Inquiry",
     );
   };
 

@@ -377,7 +377,7 @@ Contributions are welcome! Please follow these guidelines:
 - Reinstall dependencies: `rm -rf node_modules && npm install`
 - Check Node.js version matches prerequisites
 
-For additional support, contact **elishabagalw@gmail.com**.
+For additional support, contact **elishabagalwa.dev@gmail.com**.
 
 ---
 
@@ -401,7 +401,7 @@ Built with support from:
 ## Contact & Support
 
 - **Developer**: Elisha Bagalwa
-- **Email**: elishabagalw@gmail.com
+- **Email**: elishabagalwa.dev@gmail.com
 - **GitHub**: [@Elisha-hub294](https://github.com/Elisha-hub294)
 
 For questions, feedback, or collaboration opportunities, feel free to reach out!

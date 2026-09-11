@@ -397,8 +397,8 @@ function PrivacyPolicyContent({
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • Alternatively, you can email our privacy team at{" "}
-          <Text style={styles.linkText}>support@digilearn.com</Text> to request
-          complete data erasure.
+          <Text style={styles.linkText}>elishabagalwa.dev@gmail.com</Text> to
+          request complete data erasure.
         </Text>
       </Section>
 
@@ -433,7 +433,7 @@ function PrivacyPolicyContent({
           our Data Protection Officer at:
         </Text>
         <Text style={[styles.contactCard, { color: colors.primary }]}>
-          support@digilearn.com
+          elishabagalwa.dev@gmail.com
         </Text>
       </Section>
     </View>
@@ -565,7 +565,7 @@ function TermsOfServiceContent({
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           For inquiries regarding these Terms, contact{" "}
-          <Text style={styles.linkText}>support@digilearn.com</Text>.
+          <Text style={styles.linkText}>elishabagalwa.dev@gmail.com</Text>.
         </Text>
       </Section>
     </View>
