@@ -1,11 +1,17 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  endAt,
+  query as firestoreQuery,
+  getDocs,
+  limit,
+  orderBy,
+  startAt,
+} from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { db } from "../../firebaseConfig";
 import { DEFAULT_SUBJECT_AVATAR } from "../components/page/pageTypes";
-import { readThroughFirestoreCache } from "../services/firestoreReadCache";
 import { loadSubjects } from "../services/subjectsService";
-import { loadTrendingLessons } from "../services/trendingLessonsService";
 import {
   LOCAL_CACHE_KEYS,
   readLocalCache,
@@ -18,9 +24,11 @@ const RECENT_SEARCHES_KEY = "@digilearn_recent_searches";
 const MAX_RECENT_ITEMS = 10;
 const FALLBACK_TEACHER_AVATAR = "TeacherProfile/tr-default.png";
 const SEARCH_CACHE_KEY = LOCAL_CACHE_KEYS.search;
-const SEARCH_CACHE_VERSION = 3;
+const SEARCH_CACHE_VERSION = 4;
 const SEARCH_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 const MAX_SEARCH_RESULTS = 50;
+const SEARCH_QUERY_LIMIT = 20;
+const SUGGESTION_QUERY_LIMIT = 6;
 
 type SearchCache = {
   topicalNotes: any[];
@@ -31,6 +39,25 @@ type SearchCache = {
   subjectsMap: Record<string, string>;
   teachersAvatarMap: Record<string, string>;
 };
+
+function loadSearchCollection(
+  collectionName: string,
+  searchField: string,
+  searchTerm: string,
+  resultLimit: number,
+) {
+  const collectionRef = collection(db, collectionName);
+  const constraints = searchTerm
+    ? [
+        orderBy(searchField),
+        startAt(searchTerm),
+        endAt(`${searchTerm}\uf8ff`),
+        limit(resultLimit),
+      ]
+    : [limit(resultLimit)];
+
+  return getDocs(firestoreQuery(collectionRef, ...constraints));
+}
 
 function getSuggestionScore(value: string): number {
   let hash = 0;
@@ -233,7 +260,7 @@ export function useGlobalSearch(
     };
   }, []);
 
-  // 2. Load the search index from local storage, refreshing it when stale.
+  // Load only bounded suggestions or server-filtered search results.
   useEffect(() => {
     let isMounted = true;
 
@@ -248,12 +275,16 @@ export function useGlobalSearch(
       setLoading(false);
     };
 
-    const loadSearchIndex = async () => {
+    const loadSearchResults = async () => {
+      const searchTerm = hasSubmittedSearch ? debouncedQuery.trim() : "";
+      const resultLimit = searchTerm
+        ? SEARCH_QUERY_LIMIT
+        : SUGGESTION_QUERY_LIMIT;
       const cached = await readLocalCache<SearchCache>(
         SEARCH_CACHE_KEY,
         SEARCH_CACHE_VERSION,
       );
-      if (cached && isMounted) {
+      if (!hasSubmittedSearch && cached && isMounted) {
         applyCache(cached.data);
         if (Date.now() - cached.savedAt < SEARCH_CACHE_MAX_AGE_MS) return;
       }
@@ -267,20 +298,19 @@ export function useGlobalSearch(
           subjectsSnap,
           trendingLessons,
         ] = await Promise.all([
-          readThroughFirestoreCache("collection:pages", () =>
-            getDocs(collection(db, "pages")),
+          loadSearchCollection("pages", "title", searchTerm, resultLimit),
+          loadSearchCollection("pastPaper", "title", searchTerm, resultLimit),
+          loadSearchCollection("books", "title", searchTerm, resultLimit),
+          loadSearchCollection("teachers", "name", searchTerm, resultLimit),
+          searchTerm ? Promise.resolve([]) : loadSubjects(),
+          loadSearchCollection(
+            "trendingLessons",
+            "title",
+            searchTerm,
+            resultLimit,
+          ).then((snapshot) =>
+            snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
           ),
-          readThroughFirestoreCache("collection:pastPaper", () =>
-            getDocs(collection(db, "pastPaper")),
-          ),
-          readThroughFirestoreCache("collection:books", () =>
-            getDocs(collection(db, "books")),
-          ),
-          readThroughFirestoreCache("collection:teachers", () =>
-            getDocs(collection(db, "teachers")),
-          ),
-          loadSubjects(),
-          loadTrendingLessons(),
         ]);
         if (!isMounted) return;
 
@@ -325,18 +355,20 @@ export function useGlobalSearch(
           teachersAvatarMap,
         };
         applyCache(next);
-        await writeLocalCache(SEARCH_CACHE_KEY, next, SEARCH_CACHE_VERSION);
+        if (!hasSubmittedSearch) {
+          await writeLocalCache(SEARCH_CACHE_KEY, next, SEARCH_CACHE_VERSION);
+        }
       } catch (error) {
         console.warn("Failed to load search index:", error);
         if (isMounted) setLoading(false);
       }
     };
 
-    void loadSearchIndex();
+    void loadSearchResults();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [debouncedQuery, hasSubmittedSearch]);
 
   // 4. Keep typing separate from the submitted search.
   const handleSetQuery = useCallback((text: string) => {
@@ -611,7 +643,7 @@ export function useGlobalSearch(
         String(
           t.bio ||
             t.description ||
-            `${t.subject || "Educator"} at ${t.school || "DigiLearn"}`,
+            `${t.subject || "Educator"} at ${t.school || "OS platform"}`,
         ),
         "",
         teacherName,

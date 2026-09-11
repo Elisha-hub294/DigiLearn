@@ -105,11 +105,7 @@ export function useNotifications() {
     if (!user || profile?.type !== "admin") return;
 
     return onSnapshot(
-      query(
-        collection(db, "reports"),
-        where("status", "==", "new"),
-        limit(50),
-      ),
+      query(collection(db, "reports"), where("status", "==", "new"), limit(50)),
       (snapshot) => {
         const fallbackNotifications = snapshot.docs
           .map((report) => {
@@ -117,7 +113,7 @@ export function useNotifications() {
             return normalizeNotification({
               id: `report-${report.id}`,
               type: "announcement",
-              publisherName: "DigiLearn",
+              publisherName: "OS platform",
               publisherAvatar: "@/assets/images/panda.png",
               message: "A new resource report needs review.",
               resourceTitle:

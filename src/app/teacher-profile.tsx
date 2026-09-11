@@ -1,7 +1,15 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Feather as Icon } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  query,
+  where,
+} from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
@@ -71,6 +79,8 @@ type ResourceItem = {
   author?: string | string[];
   data?: Record<string, unknown>;
 };
+
+const TEACHER_RESOURCE_LIMIT = 100;
 
 const normalizeKey = (value?: string) =>
   (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
@@ -228,7 +238,7 @@ export default function TeacherProfileScreen() {
               id: docSnap.id,
               name: pickString(data.name, teacherName),
               avatar: getTeacherAvatar(data),
-              bio: pickString(data.bio, "Teacher at DigiLearn"),
+              bio: pickString(data.bio, "Teacher at OS platform"),
               accent: pickString(data.accent, colors.primaryDark),
               phone: pickString(data.phone),
               email: pickString(data.email),
@@ -263,7 +273,7 @@ export default function TeacherProfileScreen() {
           id: matched.id,
           name: pickString(data.name, teacherName),
           avatar: getTeacherAvatar(data),
-          bio: pickString(data.bio, "Teacher at DigiLearn"),
+          bio: pickString(data.bio, "Teacher at OS platform"),
           accent: pickString(data.accent, colors.primary),
           phone: pickString(data.phone),
           email: pickString(data.email),
@@ -297,15 +307,57 @@ export default function TeacherProfileScreen() {
           postSnapshots,
           lessonsSnap,
         ] = await Promise.all([
-          getDocs(collection(db, "pages")),
-          getDocs(collection(db, "books")),
-          getDocs(collection(db, "pastPaper")),
+          getDocs(
+            query(
+              collection(db, "pages"),
+              where("owner", "==", teacherId),
+              limit(TEACHER_RESOURCE_LIMIT),
+            ),
+          ),
+          getDocs(
+            query(
+              collection(db, "books"),
+              where("owner", "==", teacherId),
+              limit(TEACHER_RESOURCE_LIMIT),
+            ),
+          ),
+          getDocs(
+            query(
+              collection(db, "pastPaper"),
+              where("owner", "==", teacherId),
+              limit(TEACHER_RESOURCE_LIMIT),
+            ),
+          ),
           Promise.all([
-            getDocs(collection(db, "teacherPosts")),
-            getDocs(collection(db, "teacherPostsCards")),
-            getDocs(collection(db, "teacherUpdates")),
+            getDocs(
+              query(
+                collection(db, "teacherPosts"),
+                where("owner", "==", teacherId),
+                limit(TEACHER_RESOURCE_LIMIT),
+              ),
+            ),
+            getDocs(
+              query(
+                collection(db, "teacherPostsCards"),
+                where("owner", "==", teacherId),
+                limit(TEACHER_RESOURCE_LIMIT),
+              ),
+            ),
+            getDocs(
+              query(
+                collection(db, "teacherUpdates"),
+                where("owner", "==", teacherId),
+                limit(TEACHER_RESOURCE_LIMIT),
+              ),
+            ),
           ]),
-          getDocs(collection(db, "trendingLessons")),
+          getDocs(
+            query(
+              collection(db, "trendingLessons"),
+              where("owner", "==", teacherId),
+              limit(TEACHER_RESOURCE_LIMIT),
+            ),
+          ),
         ]);
 
         const matchesTeacher = (data: Record<string, unknown>) => {
@@ -581,7 +633,7 @@ export default function TeacherProfileScreen() {
     setContactDialog({
       title: `Visit ${firstName}'s YouTube channel?`,
       message:
-        "You are about to leave DigiLearn and open the teacher's YouTube channel.",
+        "You are about to leave OS platform and open the teacher's YouTube channel.",
       primaryText: "Confirm",
       secondaryText: "Cancel",
       onPrimary: () => Linking.openURL(youtube),
@@ -596,7 +648,7 @@ export default function TeacherProfileScreen() {
       primaryText: "Confirm",
       secondaryText: "Cancel",
       onPrimary: () => {
-        const subject = encodeURIComponent("Email From DigiLearn");
+        const subject = encodeURIComponent("Email From OS platform");
         Linking.openURL(`mailto:${teacher.email}?subject=${subject}`);
       },
     });
@@ -718,7 +770,7 @@ export default function TeacherProfileScreen() {
             style={[styles.bioText, { color: themeColors.subtitle }]}
             numberOfLines={3}
           >
-            {teacher?.bio || "Teacher at DigiLearn."}
+            {teacher?.bio || "Teacher at OS platform."}
           </Text>
 
           {teacher?.subjects && teacher.subjects.length > 0 ? (
@@ -1469,13 +1521,13 @@ export default function TeacherProfileScreen() {
           visible={isCommunityDialogVisible}
           icon={<Icon name="users" size={24} color="#2563EB" />}
           title={`Join ${teacherFirstName}'s Community?`}
-          message={`You're about to leave DigiLearn and open ${teacherFirstName}'s WhatsApp community channel. Would you like to continue?`}
+          message={`You're about to leave OS platform and open ${teacherFirstName}'s WhatsApp community channel. Would you like to continue?`}
           primaryText="Continue"
           secondaryText="Cancel"
           onPrimary={() => {
             setCommunityDialogVisible(false);
             if (teacher?.phone) {
-              const message = `Hello Teacher ${teacherFirstName}, I would like to join your DigiLearn learning community.`;
+              const message = `Hello Teacher ${teacherFirstName}, I would like to join your OS platform learning community.`;
               Linking.openURL(
                 `https://wa.me/${teacher.phone}?text=${encodeURIComponent(message)}`,
               );

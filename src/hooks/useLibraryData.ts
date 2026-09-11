@@ -1,4 +1,4 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, limit, query } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import { db } from "../../firebaseConfig";
 import { readThroughFirestoreCache } from "../services/firestoreReadCache";
@@ -11,6 +11,11 @@ import {
 const LIBRARY_CACHE_KEY = LOCAL_CACHE_KEYS.library;
 const LIBRARY_CACHE_VERSION = 2;
 const LIBRARY_CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+const LIBRARY_BOOK_LIMIT = 30;
+const LIBRARY_PAPER_LIMIT = 50;
+const LIBRARY_PROMO_LIMIT = 10;
+const LIBRARY_TEACHER_LIMIT = 100;
+const LIBRARY_DEFAULT_LIMIT = 10;
 
 type LibraryCache = {
   heroSlides: HeroSlideItem[];
@@ -31,7 +36,16 @@ function fetchLibrarySnapshots(force = false): Promise<LibrarySnapshots> {
   const readCollection = (name: string) =>
     readThroughFirestoreCache(
       `collection:${name}`,
-      () => getDocs(collection(db, name)),
+      () => {
+        const limits: Record<string, number> = {
+          books: LIBRARY_BOOK_LIMIT,
+          promotionalBanner: LIBRARY_PROMO_LIMIT,
+          pastPaper: LIBRARY_PAPER_LIMIT,
+          teachers: LIBRARY_TEACHER_LIMIT,
+          default: LIBRARY_DEFAULT_LIMIT,
+        };
+        return getDocs(query(collection(db, name), limit(limits[name] ?? 20)));
+      },
       { force },
     );
 
