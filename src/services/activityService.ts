@@ -259,7 +259,7 @@ export async function recordUserActivity(
 }
 
 export async function recordPageVisit(pageId: string): Promise<void> {
-  if (!pageId) return;
+  if (!pageId || !auth.currentUser?.emailVerified) return;
 
   try {
     const pageRef = doc(db, "pages", pageId);
@@ -279,7 +279,7 @@ export async function recordPageVisit(pageId: string): Promise<void> {
 }
 
 export async function recordBookVisit(bookId: string): Promise<void> {
-  if (!bookId) return;
+  if (!bookId || !auth.currentUser?.emailVerified) return;
 
   try {
     const bookRef = doc(db, "books", bookId);
@@ -299,7 +299,7 @@ export async function recordBookVisit(bookId: string): Promise<void> {
 }
 
 export async function recordLessonVisit(lessonId: string): Promise<void> {
-  if (!lessonId) return;
+  if (!lessonId || !auth.currentUser?.emailVerified) return;
 
   try {
     const lessonRef = doc(db, "trendingLessons", lessonId);

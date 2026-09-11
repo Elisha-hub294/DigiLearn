@@ -209,3 +209,17 @@ test("guests can read published teacher resources", async () => {
     );
   }
 });
+
+test("verified users can increment resource visits only by one", async () => {
+  const disabled = testEnv.withSecurityRulesDisabled();
+  await setDoc(doc(disabled.firestore(), "pages", "page-1"), {
+    owner: "teacher-1",
+  });
+
+  const context = firestoreContext(auth("student-1"));
+  const pageRef = doc(context.firestore(), "pages", "page-1");
+
+  await assertSucceeds(updateDoc(pageRef, { visits: 1 }));
+  await assertFails(updateDoc(pageRef, { visits: 3 }));
+  await assertFails(updateDoc(pageRef, { title: "Unauthorized edit" }));
+});

@@ -21,6 +21,20 @@ service cloud.firestore {
         );
     }
 
+    function isVisitIncrement() {
+      return isVerified()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visits'])
+        && request.resource.data.visits is number
+        && (
+          (!resource.data.keys().hasAll(['visits']) && request.resource.data.visits == 1)
+          || (
+            resource.data.keys().hasAll(['visits'])
+            && resource.data.visits is number
+            && request.resource.data.visits == resource.data.visits + 1
+          )
+        );
+    }
+
     match /users/{userId} {
       allow create: if isVerified() && request.auth.uid == userId;
       allow read: if isVerified() && request.auth.uid == userId;
@@ -185,23 +199,28 @@ service cloud.firestore {
           'updatedAt'
         ]);
       allow read: if true;
-      allow update: if isPublisher()
-        && (resource.data.owner == request.auth.uid || isAdmin())
-        && request.resource.data.owner == resource.data.owner;
+      allow update: if isVisitIncrement()
+        || (
+          isPublisher()
+          && (resource.data.owner == request.auth.uid || isAdmin())
+          && request.resource.data.owner == resource.data.owner
+        );
       allow delete: if isVerified() && (resource.data.owner == request.auth.uid || isAdmin());
     }
 
     match /pages/{pageId} {
       allow read: if true;
       allow create: if isPublisher() && request.resource.data.owner == request.auth.uid;
-      allow update: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow update: if isVisitIncrement()
+        || (isPublisher() && (resource.data.owner == request.auth.uid || isAdmin()));
       allow delete: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
     }
 
     match /pastPaper/{paperId} {
       allow read: if true;
       allow create: if isPublisher() && request.resource.data.owner == request.auth.uid;
-      allow update: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
+      allow update: if isVisitIncrement()
+        || (isPublisher() && (resource.data.owner == request.auth.uid || isAdmin()));
       allow delete: if isPublisher() && (resource.data.owner == request.auth.uid || isAdmin());
     }
 
