@@ -17,7 +17,10 @@ import {
 
 import { useTheme } from "../../contexts/ThemeContext";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
-import { extractDocxText } from "../library/add-item/pdfService";
+import {
+  extractDocxText,
+  extractPptxText,
+} from "../library/add-item/pdfService";
 import { ActionDialog } from "../ui/ActionDialog";
 
 function normalizeUriParam(
@@ -78,7 +81,7 @@ export function PdfReaderScreen() {
   const [downloaded, setDownloaded] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [localBlobUri, setLocalBlobUri] = useState<string | null>(null);
-  const [docxText, setDocxText] = useState<string | null>(null);
+  const [officeText, setOfficeText] = useState<string | null>(null);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -110,7 +113,7 @@ export function PdfReaderScreen() {
   const isResolving = rawUri != null && decodedUri == null;
   // Blob URLs used for web downloads do not include their original filename.
   // The Downloads screen supplies the persisted source extension so a cached
-  // DOCX is not mistaken for a PDF.
+  // Office document types are not mistaken for a PDF.
   const requestedFileType =
     typeof fileType === "string" && /^(pdf|docx|pptx|ppt)$/i.test(fileType)
       ? fileType.toLowerCase()
@@ -118,29 +121,34 @@ export function PdfReaderScreen() {
   const fileExtension = requestedFileType ?? getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
   const isDocxFile = fileExtension === "docx";
+  const isPptxFile = fileExtension === "pptx";
+  const isTextOfficeFile = isDocxFile || isPptxFile;
 
   useEffect(() => {
-    if (!isDocxFile || !decodedUri) return;
+    if (!isTextOfficeFile || !decodedUri) return;
 
     let active = true;
-    const loadDocx = async () => {
+    const loadOfficeText = async () => {
       try {
         const response = await fetch(decodedUri);
         if (!response.ok)
-          throw new Error(`DOCX request failed: ${response.status}`);
-        const text = await extractDocxText(await response.arrayBuffer());
-        if (active) setDocxText(text);
+          throw new Error(`Office document request failed: ${response.status}`);
+        const data = await response.arrayBuffer();
+        const text = isDocxFile
+          ? await extractDocxText(data)
+          : await extractPptxText(data);
+        if (active) setOfficeText(text);
       } catch (error) {
-        console.warn("Failed to open DOCX document:", error);
+        console.warn("Failed to open Office document:", error);
         if (active) setIframeError(true);
       }
     };
 
-    void loadDocx();
+    void loadOfficeText();
     return () => {
       active = false;
     };
-  }, [decodedUri, isDocxFile]);
+  }, [decodedUri, isDocxFile, isTextOfficeFile]);
 
   useEffect(() => {
     if (pageId) void recordPageVisit(pageId);
@@ -447,14 +455,14 @@ export function PdfReaderScreen() {
           <Feather name="file-text" size={48} color={colors.primary} />
           <Text style={styles.errorTitle}>Loading PDF…</Text>
         </View>
-      ) : isDocxFile && docxText === null && !iframeError ? (
+      ) : isTextOfficeFile && officeText === null && !iframeError ? (
         <View
           style={[styles.center, { backgroundColor: themeColors.background }]}
         >
           <Feather name="file-text" size={48} color={colors.primary} />
           <Text style={styles.errorTitle}>Loading document...</Text>
         </View>
-      ) : isDocxFile && docxText !== null ? (
+      ) : isTextOfficeFile && officeText !== null ? (
         <ScrollView
           style={[
             styles.docxContent,
@@ -462,7 +470,7 @@ export function PdfReaderScreen() {
           ]}
           contentContainerStyle={styles.docxContentContainer}
         >
-          {docxText.split("\n").map((paragraph, index) => (
+          {officeText.split("\n").map((paragraph, index) => (
             <Text
               key={`${index}-${paragraph.slice(0, 12)}`}
               style={[styles.docxParagraph, { color: themeColors.text }]}

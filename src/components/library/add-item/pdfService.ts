@@ -214,6 +214,52 @@ export const extractDocxText = async (
     .join("\n");
 };
 
+export const extractPptxText = async (
+  data: ArrayBuffer | string,
+): Promise<string> => {
+  const zip = await JSZip.loadAsync(
+    data,
+    typeof data === "string" ? { base64: true } : undefined,
+  );
+  const slideFiles = Object.keys(zip.files)
+    .filter((path) => /^ppt\/slides\/slide\d+\.xml$/i.test(path))
+    .sort((left, right) => {
+      const leftNumber = Number(left.match(/slide(\d+)\.xml$/i)?.[1] ?? 0);
+      const rightNumber = Number(right.match(/slide(\d+)\.xml$/i)?.[1] ?? 0);
+      return leftNumber - rightNumber;
+    });
+
+  if (!slideFiles.length) {
+    throw new Error("PPTX presentation content is missing");
+  }
+
+  const slides = await Promise.all(
+    slideFiles.map(async (path, index) => {
+      const slideXml = await zip.file(path)?.async("text");
+      if (!slideXml) return "";
+      const paragraphs = [
+        ...slideXml.matchAll(/<a:p(?: [^>]*)?>([\s\S]*?)<\/a:p>/g),
+      ]
+        .map(([, paragraph]) =>
+          decodeXmlText(
+            paragraph
+              .replace(/<a:br\s*\/?>/g, "\n")
+              .replace(/<[^>]+>/g, "")
+              .replace(/\s+/g, " ")
+              .trim(),
+          ),
+        )
+        .filter(Boolean);
+
+      return paragraphs.length
+        ? `Slide ${index + 1}\n${paragraphs.join("\n")}`
+        : "";
+    }),
+  );
+
+  return slides.filter(Boolean).join("\n\n");
+};
+
 const generateOfficeThumbnail = async (text: string): Promise<string> => {
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");

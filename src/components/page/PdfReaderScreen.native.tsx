@@ -28,7 +28,10 @@ import {
   savePageReadingProgress,
 } from "../../services/readingProgressService";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
-import { extractDocxText } from "../library/add-item/pdfService";
+import {
+  extractDocxText,
+  extractPptxText,
+} from "../library/add-item/pdfService";
 import { ActionDialog } from "../ui/ActionDialog";
 
 // Fallback timeout: if onLoadEnd never fires (can happen with some PDFs),
@@ -128,7 +131,7 @@ export function PdfReaderScreen() {
   // For Android remote PDFs: pre-fetched base64 to avoid CORS inside WebView
   const [remoteBase64, setRemoteBase64] = useState<string | null>(null);
   const [remoteFetchError, setRemoteFetchError] = useState(false);
-  const [docxText, setDocxText] = useState<string | null>(null);
+  const [officeText, setOfficeText] = useState<string | null>(null);
   const [noticeDialog, setNoticeDialog] = useState<{
     title: string;
     message: string;
@@ -152,6 +155,8 @@ export function PdfReaderScreen() {
   const fileExtension = requestedFileType ?? getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
   const isDocxFile = fileExtension === "docx";
+  const isPptxFile = fileExtension === "pptx";
+  const isTextOfficeFile = isDocxFile || isPptxFile;
   const useNativePdf =
     Platform.OS === "android" && Boolean(NativePdfComponent) && !isOfficeFile;
   const isOffline =
@@ -262,37 +267,41 @@ export function PdfReaderScreen() {
   }, [decodedUri, isLocalFile, isOfficeFile, useNativePdf]);
 
   useEffect(() => {
-    if (!isDocxFile || !decodedUri) return;
+    if (!isTextOfficeFile || !decodedUri) return;
 
     let active = true;
 
-    const loadDocx = async () => {
+    const loadOfficeText = async () => {
       try {
         const data = isLocalFile
           ? await FileSystem.readAsStringAsync(decodedUri, {
               encoding: FileSystem.EncodingType?.Base64 ?? "base64",
             })
           : await (await fetch(decodedUri)).arrayBuffer();
-        const text = await extractDocxText(data);
+        const text = isDocxFile
+          ? await extractDocxText(data)
+          : await extractPptxText(data);
         if (active) {
-          setDocxText(text);
+          setOfficeText(text);
           setLoaded(true);
         }
       } catch (error) {
-        console.warn("Failed to open DOCX document:", error);
+        console.warn("Failed to open Office document:", error);
         if (active) {
           setLoaded(true);
           setLoadError(true);
-          setLoadErrorMessage("This DOCX document could not be opened.");
+          setLoadErrorMessage(
+            `This ${isDocxFile ? "DOCX document" : "PPTX presentation"} could not be opened.`,
+          );
         }
       }
     };
 
-    void loadDocx();
+    void loadOfficeText();
     return () => {
       active = false;
     };
-  }, [decodedUri, isDocxFile, isLocalFile]);
+  }, [decodedUri, isDocxFile, isLocalFile, isTextOfficeFile]);
 
   // The base64 payload used by the pdf.js HTML template
   // – for local files it's read directly; for Android remote PDFs it's pre-fetched
@@ -372,7 +381,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
   const webViewSource = (() => {
     if (!decodedUri) return null;
     if (isOfficeFile) {
-      if (isDocxFile) return null;
+      if (isTextOfficeFile) return null;
       if (isLocalFile) return null;
       return {
         uri: `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(decodedUri)}`,
@@ -642,7 +651,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     );
   }
 
-  if (!decodedUri || (!webViewSource && !useNativePdf && !isDocxFile)) {
+  if (!decodedUri || (!webViewSource && !useNativePdf && !isTextOfficeFile)) {
     return (
       <>
         <ActionDialog
@@ -868,7 +877,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
           </View>
         )}
 
-        {isDocxFile && !loadError && docxText !== null && (
+        {isTextOfficeFile && !loadError && officeText !== null && (
           <ScrollView
             style={[
               styles.docxContent,
@@ -876,7 +885,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
             ]}
             contentContainerStyle={styles.docxContentContainer}
           >
-            {docxText.split("\n").map((paragraph, index) => (
+            {officeText.split("\n").map((paragraph, index) => (
               <Text
                 key={`${index}-${paragraph.slice(0, 12)}`}
                 style={[styles.docxParagraph, { color: themeColors.text }]}
