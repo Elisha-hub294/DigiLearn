@@ -86,6 +86,9 @@ const pickArray = (value: unknown): string[] => {
   return single ? [single] : [];
 };
 
+const getResourcePreview = (data: Record<string, unknown>) =>
+  pickString(data.cover || data.image || data.preview || data.previewImage);
+
 const getTeacherAvatar = (data: Record<string, unknown>) =>
   pickString(
     data.avatar ||
@@ -324,6 +327,7 @@ export default function TeacherProfileScreen() {
               subject: pickString(data.subject),
               createdAt: getResourceDate(data),
               document: pickString(data.document),
+              image: getResourcePreview(data),
               book: pickArray(data.book),
               owner: pickString(data.owner),
             } as ResourceItem;
@@ -344,10 +348,7 @@ export default function TeacherProfileScreen() {
               (entry as Record<string, unknown>).description,
             ),
             createdAt: getResourceDate(entry as Record<string, unknown>),
-            image: pickString(
-              (entry as Record<string, unknown>).image ||
-                (entry as Record<string, unknown>).cover,
-            ),
+            image: getResourcePreview(entry as Record<string, unknown>),
             author: pickArray((entry as Record<string, unknown>).author),
             owner: pickString((entry as Record<string, unknown>).owner),
           }));
@@ -363,7 +364,7 @@ export default function TeacherProfileScreen() {
               subject: pickString(data.subject),
               createdAt: getResourceDate(data),
               document: pickString(data.document),
-              image: pickString(data.cover),
+              image: getResourcePreview(data),
               owner: pickString(data.owner),
               teacher: pickString(data.teacher || data.teacherName),
               fileType: "doc" as const,
@@ -405,7 +406,7 @@ export default function TeacherProfileScreen() {
                 data.fileType === "image" || data.fileType === "doc"
                   ? data.fileType
                   : "",
-              image: pickString(data.cover || data.image),
+              image: getResourcePreview(data),
             } as ResourceItem;
           })
           .filter((item) => matchesTeacher(item as Record<string, unknown>));
@@ -422,7 +423,9 @@ export default function TeacherProfileScreen() {
               createdAt: getResourceDate(data),
               teacher: teacherValue,
               owner: pickString(data.owner),
-              thumbnail: pickString(data.thumbnail),
+              thumbnail: pickString(
+                data.thumbnail || data.cover || data.image || data.preview,
+              ),
               link: pickString(data.link),
               duration: pickString(data.duration),
             } as ResourceItem;
