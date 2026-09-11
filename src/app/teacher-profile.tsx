@@ -667,20 +667,22 @@ export default function TeacherProfileScreen() {
           <View
             style={[styles.headerPanel, { backgroundColor: accentColor }]}
           />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            style={styles.backButton}
-            onPress={() => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace("/" as any);
-              }
-            }}
-          >
-            <Icon name="chevron-left" size={20} color="#ffffff" />
-          </Pressable>
+          {!isOwnProfile && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              style={styles.backButton}
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace("/" as any);
+                }
+              }}
+            >
+              <Icon name="chevron-left" size={20} color="#ffffff" />
+            </Pressable>
+          )}
 
           {isOwnProfile && (
             <Pressable
@@ -1331,13 +1333,15 @@ export default function TeacherProfileScreen() {
                       { opacity: pulseAnim },
                     ]}
                   />
-                  <RNAnimated.View
-                    style={[
-                      styles.skeletonBackButton,
-                      { backgroundColor: themeColors.surfaceMuted },
-                      { opacity: pulseAnim },
-                    ]}
-                  />
+                  {!isOwnProfile && (
+                    <RNAnimated.View
+                      style={[
+                        styles.skeletonBackButton,
+                        { backgroundColor: themeColors.surfaceMuted },
+                        { opacity: pulseAnim },
+                      ]}
+                    />
+                  )}
                   {isOwnProfile && (
                     <RNAnimated.View
                       style={[
