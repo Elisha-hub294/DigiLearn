@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { ImageSourcePropType } from "react-native";
 import subjectDefault from "../../../assets/images/subject-default.png";
 
@@ -35,4 +34,4 @@ export type SourceBook = {
 };
 
 export const DEFAULT_SUBJECT_AVATAR =
-  Image.resolveAssetSource(subjectDefault).uri;
+  typeof subjectDefault === "string" ? subjectDefault : subjectDefault.uri;

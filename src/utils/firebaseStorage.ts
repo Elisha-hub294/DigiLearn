@@ -1,4 +1,3 @@
-import { Image } from "expo-image";
 import { getDownloadURL, listAll, ref } from "firebase/storage";
 import { useEffect, useState } from "react";
 import subjectDefault from "../../assets/images/subject-default.png";
@@ -12,7 +11,7 @@ const STALE_FIREBASE_DEFAULT_ASSET_PATHS = new Set([
 ]);
 
 const DEFAULT_LOCAL_SUBJECT_AVATAR =
-  Image.resolveAssetSource(subjectDefault).uri;
+  typeof subjectDefault === "string" ? subjectDefault : subjectDefault.uri;
 
 // Cache to prevent duplicate getDownloadURL calls
 const urlCache = new Map<string, string>();

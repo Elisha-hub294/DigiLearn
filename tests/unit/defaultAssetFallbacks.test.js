@@ -29,4 +29,16 @@ test("default subject and add-item fallbacks no longer point at missing Firebase
     firebaseStorageSource.includes("STALE_FIREBASE_DEFAULT_ASSET_PATHS"),
     "Firebase storage resolution must explicitly block the stale missing default asset.",
   );
+  assert.ok(
+    !pageTypesSource.includes("resolveAssetSource"),
+    "DEFAULT_SUBJECT_AVATAR must not use the deprecated resolveAssetSource API.",
+  );
+  assert.ok(
+    !addItemConstantsSource.includes("resolveAssetSource"),
+    "FALLBACK_ICON_URL must not use the deprecated resolveAssetSource API.",
+  );
+  assert.ok(
+    !firebaseStorageSource.includes("resolveAssetSource"),
+    "Firebase storage fallback should not use the deprecated resolveAssetSource API.",
+  );
 });
