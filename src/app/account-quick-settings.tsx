@@ -560,10 +560,17 @@ export default function AccountQuickSettingsScreen() {
                   ]}
                 >
                   <View style={styles.toggleInfo}>
-                    <Text style={styles.toggleTitle}>
+                    <Text
+                      style={[styles.toggleTitle, { color: themeColors.text }]}
+                    >
                       Only show selected interests in feeds
                     </Text>
-                    <Text style={styles.toggleSubtitle}>
+                    <Text
+                      style={[
+                        styles.toggleSubtitle,
+                        { color: themeColors.subtitle },
+                      ]}
+                    >
                       Filter your Home and Library feeds to only display
                       resources matching your selected subjects.
                     </Text>
@@ -963,12 +970,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#F8FAFC",
     borderRadius: 14,
     padding: spacing.md,
     marginTop: 20,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
     gap: 12,
   },
   toggleInfo: {
@@ -977,12 +982,10 @@ const styles = StyleSheet.create({
   toggleTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: colors.dark,
     marginBottom: 4,
   },
   toggleSubtitle: {
     fontSize: 12,
-    color: "#64748B",
     lineHeight: 16,
   },
 });
