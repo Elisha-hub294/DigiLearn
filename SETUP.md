@@ -50,6 +50,20 @@ DigiLearn needs Firebase and Google OAuth credentials to run fully. Here's what 
    EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<your-google-client-id>
    ```
 
+### Enable web resource downloads
+
+Web downloads cache resource bytes in IndexedDB, so Firebase Storage must
+allow `GET` requests from the web app's origin. After installing and
+authenticating the Google Cloud CLI with a Storage Admin account, apply the
+checked-in policy once:
+
+```bash
+npm run storage:configure-cors
+```
+
+For a custom deployed domain or development port, add its exact origin to
+`storage-cors.json` before running the command.
+
 ### Google Sign-In Branding
 
 The name and icon shown inside Google's sign-in or sign-up popup come from the

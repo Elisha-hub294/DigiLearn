@@ -52,10 +52,11 @@ function normalizeUriParam(
   const str = Array.isArray(raw) ? raw[0] : raw;
   if (!str) return null;
   let result = str.trim();
-  // Expo Router serializes route params. Some existing callers also encode
-  // document paths themselves, so decode one layer before resolving Firebase
-  // storage paths such as "docs%2Flesson.pdf".
-  if (/%[0-9a-f]{2}/i.test(result)) {
+  // Expo Router serializes route params. Decode bare storage paths such as
+  // "docs%2Flesson.pdf", but retain percent-encoding in complete URLs.
+  // Firebase Storage requires encoded object paths in its /o/ endpoint.
+  const isCompleteUrl = /^[a-z][a-z\d+.-]*:\/\//i.test(result);
+  if (!isCompleteUrl && /%[0-9a-f]{2}/i.test(result)) {
     try {
       result = decodeURIComponent(result);
     } catch {

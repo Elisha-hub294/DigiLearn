@@ -65,7 +65,8 @@
     "lint": "expo lint",
     "test": "node --test tests/unit/*.test.js",
     "test:unit": "node --test tests/unit/*.test.js",
-    "test:rules": "firebase emulators:exec --only firestore,storage \"node --test tests/security/rules.test.js\""
+    "test:rules": "firebase emulators:exec --only firestore,storage \"node --test tests/security/rules.test.js\"",
+    "storage:configure-cors": "gcloud storage buckets update gs://digilearn-af86d.firebasestorage.app --cors-file=storage-cors.json"
   },
   "private": true
 }

@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useNetworkState } from "expo-network";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -28,9 +27,12 @@ function normalizeUriParam(
   const str = Array.isArray(raw) ? raw[0] : raw;
   if (!str) return null;
   let result = str.trim();
-  // Decode one route-parameter layer so encoded bare storage paths resolve
-  // correctly (for example, docs%2Flesson.pdf -> docs/lesson.pdf).
-  if (/%[0-9a-f]{2}/i.test(result)) {
+  // Decode encoded bare storage paths (for example, docs%2Flesson.pdf), but
+  // never decode a complete URL. Firebase Storage requires the object path in
+  // its /o/ endpoint to remain percent-encoded; decoding its %2F makes the
+  // URL invalid and Firebase responds with HTTP 400.
+  const isCompleteUrl = /^[a-z][a-z\d+.-]*:\/\//i.test(result);
+  if (!isCompleteUrl && /%[0-9a-f]{2}/i.test(result)) {
     try {
       result = decodeURIComponent(result);
     } catch {
@@ -69,13 +71,12 @@ export function PdfReaderScreen() {
   const [progressReady, setProgressReady] = useState(false);
   const [iframeError, setIframeError] = useState(false);
   const [offlineNoticeVisible, setOfflineNoticeVisible] = useState(false);
-  const [offlineNoticeDismissed, setOfflineNoticeDismissed] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [localBlobUri, setLocalBlobUri] = useState<string | null>(null);
   const [docxText, setDocxText] = useState<string | null>(null);
-  const networkState = useNetworkState();
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -105,9 +106,6 @@ export function PdfReaderScreen() {
   // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
   const decodedUri = resolvedUri ?? null;
   const isResolving = rawUri != null && decodedUri == null;
-  const isOffline =
-    networkState.isConnected === false ||
-    networkState.isInternetReachable === false;
   const fileExtension = getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
   const isDocxFile = fileExtension === "docx";
@@ -191,22 +189,24 @@ export function PdfReaderScreen() {
 
   const missingDocument = !isResolving && !decodedUri;
   const showReaderDialog =
-    offlineNoticeVisible || iframeError || missingDocument;
+    offlineNoticeVisible || iframeError || missingDocument || Boolean(downloadError);
   const readerDialogTitle = missingDocument
     ? isOfficeFile
       ? "Internet connection required"
       : `${readerLabel} unavailable`
-    : "Internet connection required";
+    : downloadError
+      ? "Download failed"
+      : "Unable to open document";
   const readerDialogMessage = missingDocument
     ? isOfficeFile
       ? "Office documents can only be read while online. Connect to the internet and try again."
       : "No document is available to open."
-    : "This document is not available offline. Connect to the internet or open a downloaded copy from My Downloads.";
+    : downloadError ?? "The document could not be opened. Please try again.";
 
   const closeReaderDialog = () => {
     setOfflineNoticeVisible(false);
-    setOfflineNoticeDismissed(true);
     setIframeError(false);
+    setDownloadError(null);
   };
 
   // Check if already downloaded
@@ -289,7 +289,9 @@ export function PdfReaderScreen() {
       setDownloaded(true);
     } catch (err) {
       console.warn("Web download error:", err);
-      setOfflineNoticeVisible(true);
+      setDownloadError(
+        "The file could not be downloaded. Check your connection and try again.",
+      );
     } finally {
       setTimeout(() => {
         setDownloading(false);
@@ -301,14 +303,7 @@ export function PdfReaderScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: themeColors.background }]}>
       <ActionDialog
-        visible={
-          showReaderDialog ||
-          (isOffline &&
-            Boolean(decodedUri) &&
-            !downloaded &&
-            !rawUri?.startsWith("indexeddb://") &&
-            !offlineNoticeDismissed)
-        }
+        visible={showReaderDialog}
         title={readerDialogTitle}
         message={readerDialogMessage}
         primaryText={missingDocument ? "Go back" : "OK"}
