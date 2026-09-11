@@ -1176,10 +1176,7 @@ const layoutStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.3)",
     elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
+    boxShadow: "0px 2px 6px rgba(0,0,0,0.25)",
   },
   plusBadgeText: {
     color: "#ffffff",

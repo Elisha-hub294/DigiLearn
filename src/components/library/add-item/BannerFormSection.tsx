@@ -1,5 +1,13 @@
 import { Feather as Icon } from "@expo/vector-icons";
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { colors } from "../../../constants/theme";
 import { useTheme } from "../../../contexts/ThemeContext";
 import PdfPreview from "../../home/PdfPreview";
@@ -158,8 +166,7 @@ export function BannerFormSection({
                     ]}
                     numberOfLines={1}
                   >
-                    {selectedFile?.assets?.[0]?.name ||
-                      "Upload document"}
+                    {selectedFile?.assets?.[0]?.name || "Upload document"}
                   </Text>
                   <Text
                     style={[
@@ -235,7 +242,9 @@ export function BannerFormSection({
           <View style={localStyles.galleryHeader}>
             <View style={localStyles.badgeRow}>
               <Icon name="image" size={15} color={colors.primary} />
-              <Text style={[localStyles.galleryTitle, { color: themeColors.text }]}>
+              <Text
+                style={[localStyles.galleryTitle, { color: themeColors.text }]}
+              >
                 Selected Photos ({images.length}/10)
               </Text>
             </View>
@@ -246,7 +255,9 @@ export function BannerFormSection({
                 onPress={onClearImages}
                 hitSlop={8}
               >
-                <Text style={[localStyles.clearAllText, { color: colors.primary }]}>
+                <Text
+                  style={[localStyles.clearAllText, { color: colors.primary }]}
+                >
                   Clear all
                 </Text>
               </Pressable>
@@ -301,13 +312,25 @@ export function BannerFormSection({
                 onPress={pickImage}
                 disabled={isSubmitting}
               >
-                <View style={[localStyles.addMoreIconWrap, { backgroundColor: colors.primaryLight }]}>
+                <View
+                  style={[
+                    localStyles.addMoreIconWrap,
+                    { backgroundColor: colors.primaryLight },
+                  ]}
+                >
                   <Icon name="plus" size={20} color={colors.primary} />
                 </View>
-                <Text style={[localStyles.addMoreText, { color: colors.primary }]}>
+                <Text
+                  style={[localStyles.addMoreText, { color: colors.primary }]}
+                >
                   Add Photo
                 </Text>
-                <Text style={[localStyles.addMoreSubtext, { color: themeColors.subtitle }]}>
+                <Text
+                  style={[
+                    localStyles.addMoreSubtext,
+                    { color: themeColors.subtitle },
+                  ]}
+                >
                   {10 - images.length} left
                 </Text>
               </Pressable>
@@ -425,10 +448,7 @@ const localStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.5,
+    boxShadow: "0px 1px 3px rgba(0,0,0,0.2)",
   },
   addMoreCard: {
     width: 90,
