@@ -13,6 +13,7 @@ import {
   View,
 } from "react-native";
 import { colors } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export const REPORT_REASONS = [
   "Incorrect information",
@@ -39,6 +40,7 @@ export function ReportDialog({
   onSubmit,
   onClose,
 }: ReportDialogProps) {
+  const { colors: themeColors } = useTheme();
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
   const [details, setDetails] = useState("");
 
@@ -71,10 +73,14 @@ export function ReportDialog({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: themeColors.white }]}>
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Ionicons name="flag-outline" size={21} color={colors.primary} />
+              <Ionicons
+                name="flag-outline"
+                size={21}
+                color={themeColors.primary}
+              />
             </View>
             <Pressable
               accessibilityRole="button"
@@ -82,11 +88,13 @@ export function ReportDialog({
               onPress={onClose}
               style={styles.closeButton}
             >
-              <Ionicons name="close" size={22} color="#64748B" />
+              <Ionicons name="close" size={22} color={themeColors.inactive} />
             </Pressable>
           </View>
-          <Text style={styles.title}>Report a problem</Text>
-          <Text style={styles.message}>
+          <Text style={[styles.title, { color: themeColors.text }]}>
+            Report a problem
+          </Text>
+          <Text style={[styles.message, { color: themeColors.subtitle }]}>
             Help us improve "{itemName}". Choose any matches or describe the
             problem below.
           </Text>
@@ -104,19 +112,26 @@ export function ReportDialog({
                     accessibilityRole="checkbox"
                     accessibilityState={{ checked: selected }}
                     onPress={() => toggleReason(reason)}
-                    style={[styles.chip, selected && styles.chipSelected]}
+                    style={[
+                      styles.chip,
+                      { borderColor: themeColors.border },
+                      selected && {
+                        borderColor: themeColors.primary,
+                        backgroundColor: themeColors.primaryLight,
+                      },
+                    ]}
                   >
                     {selected ? (
                       <Ionicons
                         name="checkmark"
                         size={14}
-                        color={colors.primary}
+                        color={themeColors.primary}
                       />
                     ) : null}
                     <Text
                       style={[
-                        styles.chipText,
-                        selected && styles.chipTextSelected,
+                        [styles.chipText, { color: themeColors.text }],
+                        selected && { color: themeColors.primary },
                       ]}
                     >
                       {reason}
@@ -131,12 +146,24 @@ export function ReportDialog({
               value={details}
               onChangeText={setDetails}
               placeholder="Add more detail (optional)"
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={themeColors.subtitle}
               textAlignVertical="top"
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  borderColor: themeColors.border,
+                  color: themeColors.text,
+                },
+              ]}
             />
-            <Text style={styles.counter}>{details.length}/1000</Text>
-            {error ? <Text style={styles.error}>{error}</Text> : null}
+            <Text style={[styles.counter, { color: themeColors.inactive }]}>
+              {details.length}/1000
+            </Text>
+            {error ? (
+              <Text style={[styles.error, { color: themeColors.danger }]}>
+                {error}
+              </Text>
+            ) : null}
           </ScrollView>
           <View style={styles.actions}>
             <Pressable
@@ -144,20 +171,27 @@ export function ReportDialog({
               style={styles.cancelButton}
               disabled={submitting}
             >
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text
+                style={[styles.cancelText, { color: themeColors.subtitle }]}
+              >
+                Cancel
+              </Text>
             </Pressable>
             <Pressable
               onPress={() => onSubmit(selectedReasons, details.trim())}
               disabled={!canSubmit || submitting}
               style={[
                 styles.submitButton,
+                { backgroundColor: themeColors.primary },
                 (!canSubmit || submitting) && styles.submitDisabled,
               ]}
             >
               {submitting ? (
                 <ActivityIndicator color={colors.white} size="small" />
               ) : (
-                <Text style={styles.submitText}>Send report</Text>
+                <Text style={[styles.submitText, { color: themeColors.white }]}>
+                  Send report
+                </Text>
               )}
             </Pressable>
           </View>
@@ -196,11 +230,16 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#EAF2FF",
+    backgroundColor: colors.primaryLight,
   },
   closeButton: { padding: 4 },
-  title: { color: "#0F172A", fontSize: 22, fontWeight: "700", marginTop: 14 },
-  message: { color: "#475569", fontSize: 14, lineHeight: 21, marginTop: 7 },
+  title: { color: colors.text, fontSize: 22, fontWeight: "700", marginTop: 14 },
+  message: {
+    color: colors.subtitle,
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 7,
+  },
   scrollContent: { paddingTop: 18 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
@@ -208,26 +247,34 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 5,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
+    borderColor: colors.border,
     borderRadius: 18,
     paddingHorizontal: 11,
     paddingVertical: 8,
   },
-  chipSelected: { borderColor: colors.primary, backgroundColor: "#EAF2FF" },
-  chipText: { color: "#334155", fontSize: 12, fontWeight: "600" },
+  chipSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryLight,
+  },
+  chipText: { color: colors.text, fontSize: 12, fontWeight: "600" },
   chipTextSelected: { color: colors.primary },
   input: {
     minHeight: 100,
     marginTop: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
+    borderColor: colors.border,
     borderRadius: 12,
-    color: "#0F172A",
+    color: colors.text,
     fontSize: 14,
   },
-  counter: { color: "#94A3B8", fontSize: 11, textAlign: "right", marginTop: 5 },
-  error: { color: "#B42318", fontSize: 12, marginTop: 8 },
+  counter: {
+    color: colors.inactive,
+    fontSize: 11,
+    textAlign: "right",
+    marginTop: 5,
+  },
+  error: { color: colors.danger, fontSize: 12, marginTop: 8 },
   actions: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -235,15 +282,14 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
   cancelButton: { paddingHorizontal: 15, paddingVertical: 12 },
-  cancelText: { color: "#475569", fontSize: 14, fontWeight: "700" },
+  cancelText: { color: colors.subtitle, fontSize: 14, fontWeight: "700" },
   submitButton: {
     minWidth: 120,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",
-    backgroundColor: colors.primary,
   },
   submitDisabled: { opacity: 0.45 },
-  submitText: { color: colors.white, fontSize: 14, fontWeight: "700" },
+  submitText: { fontSize: 14, fontWeight: "700" },
 });

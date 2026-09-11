@@ -408,7 +408,10 @@ export default function AssistantScreen() {
                                   "Explain your last answer more simply",
                                 )
                               }
-                              style={styles.answerAction}
+                              style={[
+                                styles.answerAction,
+                                { borderColor: themeColors.border },
+                              ]}
                             >
                               <Text
                                 style={[
@@ -427,7 +430,10 @@ export default function AssistantScreen() {
                                   "Create a short quiz from your last answer",
                                 )
                               }
-                              style={styles.answerAction}
+                              style={[
+                                styles.answerAction,
+                                { borderColor: themeColors.border },
+                              ]}
                             >
                               <Text
                                 style={[
@@ -444,7 +450,10 @@ export default function AssistantScreen() {
                               onPress={() =>
                                 void Clipboard.setStringAsync(item.content)
                               }
-                              style={styles.answerAction}
+                              style={[
+                                styles.answerAction,
+                                { borderColor: themeColors.border },
+                              ]}
                             >
                               <Text
                                 style={[
@@ -463,7 +472,10 @@ export default function AssistantScreen() {
                                   "Ask another question about the current study resource",
                                 )
                               }
-                              style={styles.answerAction}
+                              style={[
+                                styles.answerAction,
+                                { borderColor: themeColors.border },
+                              ]}
                             >
                               <Text
                                 style={[
@@ -493,7 +505,12 @@ export default function AssistantScreen() {
                             contentFit="contain"
                           />
                         </View>
-                        <View style={styles.typingBubble}>
+                        <View
+                          style={[
+                            styles.typingBubble,
+                            { backgroundColor: themeColors.surface },
+                          ]}
+                        >
                           <TypingIndicator />
                         </View>
                       </View>
@@ -503,8 +520,20 @@ export default function AssistantScreen() {
               )}
 
               {errorText ? (
-                <View style={styles.errorCard}>
-                  <Text style={styles.errorText}>{errorText}</Text>
+                <View
+                  style={[
+                    styles.errorCard,
+                    {
+                      backgroundColor: themeColors.dangerBackground,
+                      borderColor: themeColors.danger,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.errorText, { color: themeColors.danger }]}
+                  >
+                    {errorText}
+                  </Text>
                   <Pressable
                     onPress={() => handleSend(failedPrompt ?? undefined, true)}
                     style={styles.retryButton}

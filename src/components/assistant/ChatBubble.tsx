@@ -218,6 +218,7 @@ function parseMathTokens(formula: string): MathToken[] {
 }
 
 function MathFormulaView({ formula }: { formula: string }) {
+  const { colors: themeColors } = useTheme();
   const tokens = parseMathTokens(formula);
 
   return (
@@ -227,7 +228,10 @@ function MathFormulaView({ formula }: { formula: string }) {
           return <FractionView key={i} num={token.num} den={token.den} />;
         }
         return (
-          <Text key={i} style={mdStyles.mathFormulaText}>
+          <Text
+            key={i}
+            style={[mdStyles.mathFormulaText, { color: themeColors.primary }]}
+          >
             {convertIndices(token.text)}
           </Text>
         );
@@ -339,13 +343,17 @@ function InlineText({
   segments: Segment[];
   baseStyle: object;
 }) {
+  const { colors: themeColors } = useTheme();
   return (
     <Text style={baseStyle}>
       {segments.map((seg, i) => {
         switch (seg.type) {
           case "bold":
             return (
-              <Text key={i} style={inlineStyles.bold}>
+              <Text
+                key={i}
+                style={[inlineStyles.bold, { color: themeColors.text }]}
+              >
                 {formatMathString(seg.value)}
               </Text>
             );
@@ -363,13 +371,31 @@ function InlineText({
             );
           case "code":
             return (
-              <Text key={i} style={inlineStyles.inlineCode}>
+              <Text
+                key={i}
+                style={[
+                  inlineStyles.inlineCode,
+                  {
+                    backgroundColor: themeColors.surfaceMuted,
+                    color: themeColors.text,
+                  },
+                ]}
+              >
                 {seg.value}
               </Text>
             );
           case "math":
             return (
-              <Text key={i} style={inlineStyles.mathInline}>
+              <Text
+                key={i}
+                style={[
+                  inlineStyles.mathInline,
+                  {
+                    color: themeColors.primary,
+                    backgroundColor: themeColors.primaryLight,
+                  },
+                ]}
+              >
                 {formatMathString(seg.value)}
               </Text>
             );
@@ -541,6 +567,7 @@ function parseBlocks(markdown: string): Block[] {
 }
 
 function MarkdownView({ text }: { text: string }) {
+  const { colors: themeColors } = useTheme();
   const blocks = parseBlocks(text);
 
   return (
@@ -549,7 +576,7 @@ function MarkdownView({ text }: { text: string }) {
         switch (block.kind) {
           case "heading": {
             const headingStyle = [
-              mdStyles.heading,
+              [mdStyles.heading, { color: themeColors.text }],
               block.level === 1 && mdStyles.h1,
               block.level === 2 && mdStyles.h2,
               block.level === 3 && mdStyles.h3,
@@ -568,7 +595,7 @@ function MarkdownView({ text }: { text: string }) {
                 <View style={mdStyles.listContent}>
                   <InlineText
                     segments={parseInline(block.text)}
-                    baseStyle={mdStyles.bodyText}
+                    baseStyle={[mdStyles.bodyText, { color: themeColors.text }]}
                   />
                 </View>
               </View>
@@ -581,7 +608,7 @@ function MarkdownView({ text }: { text: string }) {
                 <View style={mdStyles.listContent}>
                   <InlineText
                     segments={parseInline(block.text)}
-                    baseStyle={mdStyles.bodyText}
+                    baseStyle={[mdStyles.bodyText, { color: themeColors.text }]}
                   />
                 </View>
               </View>
@@ -589,9 +616,22 @@ function MarkdownView({ text }: { text: string }) {
 
           case "mathblock":
             return (
-              <View key={idx} style={mdStyles.mathCard}>
+              <View
+                key={idx}
+                style={[
+                  mdStyles.mathCard,
+                  {
+                    backgroundColor: themeColors.surface,
+                    borderColor: themeColors.border,
+                  },
+                ]}
+              >
                 <View style={mdStyles.mathHeader}>
-                  <Text style={mdStyles.mathBadge}>FORMULA</Text>
+                  <Text
+                    style={[mdStyles.mathBadge, { color: themeColors.primary }]}
+                  >
+                    FORMULA
+                  </Text>
                 </View>
                 <MathFormulaView formula={block.formula} />
               </View>
@@ -599,13 +639,29 @@ function MarkdownView({ text }: { text: string }) {
 
           case "codeblock":
             return (
-              <View key={idx} style={mdStyles.codeBlock}>
-                <Text style={mdStyles.codeText}>{block.code}</Text>
+              <View
+                key={idx}
+                style={[
+                  mdStyles.codeBlock,
+                  { backgroundColor: themeColors.surfaceMuted },
+                ]}
+              >
+                <Text style={[mdStyles.codeText, { color: themeColors.text }]}>
+                  {block.code}
+                </Text>
               </View>
             );
 
           case "divider":
-            return <View key={idx} style={mdStyles.divider} />;
+            return (
+              <View
+                key={idx}
+                style={[
+                  mdStyles.divider,
+                  { backgroundColor: themeColors.border },
+                ]}
+              />
+            );
 
           case "paragraph":
           default:
@@ -613,7 +669,7 @@ function MarkdownView({ text }: { text: string }) {
               <View key={idx} style={mdStyles.para}>
                 <InlineText
                   segments={parseInline(block.text)}
-                  baseStyle={mdStyles.bodyText}
+                  baseStyle={[mdStyles.bodyText, { color: themeColors.text }]}
                 />
               </View>
             );
@@ -635,7 +691,7 @@ export function ChatBubble({
   avatar?: string | null;
 }) {
   const isUser = role === "user";
-  const { isDark } = useTheme();
+  const { isDark, colors: themeColors } = useTheme();
   const fallbackAvatar = getThemeAsset("panda", isDark);
 
   return (
@@ -654,7 +710,12 @@ export function ChatBubble({
       <View
         style={[
           styles.bubble,
-          isUser ? styles.userBubble : styles.assistantBubble,
+          isUser
+            ? [styles.userBubble, { backgroundColor: themeColors.primary }]
+            : [
+                styles.assistantBubble,
+                { backgroundColor: themeColors.surface },
+              ],
         ]}
       >
         {isUser ? (

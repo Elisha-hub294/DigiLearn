@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
+import { colors } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { TopicalNote } from "./pageTypes";
 
@@ -45,7 +46,7 @@ export function SimilarPageCard({
                 { backgroundColor: colors.border },
               ]}
             >
-              <Feather name="file-text" size={20} color="#FFFFFF" />
+              <Feather name="file-text" size={20} color={colors.white} />
             </View>
           )}
         </View>
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   previewFallback: {
-    backgroundColor: "#64748B",
+    backgroundColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
   },

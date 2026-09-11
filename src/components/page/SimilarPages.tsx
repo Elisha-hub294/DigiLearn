@@ -14,11 +14,14 @@ export function SimilarPages({
   onSeeAll?: () => void;
   accentColor?: string;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   if (!pages || pages.length === 0) return null;
 
-  const activeAccent = accentColor || "#000000";
+  const activeAccent =
+    isDark || !accentColor || accentColor === "#000000"
+      ? colors.primary
+      : accentColor;
 
   return (
     <View style={styles.section}>

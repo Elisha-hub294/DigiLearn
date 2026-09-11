@@ -19,7 +19,7 @@ function DetailRow({
 }) {
   const { colors } = useTheme();
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { borderBottomColor: colors.border }]}>
       <Feather name={icon} size={16} color={colors.inactive} />
       <Text style={[styles.label, { color: colors.subtitle }]}>{label}</Text>
       <Text style={[styles.value, { color: colors.text }]}>{value}</Text>

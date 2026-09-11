@@ -665,7 +665,7 @@ export function PdfReaderScreen() {
         <View
           style={[styles.center, { backgroundColor: themeColors.background }]}
         >
-          <Feather name="file-text" size={48} color={themeColors.primary} />
+          <Feather name="file-text" size={48} color={themeColors.inactive} />
           <Text style={[styles.errorTitle, { color: themeColors.text }]}>
             Loading PDF…
           </Text>
@@ -674,7 +674,7 @@ export function PdfReaderScreen() {
         <View
           style={[styles.center, { backgroundColor: themeColors.background }]}
         >
-          <Feather name="file-text" size={48} color={themeColors.primary} />
+          <Feather name="file-text" size={48} color={themeColors.inactive} />
           <Text style={[styles.errorTitle, { color: themeColors.text }]}>
             Loading document...
           </Text>

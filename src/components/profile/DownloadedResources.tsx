@@ -47,8 +47,7 @@ export function DownloadedResources({
         uri: encodeURIComponent(file.localUri),
         title: file.title,
         fileType:
-          file.uri.split("?")[0].match(/\.(pdf|docx|pptx|ppt)$/i)?.[1] ??
-          "pdf",
+          file.uri.split("?")[0].match(/\.(pdf|docx|pptx|ppt)$/i)?.[1] ?? "pdf",
       },
     });
   };
@@ -227,11 +226,18 @@ export function DownloadedResources({
                 </Pressable>
 
                 <Pressable
-                  style={styles.deleteBtn}
+                  style={[
+                    styles.deleteBtn,
+                    { backgroundColor: themeColors.dangerBackground },
+                  ]}
                   onPress={() => handleDeleteFile(file)}
                   accessibilityLabel="Delete downloaded file"
                 >
-                  <Feather name="trash-2" size={16} color="#EF4444" />
+                  <Feather
+                    name="trash-2"
+                    size={16}
+                    color={themeColors.danger}
+                  />
                 </Pressable>
               </View>
             </Pressable>
@@ -247,7 +253,7 @@ export function DownloadedResources({
           accessibilityLabel="View all downloaded files"
         >
           <Text style={styles.moreButtonText}>More</Text>
-          <Feather name="arrow-right" size={16} color={colors.primary} />
+          <Feather name="arrow-right" size={16} color={themeColors.primary} />
         </Pressable>
       )}
 
@@ -258,8 +264,8 @@ export function DownloadedResources({
         message={`Are you sure you want to delete "${fileToDelete?.title}" from your offline downloads?`}
         primaryText="Delete"
         secondaryText="Cancel"
-        primaryButtonColor="#EF4444"
-        icon={<Feather name="trash-2" size={22} color="#EF4444" />}
+        primaryButtonColor={themeColors.danger}
+        icon={<Feather name="trash-2" size={22} color={themeColors.danger} />}
         onPrimary={confirmDeleteFile}
         onSecondary={() => setFileToDelete(null)}
         onClose={() => setFileToDelete(null)}
@@ -284,7 +290,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#EFF6FF",
+    backgroundColor: colors.primaryLight,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -419,7 +425,7 @@ const styles = StyleSheet.create({
   deleteBtn: {
     padding: 8,
     borderRadius: radius.pill,
-    backgroundColor: "#FEF2F2",
+    backgroundColor: colors.dangerBackground,
   },
   moreButton: {
     alignSelf: "flex-end",

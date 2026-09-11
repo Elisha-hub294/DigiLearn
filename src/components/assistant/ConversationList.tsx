@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors, radius, spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 function formatConversationTime(value: string) {
   const parsed = new Date(value);
@@ -44,10 +45,13 @@ export function ConversationList({
   conversations: ConversationSummary[];
   onSelectConversation: (conversationId: string) => void;
 }) {
+  const { colors: themeColors } = useTheme();
   return (
     <View style={styles.wrapper}>
       {conversations.length > 0 ? (
-        <Text style={styles.title}>Recent conversations</Text>
+        <Text style={[styles.title, { color: themeColors.text }]}>
+          Recent conversations
+        </Text>
       ) : null}
       {conversations.map((conversation) => (
         <Pressable
@@ -55,16 +59,21 @@ export function ConversationList({
           accessibilityRole="button"
           onPress={() => onSelectConversation(conversation.id)}
           style={({ pressed, hovered }) => [
-            styles.card,
+            [styles.card, { backgroundColor: themeColors.lightBackground }],
             pressed && styles.cardPressed,
-            hovered && styles.cardHovered,
+            hovered && { backgroundColor: themeColors.white },
           ]}
         >
-          <Text style={styles.cardTitle}>{conversation.title}</Text>
-          <Text style={styles.cardBody} numberOfLines={2}>
+          <Text style={[styles.cardTitle, { color: themeColors.text }]}>
+            {conversation.title}
+          </Text>
+          <Text
+            style={[styles.cardBody, { color: themeColors.subtitle }]}
+            numberOfLines={2}
+          >
             {conversation.firstMessage}
           </Text>
-          <Text style={styles.cardMeta}>
+          <Text style={[styles.cardMeta, { color: themeColors.primary }]}>
             {formatConversationTime(conversation.updatedAt)}
           </Text>
         </Pressable>

@@ -9,6 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { colors, radius, spacing } from "../../constants/theme";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export function AssistantHeader({
   title,
@@ -21,6 +22,7 @@ export function AssistantHeader({
   quotaBadge?: string;
   onBack?: () => void;
 }) {
+  const { colors: themeColors, isDark } = useTheme();
   const router = useRouter();
   const scale = useSharedValue(1);
 
@@ -59,7 +61,7 @@ export function AssistantHeader({
         >
           <BlurView
             intensity={24}
-            tint="light"
+            tint={isDark ? "dark" : "light"}
             style={StyleSheet.absoluteFill}
           />
           <Text style={styles.backIcon}>←</Text>
@@ -68,14 +70,28 @@ export function AssistantHeader({
 
       <View style={styles.headerTextWrap}>
         <View style={styles.titleRow}>
-          <Text style={styles.headerTitle}>{title}</Text>
+          <Text style={[styles.headerTitle, { color: themeColors.text }]}>
+            {title}
+          </Text>
           {quotaBadge && (
-            <View style={styles.quotaPill}>
-              <Text style={styles.quotaText}>{quotaBadge}</Text>
+            <View
+              style={[
+                styles.quotaPill,
+                {
+                  backgroundColor: themeColors.successBackground,
+                  borderColor: themeColors.success,
+                },
+              ]}
+            >
+              <Text style={[styles.quotaText, { color: themeColors.success }]}>
+                {quotaBadge}
+              </Text>
             </View>
           )}
         </View>
-        <Text style={styles.headerSubtitle}>{subtitle}</Text>
+        <Text style={[styles.headerSubtitle, { color: themeColors.subtitle }]}>
+          {subtitle}
+        </Text>
       </View>
     </View>
   );
