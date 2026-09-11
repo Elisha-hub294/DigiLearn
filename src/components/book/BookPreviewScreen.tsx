@@ -383,6 +383,15 @@ export function BookPreviewScreen() {
       return;
     }
 
+    if (
+      typeof returnTo === "string" &&
+      returnTo.trim() === "/library" &&
+      router.canGoBack()
+    ) {
+      router.back();
+      return;
+    }
+
     if (typeof returnTo === "string" && returnTo.trim()) {
       router.replace(returnTo as any);
       return;
