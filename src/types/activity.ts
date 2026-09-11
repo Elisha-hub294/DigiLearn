@@ -1,4 +1,4 @@
-export type ActivityType = "lesson" | "page" | "book" | "paper";
+export type ActivityType = "lesson" | "page" | "book" | "paper" | "download";
 
 export type ActivityRecord = {
   id: string;

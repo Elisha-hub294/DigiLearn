@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
 import { Platform } from "react-native";
+import { recordDownloadActivity } from "./activityService";
 
 export interface DownloadedFile {
   id: string;
@@ -193,6 +194,7 @@ export async function saveDownloadedFile(
 
     const updated = [newEntry, ...filtered];
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    await recordDownloadActivity(uniqueName || file.uri, file.title);
 
     // Remove blobs that were replaced by this download. This keeps the web
     // cache aligned with the registry when a resource is downloaded again.

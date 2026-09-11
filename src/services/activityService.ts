@@ -20,7 +20,7 @@ const ACTIVITY_EVENT_QUEUE_KEY = "@digilearn/activity-event-queue";
 const ACTIVITY_FETCH_TIMEOUT_MS = 15000;
 const MAX_ADMIN_ACTIVITY_DOCUMENTS = 500;
 
-const ACTIVITY_FIELD_MAP: Record<ActivityType, string> = {
+const ACTIVITY_FIELD_MAP: Partial<Record<ActivityType, string>> = {
   lesson: "activity-lessons",
   page: "activity-pages",
   book: "activity-books",
@@ -66,9 +66,10 @@ async function uploadActivityBatch(
     userId,
     userName: firstEvent.userName,
     userEmail: firstEvent.userEmail,
-    events: events.map(({ type, resourceId, openedAt }) => ({
+    events: events.map(({ type, resourceId, resourceTitle, openedAt }) => ({
       type,
       resourceId,
+      ...(resourceTitle ? { resourceTitle } : {}),
       openedAt,
     })),
     createdAt: new Date().toISOString(),
@@ -261,6 +262,28 @@ export async function recordUserActivity(
   }
 }
 
+export async function recordDownloadActivity(
+  resourceId: string,
+  resourceTitle?: string,
+): Promise<void> {
+  const userId = auth.currentUser?.uid;
+  if (!userId || !resourceId) return;
+
+  try {
+    await queueActivityEvent({
+      userId,
+      userName: auth.currentUser?.displayName || "OS platform user",
+      userEmail: auth.currentUser?.email || "",
+      type: "download",
+      resourceId,
+      resourceTitle,
+      openedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.warn("Failed to record download activity:", error);
+  }
+}
+
 export async function recordPageVisit(pageId: string): Promise<void> {
   if (!pageId || !auth.currentUser?.emailVerified) return;
 
@@ -352,6 +375,9 @@ export async function fetchActivityEvents(): Promise<ActivityEvent[]> {
               userEmail: String(data.userEmail || ""),
               type: event.type,
               resourceId: String(event.resourceId || ""),
+              resourceTitle: event.resourceTitle
+                ? String(event.resourceTitle)
+                : undefined,
               openedAt: event.openedAt,
             }) as ActivityEvent,
         );

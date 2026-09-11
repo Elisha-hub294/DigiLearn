@@ -271,7 +271,14 @@ export default function AdminActivityScreen() {
               contentContainerStyle={styles.filterRow}
             >
               {(
-                ["all", "lesson", "book", "page", "paper"] as ActivityFilter[]
+                [
+                  "all",
+                  "lesson",
+                  "book",
+                  "page",
+                  "paper",
+                  "download",
+                ] as ActivityFilter[]
               ).map((item) => (
                 <Pressable
                   key={item}
@@ -303,7 +310,11 @@ export default function AdminActivityScreen() {
                       activityFilter === item && styles.filterTextSelected,
                     ]}
                   >
-                    {item === "all" ? "All actions" : labelForType(item)}
+                    {item === "all"
+                      ? "All actions"
+                      : item === "download"
+                        ? "Downloads"
+                        : labelForType(item)}
                   </Text>
                 </Pressable>
               ))}
@@ -506,11 +517,13 @@ export default function AdminActivityScreen() {
                       <View style={styles.eventIcon}>
                         <Icon
                           name={
-                            event.type === "lesson"
-                              ? "play-circle"
-                              : event.type === "book"
-                                ? "book"
-                                : "file-text"
+                            event.type === "download"
+                              ? "download"
+                              : event.type === "lesson"
+                                ? "play-circle"
+                                : event.type === "book"
+                                  ? "book"
+                                  : "file-text"
                           }
                           size={17}
                           color={colors.primary}
@@ -531,7 +544,10 @@ export default function AdminActivityScreen() {
                             { color: themeColors.subtitle },
                           ]}
                         >
-                          {labelForType(event.type)} opened · {event.resourceId}
+                          {event.type === "download"
+                            ? "Downloaded"
+                            : `${labelForType(event.type)} opened`}{" "}
+                          · {event.resourceTitle || event.resourceId}
                         </Text>
                       </View>
                       <Text

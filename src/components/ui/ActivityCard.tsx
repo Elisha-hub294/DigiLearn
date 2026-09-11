@@ -15,6 +15,7 @@ const PANEL_CONFIG: Record<
   page: { bg: "#3B82F6", icon: "file-text" },
   book: { bg: "#FF646A", icon: "book-open" },
   paper: { bg: "#10B981", icon: "file-text" },
+  download: { bg: "#E76F51", icon: "download" },
 };
 
 export const ActivityCard: React.FC<ActivityCardProps> = ({
