@@ -2,17 +2,17 @@ import { GoogleGenAI } from "@google/genai";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import {
-    FieldPath,
-    FieldValue,
-    getFirestore,
-    Timestamp,
+  FieldPath,
+  FieldValue,
+  getFirestore,
+  Timestamp,
 } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { getStorage } from "firebase-admin/storage";
 import { defineSecret } from "firebase-functions/params";
 import {
-    onDocumentCreated,
-    onDocumentWritten,
+  onDocumentCreated,
+  onDocumentWritten,
 } from "firebase-functions/v2/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
@@ -180,7 +180,8 @@ export const generateAssistantReply = onCall(
         const usage = usageSnapshot.exists
           ? usageSnapshot.data()
           : legacySnapshot.data();
-        const requestCount = usage?.day === today ? Number(usage.count ?? 0) : 0;
+        const requestCount =
+          usage?.day === today ? Number(usage.count ?? 0) : 0;
         if (requestCount >= 15) {
           throw new HttpsError(
             "resource-exhausted",
@@ -789,19 +790,24 @@ export const manageTeacherCommunity = onCall(async (request) => {
   return { joined: followerSnapshot.exists };
 });
 
-/** Returns memberships created both before and after profile mirroring. */
+/** Returns the followed-teacher IDs mirrored onto the authenticated profile. */
 export const getFollowedTeachers = onCall(async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Sign in required.");
   }
 
-  const followers = await db
-    .collectionGroup("followers")
-    .where(FieldPath.documentId(), "==", request.auth.uid)
-    .get();
-  const teacherIds = followers.docs
-    .map((follower) => follower.ref.parent.parent?.id)
-    .filter((teacherId): teacherId is string => Boolean(teacherId));
+  const [userSnapshot, teacherSnapshot] = await Promise.all([
+    db.doc(`users/${request.auth.uid}`).get(),
+    db.doc(`teachers/${request.auth.uid}`).get(),
+  ]);
+  const teacherIds = [userSnapshot, teacherSnapshot].flatMap((snapshot) => {
+    const followedTeacherIds = snapshot.data()?.followedTeacherIds;
+    return Array.isArray(followedTeacherIds)
+      ? followedTeacherIds.filter(
+          (teacherId): teacherId is string => typeof teacherId === "string",
+        )
+      : [];
+  });
 
   return { teacherIds: [...new Set(teacherIds)] };
 });
@@ -817,7 +823,9 @@ export const notifyTeacherFollowersOfNewPost = onDocumentCreated(
     const teacherSnapshot = await db.doc(`teachers/${teacherId}`).get();
     if (!teacherSnapshot.exists) return;
     const teacher = teacherSnapshot.data() ?? {};
-    const followers = await db.collection(`teachers/${teacherId}/followers`).get();
+    const followers = await db
+      .collection(`teachers/${teacherId}/followers`)
+      .get();
     if (followers.empty) return;
 
     const title = typeof post?.title === "string" ? post.title.trim() : "";
