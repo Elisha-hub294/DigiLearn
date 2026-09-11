@@ -6,7 +6,7 @@ import {
   useRouter,
 } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +16,7 @@ import {
   NativeSyntheticEvent,
   Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -77,10 +78,17 @@ export default function AccountTypeScreen() {
   const [isReviewPending, setIsReviewPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const carouselRef = useRef<FlatList<(typeof ACCOUNT_OPTIONS)[number]>>(null);
 
   const horizontalPadding = useMemo(() => getHorizontalPadding(width), [width]);
   const contentMaxWidth = Math.min(500, width - horizontalPadding * 2);
+  const cardImageSize = useMemo(
+    () => Math.min(340, Math.max(200, contentMaxWidth * 0.7)),
+    [contentMaxWidth],
+  );
+  const cardMinHeight = useMemo(
+    () => Math.min(500, Math.max(360, contentMaxWidth * 1.35)),
+    [contentMaxWidth],
+  );
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
@@ -165,7 +173,6 @@ export default function AccountTypeScreen() {
     (accountType: AccountType, index: number) => {
       handleSelect(accountType);
       setCarouselIndex(index);
-      carouselRef.current?.scrollToIndex({ index, animated: true });
     },
     [handleSelect],
   );
@@ -342,147 +349,178 @@ export default function AccountTypeScreen() {
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: themeColors.background }]}
     >
-      <View
-        style={[
-          styles.page,
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scrollContent,
           {
             paddingHorizontal: horizontalPadding,
             backgroundColor: themeColors.background,
           },
         ]}
       >
-        <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
-          <Text style={[styles.title, { color: themeColors.text }]}>
-            {openedFromSettings ? "Choose your account type" : "Account type"}
-          </Text>
-          <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
-            Choose the experience that fits how you use OS platform. Compare the
-            features before deciding.
-          </Text>
-
-          {isReviewPending ? (
-            <Text style={[styles.reviewNotice, { color: themeColors.warning }]}>
-              Your teacher account is under review. Account type changes are
-              unavailable until the application is decided.
+        <View
+          style={[styles.page, { backgroundColor: themeColors.background }]}
+        >
+          <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
+            <Text style={[styles.title, { color: themeColors.text }]}>
+              {openedFromSettings ? "Choose your account type" : "Account type"}
             </Text>
-          ) : null}
+            <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
+              Choose the experience that fits how you use OS platform. Compare
+              the features before deciding.
+            </Text>
 
-          <View style={styles.carouselWrap}>
-            <FlatList
-              ref={carouselRef}
-              data={ACCOUNT_OPTIONS}
-              horizontal
-              pagingEnabled
-              bounces={false}
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.type}
-              onMomentumScrollEnd={handleCarouselScrollEnd}
-              renderItem={({ item, index }) => (
-                <View style={[styles.carouselItem, { width: contentMaxWidth }]}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Select ${item.type} account, option ${index + 1} of ${ACCOUNT_OPTIONS.length}`}
-                    accessibilityState={{
-                      selected: selectedAccountType === item.type,
-                      disabled: isReviewPending,
-                    }}
-                    disabled={isReviewPending}
-                    onPress={() => handleCardPress(item.type, index)}
-                    style={({ pressed }) => [
-                      styles.card,
-                      { backgroundColor: item.color },
-                      selectedAccountType === item.type && styles.cardSelected,
-                      pressed && styles.cardPressed,
-                    ]}
-                  >
-                    <Image
-                      source={item.image}
-                      style={styles.cardImage}
-                      contentFit="contain"
-                    />
-                    <Text style={styles.cardLabel}>{item.label}</Text>
-                    <Text style={styles.cardDescription}>
-                      {item.description}
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-            />
-            <View style={styles.carouselControls}>
+            {isReviewPending ? (
               <Text
-                style={[
-                  styles.carouselPosition,
-                  { color: themeColors.subtitle },
-                ]}
+                style={[styles.reviewNotice, { color: themeColors.warning }]}
               >
-                {carouselIndex + 1} of {ACCOUNT_OPTIONS.length}
+                Your teacher account is under review. Account type changes are
+                unavailable until the application is decided.
               </Text>
-              <View style={styles.dots}>
-                {ACCOUNT_OPTIONS.map((item, index) => (
+            ) : null}
+
+            <View style={styles.carouselWrap}>
+              <FlatList
+                data={ACCOUNT_OPTIONS}
+                horizontal
+                pagingEnabled
+                bounces={false}
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item.type}
+                onMomentumScrollEnd={handleCarouselScrollEnd}
+                renderItem={({ item, index }) => (
                   <View
-                    key={item.type}
-                    style={[
-                      styles.dot,
-                      { backgroundColor: themeColors.border },
-                      index === carouselIndex && {
-                        backgroundColor: themeColors.primary,
-                        width: 20,
-                      },
-                    ]}
-                  />
-                ))}
+                    style={[styles.carouselItem, { width: contentMaxWidth }]}
+                  >
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select ${item.type} account, option ${index + 1} of ${ACCOUNT_OPTIONS.length}`}
+                      accessibilityState={{
+                        selected: selectedAccountType === item.type,
+                        disabled: isReviewPending,
+                      }}
+                      disabled={isReviewPending}
+                      onPress={() => handleCardPress(item.type, index)}
+                      style={({ pressed }) => [
+                        styles.card,
+                        {
+                          backgroundColor: item.color,
+                          minHeight: cardMinHeight,
+                        },
+                        selectedAccountType === item.type &&
+                          styles.cardSelected,
+                        pressed && styles.cardPressed,
+                      ]}
+                    >
+                      <Image
+                        source={item.image}
+                        style={[
+                          styles.cardImage,
+                          { width: cardImageSize, height: cardImageSize },
+                        ]}
+                        contentFit="contain"
+                      />
+                      <Text
+                        style={[
+                          styles.cardLabel,
+                          item.type === "student" && styles.studentCardText,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.cardDescription,
+                          item.type === "student" &&
+                            styles.studentCardDescription,
+                        ]}
+                      >
+                        {item.description}
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+              />
+              <View style={styles.carouselControls}>
+                <Text
+                  style={[
+                    styles.carouselPosition,
+                    { color: themeColors.subtitle },
+                  ]}
+                >
+                  {carouselIndex + 1} of {ACCOUNT_OPTIONS.length}
+                </Text>
+                <View style={styles.dots}>
+                  {ACCOUNT_OPTIONS.map((item, index) => (
+                    <View
+                      key={item.type}
+                      style={[
+                        styles.dot,
+                        { backgroundColor: themeColors.border },
+                        index === carouselIndex && {
+                          backgroundColor: themeColors.primary,
+                          width: 20,
+                        },
+                      ]}
+                    />
+                  ))}
+                </View>
               </View>
             </View>
-          </View>
 
-          {errorMessage ? (
-            <Text style={[styles.errorText, { color: themeColors.danger }]}>
-              {errorMessage}
-            </Text>
-          ) : null}
+            {errorMessage ? (
+              <Text style={[styles.errorText, { color: themeColors.danger }]}>
+                {errorMessage}
+              </Text>
+            ) : null}
 
-          <Pressable
-            disabled={!selectedAccountType || isSubmitting || isReviewPending}
-            accessibilityRole="button"
-            accessibilityLabel="Confirm account type"
-            onPress={handleSave}
-            style={({ pressed }) => [
-              [styles.primaryButton, { backgroundColor: themeColors.primary }],
-              styles.confirmButton,
-              (!selectedAccountType || isSubmitting || isReviewPending) &&
-                styles.primaryButtonDisabled,
-              pressed && !isSubmitting && styles.buttonPressed,
-            ]}
-          >
-            {isSubmitting ? (
-              <ActivityIndicator color={colors.white} size="small" />
-            ) : (
-              <Text style={styles.primaryButtonText}>Confirm</Text>
-            )}
-          </Pressable>
+            <Pressable
+              disabled={!selectedAccountType || isSubmitting || isReviewPending}
+              accessibilityRole="button"
+              accessibilityLabel="Confirm account type"
+              onPress={handleSave}
+              style={({ pressed }) => [
+                [
+                  styles.primaryButton,
+                  { backgroundColor: themeColors.primary },
+                ],
+                styles.confirmButton,
+                (!selectedAccountType || isSubmitting || isReviewPending) &&
+                  styles.primaryButtonDisabled,
+                pressed && !isSubmitting && styles.buttonPressed,
+              ]}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color={colors.white} size="small" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Confirm</Text>
+              )}
+            </Pressable>
 
-          {!openedFromSettings ? (
-            <View style={styles.skipRow}>
-              <Pressable
-                onPress={handleSkip}
-                disabled={isSubmitting || isReviewPending}
-                style={({ pressed }) => [
-                  styles.skipButton,
-                  pressed && !isSubmitting && styles.skipButtonPressed,
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel="Skip account type selection"
-              >
-                <Text
-                  style={[styles.skipText, { color: themeColors.subtitle }]}
+            {!openedFromSettings ? (
+              <View style={styles.skipRow}>
+                <Pressable
+                  onPress={handleSkip}
+                  disabled={isSubmitting || isReviewPending}
+                  style={({ pressed }) => [
+                    styles.skipButton,
+                    pressed && !isSubmitting && styles.skipButtonPressed,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Skip account type selection"
                 >
-                  Skip →
-                </Text>
-              </Pressable>
-            </View>
-          ) : null}
+                  <Text
+                    style={[styles.skipText, { color: themeColors.subtitle }]}
+                  >
+                    Skip →
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -491,6 +529,10 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.white,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingVertical: spacing.xxl,
   },
   page: {
     flex: 1,
@@ -513,24 +555,26 @@ const styles = StyleSheet.create({
   loadingSkeleton: { width: 88, height: 88, borderRadius: 44 },
   title: {
     fontSize: 30,
-    fontWeight: "700",
+    fontWeight: "800",
     color: colors.dark,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
     textAlign: "center",
+    letterSpacing: -0.5,
   },
   subtitle: {
     color: colors.text,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 24,
     textAlign: "center",
     marginBottom: spacing.xl,
+    maxWidth: "100%",
   },
   reviewNotice: {
     width: "100%",
     marginBottom: spacing.xl,
     color: colors.text,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 14.5,
+    lineHeight: 22,
     textAlign: "center",
   },
   carouselWrap: {
@@ -584,16 +628,23 @@ const styles = StyleSheet.create({
   },
   cardLabel: {
     color: colors.white,
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 22,
+    fontWeight: "800",
     textAlign: "center",
+    letterSpacing: -0.3,
+  },
+  studentCardText: {
+    color: "#103B62",
   },
   cardDescription: {
     color: colors.white,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 13,
+    lineHeight: 19,
     textAlign: "center",
     marginTop: spacing.sm,
+  },
+  studentCardDescription: {
+    color: "#1E4567",
   },
   primaryButton: {
     width: "100%",
@@ -666,8 +717,8 @@ const styles = StyleSheet.create({
   },
   authSubtitle: {
     color: colors.text,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 24,
     textAlign: "center",
     marginBottom: spacing.xl,
   },

@@ -4,6 +4,8 @@ import { httpsCallable } from "firebase/functions";
 
 import { auth, db, functions } from "../../firebaseConfig";
 import { getFirebaseStorageUrl } from "../utils/firebaseStorage";
+import { shouldSkipStartupSuggestionGeneration } from "./aiStartupGuard";
+import { checkCanSendAiPrompt } from "./aiUsageGuardrailsService";
 
 const ASSISTANT_ENABLED_KEY = "digilearn.assistant.enabled"; // retained for backward compatibility
 
@@ -203,6 +205,14 @@ async function generateAIContentFromKnowledge(
 ): Promise<{ floatingMessages: string[]; suggestions: string[] }> {
   await auth.authStateReady();
   if (!auth.currentUser) {
+    return getDefaultAssistantContent();
+  }
+
+  const quotaStatus = await checkCanSendAiPrompt();
+  if (shouldSkipStartupSuggestionGeneration(quotaStatus)) {
+    console.info(
+      "Skipping startup AI suggestion generation because the daily quota is exhausted.",
+    );
     return getDefaultAssistantContent();
   }
 

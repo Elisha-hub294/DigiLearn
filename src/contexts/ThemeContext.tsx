@@ -3,6 +3,7 @@ import * as SystemUI from "expo-system-ui";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Appearance } from "react-native";
 import { colors as lightColors } from "../constants/theme";
+import { resolveInitialThemeMode, type ThemeMode } from "../utils/themeMode";
 
 const THEME_STORAGE_KEY = "digilearn-theme";
 
@@ -36,7 +37,6 @@ const darkColors = {
   skeletonHighlight: "rgba(255, 255, 255, 0.12)",
 } as const;
 
-export type ThemeMode = "light" | "dark";
 export type ThemeColors = {
   [Key in keyof typeof lightColors]: string;
 };
@@ -51,7 +51,10 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [mode, setMode] = useState<ThemeMode>("light");
+  const [mode, setMode] = useState<ThemeMode>(() => {
+    const systemMode = Appearance.getColorScheme();
+    return resolveInitialThemeMode(null, systemMode);
+  });
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
@@ -61,15 +64,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const storedMode = await AsyncStorage.getItem(THEME_STORAGE_KEY);
         if (cancelled) return;
 
-        if (storedMode === "light" || storedMode === "dark") {
-          setMode(storedMode);
-        } else {
-          setMode(Appearance.getColorScheme() === "dark" ? "dark" : "light");
-        }
+        setMode(
+          resolveInitialThemeMode(storedMode, Appearance.getColorScheme()),
+        );
       } catch (error) {
         console.error("Unable to load theme preference:", error);
         if (!cancelled) {
-          setMode(Appearance.getColorScheme() === "dark" ? "dark" : "light");
+          setMode(resolveInitialThemeMode(null, Appearance.getColorScheme()));
         }
       } finally {
         if (!cancelled) setIsHydrated(true);
