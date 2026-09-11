@@ -414,8 +414,7 @@ export default function HomeScreen() {
 
     const noteItems: FeedItem[] = filteredFeaturedNotes.map((note) => ({
       kind: "featuredNote",
-      id: 
-ote-${note.id}`,
+      id: `note-${note.id}`,
       data: note,
       subject: Array.isArray(note.subject) ? note.subject[0] : note.subject,
     }));
