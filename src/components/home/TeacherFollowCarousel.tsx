@@ -230,7 +230,12 @@ function TeacherCard({
 
           {/* Verified badge */}
           {teacher.verified && (
-            <View style={[styles.verifiedBadge, { backgroundColor: accent }]}>
+            <View
+              style={[
+                styles.verifiedBadge,
+                { backgroundColor: accent, borderColor: themeColors.surface },
+              ]}
+            >
               <Ionicons name="checkmark" size={8} color="#fff" />
             </View>
           )}
@@ -493,7 +498,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: "#fff",
+    // borderColor applied inline via themeColors.surface
   },
   teacherName: {
     fontSize: 13.5,
