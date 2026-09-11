@@ -18,15 +18,15 @@ export const SubjectChip = ({ item, onPress, variant }: SubjectChipProps) => {
   const { colors } = useTheme();
   const activeColor =
     variant === "teacher"
-      ? "#FF6269"
+      ? colors.primaryRed
       : variant === "student"
-        ? "#55A9DF"
+        ? colors.primary
         : colors.dark;
   const inactiveColor =
     variant === "teacher"
-      ? "#FFE0E2"
+      ? colors.dangerBackground
       : variant === "student"
-        ? "#E6F3FC"
+        ? colors.primaryLight
         : colors.lightBackground;
   return (
     <Pressable

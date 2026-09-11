@@ -1631,7 +1631,15 @@ export function AddItemModal({
                                   disabled={isSubjectSubsidiary}
                                   style={[
                                     styles.paperCodeChip,
+                                    {
+                                      backgroundColor: themeColors.white,
+                                      borderColor: themeColors.border,
+                                    },
                                     isSelected && styles.paperCodeChipSelected,
+                                    isSelected && {
+                                      backgroundColor: themeColors.primary,
+                                      borderColor: themeColors.primary,
+                                    },
                                   ]}
                                   onPress={() =>
                                     updateField(
@@ -1665,8 +1673,16 @@ export function AddItemModal({
                               }}
                               style={[
                                 styles.paperCodeChip,
+                                {
+                                  backgroundColor: themeColors.white,
+                                  borderColor: themeColors.border,
+                                },
                                 isSubsidiaryPaperSelected &&
                                   styles.paperCodeChipSelected,
+                                isSubsidiaryPaperSelected && {
+                                  backgroundColor: themeColors.primary,
+                                  borderColor: themeColors.primary,
+                                },
                               ]}
                               onPress={() => {
                                 const nextSubsidiaryPaperCode =
@@ -2170,7 +2186,15 @@ export function AddItemModal({
                                   disabled={isSubjectSubsidiary}
                                   style={[
                                     styles.paperCodeChip,
+                                    {
+                                      backgroundColor: themeColors.white,
+                                      borderColor: themeColors.border,
+                                    },
                                     isSelected && styles.paperCodeChipSelected,
+                                    isSelected && {
+                                      backgroundColor: themeColors.primary,
+                                      borderColor: themeColors.primary,
+                                    },
                                   ]}
                                   onPress={() =>
                                     updateField(
@@ -2207,9 +2231,18 @@ export function AddItemModal({
                               disabled={isSubjectSubsidiary}
                               style={[
                                 styles.paperCodeChip,
+                                {
+                                  backgroundColor: themeColors.white,
+                                  borderColor: themeColors.border,
+                                },
                                 (isSubjectSubsidiary ||
                                   isSubsidiaryPaperSelected) &&
                                   styles.paperCodeChipSelected,
+                                (isSubjectSubsidiary ||
+                                  isSubsidiaryPaperSelected) && {
+                                  backgroundColor: themeColors.primary,
+                                  borderColor: themeColors.primary,
+                                },
                               ]}
                               onPress={() => {
                                 if (isSubjectSubsidiary) return;

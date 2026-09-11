@@ -393,26 +393,44 @@ export default function AccountQuickSettingsScreen() {
               </View>
             ) : loadError ? (
               <View style={styles.errorState}>
-                <Text style={styles.errorTitle}>
+                <Text style={[styles.errorTitle, { color: themeColors.text }]}>
                   We couldn’t load your profile.
                 </Text>
-                <Text style={styles.errorText}>{loadError}</Text>
+                <Text
+                  style={[styles.errorText, { color: themeColors.subtitle }]}
+                >
+                  {loadError}
+                </Text>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Retry loading account profile"
                   onPress={() => user && loadData(user)}
                   style={({ pressed }) => [
-                    styles.retryButton,
+                    [
+                      styles.retryButton,
+                      { backgroundColor: themeColors.primary },
+                    ],
                     pressed && styles.buttonPressed,
                   ]}
                 >
-                  <Text style={styles.retryButtonText}>Try again</Text>
+                  <Text
+                    style={[
+                      styles.retryButtonText,
+                      { color: themeColors.white },
+                    ]}
+                  >
+                    Try again
+                  </Text>
                 </Pressable>
               </View>
             ) : (
               <>
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Name</Text>
+                  <Text
+                    style={[styles.fieldLabel, { color: themeColors.text }]}
+                  >
+                    Name
+                  </Text>
                   <TextInput
                     value={name}
                     onChangeText={(value) =>
@@ -442,7 +460,11 @@ export default function AccountQuickSettingsScreen() {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Level</Text>
+                  <Text
+                    style={[styles.fieldLabel, { color: themeColors.text }]}
+                  >
+                    Level
+                  </Text>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel="Select level"
@@ -478,7 +500,11 @@ export default function AccountQuickSettingsScreen() {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>School (Optional)</Text>
+                  <Text
+                    style={[styles.fieldLabel, { color: themeColors.text }]}
+                  >
+                    School (Optional)
+                  </Text>
                   <TextInput
                     value={school}
                     onChangeText={(value) =>
@@ -512,7 +538,11 @@ export default function AccountQuickSettingsScreen() {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Subjects</Text>
+                  <Text
+                    style={[styles.fieldLabel, { color: themeColors.text }]}
+                  >
+                    Subjects
+                  </Text>
                   {subjects.length > 0 ? (
                     <View style={styles.chipsWrap}>
                       {subjects.map((subject) => {
@@ -538,7 +568,12 @@ export default function AccountQuickSettingsScreen() {
                       })}
                     </View>
                   ) : (
-                    <Text style={styles.emptySubjects}>
+                    <Text
+                      style={[
+                        styles.emptySubjects,
+                        { color: themeColors.subtitle },
+                      ]}
+                    >
                       No subjects are available yet.
                     </Text>
                   )}
@@ -583,7 +618,18 @@ export default function AccountQuickSettingsScreen() {
                 </View>
 
                 {saveError ? (
-                  <Text style={styles.errorBubble}>{saveError}</Text>
+                  <Text
+                    style={[
+                      styles.errorBubble,
+                      {
+                        backgroundColor: themeColors.dangerBackground,
+                        borderColor: themeColors.border,
+                        color: themeColors.danger,
+                      },
+                    ]}
+                  >
+                    {saveError}
+                  </Text>
                 ) : null}
 
                 <Pressable
@@ -593,14 +639,22 @@ export default function AccountQuickSettingsScreen() {
                   onPress={handleSave}
                   style={({ pressed }) => [
                     styles.primaryButton,
+                    { backgroundColor: themeColors.primary },
                     isSaving && styles.primaryButtonDisabled,
                     pressed && !isSaving && styles.buttonPressed,
                   ]}
                 >
                   {isSaving ? (
-                    <ActivityIndicator color={colors.white} size="small" />
+                    <ActivityIndicator color={themeColors.white} size="small" />
                   ) : (
-                    <Text style={styles.primaryButtonText}>Confirm</Text>
+                    <Text
+                      style={[
+                        styles.primaryButtonText,
+                        { color: themeColors.white },
+                      ]}
+                    >
+                      Confirm
+                    </Text>
                   )}
                 </Pressable>
               </>
@@ -667,7 +721,7 @@ export default function AccountQuickSettingsScreen() {
                   {option}
                 </Text>
                 {level === option ? (
-                  <Feather name="check" size={16} color={colors.primary} />
+                  <Feather name="check" size={16} color={themeColors.primary} />
                 ) : null}
               </Pressable>
             ))}
@@ -690,7 +744,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
   },
   scroll: {
     flex: 1,

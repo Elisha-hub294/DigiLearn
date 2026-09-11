@@ -168,15 +168,19 @@ function getErrorMessage(error: unknown, fallback: string) {
 
 function InfoMessage({
   children,
-  color = "#3B82F6",
+  color,
 }: {
   children: string;
   color?: string;
 }) {
+  const { colors: themeColors } = useTheme();
+  const resolvedColor = color ?? themeColors.primary;
   return (
     <View style={styles.infoRow}>
-      <Feather name="info" size={12} color={color} />
-      <Text style={[styles.infoText, { color }]}>{children}</Text>
+      <Feather name="info" size={12} color={resolvedColor} />
+      <Text style={[styles.infoText, { color: resolvedColor }]}>
+        {children}
+      </Text>
     </View>
   );
 }
@@ -498,12 +502,16 @@ export default function TeacherAccountQuickSettingsScreen() {
 
   if (!user && !isLoading) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      >
         <View style={[styles.page, { paddingHorizontal: horizontalPadding }]}>
           <View style={[styles.authContainer, { maxWidth: contentMaxWidth }]}>
             <View style={styles.authState}>
-              <Text style={styles.authTitle}>You&apos;re not signed in</Text>
-              <Text style={styles.authText}>
+              <Text style={[styles.authTitle, { color: themeColors.text }]}>
+                You&apos;re not signed in
+              </Text>
+              <Text style={[styles.authText, { color: themeColors.subtitle }]}>
                 Log in or create an account to finish setting up your DigiLearn
                 teacher profile.
               </Text>
@@ -514,11 +522,24 @@ export default function TeacherAccountQuickSettingsScreen() {
                   accessibilityLabel="Log in"
                   onPress={handleLogin}
                   style={({ pressed }) => [
-                    styles.secondaryButton,
+                    [
+                      styles.secondaryButton,
+                      {
+                        borderColor: themeColors.primary,
+                        backgroundColor: themeColors.white,
+                      },
+                    ],
                     pressed && styles.buttonPressed,
                   ]}
                 >
-                  <Text style={styles.secondaryButtonText}>Log in</Text>
+                  <Text
+                    style={[
+                      styles.secondaryButtonText,
+                      { color: themeColors.primary },
+                    ]}
+                  >
+                    Log in
+                  </Text>
                 </Pressable>
 
                 <Pressable
@@ -526,12 +547,22 @@ export default function TeacherAccountQuickSettingsScreen() {
                   accessibilityLabel="Sign up"
                   onPress={handleSignup}
                   style={({ pressed }) => [
-                    styles.primaryButton,
+                    [
+                      styles.primaryButton,
+                      { backgroundColor: themeColors.primary },
+                    ],
                     styles.authSignupButton,
                     pressed && styles.buttonPressed,
                   ]}
                 >
-                  <Text style={styles.primaryButtonText}>Sign up</Text>
+                  <Text
+                    style={[
+                      styles.primaryButtonText,
+                      { color: themeColors.white },
+                    ]}
+                  >
+                    Sign up
+                  </Text>
                 </Pressable>
               </View>
             </View>
@@ -542,7 +573,9 @@ export default function TeacherAccountQuickSettingsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 40}
@@ -565,11 +598,13 @@ export default function TeacherAccountQuickSettingsScreen() {
                 onPress={() => router.back()}
                 style={styles.backButton}
               >
-                <Feather name="arrow-left" size={22} color={colors.dark} />
+                <Feather name="arrow-left" size={22} color={themeColors.text} />
               </Pressable>
 
               <View style={styles.titleWrap}>
-                <Text style={styles.title}>Teacher Account</Text>
+                <Text style={[styles.title, { color: themeColors.text }]}>
+                  Teacher Account
+                </Text>
               </View>
 
               <View style={styles.headerSpacer} />
@@ -581,13 +616,21 @@ export default function TeacherAccountQuickSettingsScreen() {
             </InfoMessage>
 
             <View style={styles.profilePictureSection}>
-              <Text style={styles.fieldLabel}>Profile picture</Text>
+              <Text style={[styles.fieldLabel, { color: themeColors.text }]}>
+                Profile picture
+              </Text>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Choose teacher profile picture"
                 onPress={handleProfilePictureChange}
                 style={({ pressed }) => [
-                  styles.profilePictureButton,
+                  [
+                    styles.profilePictureButton,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      borderColor: themeColors.border,
+                    },
+                  ],
                   pressed && styles.buttonPressed,
                 ]}
               >
@@ -595,10 +638,18 @@ export default function TeacherAccountQuickSettingsScreen() {
                   source={profilePicture ? { uri: profilePicture } : undefined}
                   fallbackSource={fallbackAvatar}
                   placeholder={fallbackAvatar}
-                  style={styles.profilePicturePreview}
+                  style={[
+                    styles.profilePicturePreview,
+                    { backgroundColor: themeColors.surface },
+                  ]}
                   contentFit="cover"
                 />
-                <Text style={styles.profilePictureText}>
+                <Text
+                  style={[
+                    styles.profilePictureText,
+                    { color: themeColors.text },
+                  ]}
+                >
                   {pictureSaving
                     ? "Saving picture..."
                     : profilePicture
@@ -607,7 +658,11 @@ export default function TeacherAccountQuickSettingsScreen() {
                 </Text>
               </Pressable>
               {pictureError ? (
-                <Text style={styles.socialError}>{pictureError}</Text>
+                <Text
+                  style={[styles.socialError, { color: themeColors.danger }]}
+                >
+                  {pictureError}
+                </Text>
               ) : null}
             </View>
 
@@ -624,26 +679,44 @@ export default function TeacherAccountQuickSettingsScreen() {
               </View>
             ) : loadError ? (
               <View style={styles.errorState}>
-                <Text style={styles.errorTitle}>
+                <Text style={[styles.errorTitle, { color: themeColors.text }]}>
                   We couldn&apos;t load your profile.
                 </Text>
-                <Text style={styles.errorText}>{loadError}</Text>
+                <Text
+                  style={[styles.errorText, { color: themeColors.subtitle }]}
+                >
+                  {loadError}
+                </Text>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel="Retry loading teacher profile"
                   onPress={() => user && loadData(user)}
                   style={({ pressed }) => [
-                    styles.retryButton,
+                    [
+                      styles.retryButton,
+                      { backgroundColor: themeColors.primary },
+                    ],
                     pressed && styles.buttonPressed,
                   ]}
                 >
-                  <Text style={styles.retryButtonText}>Try again</Text>
+                  <Text
+                    style={[
+                      styles.retryButtonText,
+                      { color: themeColors.white },
+                    ]}
+                  >
+                    Try again
+                  </Text>
                 </Pressable>
               </View>
             ) : (
               <>
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Name</Text>
+                  <Text
+                    style={[styles.fieldLabel, { color: themeColors.text }]}
+                  >
+                    Name
+                  </Text>
                   <TextInput
                     value={name}
                     onChangeText={(value) =>
@@ -657,7 +730,14 @@ export default function TeacherAccountQuickSettingsScreen() {
                     maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your name"
                     placeholderTextColor={themeColors.subtitle}
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: themeColors.white,
+                        borderColor: themeColors.border,
+                        color: themeColors.text,
+                      },
+                    ]}
                     accessibilityLabel="Name"
                     autoCapitalize="words"
                     autoCorrect={false}
@@ -666,7 +746,11 @@ export default function TeacherAccountQuickSettingsScreen() {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Schools (Optional)</Text>
+                  <Text
+                    style={[styles.fieldLabel, { color: themeColors.text }]}
+                  >
+                    Schools (Optional)
+                  </Text>
                   <TextInput
                     value={school}
                     onChangeText={(value) =>
@@ -680,7 +764,14 @@ export default function TeacherAccountQuickSettingsScreen() {
                     maxLength={MAX_PROFILE_FIELD_LENGTH}
                     placeholder="Your school"
                     placeholderTextColor={themeColors.subtitle}
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: themeColors.white,
+                        borderColor: themeColors.border,
+                        color: themeColors.text,
+                      },
+                    ]}
                     accessibilityLabel="School"
                     autoCapitalize="words"
                     autoCorrect={false}
@@ -693,7 +784,11 @@ export default function TeacherAccountQuickSettingsScreen() {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Subjects</Text>
+                  <Text
+                    style={[styles.fieldLabel, { color: themeColors.text }]}
+                  >
+                    Subjects
+                  </Text>
                   {subjects.length > 0 ? (
                     <View style={styles.chipsWrap}>
                       {subjects.map((subject) => {
@@ -719,7 +814,12 @@ export default function TeacherAccountQuickSettingsScreen() {
                       })}
                     </View>
                   ) : (
-                    <Text style={styles.emptySubjects}>
+                    <Text
+                      style={[
+                        styles.emptySubjects,
+                        { color: themeColors.subtitle },
+                      ]}
+                    >
                       No subjects are available yet.
                     </Text>
                   )}
@@ -764,7 +864,11 @@ export default function TeacherAccountQuickSettingsScreen() {
                 </View>
 
                 <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Socials</Text>
+                  <Text
+                    style={[styles.fieldLabel, { color: themeColors.text }]}
+                  >
+                    Socials
+                  </Text>
                   <View style={styles.socialsList}>
                     {SOCIAL_OPTIONS.map((option) => {
                       const value = socialValues[option.key];
@@ -782,15 +886,23 @@ export default function TeacherAccountQuickSettingsScreen() {
                           <Feather
                             name={option.icon}
                             size={21}
-                            color="#3B5B8F"
+                            color={themeColors.primary}
                           />
                           <View style={styles.socialTextWrap}>
-                            <Text style={styles.socialTitle}>
+                            <Text
+                              style={[
+                                styles.socialTitle,
+                                { color: themeColors.text },
+                              ]}
+                            >
                               {option.title}
                             </Text>
                             {value ? (
                               <Text
-                                style={styles.socialValue}
+                                style={[
+                                  styles.socialValue,
+                                  { color: themeColors.subtitle },
+                                ]}
                                 numberOfLines={1}
                               >
                                 {value}
@@ -809,7 +921,18 @@ export default function TeacherAccountQuickSettingsScreen() {
                 </View>
 
                 {saveError ? (
-                  <Text style={styles.errorBubble}>{saveError}</Text>
+                  <Text
+                    style={[
+                      styles.errorBubble,
+                      {
+                        backgroundColor: themeColors.dangerBackground,
+                        borderColor: themeColors.border,
+                        color: themeColors.danger,
+                      },
+                    ]}
+                  >
+                    {saveError}
+                  </Text>
                 ) : null}
 
                 <Pressable
@@ -819,14 +942,22 @@ export default function TeacherAccountQuickSettingsScreen() {
                   onPress={handleConfirm}
                   style={({ pressed }) => [
                     styles.primaryButton,
+                    { backgroundColor: themeColors.primary },
                     isSaving && styles.primaryButtonDisabled,
                     pressed && !isSaving && styles.buttonPressed,
                   ]}
                 >
                   {isSaving ? (
-                    <ActivityIndicator color={colors.white} size="small" />
+                    <ActivityIndicator color={themeColors.white} size="small" />
                   ) : (
-                    <Text style={styles.primaryButtonText}>Confirm</Text>
+                    <Text
+                      style={[
+                        styles.primaryButtonText,
+                        { color: themeColors.white },
+                      ]}
+                    >
+                      Confirm
+                    </Text>
                   )}
                 </Pressable>
               </>
@@ -846,7 +977,12 @@ export default function TeacherAccountQuickSettingsScreen() {
           keyboardVerticalOffset={Platform.OS === "ios" ? 24 : 0}
           style={styles.modalKeyboardView}
         >
-          <SafeAreaView style={styles.modalSafeArea}>
+          <SafeAreaView
+            style={[
+              styles.modalSafeArea,
+              { backgroundColor: themeColors.background },
+            ]}
+          >
             <Pressable
               style={[
                 styles.modalBackdrop,
@@ -855,10 +991,18 @@ export default function TeacherAccountQuickSettingsScreen() {
               onPress={closeSocialModal}
             >
               <Pressable
-                style={[styles.socialModalCard, { maxWidth: contentMaxWidth }]}
+                style={[
+                  styles.socialModalCard,
+                  {
+                    maxWidth: contentMaxWidth,
+                    backgroundColor: themeColors.white,
+                  },
+                ]}
                 onPress={() => undefined}
               >
-                <Text style={styles.modalTitle}>Set {activeSocial?.title}</Text>
+                <Text style={[styles.modalTitle, { color: themeColors.text }]}>
+                  Set {activeSocial?.title}
+                </Text>
                 <TextInput
                   value={socialInput}
                   onChangeText={(value) => {
@@ -867,7 +1011,14 @@ export default function TeacherAccountQuickSettingsScreen() {
                   }}
                   placeholder={activeSocial?.placeholder}
                   placeholderTextColor={themeColors.subtitle}
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                      color: themeColors.text,
+                    },
+                  ]}
                   autoCapitalize="none"
                   autoCorrect={false}
                   keyboardType={activeSocial?.keyboardType ?? "default"}
@@ -876,20 +1027,41 @@ export default function TeacherAccountQuickSettingsScreen() {
                   autoFocus
                 />
                 {socialError ? (
-                  <Text style={styles.socialError}>{socialError}</Text>
+                  <Text
+                    style={[styles.socialError, { color: themeColors.danger }]}
+                  >
+                    {socialError}
+                  </Text>
                 ) : null}
                 <View style={styles.modalActions}>
                   <Pressable
                     onPress={closeSocialModal}
                     style={styles.modalCancelButton}
                   >
-                    <Text style={styles.modalCancelText}>Cancel</Text>
+                    <Text
+                      style={[
+                        styles.modalCancelText,
+                        { color: themeColors.primary },
+                      ]}
+                    >
+                      Cancel
+                    </Text>
                   </Pressable>
                   <Pressable
                     onPress={saveSocial}
-                    style={styles.modalSaveButton}
+                    style={[
+                      styles.modalSaveButton,
+                      { backgroundColor: themeColors.primary },
+                    ]}
                   >
-                    <Text style={styles.modalSaveText}>Save</Text>
+                    <Text
+                      style={[
+                        styles.modalSaveText,
+                        { color: themeColors.white },
+                      ]}
+                    >
+                      Save
+                    </Text>
                   </Pressable>
                 </View>
               </Pressable>
@@ -913,7 +1085,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
   },
   scroll: {
     flex: 1,
