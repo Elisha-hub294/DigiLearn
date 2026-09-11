@@ -56,7 +56,6 @@ import { recordUserActivity } from "../../services/activityService";
 import { BookRecord, loadBooks } from "../../services/booksService";
 import { clearGuestMode, isGuestMode } from "../../services/guestService";
 import { loadTrendingLessons } from "../../services/trendingLessonsService";
-import { getFollowedTeacherIds } from "../../services/teacherCommunity";
 import { getUserOnboardingState } from "../../services/userProfile";
 import { interleaveFeedItems } from "../../utils/feedAlgorithm";
 import {
@@ -126,12 +125,11 @@ export default function HomeScreen() {
         loadFeaturedNotes(),
         loadFeaturedNotesMetadata(),
         loadBooks(force),
-        user
-          ? getFollowedTeacherIds().catch((error) => {
-              console.warn("Failed to load followed teachers:", error);
-              return [];
-            })
-          : Promise.resolve([]),
+        Promise.resolve(
+          user && Array.isArray(profile?.followedTeacherIds)
+            ? profile.followedTeacherIds
+            : [],
+        ),
       ]);
 
       setTeacherPosts(posts);
@@ -149,7 +147,7 @@ export default function HomeScreen() {
     } catch (err) {
       console.warn("Failed to load feed pool data:", err);
     }
-  }, [user]);
+  }, [profile?.followedTeacherIds, user]);
 
   useEffect(() => {
     let active = true;
