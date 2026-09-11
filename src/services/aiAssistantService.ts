@@ -1,8 +1,8 @@
 import * as SecureStore from "expo-secure-store";
 import { collection, getDocs, limit, query } from "firebase/firestore";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { httpsCallable } from "firebase/functions";
 
-import { db } from "../../firebaseConfig";
+import { auth, db, functions } from "../../firebaseConfig";
 import { getFirebaseStorageUrl } from "../utils/firebaseStorage";
 
 const ASSISTANT_ENABLED_KEY = "digilearn.assistant.enabled"; // retained for backward compatibility
@@ -159,42 +159,80 @@ const extractKnowledgeValue = (
   return null;
 };
 
-async function generateAIContentFromKnowledge(
-  _geminiApiKey: string | null,
-  _appOverview: string | null,
-): Promise<{ floatingMessages: string[]; suggestions: string[] }> {
-  // Attempt to call the backend Gemini function to generate dynamic content.
-  try {
-    const functions = getFunctions();
-    const generate = httpsCallable(functions, "generateAssistantReply");
-    const prompt = `Generate two JSON arrays named 'floatingMessages' and 'suggestions' based on the following app overview: ${_appOverview ?? ""}`;
-    const response = await generate({
-      prompt,
-      conversation: "",
-      systemPrompt: "",
-    });
-    const text = (response?.data as any)?.text as string | undefined;
-    if (text) {
-      // Expecting the assistant to return a JSON string.
-      const parsed = JSON.parse(text);
-      if (
-        Array.isArray(parsed.floatingMessages) &&
-        Array.isArray(parsed.suggestions)
-      ) {
-        return {
-          floatingMessages: parsed.floatingMessages,
-          suggestions: parsed.suggestions,
-        };
-      }
-    }
-  } catch (e) {
-    console.warn("Failed to generate AI content via Gemini", e);
-  }
-  // Fallback to static defaults.
+function getDefaultAssistantContent(): {
+  floatingMessages: string[];
+  suggestions: string[];
+} {
+  // This content is shown before a chat session starts. It must not invoke the
+  // authenticated chat callable, which would otherwise fail for signed-out users.
   return {
     floatingMessages: DEFAULT_FLOATING_MESSAGES,
     suggestions: DEFAULT_SUGGESTIONS,
   };
+}
+
+function parseGeneratedAssistantContent(text: string): {
+  floatingMessages: string[];
+  suggestions: string[];
+} | null {
+  const json = text
+    .trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/, "");
+
+  try {
+    const value = JSON.parse(json) as Record<string, unknown>;
+    const toTextList = (items: unknown) =>
+      Array.isArray(items)
+        ? items.filter(isNonEmptyString).map((item) => item.trim())
+        : [];
+    const floatingMessages = toTextList(value.floatingMessages);
+    const suggestions = toTextList(value.suggestions);
+
+    return floatingMessages.length > 0 && suggestions.length > 0
+      ? { floatingMessages, suggestions }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+async function generateAIContentFromKnowledge(
+  appOverview: string | null,
+): Promise<{ floatingMessages: string[]; suggestions: string[] }> {
+  await auth.authStateReady();
+  if (!auth.currentUser) {
+    return getDefaultAssistantContent();
+  }
+
+  try {
+    const generate = httpsCallable<
+      {
+        prompt: string;
+        conversation: string;
+        systemPrompt: string;
+        startupContent: boolean;
+      },
+      { text?: string }
+    >(functions, "generateAssistantReply");
+    const response = await generate({
+      prompt: "Generate startup assistant content.",
+      conversation: "",
+      systemPrompt: `Base the suggestions on this DigiLearn overview when relevant: ${appOverview ?? "No overview is available."}`,
+      startupContent: true,
+    });
+    const generated = response.data.text
+      ? parseGeneratedAssistantContent(response.data.text)
+      : null;
+    if (generated) {
+      return generated;
+    }
+  } catch (error) {
+    console.warn("Unable to generate startup AI suggestions", error);
+  }
+
+  return getDefaultAssistantContent();
 }
 
 export async function getAssistantContent(
@@ -228,7 +266,7 @@ export async function getAssistantContent(
     const avatar = await resolveAssistantAsset(firstAvatar);
 
     const { floatingMessages, suggestions } =
-      await generateAIContentFromKnowledge(null, knowledgeContext.appOverview);
+      await generateAIContentFromKnowledge(knowledgeContext.appOverview);
 
     const content = {
       avatar,

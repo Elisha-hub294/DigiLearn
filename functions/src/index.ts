@@ -150,6 +150,7 @@ export const generateAssistantReply = onCall(
       typeof request.data?.systemPrompt === "string"
         ? request.data.systemPrompt.trim()
         : "";
+    const startupContent = request.data?.startupContent === true;
 
     if (!prompt || prompt.length > 4000 || conversation.length > 12000) {
       throw new HttpsError(
@@ -163,44 +164,50 @@ export const generateAssistantReply = onCall(
       throw new HttpsError("unavailable", "The assistant is not configured.");
     }
 
-    const {
-      ref: usageRef,
-      legacyRef,
-      email,
-    } = getAssistantUsageRef(request.auth.uid, request.auth.token.email);
-    const today = new Date().toISOString().slice(0, 10);
-    await db.runTransaction(async (transaction) => {
-      const usageSnapshot = await transaction.get(usageRef);
-      const legacySnapshot =
-        usageRef.path === legacyRef.path
-          ? usageSnapshot
-          : await transaction.get(legacyRef);
-      const usage = usageSnapshot.exists
-        ? usageSnapshot.data()
-        : legacySnapshot.data();
-      const requestCount = usage?.day === today ? Number(usage.count ?? 0) : 0;
-      if (requestCount >= 15) {
-        throw new HttpsError(
-          "resource-exhausted",
-          "Daily assistant usage limit reached.",
-        );
-      }
-      transaction.set(usageRef, {
-        day: today,
-        count: requestCount + 1,
-        updatedAt: Timestamp.now(),
-        ...(email ? { email } : {}),
+    if (!startupContent) {
+      const {
+        ref: usageRef,
+        legacyRef,
+        email,
+      } = getAssistantUsageRef(request.auth.uid, request.auth.token.email);
+      const today = new Date().toISOString().slice(0, 10);
+      await db.runTransaction(async (transaction) => {
+        const usageSnapshot = await transaction.get(usageRef);
+        const legacySnapshot =
+          usageRef.path === legacyRef.path
+            ? usageSnapshot
+            : await transaction.get(legacyRef);
+        const usage = usageSnapshot.exists
+          ? usageSnapshot.data()
+          : legacySnapshot.data();
+        const requestCount = usage?.day === today ? Number(usage.count ?? 0) : 0;
+        if (requestCount >= 15) {
+          throw new HttpsError(
+            "resource-exhausted",
+            "Daily assistant usage limit reached.",
+          );
+        }
+        transaction.set(usageRef, {
+          day: today,
+          count: requestCount + 1,
+          updatedAt: Timestamp.now(),
+          ...(email ? { email } : {}),
+        });
+        if (usageRef.path !== legacyRef.path && legacySnapshot.exists) {
+          transaction.delete(legacyRef);
+        }
       });
-      if (usageRef.path !== legacyRef.path && legacySnapshot.exists) {
-        transaction.delete(legacyRef);
-      }
-    });
+    }
 
     try {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash-lite",
-        contents: `${systemPrompt}\n\nConversation:\n${conversation}\n\nUser prompt:\n${prompt}`,
+        // `gemini-3.5-flash-lite` is not a published Gemini model ID.
+        // Use the lightweight production model supported by the Google Gen AI SDK.
+        model: "gemini-2.5-flash-lite",
+        contents: startupContent
+          ? "Return JSON only with two string arrays: floatingMessages (exactly 3 short study-assistant greetings) and suggestions (exactly 6 useful study prompts). Do not use Markdown or add any other keys."
+          : `${systemPrompt}\n\nConversation:\n${conversation}\n\nUser prompt:\n${prompt}`,
       });
       return { text: response.text ?? "" };
     } catch (error) {
