@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Image,
   Pressable,
@@ -29,6 +29,166 @@ import {
   extractPptxContent,
 } from "../library/add-item/pdfService";
 import { ActionDialog } from "../ui/ActionDialog";
+
+const PDF_JS_CDN =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js";
+const PDF_WORKER_CDN =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+
+/** Load PDF.js once, even when a preview component loaded it before the reader. */
+function loadPdfJs(): Promise<any> {
+  if ((window as any).pdfjsLib) return Promise.resolve((window as any).pdfjsLib);
+
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(
+      `script[src="${PDF_JS_CDN}"]`,
+    );
+    const onLoad = () => {
+      const pdfjsLib = (window as any).pdfjsLib;
+      if (!pdfjsLib) {
+        reject(new Error("PDF.js did not initialise"));
+        return;
+      }
+      pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_CDN;
+      resolve(pdfjsLib);
+    };
+
+    if (existing) {
+      existing.addEventListener("load", onLoad, { once: true });
+      existing.addEventListener("error", () => reject(new Error("Failed to load PDF.js")), {
+        once: true,
+      });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = PDF_JS_CDN;
+    script.onload = onLoad;
+    script.onerror = () => reject(new Error("Failed to load PDF.js"));
+    document.head.appendChild(script);
+  });
+}
+
+function WebPdfPage({
+  pdf,
+  pageNumber,
+  onVisible,
+  setCanvasRef,
+}: {
+  pdf: any;
+  pageNumber: number;
+  onVisible: (page: number) => void;
+  setCanvasRef: (canvas: HTMLCanvasElement | null) => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) onVisible(pageNumber);
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(canvas);
+
+    void (async () => {
+      const page = await pdf.getPage(pageNumber);
+      if (!active) return;
+      const viewport = page.getViewport({ scale: 1.5 });
+      const context = canvas.getContext("2d");
+      if (!context) return;
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: context, viewport }).promise;
+    })();
+
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, [onVisible, pageNumber, pdf]);
+
+  return (
+    <canvas
+      ref={(canvas) => {
+        canvasRef.current = canvas;
+        setCanvasRef(canvas);
+      }}
+      style={{
+        display: "block",
+        width: "100%",
+        height: "auto",
+        marginBottom: 8,
+        backgroundColor: "#FFFFFF",
+      }}
+    />
+  );
+}
+
+function WebPdfReader({
+  uri,
+  initialPage,
+  onLoaded,
+  onPageChange,
+  onError,
+}: {
+  uri: string;
+  initialPage: number;
+  onLoaded: (pageCount: number) => void;
+  onPageChange: (page: number) => void;
+  onError: () => void;
+}) {
+  const [pdf, setPdf] = useState<any>(null);
+  const pageRefs = useRef<Record<number, HTMLCanvasElement | null>>({});
+
+  useEffect(() => {
+    let active = true;
+    void loadPdfJs()
+      .then((pdfjsLib) =>
+        pdfjsLib.getDocument({ url: uri, withCredentials: false }).promise,
+      )
+      .then((document) => {
+        if (!active) return;
+        setPdf(document);
+        onLoaded(document.numPages);
+      })
+      .catch(() => {
+        if (active) onError();
+      });
+    return () => {
+      active = false;
+    };
+  }, [onError, onLoaded, uri]);
+
+  useEffect(() => {
+    if (!pdf || initialPage <= 1) return;
+    const timer = window.setTimeout(() => {
+      pageRefs.current[initialPage]?.scrollIntoView({ block: "start" });
+    }, 100);
+    return () => window.clearTimeout(timer);
+  }, [initialPage, pdf]);
+
+  if (!pdf) return null;
+  return (
+    <ScrollView style={styles.pdfScroll} contentContainerStyle={styles.pdfContent}>
+      {Array.from({ length: pdf.numPages }, (_, index) => (
+        <WebPdfPage
+          key={index + 1}
+          pdf={pdf}
+          pageNumber={index + 1}
+          onVisible={onPageChange}
+          setCanvasRef={(canvas) => {
+            pageRefs.current[index + 1] = canvas;
+          }}
+        />
+      ))}
+    </ScrollView>
+  );
+}
 
 function normalizeUriParam(
   raw: string | string[] | undefined | null,
@@ -90,6 +250,7 @@ export function PdfReaderScreen() {
   const [localBlobUri, setLocalBlobUri] = useState<string | null>(null);
   const [officeText, setOfficeText] = useState<string | null>(null);
   const [officeImages, setOfficeImages] = useState<string[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -202,11 +363,19 @@ export function PdfReaderScreen() {
   useEffect(() => {
     if (!progressReady || !pageId || !decodedUri || isOfficeFile) return;
 
-    void savePageReadingProgress(pageId, currentPage, undefined, {
+    void savePageReadingProgress(pageId, currentPage, totalPages || undefined, {
       title: title || "PDF",
       documentUri: decodedUri,
     });
-  }, [currentPage, decodedUri, isOfficeFile, pageId, progressReady, title]);
+  }, [
+    currentPage,
+    decodedUri,
+    isOfficeFile,
+    pageId,
+    progressReady,
+    title,
+    totalPages,
+  ]);
 
   const readerLabel = isOfficeFile ? "Office Reader" : "PDF Reader";
   const viewerUri = isOfficeFile
@@ -331,6 +500,19 @@ export function PdfReaderScreen() {
       }, 600);
     }
   };
+
+  const handlePdfLoaded = useCallback((pageCount: number) => {
+    setTotalPages(pageCount);
+  }, []);
+
+  const handlePdfPageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+
+  const handlePdfError = useCallback(() => {
+    setIframeError(true);
+    setOfflineNoticeVisible(true);
+  }, []);
 
   return (
     <View style={[styles.screen, { backgroundColor: themeColors.background }]}>
@@ -508,7 +690,7 @@ export function PdfReaderScreen() {
         >
           <Feather name="alert-circle" size={48} color="#CBD5E1" />
         </View>
-      ) : (
+      ) : isOfficeFile ? (
         <iframe
           // Loading the signed resource URL directly lets the browser's PDF
           // viewer handle it. The previous pdf.js srcDoc implementation
@@ -527,6 +709,14 @@ export function PdfReaderScreen() {
             setIframeError(true);
             setOfflineNoticeVisible(true);
           }}
+        />
+      ) : (
+        <WebPdfReader
+          uri={decodedUri}
+          initialPage={startPage}
+          onLoaded={handlePdfLoaded}
+          onPageChange={handlePdfPageChange}
+          onError={handlePdfError}
         />
       )}
     </View>
@@ -554,6 +744,14 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 260,
     marginBottom: spacing.lg,
+  },
+  pdfScroll: {
+    flex: 1,
+    backgroundColor: "#525659",
+  },
+  pdfContent: {
+    alignItems: "center",
+    paddingVertical: 8,
   },
 
   // Header
