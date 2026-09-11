@@ -1456,6 +1456,7 @@ export const notifyAdminsOfTeacherApplication = onDocumentWritten(
     const application = event.data?.after.data();
     const previousApplication = event.data?.before.data();
     const applicationId = event.params.applicationId;
+    const isResubmission = previousApplication?.status === "rejected";
     if (
       !application ||
       application.status !== "pending" ||
@@ -1463,26 +1464,33 @@ export const notifyAdminsOfTeacherApplication = onDocumentWritten(
     )
       return;
 
+    const notificationId = isResubmission
+      ? `teacher-resubmission-${applicationId}-${application.resubmittedAt?.seconds ?? Date.now()}`
+      : applicationId;
+
     await Promise.all([
       db
         .collection("adminNotifications")
-        .doc(applicationId)
+        .doc(notificationId)
         .set(
           {
-            id: applicationId,
+            id: notificationId,
             type: "announcement",
             publisherName: "DigiLearn",
             publisherAvatar:
               typeof application.photoURL === "string"
                 ? application.photoURL
                 : "@/assets/images/panda.png",
-            message: "A new teacher account is waiting for your review.",
+            message: isResubmission
+              ? "A teacher has resubmitted an application for your review."
+              : "A new teacher account is waiting for your review.",
             resourceTitle: application.name || "Teacher application",
             itemId: applicationId,
             navigation: "/teacher-applications",
             adminKind: "teacher-application",
             createdAt: FieldValue.serverTimestamp(),
             read: false,
+            dismissed: false,
           },
           { merge: true },
         ),
