@@ -18,16 +18,10 @@ export const SubjectChip = ({ item, onPress, variant }: SubjectChipProps) => {
   const { colors } = useTheme();
   const activeColor =
     variant === "teacher"
-      ? colors.primaryRed
+      ? colors.primaryRedDark
       : variant === "student"
         ? colors.primary
         : colors.dark;
-  const inactiveColor =
-    variant === "teacher"
-      ? colors.dangerBackground
-      : variant === "student"
-        ? colors.primaryLight
-        : colors.lightBackground;
   return (
     <Pressable
       accessibilityRole="button"
@@ -35,8 +29,8 @@ export const SubjectChip = ({ item, onPress, variant }: SubjectChipProps) => {
       style={[
         styles.chip,
         {
-          backgroundColor: item.active ? activeColor : inactiveColor,
-          borderColor: item.active ? activeColor : colors.border,
+          backgroundColor: item.active ? activeColor : colors.surfaceMuted,
+          borderColor: item.active ? activeColor : colors.surfaceBorder,
         },
       ]}
     >
@@ -56,7 +50,7 @@ const styles = StyleSheet.create({
   chip: {
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    paddingVertical: 10,
+    paddingVertical: 9,
     marginRight: spacing.sm,
     marginTop: spacing.sm,
     borderWidth: 1,

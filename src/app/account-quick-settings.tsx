@@ -60,9 +60,17 @@ function getSubjectNames(items: unknown): string[] {
 function InfoMessage({ children }: { children: string }) {
   const { colors: themeColors } = useTheme();
   return (
-    <View style={styles.infoRow}>
-      <Feather name="info" size={12} color={themeColors.primaryRed} />
-      <Text style={[styles.infoText, { color: themeColors.primaryRed }]}>
+    <View
+      style={[
+        styles.infoRow,
+        {
+          backgroundColor: themeColors.primaryLight,
+          borderColor: themeColors.infoBorder,
+        },
+      ]}
+    >
+      <Feather name="info" size={14} color={themeColors.primaryDark} />
+      <Text style={[styles.infoText, { color: themeColors.primaryDark }]}>
         {children}
       </Text>
     </View>
@@ -834,14 +842,17 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginTop: spacing.sm,
-    gap: 6,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderRadius: 10,
+    gap: 8,
     flexShrink: 1,
   },
   infoText: {
     flex: 1,
-    color: "#FF6B6B",
-    fontSize: 12.5,
+    fontSize: 12,
     lineHeight: 17,
   },
   chipsWrap: {
