@@ -122,10 +122,12 @@ const extractAccentColor = (rawAccent: unknown): string => {
 export function PagePreviewScreen() {
   const { colors: themeColors } = useTheme();
   const { profile } = useProfile();
-  const { id, source, returnTo, title } = useLocalSearchParams<{
+  const { id, source, returnTo, teacherId, teacherName, title } = useLocalSearchParams<{
     id: string;
     source?: "home" | "library" | "pages" | "activity";
     returnTo?: string;
+    teacherId?: string;
+    teacherName?: string;
     title?: string;
   }>();
 
@@ -504,6 +506,30 @@ export function PagePreviewScreen() {
   const goBack = () => {
     if (returnTo === "/profile") {
       router.back();
+      return;
+    }
+
+    if (
+      returnTo === "/teacher-profile" &&
+      ((typeof teacherId === "string" && teacherId.trim()) ||
+        (typeof teacherName === "string" && teacherName.trim()))
+    ) {
+      if (router.canGoBack()) {
+        router.back();
+        return;
+      }
+
+      router.replace({
+        pathname: "/teacher-profile",
+        params: {
+          ...(typeof teacherId === "string" && teacherId.trim()
+            ? { id: teacherId.trim() }
+            : {}),
+          ...(typeof teacherName === "string" && teacherName.trim()
+            ? { name: teacherName.trim() }
+            : {}),
+        },
+      } as any);
       return;
     }
 

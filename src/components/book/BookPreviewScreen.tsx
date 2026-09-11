@@ -105,10 +105,11 @@ function mapBook(id: string, d: Record<string, unknown>): Book {
 
 export function BookPreviewScreen() {
   const { colors: themeColors } = useTheme();
-  const { id, source, returnTo, teacherName } = useLocalSearchParams<{
+  const { id, source, returnTo, teacherId, teacherName } = useLocalSearchParams<{
     id: string;
     source?: string;
     returnTo?: string;
+    teacherId?: string;
     teacherName?: string;
   }>();
   const [book, setBook] = useState<Book>();
@@ -329,12 +330,24 @@ export function BookPreviewScreen() {
     if (
       typeof returnTo === "string" &&
       returnTo.trim() === "/teacher-profile" &&
-      typeof teacherName === "string" &&
-      teacherName.trim()
+      ((typeof teacherId === "string" && teacherId.trim()) ||
+        (typeof teacherName === "string" && teacherName.trim()))
     ) {
+      if (router.canGoBack()) {
+        router.back();
+        return;
+      }
+
       router.replace({
         pathname: "/teacher-profile",
-        params: { name: teacherName.trim() },
+        params: {
+          ...(typeof teacherId === "string" && teacherId.trim()
+            ? { id: teacherId.trim() }
+            : {}),
+          ...(typeof teacherName === "string" && teacherName.trim()
+            ? { name: teacherName.trim() }
+            : {}),
+        },
       } as any);
       return;
     }

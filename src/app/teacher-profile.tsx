@@ -1179,6 +1179,9 @@ export default function TeacherProfileScreen() {
             source="pages"
             includeHiddenItems
             filterByInterests={false}
+            returnTo="/teacher-profile"
+            teacherId={teacher?.id || params.id || ""}
+            teacherName={teacher?.name || teacherName}
           />
         );
       }
@@ -1203,6 +1206,7 @@ export default function TeacherProfileScreen() {
                   id: item.id,
                   source: "teacher-profile",
                   returnTo: "/teacher-profile",
+                  teacherId: teacher?.id || params.id || "",
                   teacherName: teacher?.name || teacherName,
                 },
               } as any);

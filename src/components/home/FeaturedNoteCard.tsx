@@ -93,6 +93,9 @@ type FeaturedNoteCardProps = {
   onEndReached?: () => void;
   loadingMore?: boolean;
   hasMore?: boolean;
+  returnTo?: string;
+  teacherId?: string;
+  teacherName?: string;
 };
 
 const normalizeKey = (str: string) => str.trim().toLowerCase();
@@ -181,6 +184,9 @@ export const FeaturedNoteCard = ({
   onEndReached,
   loadingMore = false,
   hasMore = false,
+  returnTo,
+  teacherId,
+  teacherName,
 }: FeaturedNoteCardProps) => {
   const { width } = useWindowDimensions();
   const { profile } = useProfile();
@@ -315,6 +321,9 @@ export const FeaturedNoteCard = ({
             hideAvatar={hideAvatar}
             includeHiddenItems={includeHiddenItems}
             isVisible={visibleNoteIds.has(item.id)}
+            returnTo={returnTo}
+            teacherId={teacherId}
+            teacherName={teacherName}
           />
         )}
       />
@@ -363,6 +372,9 @@ export const FeaturedNoteItem = ({
   hideAvatar = false,
   includeHiddenItems = false,
   isVisible = true,
+  returnTo,
+  teacherId,
+  teacherName,
 }: {
   note: TopicalNote;
   subjectAvatars?: Record<string, string>;
@@ -373,6 +385,9 @@ export const FeaturedNoteItem = ({
   hideAvatar?: boolean;
   includeHiddenItems?: boolean;
   isVisible?: boolean;
+  returnTo?: string;
+  teacherId?: string;
+  teacherName?: string;
 }) => {
   const { user, profile } = useProfile();
   const { colors: themeColors, isDark } = useTheme();
@@ -659,7 +674,9 @@ export const FeaturedNoteItem = ({
                 params: {
                   id: note.id,
                   source: previewSource,
-                  returnTo: pathname,
+                  returnTo: returnTo ?? pathname,
+                  teacherId: teacherId ?? "",
+                  teacherName: teacherName ?? "",
                   title: routeTitle,
                 },
               } as any);
@@ -746,7 +763,9 @@ export const FeaturedNoteItem = ({
                         params: {
                           id: note.id,
                           source: previewSource,
-                          returnTo: pathname,
+                          returnTo: returnTo ?? pathname,
+                          teacherId: teacherId ?? "",
+                          teacherName: teacherName ?? "",
                           title: routeTitle,
                         },
                       } as any);
