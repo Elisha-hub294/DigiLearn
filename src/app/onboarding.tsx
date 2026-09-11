@@ -37,21 +37,39 @@ const SLIDES = [
   },
   {
     id: "slide2",
-    headline: "Study Smarter\nwith AI",
+    headline: "Everything You Need\nto Learn",
     subtitle:
-      "OSplatform AI assistant answers questions, summarises notes and helps you master any topic.",
+      "Find books, past papers, videos and lessons in one organised library built for your learning journey.",
 
-    animation: require("../../assets/animations/onboarding2.json"),
-    accentColor: "#A78BFA",
+    animation: require("../../assets/animations/Resources.json"),
+    accentColor: "#4F8EF7",
   },
   {
     id: "slide3",
-    headline: "Achieve Your\nGoals",
+    headline: "Study Smarter\nwith AI",
     subtitle:
-      "Track your progress, earn achievements and become the best version of yourself.",
+      "Ask questions, simplify difficult topics and get helpful explanations whenever you need support.",
 
-    animation: require("../../assets/animations/onboarding3.json"),
-    accentColor: "#34D399",
+    animation: require("../../assets/animations/Artificial Intelligence.json"),
+    accentColor: "#fff",
+  },
+  {
+    id: "slide4",
+    headline: "Make Learning\nYour Own",
+    subtitle:
+      "Learn wherever you are with resources that fit your pace, your goals and the way you study best.",
+
+    animation: require("../../assets/animations/Student.json"),
+    accentColor: "#f658f1",
+  },
+  {
+    id: "slide5",
+    headline: "Stay Focused\non Your Goals",
+    subtitle:
+      "Keep your target in sight, build momentum and take the next step toward the future you want.",
+
+    animation: require("../../assets/animations/Target.json"),
+    accentColor: "#eaffa0",
   },
 ] as const;
 
@@ -239,7 +257,7 @@ export default function OnboardingScreen() {
             ]}
             accessibilityRole="button"
             accessibilityLabel={
-              isLast ? "Get started with OS platform" : "Next slide"
+              isLast ? "Get started with Opero Stephen platform" : "Next slide"
             }
           >
             <Text style={styles.ctaText}>
