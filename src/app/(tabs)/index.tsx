@@ -34,6 +34,7 @@ import {
   TeacherPost,
   TeacherPostItem,
 } from "../../components/home/TeacherPostCard";
+import { TeacherFollowCarousel } from "../../components/home/TeacherFollowCarousel";
 import { TopicalNotesSlider } from "../../components/home/TopicalNotesSlider";
 import { BookCard } from "../../components/library/BookCard";
 import { PaperCard } from "../../components/library/PaperCard";
@@ -360,6 +361,12 @@ export default function HomeScreen() {
         id: "break-books",
         type: "books",
         render: () => <BookCarousel />,
+      },
+      {
+        kind: "break",
+        id: "break-teacher-follow",
+        type: "teacherFollow",
+        render: () => <TeacherFollowCarousel seed={shuffleSeed} />,
       },
     ];
 
