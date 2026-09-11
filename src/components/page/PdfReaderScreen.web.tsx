@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNetworkState } from "expo-network";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 import { recordPageVisit } from "../../services/activityService";
@@ -189,63 +189,6 @@ export function PdfReaderScreen() {
         : decodedUri
       : null;
 
-  const pdfViewerHtml = useMemo(() => {
-    if (!decodedUri || isOfficeFile) return null;
-    const documentUrl = JSON.stringify(decodedUri).replace(/</g, "\\u003c");
-
-    return `<!doctype html><html><head>
-      <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=3" />
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-      <style>html,body{margin:0;background:#525659}canvas{display:block;margin:4px auto;box-shadow:0 2px 8px #0006}</style>
-    </head><body><main id="pages"></main><script>
-      const send = (message) => window.parent.postMessage({ source: 'digilearn-pdf', ...message }, '*');
-      (async () => {
-        try {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-          const response = await fetch(${documentUrl});
-          if (!response.ok) throw new Error('Document request failed: ' + response.status);
-          const pdf = await pdfjsLib.getDocument({ data: await response.arrayBuffer() }).promise;
-          const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
-            if (entry.isIntersecting) send({ type: 'pageChange', page: Number(entry.target.dataset.page), totalPages: pdf.numPages });
-          }), { threshold: 0.5 });
-          const container = document.getElementById('pages');
-          for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-            const page = await pdf.getPage(pageNumber);
-            const baseViewport = page.getViewport({ scale: 1 });
-            const scale = window.innerWidth / baseViewport.width;
-            const viewport = page.getViewport({ scale });
-            const canvas = document.createElement('canvas');
-            canvas.dataset.page = pageNumber;
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            canvas.style.width = viewport.width + 'px';
-            canvas.style.height = viewport.height + 'px';
-            container.appendChild(canvas);
-            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-            observer.observe(canvas);
-          }
-          send({ type: 'loaded', totalPages: pdf.numPages });
-          const initialPage = ${startPage};
-          if (initialPage > 1) document.querySelector('[data-page="' + initialPage + '"]')?.scrollIntoView();
-        } catch (error) { send({ type: 'error' }); }
-      })();
-    </script></body></html>`;
-  }, [decodedUri, isOfficeFile, startPage]);
-
-  useEffect(() => {
-    const handlePdfMessage = (event: MessageEvent) => {
-      const message = event.data;
-      if (!message || message.source !== "digilearn-pdf") return;
-      if (message.type === "pageChange" && Number.isInteger(message.page)) {
-        setCurrentPage(Math.max(1, message.page));
-      } else if (message.type === "error") {
-        setIframeError(true);
-        setOfflineNoticeVisible(true);
-      }
-    };
-    window.addEventListener("message", handlePdfMessage);
-    return () => window.removeEventListener("message", handlePdfMessage);
-  }, []);
   const missingDocument = !isResolving && !decodedUri;
   const showReaderDialog =
     offlineNoticeVisible || iframeError || missingDocument;
@@ -527,8 +470,11 @@ export function PdfReaderScreen() {
         </View>
       ) : (
         <iframe
-          src={isOfficeFile ? viewerUri ?? undefined : undefined}
-          srcDoc={isOfficeFile ? undefined : pdfViewerHtml ?? undefined}
+          // Loading the signed resource URL directly lets the browser's PDF
+          // viewer handle it. The previous pdf.js srcDoc implementation
+          // fetched the file from a different origin, so CORS or a blocked
+          // CDN was incorrectly reported to users as an offline error.
+          src={viewerUri ?? undefined}
           title={title || readerLabel}
           style={{
             flex: 1,
