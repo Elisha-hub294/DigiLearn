@@ -70,6 +70,7 @@ type FeaturedNoteCardProps = {
   hideAvatar?: boolean;
   notes?: {
     id: string;
+    owner?: string;
     title?: string;
     description?: string;
     subject?: string | string[];

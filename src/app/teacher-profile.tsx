@@ -31,6 +31,7 @@ import { colors, radius, spacing } from "../constants/theme";
 import { getThemeAsset } from "../constants/themeAssets";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { subscribeToResourceDeleted } from "../services/resourceDeletion";
 import {
   getTeacherCommunityStatus,
   setTeacherCommunityMembership,
@@ -515,6 +516,22 @@ export default function TeacherProfileScreen() {
     pulse.start();
     return () => pulse.stop();
   }, [pulseAnim]);
+
+  useEffect(() => {
+    return subscribeToResourceDeleted((collectionName, resourceId) => {
+      setResources((current) =>
+        current.filter((resource) => resource.id !== resourceId),
+      );
+      if (collectionName === "teacherPosts") {
+        setErrorMessage((current) => {
+          if (current && current.includes("No resources published")) {
+            return current;
+          }
+          return current;
+        });
+      }
+    });
+  }, []);
 
   const filteredResources = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -1184,6 +1201,7 @@ export default function TeacherProfileScreen() {
                 cover: item.image,
                 book: item.book,
                 createdAt: item.createdAt,
+                owner: item.owner,
               },
             ]}
             source="pages"
@@ -1207,6 +1225,7 @@ export default function TeacherProfileScreen() {
                 : item.author || "Unknown author",
               description: item.description || "",
               image: item.image ? { uri: item.image } : undefined,
+              owner: item.owner,
             }}
             width={contentMaxWidth}
             onPress={() => {
@@ -1236,7 +1255,7 @@ export default function TeacherProfileScreen() {
               id: item.id,
               title: item.title,
               teacher: item.teacher || teacher?.name || teacherName,
-              owner: item.teacher || teacher?.name || teacherName,
+              owner: item.owner,
               ownerType: item.ownerType,
               subject: item.subject,
               description: item.description,
@@ -1275,6 +1294,7 @@ export default function TeacherProfileScreen() {
             thumbnail: item.thumbnail || item.image || "",
             avatar: teacher?.avatar,
             link: item.link || "",
+            owner: item.owner,
             isNew: false,
           }}
           index={index}
