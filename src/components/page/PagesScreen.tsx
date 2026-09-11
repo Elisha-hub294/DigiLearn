@@ -232,7 +232,7 @@ const filterByAttachments = (note: PageNote, attachments: string) => {
 };
 
 export default function PagesScreen() {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const router = useRouter();
   const { profile } = useProfile();
   const params = useLocalSearchParams<{ title?: string }>();
@@ -333,7 +333,9 @@ export default function PagesScreen() {
 
         const accent = matchedSubject
           ? extractAccentColor(
-              (matchedSubject.data() as { accent?: unknown }).accent,
+              (matchedSubject.data() as Record<string, unknown>)[
+                isDark ? "accent-dark-mode" : "accent"
+              ],
             )
           : "#000000";
 
@@ -369,7 +371,7 @@ export default function PagesScreen() {
     return () => {
       cancelled = true;
     };
-  }, [pageTitle]);
+  }, [isDark, pageTitle]);
 
   const loadMoreNotes = async () => {
     if (loadingMore || !hasMoreNotes || !lastPageDocument.current) return;

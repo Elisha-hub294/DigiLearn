@@ -120,7 +120,7 @@ const extractAccentColor = (rawAccent: unknown): string => {
 };
 
 export function PagePreviewScreen() {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, isDark } = useTheme();
   const { profile } = useProfile();
   const { id, source, returnTo, teacherId, teacherName, title } =
     useLocalSearchParams<{
@@ -263,7 +263,9 @@ export function PagePreviewScreen() {
             return {
               name: (sData.name as string)?.trim().toLowerCase(),
               avatar: sData.avatar as string,
-              accent: extractAccentColor(sData.accent),
+              accent: extractAccentColor(
+                sData[isDark ? "accent-dark-mode" : "accent"],
+              ),
             };
           });
 
@@ -329,7 +331,7 @@ export function PagePreviewScreen() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, isDark]);
 
   useEffect(() => {
     let active = true;
