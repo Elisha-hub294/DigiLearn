@@ -48,13 +48,11 @@ import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import {
-  PaperItem,
-  useLibraryData,
-} from "../../hooks/useLibraryData";
+import { PaperItem, useLibraryData } from "../../hooks/useLibraryData";
 import { recordUserActivity } from "../../services/activityService";
 import { BookRecord, loadBooks } from "../../services/booksService";
 import { clearGuestMode, isGuestMode } from "../../services/guestService";
+import { subscribeToResourceDeleted } from "../../services/resourceDeletion";
 import { loadTrendingLessons } from "../../services/trendingLessonsService";
 import { getUserOnboardingState } from "../../services/userProfile";
 import { interleaveFeedItems } from "../../utils/feedAlgorithm";
@@ -116,38 +114,42 @@ export default function HomeScreen() {
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   // Fetch all pool data
-  const loadAllFeedPools = useCallback(async (force = false) => {
-    try {
-      const [posts, tMeta, lessons, notes, nMeta, bks, followedTeachers] = await Promise.all([
-        loadTeacherPosts(),
-        loadTeacherMetadata(),
-        loadTrendingLessons(force),
-        loadFeaturedNotes(),
-        loadFeaturedNotesMetadata(),
-        loadBooks(force),
-        Promise.resolve(
-          user && Array.isArray(profile?.followedTeacherIds)
-            ? profile.followedTeacherIds
-            : [],
-        ),
-      ]);
+  const loadAllFeedPools = useCallback(
+    async (force = false) => {
+      try {
+        const [posts, tMeta, lessons, notes, nMeta, bks, followedTeachers] =
+          await Promise.all([
+            loadTeacherPosts(),
+            loadTeacherMetadata(),
+            loadTrendingLessons(force),
+            loadFeaturedNotes(),
+            loadFeaturedNotesMetadata(),
+            loadBooks(force),
+            Promise.resolve(
+              user && Array.isArray(profile?.followedTeacherIds)
+                ? profile.followedTeacherIds
+                : [],
+            ),
+          ]);
 
-      setTeacherPosts(posts);
-      setFollowedTeacherIds(followedTeachers);
-      setTeacherMeta(tMeta);
-      setVideoLessons(
-        lessons.map((lesson) => ({
-          ...lesson,
-          uploadedAt: lesson.uploadedAt || "Recently added",
-        })),
-      );
-      setFeaturedNotes(notes);
-      setNotesMeta(nMeta);
-      setBooks(bks);
-    } catch (err) {
-      console.warn("Failed to load feed pool data:", err);
-    }
-  }, [profile?.followedTeacherIds, user]);
+        setTeacherPosts(posts);
+        setFollowedTeacherIds(followedTeachers);
+        setTeacherMeta(tMeta);
+        setVideoLessons(
+          lessons.map((lesson) => ({
+            ...lesson,
+            uploadedAt: lesson.uploadedAt || "Recently added",
+          })),
+        );
+        setFeaturedNotes(notes);
+        setNotesMeta(nMeta);
+        setBooks(bks);
+      } catch (err) {
+        console.warn("Failed to load feed pool data:", err);
+      }
+    },
+    [profile?.followedTeacherIds, user],
+  );
 
   useEffect(() => {
     let active = true;
@@ -162,6 +164,32 @@ export default function HomeScreen() {
       clearTimeout(timer);
     };
   }, [loadAllFeedPools]);
+
+  useEffect(() => {
+    return subscribeToResourceDeleted((collectionName, resourceId) => {
+      if (collectionName === "teacherPosts") {
+        setTeacherPosts((current) =>
+          current.filter((post) => post.id !== resourceId),
+        );
+      }
+      if (collectionName === "trendingLessons") {
+        setVideoLessons((current) =>
+          current.filter((lesson) => lesson.id !== resourceId),
+        );
+      }
+      if (collectionName === "pages") {
+        setFeaturedNotes((current) =>
+          current.filter((note) => note.id !== resourceId),
+        );
+      }
+      if (collectionName === "books") {
+        setBooks((current) => current.filter((book) => book.id !== resourceId));
+      }
+      if (collectionName === "pastPaper") {
+        refreshLibraryData();
+      }
+    });
+  }, [refreshLibraryData]);
 
   // Auth gate check
   useEffect(() => {
@@ -235,10 +263,7 @@ export default function HomeScreen() {
   // Filter Past Papers by user interests
   const followedTeacherIdSet = useMemo(
     () =>
-      new Set([
-        ...followedTeacherIds,
-        ...(profile?.followedTeacherIds ?? []),
-      ]),
+      new Set([...followedTeacherIds, ...(profile?.followedTeacherIds ?? [])]),
     [followedTeacherIds, profile?.followedTeacherIds],
   );
 
@@ -248,9 +273,10 @@ export default function HomeScreen() {
     return paperCollections
       .map((section) => ({
         ...section,
-        items: section.items.filter((paper) =>
-          (paper.owner && followedTeacherIdSet.has(paper.owner)) ||
-          matchesUserInterests(paper.subject, profile?.subjects),
+        items: section.items.filter(
+          (paper) =>
+            (paper.owner && followedTeacherIdSet.has(paper.owner)) ||
+            matchesUserInterests(paper.subject, profile?.subjects),
         ),
       }))
       .filter((section) => section.items.length > 0);
@@ -290,7 +316,12 @@ export default function HomeScreen() {
         (lesson.owner && followedTeacherIdSet.has(lesson.owner)) ||
         matchesUserInterests(lesson.subject, profile?.subjects),
     );
-  }, [filterByInterestsActive, followedTeacherIdSet, profile?.subjects, videoLessons]);
+  }, [
+    filterByInterestsActive,
+    followedTeacherIdSet,
+    profile?.subjects,
+    videoLessons,
+  ]);
 
   const filteredFeaturedNotes = useMemo(() => {
     if (!filterByInterestsActive) return featuredNotes;
@@ -299,7 +330,12 @@ export default function HomeScreen() {
         (note.owner && followedTeacherIdSet.has(note.owner)) ||
         matchesUserInterests(note.subject, profile?.subjects),
     );
-  }, [filterByInterestsActive, featuredNotes, followedTeacherIdSet, profile?.subjects]);
+  }, [
+    filterByInterestsActive,
+    featuredNotes,
+    followedTeacherIdSet,
+    profile?.subjects,
+  ]);
 
   const filteredBooks = useMemo(() => {
     if (!filterByInterestsActive) return books;

@@ -10,6 +10,20 @@ export type DeletableResourceCollection =
   | "trendingLessons"
   | "teacherPosts";
 
+type ResourceDeletedListener = (
+  collectionName: DeletableResourceCollection,
+  resourceId: string,
+) => void;
+
+const resourceDeletedListeners = new Set<ResourceDeletedListener>();
+
+export function subscribeToResourceDeleted(
+  listener: ResourceDeletedListener,
+): () => void {
+  resourceDeletedListeners.add(listener);
+  return () => resourceDeletedListeners.delete(listener);
+}
+
 export async function deleteResource(
   collectionName: DeletableResourceCollection,
   resourceId: string,
@@ -29,5 +43,9 @@ export async function deleteResource(
     "collection:pastPaper",
     "collection:trendingLessons",
     "collection:teacherPosts",
+  );
+
+  resourceDeletedListeners.forEach((listener) =>
+    listener(collectionName, resourceId),
   );
 }

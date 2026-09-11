@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { subscribeToResourceDeleted } from "../services/resourceDeletion";
 import { loadTrendingLessons } from "../services/trendingLessonsService";
 
 export type TrendingLesson = {
@@ -37,6 +38,12 @@ export function useTrendingLessons() {
   useEffect(() => {
     let isMounted = true;
 
+    const unsubscribe = subscribeToResourceDeleted((collectionName, id) => {
+      if (collectionName === "trendingLessons") {
+        setLessons((current) => current.filter((lesson) => lesson.id !== id));
+      }
+    });
+
     const loadLessons = async () => {
       try {
         const cachedLessons = await loadTrendingLessons();
@@ -56,6 +63,7 @@ export function useTrendingLessons() {
     void loadLessons();
     return () => {
       isMounted = false;
+      unsubscribe();
     };
   }, []);
 
