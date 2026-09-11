@@ -45,25 +45,6 @@ import {
   type ConversationRecord,
 } from "../services/assistantChatService";
 
-const INTENT_GROUPS = [
-  {
-    title: "Understand a topic",
-    prompts: ["Explain this topic simply", "Give me a real-world example"],
-  },
-  {
-    title: "Practice questions",
-    prompts: ["Create 5 practice questions", "Quiz me one question at a time"],
-  },
-  {
-    title: "Exam revision",
-    prompts: ["Help me revise for an exam", "Summarize the key exam points"],
-  },
-  {
-    title: "Summarize notes",
-    prompts: ["Summarize these notes", "Turn this into flashcards"],
-  },
-] as const;
-
 function createMessageId(role: ChatMessage["role"]) {
   return `${Date.now()}-${role}`;
 }
@@ -80,6 +61,7 @@ export default function AssistantScreen() {
   const { user, profile } = useProfile();
   const params = useLocalSearchParams<{ initialPrompt?: string }>();
   const [isLoading, setIsLoading] = useState(true);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [message, setMessage] = useState(
     typeof params.initialPrompt === "string" ? params.initialPrompt : "",
   );
@@ -118,6 +100,7 @@ export default function AssistantScreen() {
         }
 
         setAssistantAvatar(content.avatar);
+        setSuggestions(content.suggestions ?? content.messages.slice(0, 6));
         const history = await loadConversationHistory();
         if (active) {
           setConversations(history);
@@ -129,6 +112,13 @@ export default function AssistantScreen() {
           setQuota(quotaStatus);
         }
       } catch {
+        if (active) {
+          setSuggestions([
+            "Explain Osmosis",
+            "Revise Quadratic Equations",
+            "Help me prepare for UNEB",
+          ]);
+        }
       } finally {
         if (active) {
           setIsLoading(false);
@@ -373,27 +363,13 @@ export default function AssistantScreen() {
                     <Text style={styles.greeting}>
                       How can I help you today?
                     </Text>
-                    <View style={styles.intentList}>
-                      {INTENT_GROUPS.map((group) => (
-                        <View key={group.title} style={styles.intentGroup}>
-                          <Text
-                            style={[
-                              styles.intentTitle,
-                              { color: themeColors.subtitle },
-                            ]}
-                          >
-                            {group.title}
-                          </Text>
-                          <View style={styles.suggestionWrap}>
-                            {group.prompts.map((prompt) => (
-                              <PromptChip
-                                key={prompt}
-                                label={prompt}
-                                onPress={() => handlePromptChipPress(prompt)}
-                              />
-                            ))}
-                          </View>
-                        </View>
+                    <View style={styles.suggestionWrap}>
+                      {suggestions.map((suggestion) => (
+                        <PromptChip
+                          key={suggestion}
+                          label={suggestion}
+                          onPress={() => handlePromptChipPress(suggestion)}
+                        />
                       ))}
                     </View>
                   </View>
@@ -646,19 +622,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "center",
     marginTop: spacing.md,
-  },
-  intentList: {
-    width: "100%",
-    marginTop: spacing.md,
-  },
-  intentGroup: {
-    marginBottom: spacing.sm,
-  },
-  intentTitle: {
-    fontSize: 12,
-    fontWeight: "700",
-    marginBottom: 6,
-    textAlign: "left",
   },
   chatArea: {
     flex: 1,

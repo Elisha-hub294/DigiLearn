@@ -91,17 +91,6 @@ export function PageHero({
           {note.title || "Untitled Page"}
         </Text>
         <Text style={styles.subtitle}>{dateText}</Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={openLabel}
-          onPress={onOpen}
-          style={({ pressed }) => [styles.openButton, pressed && styles.pressed]}
-        >
-          <Feather name="file-text" size={17} color={colors.primary} />
-          <Text style={[styles.openButtonText, { color: colors.primary }]}>
-            {openLabel}
-          </Text>
-        </Pressable>
       </Animated.View>
     </Animated.View>
   );
@@ -151,20 +140,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     marginTop: 8,
-  },
-  openButton: {
-    alignSelf: "flex-start",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 16,
-    paddingHorizontal: 16,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "#FFFFFF",
-  },
-  openButtonText: {
-    fontSize: 15,
-    fontWeight: "700",
   },
 });

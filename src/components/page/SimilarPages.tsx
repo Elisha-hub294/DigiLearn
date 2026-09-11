@@ -52,7 +52,7 @@ export function SimilarPages({
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: 28,
+    marginVertical: 25,
   },
   headerRow: {
     flexDirection: "row",
