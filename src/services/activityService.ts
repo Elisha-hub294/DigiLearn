@@ -11,7 +11,6 @@ import {
 import { AppState } from "react-native";
 import { auth, db } from "../../firebaseConfig";
 import { ActivityItem, ActivityRecord, ActivityType } from "../types/activity";
-import { recordStudyActivity } from "./streakService";
 
 const MAX_ACTIVITY_ITEMS = 50;
 const ACTIVITY_EVENT_BATCH_SIZE = 20;
@@ -251,9 +250,6 @@ export async function recordUserActivity(
       resourceId: docId,
       openedAt: new Date().toISOString(),
     });
-
-    // Automatically record daily streak progress
-    void recordStudyActivity(5);
   } catch (error) {
     console.warn(
       `Failed to record ${type} activity for user ${userId}:`,

@@ -89,6 +89,16 @@ const pickArray = (value: unknown): string[] => {
 const getResourcePreview = (data: Record<string, unknown>) =>
   pickString(data.cover || data.image || data.preview || data.previewImage);
 
+const getHasResourcePreview = (data: Record<string, unknown>) => {
+  if (typeof data.hasCover === "boolean") return data.hasCover;
+  if (typeof data.hasCover === "string") {
+    const value = data.hasCover.trim().toLowerCase();
+    if (value === "true") return true;
+    if (value === "false") return false;
+  }
+  return Boolean(getResourcePreview(data));
+};
+
 const getTeacherAvatar = (data: Record<string, unknown>) =>
   pickString(
     data.avatar ||
@@ -328,6 +338,7 @@ export default function TeacherProfileScreen() {
               createdAt: getResourceDate(data),
               document: pickString(data.document),
               image: getResourcePreview(data),
+              hasCover: getHasResourcePreview(data),
               book: pickArray(data.book),
               owner: pickString(data.owner),
             } as ResourceItem;
@@ -365,6 +376,7 @@ export default function TeacherProfileScreen() {
               createdAt: getResourceDate(data),
               document: pickString(data.document),
               image: getResourcePreview(data),
+              hasCover: getHasResourcePreview(data),
               owner: pickString(data.owner),
               teacher: pickString(data.teacher || data.teacherName),
               fileType: "doc" as const,
@@ -397,10 +409,7 @@ export default function TeacherProfileScreen() {
               teacher: teacherValue,
               owner: pickString(data.owner),
               document,
-              hasCover:
-                typeof data.hasCover === "boolean"
-                  ? data.hasCover
-                  : pickString(data.hasCover),
+              hasCover: getHasResourcePreview(data),
               ownerType: pickString(data.ownerType),
               fileType:
                 data.fileType === "image" || data.fileType === "doc"
@@ -1172,6 +1181,7 @@ export default function TeacherProfileScreen() {
                 description: item.description,
                 subject: item.subject,
                 document: item.document,
+                cover: item.image,
                 book: item.book,
                 createdAt: item.createdAt,
               },
