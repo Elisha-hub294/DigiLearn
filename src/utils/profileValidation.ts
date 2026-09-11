@@ -13,9 +13,20 @@ export function normalizeProfileText(value: string): string {
   return sanitizeProfileText(value).trim();
 }
 
+export function sanitizeProfileName(value: string): string {
+  return normalizeProfileText(value)
+    .replace(/\p{N}/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function validateProfileText(value: string, label: string): string {
   if (!value) {
     return `${label} is required.`;
+  }
+
+  if (label === "Name" && /\p{N}/u.test(value)) {
+    return "Name cannot contain numbers.";
   }
 
   if (value.length > MAX_PROFILE_FIELD_LENGTH) {

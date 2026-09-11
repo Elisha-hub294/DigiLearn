@@ -1088,28 +1088,35 @@ exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentWritten)("t
     const application = event.data?.after.data();
     const previousApplication = event.data?.before.data();
     const applicationId = event.params.applicationId;
+    const isResubmission = previousApplication?.status === "rejected";
     if (!application ||
         application.status !== "pending" ||
         previousApplication?.status === "pending")
         return;
+    const notificationId = isResubmission
+        ? `teacher-resubmission-${applicationId}-${application.resubmittedAt?.seconds ?? Date.now()}`
+        : applicationId;
     await Promise.all([
         db
             .collection("adminNotifications")
-            .doc(applicationId)
+            .doc(notificationId)
             .set({
-            id: applicationId,
+            id: notificationId,
             type: "announcement",
             publisherName: "DigiLearn",
             publisherAvatar: typeof application.photoURL === "string"
                 ? application.photoURL
                 : "@/assets/images/panda.png",
-            message: "A new teacher account is waiting for your review.",
+            message: isResubmission
+                ? "A teacher has resubmitted an application for your review."
+                : "A new teacher account is waiting for your review.",
             resourceTitle: application.name || "Teacher application",
             itemId: applicationId,
             navigation: "/teacher-applications",
             adminKind: "teacher-application",
             createdAt: firestore_1.FieldValue.serverTimestamp(),
             read: false,
+            dismissed: false,
         }, { merge: true }),
         db.doc(`teachers/${applicationId}`).set({
             notifications: firestore_1.FieldValue.arrayUnion(applicantNotification("Your teacher application is under review. We will notify you when a decision is made.", application.name || "Teacher application")),

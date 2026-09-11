@@ -17,6 +17,7 @@ import {
   uploadBytes,
 } from "firebase/storage";
 import { app, db, storage } from "../../firebaseConfig";
+import { sanitizeProfileName } from "../utils/profileValidation";
 
 export type AccountType = "student" | "teacher" | "admin" | "";
 
@@ -213,11 +214,14 @@ export const nameFromEmail = (email?: string | null) => {
     .trim();
   return localPart
     ? localPart.replace(/\b\w/g, (letter) => letter.toUpperCase())
-    : "DigiLearn learner";
+    : "Student";
 };
 
 export const defaultUserProfile = (user: User): UserProfile => ({
-  name: user.displayName?.trim() || nameFromEmail(user.email),
+  name:
+    sanitizeProfileName(user.displayName ?? "") ||
+    sanitizeProfileName(nameFromEmail(user.email)) ||
+    "Student",
   email: user.email ?? "",
   photoURL: user.photoURL ?? "",
   accent: generateProfileAccent(user.uid),
@@ -254,7 +258,10 @@ async function saveSocialProfilePicture(
   provider: "google" | "facebook",
 ) {
   const sourceUrl = user.photoURL?.trim();
-  const displayName = user.displayName?.trim() || nameFromEmail(user.email);
+  const displayName =
+    sanitizeProfileName(user.displayName ?? "") ||
+    sanitizeProfileName(nameFromEmail(user.email)) ||
+    "Student";
   const teacherSnapshot = await getDoc(doc(db, "teachers", user.uid));
   const profileCollection = teacherSnapshot.exists() ? "teachers" : "users";
 

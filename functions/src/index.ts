@@ -61,7 +61,7 @@ const defaultProfileFields = (request: {
   const displayName = typeof token.name === "string" ? token.name.trim() : "";
 
   return {
-    name: displayName || email.split("@")[0] || "DigiLearn learner",
+    name: displayName || email.split("@")[0] || "Student",
     email,
     photoURL: typeof token.picture === "string" ? token.picture : "",
     accent: generateProfileAccent(),
