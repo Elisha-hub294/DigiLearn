@@ -4,7 +4,7 @@
     "slug": "DigiLearn",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./assets/images/panda.png",
+    "icon": "./assets/images/main.png",
     "scheme": "digilearn",
     "userInterfaceStyle": "automatic",
     "extra": {
@@ -17,7 +17,7 @@
       "googleWebClientId": "851245099108-ckatv1djqhf5h2m40ni879p8nsb2vne5.apps.googleusercontent.com"
     },
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/main.png",
       "bundleIdentifier": "com.digilearn.app",
       "buildNumber": "1",
       "associatedDomains": ["applinks:digilearn-af86d.firebaseapp.com"]
@@ -53,13 +53,13 @@
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/panda.png"
+        "foregroundImage": "./assets/images/main.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/panda.png",
+      "favicon": "./assets/images/main.png",
       "config": {
         "firebase": {
           "apiKey": "AIzaSyCKAYN1h2binUbKcJAZhcXZL8KQ_rBs21I",
