@@ -456,7 +456,10 @@ export function PdfReaderScreen() {
         </View>
       ) : isDocxFile && docxText !== null ? (
         <ScrollView
-          style={styles.docxContent}
+          style={[
+            styles.docxContent,
+            { backgroundColor: themeColors.background },
+          ]}
           contentContainerStyle={styles.docxContentContainer}
         >
           {docxText.split("\n").map((paragraph, index) => (

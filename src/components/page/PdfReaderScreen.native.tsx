@@ -870,7 +870,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 
         {isDocxFile && !loadError && docxText !== null && (
           <ScrollView
-            style={styles.docxContent}
+            style={[
+              styles.docxContent,
+              { backgroundColor: themeColors.background },
+            ]}
             contentContainerStyle={styles.docxContentContainer}
           >
             {docxText.split("\n").map((paragraph, index) => (
