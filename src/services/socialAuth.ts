@@ -1,4 +1,3 @@
-import Constants from "expo-constants";
 import {
   deleteUser,
   FacebookAuthProvider,
@@ -71,12 +70,7 @@ function getNativeGoogleSigninModule() {
       mod.GoogleSignin &&
       typeof mod.GoogleSignin.configure === "function"
     ) {
-      const extra =
-        (Constants.expoConfig?.extra as Record<string, any> | undefined) ?? {};
-      const webClientId =
-        process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
-        extra.googleWebClientId ||
-        "";
+      const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || "";
 
       mod.GoogleSignin.configure({
         webClientId: webClientId || undefined,
