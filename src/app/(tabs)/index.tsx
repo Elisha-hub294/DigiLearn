@@ -148,7 +148,7 @@ export default function HomeScreen() {
         console.warn("Failed to load feed pool data:", err);
       }
     },
-    [profile?.followedTeacherIds, user],
+    [profile, user],
   );
 
   useEffect(() => {
