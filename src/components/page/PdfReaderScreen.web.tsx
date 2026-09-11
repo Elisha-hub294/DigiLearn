@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNetworkState } from "expo-network";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 import { recordPageVisit } from "../../services/activityService";
@@ -65,6 +65,8 @@ export function PdfReaderScreen() {
     const p = parseInt(initialPage ?? "", 10);
     return isNaN(p) || p < 1 ? 1 : p;
   });
+  const [currentPage, setCurrentPage] = useState(startPage);
+  const [progressReady, setProgressReady] = useState(false);
   const [iframeError, setIframeError] = useState(false);
   const [offlineNoticeVisible, setOfflineNoticeVisible] = useState(false);
   const [offlineNoticeDismissed, setOfflineNoticeDismissed] = useState(false);
@@ -139,27 +141,44 @@ export function PdfReaderScreen() {
 
   useEffect(() => {
     let active = true;
-    if (pageId && !initialPage) {
-      getPageReadingProgress(pageId).then((prog) => {
-        if (!active) return;
-        if (prog && prog.lastPage > 1) {
-          setStartPage(prog.lastPage);
-        }
-      });
+    if (!pageId) {
+      setProgressReady(true);
+      return () => {
+        active = false;
+      };
     }
+
+    setProgressReady(false);
+    if (initialPage) {
+      const page = parseInt(initialPage, 10);
+      if (!isNaN(page) && page > 0) setCurrentPage(page);
+      setProgressReady(true);
+      return () => {
+        active = false;
+      };
+    }
+
+    getPageReadingProgress(pageId).then((prog) => {
+      if (!active) return;
+      if (prog && prog.lastPage > 1) {
+        setStartPage(prog.lastPage);
+        setCurrentPage(prog.lastPage);
+      }
+      setProgressReady(true);
+    });
     return () => {
       active = false;
     };
   }, [pageId, initialPage]);
 
   useEffect(() => {
-    if (pageId && decodedUri) {
-      void savePageReadingProgress(pageId, startPage, undefined, {
-        title: title || "PDF",
-        documentUri: decodedUri,
-      });
-    }
-  }, [decodedUri, pageId, startPage, title]);
+    if (!progressReady || !pageId || !decodedUri || isOfficeFile) return;
+
+    void savePageReadingProgress(pageId, currentPage, undefined, {
+      title: title || "PDF",
+      documentUri: decodedUri,
+    });
+  }, [currentPage, decodedUri, isOfficeFile, pageId, progressReady, title]);
 
   const readerLabel = isOfficeFile ? "Office Reader" : "PDF Reader";
   const viewerUri = isOfficeFile
@@ -169,6 +188,64 @@ export function PdfReaderScreen() {
         ? `${decodedUri}#page=${startPage}`
         : decodedUri
       : null;
+
+  const pdfViewerHtml = useMemo(() => {
+    if (!decodedUri || isOfficeFile) return null;
+    const documentUrl = JSON.stringify(decodedUri).replace(/</g, "\\u003c");
+
+    return `<!doctype html><html><head>
+      <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=3" />
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+      <style>html,body{margin:0;background:#525659}canvas{display:block;margin:4px auto;box-shadow:0 2px 8px #0006}</style>
+    </head><body><main id="pages"></main><script>
+      const send = (message) => window.parent.postMessage({ source: 'digilearn-pdf', ...message }, '*');
+      (async () => {
+        try {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          const response = await fetch(${documentUrl});
+          if (!response.ok) throw new Error('Document request failed: ' + response.status);
+          const pdf = await pdfjsLib.getDocument({ data: await response.arrayBuffer() }).promise;
+          const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+            if (entry.isIntersecting) send({ type: 'pageChange', page: Number(entry.target.dataset.page), totalPages: pdf.numPages });
+          }), { threshold: 0.5 });
+          const container = document.getElementById('pages');
+          for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+            const page = await pdf.getPage(pageNumber);
+            const baseViewport = page.getViewport({ scale: 1 });
+            const scale = window.innerWidth / baseViewport.width;
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.dataset.page = pageNumber;
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            canvas.style.width = viewport.width + 'px';
+            canvas.style.height = viewport.height + 'px';
+            container.appendChild(canvas);
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+            observer.observe(canvas);
+          }
+          send({ type: 'loaded', totalPages: pdf.numPages });
+          const initialPage = ${startPage};
+          if (initialPage > 1) document.querySelector('[data-page="' + initialPage + '"]')?.scrollIntoView();
+        } catch (error) { send({ type: 'error' }); }
+      })();
+    </script></body></html>`;
+  }, [decodedUri, isOfficeFile, startPage]);
+
+  useEffect(() => {
+    const handlePdfMessage = (event: MessageEvent) => {
+      const message = event.data;
+      if (!message || message.source !== "digilearn-pdf") return;
+      if (message.type === "pageChange" && Number.isInteger(message.page)) {
+        setCurrentPage(Math.max(1, message.page));
+      } else if (message.type === "error") {
+        setIframeError(true);
+        setOfflineNoticeVisible(true);
+      }
+    };
+    window.addEventListener("message", handlePdfMessage);
+    return () => window.removeEventListener("message", handlePdfMessage);
+  }, []);
   const missingDocument = !isResolving && !decodedUri;
   const showReaderDialog =
     offlineNoticeVisible || iframeError || missingDocument;
@@ -487,7 +564,8 @@ export function PdfReaderScreen() {
         </View>
       ) : (
         <iframe
-          src={viewerUri ?? undefined}
+          src={isOfficeFile ? viewerUri ?? undefined : undefined}
+          srcDoc={isOfficeFile ? undefined : pdfViewerHtml ?? undefined}
           title={title || readerLabel}
           style={{
             flex: 1,
