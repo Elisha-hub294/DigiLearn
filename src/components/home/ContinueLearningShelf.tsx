@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
+import { doc, getDoc } from "firebase/firestore";
 import { useCallback, useState } from "react";
 import {
   FlatList,
@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import { db } from "../../../firebaseConfig";
 import { radius, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -20,6 +21,7 @@ import {
   type ReadingProgress,
 } from "../../services/readingProgressService";
 import { ActionDialog } from "../ui/ActionDialog";
+import { FirebaseImage } from "../ui/FirebaseImage";
 import { SectionHeader } from "../ui/SectionHeader";
 
 const MAX_CONTINUE_ITEMS = 5;
@@ -29,17 +31,41 @@ export function ContinueLearningShelf() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [recents, setRecents] = useState<ReadingProgress[]>([]);
+  const [savedCovers, setSavedCovers] = useState<Record<string, string>>({});
   const [showClearDialog, setShowClearDialog] = useState(false);
 
   const loadRecents = useCallback(() => {
-    void getRecentReadingProgressList().then((items) => {
-      setRecents(items.slice(0, MAX_CONTINUE_ITEMS));
+    void getRecentReadingProgressList().then(async (items) => {
+      const recentItems = items.slice(0, MAX_CONTINUE_ITEMS);
+      const coverEntries = await Promise.all(
+        recentItems.map(async ({ pageId }) => {
+          try {
+            const snapshot = await getDoc(doc(db, "pages", pageId));
+            const cover = snapshot.data()?.cover;
+            return typeof cover === "string" && cover.trim()
+              ? ([pageId, cover] as const)
+              : null;
+          } catch {
+            return null;
+          }
+        }),
+      );
+
+      setSavedCovers(
+        Object.fromEntries(
+          coverEntries.filter(
+            (entry): entry is readonly [string, string] => entry !== null,
+          ),
+        ),
+      );
+      setRecents(recentItems);
     });
   }, []);
 
   const clearRecents = useCallback(async () => {
     const itemsToClear = recents;
     setRecents([]);
+    setSavedCovers({});
     setShowClearDialog(false);
     await Promise.all(
       itemsToClear.map((item) => clearPageReadingProgress(item.pageId)),
@@ -74,8 +100,9 @@ export function ContinueLearningShelf() {
         keyExtractor={(item) => item.pageId}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => {
-          const thumbSource = item.cover
-            ? { uri: item.cover }
+          const savedCover = savedCovers[item.pageId];
+          const thumbSource = savedCover
+            ? { uri: savedCover }
             : getThemeAsset("pdfPreview", isDark);
 
           return (
@@ -106,7 +133,7 @@ export function ContinueLearningShelf() {
               }}
             >
               <View style={styles.imageContainer}>
-                <Image
+                <FirebaseImage
                   source={thumbSource}
                   style={styles.image}
                   contentFit="cover"

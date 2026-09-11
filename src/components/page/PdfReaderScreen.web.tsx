@@ -28,12 +28,9 @@ function normalizeUriParam(
   const str = Array.isArray(raw) ? raw[0] : raw;
   if (!str) return null;
   let result = str.trim();
-  if (
-    result.startsWith("http%3A") ||
-    result.startsWith("https%3A") ||
-    result.startsWith("file%3A") ||
-    result.startsWith("%2F")
-  ) {
+  // Decode one route-parameter layer so encoded bare storage paths resolve
+  // correctly (for example, docs%2Flesson.pdf -> docs/lesson.pdf).
+  if (/%[0-9a-f]{2}/i.test(result)) {
     try {
       result = decodeURIComponent(result);
     } catch {
