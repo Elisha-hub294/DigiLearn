@@ -15,7 +15,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { Book } from "./bookTypes";
 
 export function BookHero({ book, onBack }: { book: Book; onBack: () => void }) {
-  const { isDark } = useTheme();
+  const { colors, isDark } = useTheme();
   const fallbackCover = getThemeAsset("bookCoverDefault", isDark);
   const { width, height } = useWindowDimensions();
   const heroHeight = Math.min(Math.max(height * 0.48, 360), 500);
@@ -85,7 +85,10 @@ export function BookHero({ book, onBack }: { book: Book; onBack: () => void }) {
         <Text style={styles.title} numberOfLines={2}>
           {book.title}
         </Text>
-        <Text style={styles.meta} numberOfLines={1}>
+        <Text
+          style={[styles.meta, { color: colors.subtitle }]}
+          numberOfLines={1}
+        >
           {book.author.join(", ") || "Unknown author"}
         </Text>
       </Animated.View>

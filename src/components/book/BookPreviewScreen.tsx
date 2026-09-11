@@ -3,11 +3,11 @@ import { router, useLocalSearchParams } from "expo-router";
 import { collection, doc, getDoc, getDocs } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-    Linking,
-    ScrollView,
-    StyleSheet,
-    View,
-    useWindowDimensions,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -15,14 +15,14 @@ import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
-    recordBookVisit,
-    recordUserActivity,
+  recordBookVisit,
+  recordUserActivity,
 } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { shareResource } from "../../services/shareLinks";
 import {
-    getSavedItemsProfile,
-    toggleSavedItem,
+  getSavedItemsProfile,
+  toggleSavedItem,
 } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
@@ -306,7 +306,7 @@ export function BookPreviewScreen() {
           <View
             style={[
               styles.skeletonSheet,
-              { backgroundColor: themeColors.white },
+              { backgroundColor: themeColors.surface },
             ]}
           >
             <Skeleton
@@ -439,7 +439,7 @@ export function BookPreviewScreen() {
             entering={FadeInUp.duration(430)}
             style={[
               styles.sheet,
-              { paddingHorizontal: 10, backgroundColor: themeColors.white },
+              { paddingHorizontal: 10, backgroundColor: themeColors.surface },
             ]}
           >
             <BookQuickInfo book={book} />

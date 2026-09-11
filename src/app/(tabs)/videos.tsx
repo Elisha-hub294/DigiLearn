@@ -319,8 +319,12 @@ export default function VideosScreen() {
                 style={styles.emptyImage}
                 contentFit="contain"
               />
-              <Text style={styles.emptyTitle}>{onlineEmptyTitle}</Text>
-              <Text style={styles.emptyText}>{onlineEmptyMessage}</Text>
+              <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
+                {onlineEmptyTitle}
+              </Text>
+              <Text style={[styles.emptyText, { color: themeColors.subtitle }]}>
+                {onlineEmptyMessage}
+              </Text>
             </View>
           </ScrollView>
         ) : (

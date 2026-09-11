@@ -1,6 +1,7 @@
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import { useTheme } from "../../contexts/ThemeContext";
 
 type AuthorCardProps = {
   name: string;
@@ -10,6 +11,8 @@ type AuthorCardProps = {
 };
 
 export function AuthorCard({ name, avatar, index, onPress }: AuthorCardProps) {
+  const { colors } = useTheme();
+
   return (
     <Animated.View
       entering={FadeInUp.delay(index * 70).duration(300)}
@@ -26,7 +29,7 @@ export function AuthorCard({ name, avatar, index, onPress }: AuthorCardProps) {
           style={styles.avatar}
           contentFit="cover"
         />
-        <Text style={styles.name} numberOfLines={2}>
+        <Text style={[styles.name, { color: colors.text }]} numberOfLines={2}>
           {name}
         </Text>
       </Pressable>

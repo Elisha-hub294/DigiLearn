@@ -25,7 +25,7 @@ export function BottomActionBar({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Share book"
-        style={[styles.icon, { backgroundColor: colors.lightBackground }]}
+        style={[styles.icon, { backgroundColor: colors.surface }]}
         onPress={onShare}
       >
         <Feather name="share-2" size={21} color={colors.primary} />
