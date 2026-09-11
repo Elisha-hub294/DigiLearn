@@ -95,8 +95,8 @@ export function ReportDialog({
             Report a problem
           </Text>
           <Text style={[styles.message, { color: themeColors.subtitle }]}>
-            Help us improve "{itemName}". Choose any matches or describe the
-            problem below.
+            Help us improve &quot;{itemName}&quot;. Choose any matches or
+            describe the problem below.
           </Text>
           <ScrollView
             keyboardShouldPersistTaps="handled"

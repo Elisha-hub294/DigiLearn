@@ -86,7 +86,7 @@ Ensure you have the following installed:
 
 - **Node.js** v20.19.x or higher ([download](https://nodejs.org/))
 - **npm** or **yarn** (included with Node.js)
-- **Expo CLI**: `npm install -g expo-cli`
+- **Expo CLI**: Use the project-local CLI through the npm scripts below; no global install is required.
 - **Expo Go** app on your mobile device, or Android/iOS emulator
 
 ### Installation

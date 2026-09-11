@@ -281,6 +281,14 @@ export const deleteAccount = onCall(async (request) => {
     throw new HttpsError("unauthenticated", "Sign in required.");
   }
 
+  const authTime = Number(request.auth.token?.auth_time ?? 0);
+  if (!authTime || Date.now() / 1000 - authTime > 30 * 60) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Please sign in again before deleting your account.",
+    );
+  }
+
   const userId = request.auth.uid;
   const ownedResourceSnapshots = await Promise.all(
     ownedCollections.map((collectionName) =>

@@ -1,7 +1,5 @@
 import bookCoverDefaultDark from "../../assets/images/bookcover-default-dark.png";
 import bookCoverDefault from "../../assets/images/bookcover-default.png";
-import emptyDark from "../../assets/images/empty-dark.png";
-import empty from "../../assets/images/empty.png";
 import pandaDark from "../../assets/images/panda-dark.png";
 import panda from "../../assets/images/panda.png";
 import pdfPreviewDark from "../../assets/images/pdf-preview-dark.png";
@@ -19,7 +17,7 @@ export type ThemeAssetName = keyof typeof themeAssets;
 
 export const themeAssets = {
   bookCoverDefault: { light: bookCoverDefault, dark: bookCoverDefaultDark },
-  empty: { light: empty, dark: emptyDark },
+  empty: { light: bookCoverDefault, dark: bookCoverDefaultDark },
   panda: { light: panda, dark: pandaDark },
   pdfPreview: { light: pdfPreview, dark: pdfPreviewDark },
   subjectDefault: { light: subjectDefault, dark: subjectDefaultDark },

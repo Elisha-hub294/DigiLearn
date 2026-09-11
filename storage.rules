@@ -1,6 +1,17 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function isVerifiedOwner(userId) {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.uid == userId;
+    }
+
+    function isSafeUpload() {
+      return request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType.matches('(image|video|audio|application|text)/.*');
+    }
+
     match /{allPaths=**} {
       // Learning assets (covers, PDFs, and videos) are available to guests.
       // Upload and modification permissions remain restricted below.
@@ -8,18 +19,18 @@ service firebase.storage {
     }
 
     match /profile-pics/{userId}/{fileName} {
-      allow write: if request.auth != null
-        && request.auth.token.email_verified == true
-        && request.auth.uid == userId
+      allow create, update: if isVerifiedOwner(userId)
         && request.resource.size < 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+      allow delete: if isVerifiedOwner(userId);
     }
 
     match /{resourcePrefix}/{userId}/{fileName} {
-      allow write: if request.auth != null
-        && request.auth.token.email_verified == true
-        && request.auth.uid == userId
-        && request.resource.size < 20 * 1024 * 1024;
+      allow create, update: if isVerifiedOwner(userId)
+        && resourcePrefix.matches('(book-covers|page-covers|past-paper-covers|docs|post-covers|post-documents|past-papers)')
+        && isSafeUpload();
+      allow delete: if isVerifiedOwner(userId)
+        && resourcePrefix.matches('(book-covers|page-covers|past-paper-covers|docs|post-covers|post-documents|past-papers)');
     }
   }
 }
