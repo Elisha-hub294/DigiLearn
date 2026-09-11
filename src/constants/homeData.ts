@@ -55,6 +55,7 @@ export type TeacherPost = {
   time: string;
   content: string;
   previewImage?: ImageSourcePropType;
+  images?: (ImageSourcePropType | string)[];
   document?: string;
   type: "pdf" | "image" | "announcement";
   subject: SubjectKey;

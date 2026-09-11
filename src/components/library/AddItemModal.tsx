@@ -237,6 +237,9 @@ export function AddItemModal({
     useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [selectedImage, setSelectedImage] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [selectedImages, setSelectedImages] = useState<
+    ImagePicker.ImagePickerAsset[]
+  >([]);
   const [activeWebDropType, setActiveWebDropType] = useState<
     "document" | "image" | null
   >(null);
@@ -326,6 +329,7 @@ export function AddItemModal({
           setSelectedFile(null);
           setSelectedSampleFile(null);
           setSelectedImage(null);
+          setSelectedImages([]);
           setFormData(INITIAL_FORM_STATE);
           setStatusDialog(null);
           setInfoMessage("");
@@ -348,6 +352,7 @@ export function AddItemModal({
     setSelectedFile(null);
     setSelectedSampleFile(null);
     setSelectedImage(null);
+    setSelectedImages([]);
     setFormData(INITIAL_FORM_STATE);
     setPdfToProcess(null);
     resetProgress();
@@ -384,6 +389,7 @@ export function AddItemModal({
   const clearSelectedFile = () => {
     setSelectedFile(null);
     setSelectedImage(null);
+    setSelectedImages([]);
     updateField("title", "");
   };
 
@@ -431,15 +437,25 @@ export function AddItemModal({
           return;
         }
 
-        setSelectedImage({
+        const newAsset = {
           uri: URL.createObjectURL(file),
           fileName,
           mimeType,
           fileSize: file.size,
           width: 0,
           height: 0,
-        } as ImagePicker.ImagePickerAsset);
-        setSelectedFile(null);
+        } as ImagePicker.ImagePickerAsset;
+
+        if (formType === "banner") {
+          setSelectedImages((prev) => {
+            if (prev.length >= 10) return prev;
+            return [...prev, newAsset].slice(0, 10);
+          });
+          setSelectedFile(null);
+        } else {
+          setSelectedImage(newAsset);
+          setSelectedFile(null);
+        }
         setTitleFromSelectedFile(fileName);
         return;
       }
@@ -470,10 +486,11 @@ export function AddItemModal({
       } else {
         setSelectedFile(documentResult);
         setSelectedImage(null);
+        setSelectedImages([]);
         setTitleFromSelectedFile(fileName);
       }
     },
-    [setTitleFromSelectedFile, showFileValidationError],
+    [formType, setTitleFromSelectedFile, showFileValidationError],
   );
 
   useEffect(() => {
@@ -629,6 +646,54 @@ export function AddItemModal({
 
   const pickImage = async () => {
     try {
+      if (formType === "banner") {
+        const remainingSlots = 10 - selectedImages.length;
+        if (remainingSlots <= 0) {
+          showStatusDialog(
+            "Limit Reached",
+            "You can upload up to 10 photos per announcement.",
+            "OK",
+            () => setStatusDialog(null),
+          );
+          return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          allowsMultipleSelection: true,
+          selectionLimit: remainingSlots,
+          quality: 0.85,
+        });
+
+        if (result.canceled || !result.assets || result.assets.length === 0) {
+          return;
+        }
+
+        const validAssets: ImagePicker.ImagePickerAsset[] = [];
+        for (const img of result.assets) {
+          const error = getFileValidationError(
+            img.fileName || "",
+            img.fileSize,
+            true,
+            img.mimeType,
+          );
+          if (error) {
+            showFileValidationError("Invalid Image", error);
+            continue;
+          }
+          validAssets.push(img);
+        }
+
+        if (validAssets.length > 0) {
+          setSelectedImages((prev) => [...prev, ...validAssets].slice(0, 10));
+          setSelectedFile(null);
+          if (!formData.title && validAssets[0]?.fileName) {
+            setTitleFromSelectedFile(validAssets[0].fileName);
+          }
+        }
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         quality: 0.85,
@@ -653,6 +718,14 @@ export function AddItemModal({
     } catch (error) {
       console.error("Error picking image", error);
     }
+  };
+
+  const handleRemoveBannerImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleClearBannerImages = () => {
+    setSelectedImages([]);
   };
 
   const selectedPreviewAsset = (() => {
@@ -1028,22 +1101,49 @@ export function AddItemModal({
       } else if (formType === "banner") {
         let coverUrl = "";
         let documentUrl = "";
-        const hasCover = Boolean(selectedImage || selectedFile?.assets?.[0]);
-        const fileType = selectedImage
-          ? "image"
-          : selectedFile?.assets?.[0]
-            ? "doc"
-            : "";
+        const effectiveImages =
+          selectedImages.length > 0
+            ? selectedImages
+            : selectedImage
+              ? [selectedImage]
+              : [];
+        const hasCover = Boolean(
+          effectiveImages.length > 0 || selectedFile?.assets?.[0],
+        );
+        const fileType =
+          effectiveImages.length > 0
+            ? "image"
+            : selectedFile?.assets?.[0]
+              ? "doc"
+              : "";
 
-        if (selectedImage) {
-          const blob = await uriToBlob(selectedImage.uri);
-          coverUrl = await uploadAssetToStorage(
-            `post-covers/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
-            blob,
-            "",
-            updatePreviewProgress,
-            { contentType: selectedImage.mimeType || "image/jpeg" },
-          );
+        const uploadedImageUrls: string[] = [];
+
+        if (effectiveImages.length > 0) {
+          for (let i = 0; i < effectiveImages.length; i++) {
+            const img = effectiveImages[i];
+            const blob = await uriToBlob(img.uri);
+            const ext = img.mimeType?.split("/")[1] || "jpg";
+            const progressLabel =
+              effectiveImages.length > 1
+                ? `Uploading photo ${i + 1} of ${effectiveImages.length}`
+                : "Uploading photo";
+
+            const url = await uploadAssetToStorage(
+              `post-images/${userId}/${Date.now()}_${i}_${Math.random().toString(36).slice(2, 9)}.${ext}`,
+              blob,
+              progressLabel,
+              (_label, prog) => {
+                const combinedProg = Math.round(
+                  ((i + prog / 100) / effectiveImages.length) * 100,
+                );
+                updatePreviewProgress(progressLabel, combinedProg);
+              },
+              { contentType: img.mimeType || "image/jpeg" },
+            );
+            uploadedImageUrls.push(url);
+          }
+          coverUrl = uploadedImageUrls[0] || "";
         } else if (selectedFile?.assets?.[0]) {
           const file = selectedFile.assets[0];
           const blob = await uriToBlob(file.uri);
@@ -1082,6 +1182,7 @@ export function AddItemModal({
           fileType,
           userId,
           profile?.type || "",
+          uploadedImageUrls,
         );
         notificationType = "announcement";
       } else if (formType === "page") {
@@ -1429,10 +1530,13 @@ export function AddItemModal({
                 }
                 selectedFile={selectedFile}
                 selectedImage={selectedImage}
+                selectedImages={selectedImages}
                 selectedPreviewAsset={selectedPreviewAsset}
                 pickDocument={pickDocument}
                 pickImage={pickImage}
                 clearSelectedFile={clearSelectedFile}
+                onRemoveImage={handleRemoveBannerImage}
+                onClearImages={handleClearBannerImages}
                 getWebDropHandlers={getWebDropHandlers}
                 isSubmitting={isSubmitting}
                 styles={styles}

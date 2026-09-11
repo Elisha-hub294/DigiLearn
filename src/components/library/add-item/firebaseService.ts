@@ -189,16 +189,21 @@ export const addBanner = async (
   fileType: string,
   userId: string,
   userType: string,
+  images: string[] = [],
 ) => {
   const bannerId = `${getTitleDocId(title)}-${Date.now()}-${Math.random()
     .toString(36)
     .slice(2, 9)}`;
 
+  const finalImages = images.length > 0 ? images : coverUrl ? [coverUrl] : [];
+
   await setDoc(doc(db, "teacherPosts", bannerId), {
     title,
     descriprion: description,
+    description,
     hasCover,
-    cover: coverUrl,
+    cover: coverUrl || (finalImages[0] ?? ""),
+    images: finalImages,
     document: documentUrl,
     createdAt: serverTimestamp(),
     subject: subject || "General",

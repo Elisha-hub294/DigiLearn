@@ -6,6 +6,8 @@ import {
   ActivityIndicator,
   FlatList,
   LayoutChangeEvent,
+  Modal,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -36,7 +38,13 @@ import {
 import { resolveVideoImageSource } from "../utils/videoUtils";
 
 type Book = { id: string; title: string; author: string; image: string };
-type ViewMode = "books" | "courses" | "papers" | "pages" | "downloads";
+type ViewMode =
+  | "books"
+  | "courses"
+  | "papers"
+  | "pages"
+  | "downloads"
+  | "post-images";
 
 const parsePages = (value: string | string[] | undefined): TopicalNote[] => {
   if (!value) return [];
@@ -54,6 +62,22 @@ const parsePages = (value: string | string[] | undefined): TopicalNote[] => {
   }
 };
 
+const parseImages = (value: string | string[] | undefined): string[] => {
+  if (!value) return [];
+  const serialized = Array.isArray(value) ? value[0] : value;
+  try {
+    const parsed = JSON.parse(serialized);
+    return Array.isArray(parsed) ? (parsed as string[]) : [String(parsed)];
+  } catch {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(serialized));
+      return Array.isArray(parsed) ? (parsed as string[]) : [String(parsed)];
+    } catch {
+      return [serialized];
+    }
+  }
+};
+
 export default function SeeAllScreen() {
   const router = useRouter();
   const { colors: themeColors, isDark } = useTheme();
@@ -65,20 +89,53 @@ export default function SeeAllScreen() {
     paperType?: string;
     paperYear?: string;
     pages?: string | string[];
+    title?: string;
+    images?: string | string[];
+    initialIndex?: string;
   }>();
   const mode: ViewMode =
     params.type === "courses" ||
     params.type === "papers" ||
     params.type === "pages" ||
-    params.type === "downloads"
-      ? params.type
+    params.type === "downloads" ||
+    params.type === "post-images" ||
+    params.type === "images"
+      ? params.type === "images"
+        ? "post-images"
+        : (params.type as ViewMode)
       : "books";
   const pages = useMemo(() => parsePages(params.pages), [params.pages]);
+  const postImages = useMemo(
+    () => parseImages(params.images),
+    [params.images],
+  );
+  const [selectedLightboxIndex, setSelectedLightboxIndex] = useState<
+    number | null
+  >(() => {
+    if (params.initialIndex !== undefined) {
+      const parsed = parseInt(String(params.initialIndex), 10);
+      return isNaN(parsed) ? null : parsed;
+    }
+    return null;
+  });
   const minimumCardWidth =
-    contentMaxWidth >= 900 ? 220 : contentMaxWidth >= 600 ? 180 : 145;
+    mode === "post-images"
+      ? contentMaxWidth >= 900
+        ? 260
+        : contentMaxWidth >= 600
+          ? 200
+          : 150
+      : contentMaxWidth >= 900
+        ? 220
+        : contentMaxWidth >= 600
+          ? 180
+          : 145;
   const columns = Math.max(
     1,
-    Math.min(3, Math.floor(contentMaxWidth / minimumCardWidth)),
+    Math.min(
+      mode === "post-images" ? 4 : 3,
+      Math.floor(contentMaxWidth / minimumCardWidth),
+    ),
   );
   const { paperCollections, loading: papersLoading } = useLibraryData();
 
@@ -166,7 +223,14 @@ export default function SeeAllScreen() {
           ? "Similar Pages"
           : mode === "downloads"
             ? "My Downloads"
-            : "Books";
+            : mode === "post-images"
+              ? params.title || "Post Photos"
+              : "Books";
+
+  const postImageData = useMemo(
+    () => postImages.map((uri, idx) => ({ id: `img-${idx}`, uri, index: idx })),
+    [postImages],
+  );
 
   const data =
     mode === "books"
@@ -175,7 +239,9 @@ export default function SeeAllScreen() {
         ? lessonsPagination.items
         : mode === "papers"
           ? papers
-          : pages;
+          : mode === "post-images"
+            ? postImageData
+            : pages;
 
   const loading =
     mode === "books"
@@ -240,7 +306,9 @@ export default function SeeAllScreen() {
           </Pressable>
           <View>
             <Text style={[styles.eyebrow, { color: themeColors.primary }]}>
-              Explore library
+              {mode === "post-images"
+                ? "Teacher Announcement"
+                : "Explore library"}
             </Text>
             <Text style={[styles.heading, { color: themeColors.text }]}>
               {title}
@@ -506,6 +574,11 @@ export default function SeeAllScreen() {
                       } as any)
                     }
                   />
+                ) : mode === "post-images" ? (
+                  <PostPhotoTile
+                    item={item}
+                    onPress={() => setSelectedLightboxIndex(item.index)}
+                  />
                 ) : (
                   <PaperTile
                     item={item}
@@ -534,7 +607,144 @@ export default function SeeAllScreen() {
             )}
           />
         )}
+
+        {/* Fullscreen Photo Lightbox Modal */}
+        <Modal
+          visible={selectedLightboxIndex !== null && mode === "post-images"}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSelectedLightboxIndex(null)}
+        >
+          {selectedLightboxIndex !== null &&
+          postImages[selectedLightboxIndex] ? (
+            <View style={styles.lightboxBackdrop}>
+              {/* Top Bar */}
+              <View style={styles.lightboxHeader}>
+                <Text style={styles.lightboxCounter}>
+                  {selectedLightboxIndex + 1} of {postImages.length}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Close lightbox"
+                  style={styles.lightboxCloseButton}
+                  onPress={() => setSelectedLightboxIndex(null)}
+                >
+                  <Feather name="x" size={22} color="#ffffff" />
+                </Pressable>
+              </View>
+
+              {/* Main Image Display with Navigation Arrows */}
+              <View style={styles.lightboxMain}>
+                {selectedLightboxIndex > 0 && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Previous image"
+                    style={styles.lightboxNavLeft}
+                    onPress={() =>
+                      setSelectedLightboxIndex((prev) =>
+                        prev !== null ? Math.max(0, prev - 1) : 0,
+                      )
+                    }
+                  >
+                    <Feather name="chevron-left" size={26} color="#ffffff" />
+                  </Pressable>
+                )}
+
+                <Image
+                  source={{ uri: postImages[selectedLightboxIndex] }}
+                  style={styles.lightboxImage}
+                  contentFit="contain"
+                />
+
+                {selectedLightboxIndex < postImages.length - 1 && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Next image"
+                    style={styles.lightboxNavRight}
+                    onPress={() =>
+                      setSelectedLightboxIndex((prev) =>
+                        prev !== null
+                          ? Math.min(postImages.length - 1, prev + 1)
+                          : 0,
+                      )
+                    }
+                  >
+                    <Feather name="chevron-right" size={26} color="#ffffff" />
+                  </Pressable>
+                )}
+              </View>
+
+              {/* Bottom Thumbnail Strip */}
+              {postImages.length > 1 && (
+                <View style={styles.lightboxThumbnailsBar}>
+                  <FlatList
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    data={postImages}
+                    keyExtractor={(uri, idx) => `thumb-${idx}-${uri}`}
+                    renderItem={({ item: uri, index }) => (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={`View photo ${index + 1}`}
+                        style={[
+                          styles.lightboxThumb,
+                          selectedLightboxIndex === index &&
+                            styles.lightboxThumbSelected,
+                        ]}
+                        onPress={() => setSelectedLightboxIndex(index)}
+                      >
+                        <Image
+                          source={{ uri }}
+                          style={styles.lightboxThumbImage}
+                          contentFit="cover"
+                        />
+                      </Pressable>
+                    )}
+                  />
+                </View>
+              )}
+            </View>
+          ) : null}
+        </Modal>
       </View>
+    </View>
+  );
+}
+
+function PostPhotoTile({
+  item,
+  onPress,
+}: {
+  item: { id: string; uri: string; index: number };
+  onPress: () => void;
+}) {
+  const { colors: themeColors } = useTheme();
+  return (
+    <View
+      style={[
+        styles.photoTile,
+        {
+          backgroundColor: themeColors.white,
+          borderColor: themeColors.border,
+        },
+      ]}
+    >
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Open photo ${item.index + 1}`}
+        style={styles.cardPressable}
+        onPress={onPress}
+      >
+        <Image
+          source={{ uri: item.uri }}
+          style={styles.photoTileImage}
+          contentFit="cover"
+          transition={180}
+        />
+        <View style={styles.photoIndexTag}>
+          <Text style={styles.photoIndexText}>{item.index + 1}</Text>
+        </View>
+      </Pressable>
     </View>
   );
 }
@@ -1181,5 +1391,119 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     alignItems: "center",
     justifyContent: "center",
+  },
+  photoTile: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: radius.md,
+    overflow: "hidden",
+    borderWidth: 1,
+    position: "relative",
+    marginBottom: spacing.md,
+  },
+  photoTileImage: {
+    width: "100%",
+    height: "100%",
+  },
+  photoIndexTag: {
+    position: "absolute",
+    bottom: 8,
+    left: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  photoIndexText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  lightboxBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.94)",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  lightboxHeader: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "ios" ? 54 : 32,
+    paddingBottom: 16,
+    zIndex: 10,
+  },
+  lightboxCounter: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  lightboxCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  lightboxMain: {
+    flex: 1,
+    width: "100%",
+    position: "relative",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  lightboxImage: {
+    width: "100%",
+    height: "100%",
+  },
+  lightboxNavLeft: {
+    position: "absolute",
+    left: 16,
+    zIndex: 10,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+  },
+  lightboxNavRight: {
+    position: "absolute",
+    right: 16,
+    zIndex: 10,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+  },
+  lightboxThumbnailsBar: {
+    width: "100%",
+    paddingVertical: 18,
+    paddingHorizontal: 12,
+  },
+  lightboxThumb: {
+    width: 52,
+    height: 52,
+    borderRadius: 8,
+    marginHorizontal: 4,
+    overflow: "hidden",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  lightboxThumbSelected: {
+    borderColor: colors.primary,
+  },
+  lightboxThumbImage: {
+    width: "100%",
+    height: "100%",
   },
 });

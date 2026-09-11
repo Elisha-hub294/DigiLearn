@@ -42,6 +42,7 @@ export type TeacherPost = {
   description?: string;
   hasCover?: boolean;
   cover?: string;
+  images?: string[];
   createdAt?: Date | null;
   document?: string;
   fileType?: "image" | "doc" | "";
@@ -160,6 +161,19 @@ export const normalizeTeacherPost = (doc: {
     if (!isNaN(parsed.getTime())) createdAt = parsed;
   }
 
+  const rawImages = Array.isArray(data.images)
+    ? (data.images.filter(
+        (img: unknown): img is string =>
+          typeof img === "string" && img.trim().length > 0,
+      ) as string[])
+    : [];
+  const images =
+    rawImages.length > 0
+      ? rawImages
+      : cover && fileType !== "doc"
+        ? [cover]
+        : [];
+
   return {
     id: doc.id,
     title,
@@ -170,6 +184,7 @@ export const normalizeTeacherPost = (doc: {
     description,
     hasCover,
     cover,
+    images,
     document,
     fileType,
     createdAt,
@@ -362,6 +377,246 @@ export const TeacherPostCard = ({
   );
 };
 
+function MultiImageLayout({
+  images,
+  onImagePress,
+  onSeeAllPress,
+}: {
+  images: string[];
+  onImagePress: (index: number) => void;
+  onSeeAllPress: () => void;
+}) {
+  const count = images.length;
+  if (count === 0) return null;
+
+  return (
+    <View style={layoutStyles.container}>
+      {/* Floating "+" / "See all" button */}
+      {count > 1 && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Open all ${count} photos in see-all screen`}
+          style={layoutStyles.plusBadgeButton}
+          onPress={onSeeAllPress}
+        >
+          <Icon name="plus" size={13} color="#ffffff" />
+          <Text style={layoutStyles.plusBadgeText}>{count}</Text>
+        </Pressable>
+      )}
+
+      {/* 1 Image */}
+      {count === 1 && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open image preview"
+          style={layoutStyles.singleWrapper}
+          onPress={() => onImagePress(0)}
+        >
+          <Image
+            source={{ uri: images[0] }}
+            style={layoutStyles.fullImage}
+            contentFit="cover"
+          />
+        </Pressable>
+      )}
+
+      {/* 2 Images */}
+      {count === 2 && (
+        <View style={layoutStyles.row2}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open photo 1"
+            style={layoutStyles.halfCell}
+            onPress={() => onImagePress(0)}
+          >
+            <Image
+              source={{ uri: images[0] }}
+              style={layoutStyles.fullImage}
+              contentFit="cover"
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open photo 2"
+            style={layoutStyles.halfCell}
+            onPress={() => onImagePress(1)}
+          >
+            <Image
+              source={{ uri: images[1] }}
+              style={layoutStyles.fullImage}
+              contentFit="cover"
+            />
+          </Pressable>
+        </View>
+      )}
+
+      {/* 3 Images: 1 large left, 2 stacked right */}
+      {count === 3 && (
+        <View style={layoutStyles.row3}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open photo 1"
+            style={layoutStyles.threeLeftCell}
+            onPress={() => onImagePress(0)}
+          >
+            <Image
+              source={{ uri: images[0] }}
+              style={layoutStyles.fullImage}
+              contentFit="cover"
+            />
+          </Pressable>
+          <View style={layoutStyles.threeRightCol}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open photo 2"
+              style={layoutStyles.threeSubCell}
+              onPress={() => onImagePress(1)}
+            >
+              <Image
+                source={{ uri: images[1] }}
+                style={layoutStyles.fullImage}
+                contentFit="cover"
+              />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open photo 3"
+              style={layoutStyles.threeSubCell}
+              onPress={() => onImagePress(2)}
+            >
+              <Image
+                source={{ uri: images[2] }}
+                style={layoutStyles.fullImage}
+                contentFit="cover"
+              />
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      {/* 4 Images: 2x2 grid */}
+      {count === 4 && (
+        <View style={layoutStyles.grid2x2}>
+          <View style={layoutStyles.gridRow}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open photo 1"
+              style={layoutStyles.quarterCell}
+              onPress={() => onImagePress(0)}
+            >
+              <Image
+                source={{ uri: images[0] }}
+                style={layoutStyles.fullImage}
+                contentFit="cover"
+              />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open photo 2"
+              style={layoutStyles.quarterCell}
+              onPress={() => onImagePress(1)}
+            >
+              <Image
+                source={{ uri: images[1] }}
+                style={layoutStyles.fullImage}
+                contentFit="cover"
+              />
+            </Pressable>
+          </View>
+          <View style={layoutStyles.gridRow}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open photo 3"
+              style={layoutStyles.quarterCell}
+              onPress={() => onImagePress(2)}
+            >
+              <Image
+                source={{ uri: images[2] }}
+                style={layoutStyles.fullImage}
+                contentFit="cover"
+              />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open photo 4"
+              style={layoutStyles.quarterCell}
+              onPress={() => onImagePress(3)}
+            >
+              <Image
+                source={{ uri: images[3] }}
+                style={layoutStyles.fullImage}
+                contentFit="cover"
+              />
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      {/* 5+ Images: 2x2 grid with +N on the 4th item */}
+      {count >= 5 && (
+        <View style={layoutStyles.grid2x2}>
+          <View style={layoutStyles.gridRow}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open photo 1"
+              style={layoutStyles.quarterCell}
+              onPress={() => onImagePress(0)}
+            >
+              <Image
+                source={{ uri: images[0] }}
+                style={layoutStyles.fullImage}
+                contentFit="cover"
+              />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open photo 2"
+              style={layoutStyles.quarterCell}
+              onPress={() => onImagePress(1)}
+            >
+              <Image
+                source={{ uri: images[1] }}
+                style={layoutStyles.fullImage}
+                contentFit="cover"
+              />
+            </Pressable>
+          </View>
+          <View style={layoutStyles.gridRow}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open photo 3"
+              style={layoutStyles.quarterCell}
+              onPress={() => onImagePress(2)}
+            >
+              <Image
+                source={{ uri: images[2] }}
+                style={layoutStyles.fullImage}
+                contentFit="cover"
+              />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`View all ${count} photos in see-all screen`}
+              style={layoutStyles.quarterCell}
+              onPress={onSeeAllPress}
+            >
+              <Image
+                source={{ uri: images[3] }}
+                style={layoutStyles.fullImage}
+                contentFit="cover"
+              />
+              <View style={layoutStyles.moreOverlay}>
+                <Text style={layoutStyles.moreOverlayPlus}>+{count - 3}</Text>
+                <Text style={layoutStyles.moreOverlayLabel}>See all</Text>
+              </View>
+            </Pressable>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export const TeacherPostItem = ({
   postItem,
   index = 0,
@@ -385,6 +640,8 @@ export const TeacherPostItem = ({
   const [isHovered, setIsHovered] = useState(false);
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const [activePreviewIndex, setActivePreviewIndex] = useState(0);
+
   const ownerProfile = postItem.owner
     ? ownerProfiles[postItem.owner]
     : undefined;
@@ -394,6 +651,33 @@ export const TeacherPostItem = ({
     postItem.description ?? "No teacher update available yet.";
   const title = postItem.title || "Teacher update";
   const hideOwner = postItem.ownerType?.trim().toLowerCase() === "admin";
+
+  const postImages = useMemo(() => {
+    if (postItem.images && postItem.images.length > 0) {
+      return postItem.images;
+    }
+    if (postItem.cover && postItem.fileType !== "doc") {
+      return [postItem.cover];
+    }
+    return [];
+  }, [postItem.images, postItem.cover, postItem.fileType]);
+
+  const handleOpenSeeAll = (initialIndex: number = 0) => {
+    router.push({
+      pathname: "/see-all",
+      params: {
+        type: "post-images",
+        title: postItem.title || `${teacherName}'s Photos`,
+        images: JSON.stringify(postImages),
+        initialIndex: String(initialIndex),
+      },
+    } as never);
+  };
+
+  const handleImagePress = (imageIndex: number) => {
+    setActivePreviewIndex(imageIndex);
+    setShowImagePreview(true);
+  };
 
   const handlePreviewPress = () => {
     if (postItem.fileType === "doc" && postItem.document) {
@@ -407,7 +691,9 @@ export const TeacherPostItem = ({
       return;
     }
 
-    if (postItem.fileType === "image") setShowImagePreview(true);
+    if (postItem.fileType === "image" || postImages.length > 0) {
+      handleImagePress(0);
+    }
   };
 
   const isSaved = Boolean(
@@ -467,7 +753,9 @@ export const TeacherPostItem = ({
             light
           />
         </View>
-        {postItem.hasCover && postItem.cover ? (
+
+        {/* Document preview */}
+        {postItem.fileType === "doc" && postItem.document && postItem.cover ? (
           <Pressable
             {...({
               onHoverIn: () => setIsHovered(true),
@@ -476,9 +764,7 @@ export const TeacherPostItem = ({
             style={styles.previewWrap}
             onPress={handlePreviewPress}
             accessibilityRole="button"
-            accessibilityLabel={
-              postItem.fileType === "doc" ? "Open PDF" : "Open image preview"
-            }
+            accessibilityLabel="Open PDF"
           >
             <Image
               source={{ uri: postItem.cover }}
@@ -487,6 +773,15 @@ export const TeacherPostItem = ({
             />
             <View style={[styles.previewOverlay, { pointerEvents: "none" }]} />
           </Pressable>
+        ) : null}
+
+        {/* Multi-image photo layout */}
+        {postItem.fileType !== "doc" && postImages.length > 0 ? (
+          <MultiImageLayout
+            images={postImages}
+            onImagePress={handleImagePress}
+            onSeeAllPress={() => handleOpenSeeAll(0)}
+          />
         ) : null}
 
         <Modal
@@ -508,16 +803,78 @@ export const TeacherPostItem = ({
             >
               <Icon name="x" size={24} color={staticColors.white} />
             </Pressable>
+
+            {/* Quick action to open full see-all screen */}
+            {postImages.length > 1 && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Open in see-all screen"
+                style={layoutStyles.modalSeeAllButton}
+                onPress={() => {
+                  setShowImagePreview(false);
+                  handleOpenSeeAll(activePreviewIndex);
+                }}
+              >
+                <Icon name="grid" size={15} color="#ffffff" />
+                <Text style={layoutStyles.modalSeeAllText}>
+                  See all ({postImages.length})
+                </Text>
+              </Pressable>
+            )}
+
             <Pressable
               style={styles.fullImagePreviewFrame}
               onPress={(event) => event.stopPropagation()}
             >
               <Image
-                source={{ uri: postItem.cover }}
+                source={{
+                  uri: postImages[activePreviewIndex] || postItem.cover,
+                }}
                 style={styles.fullImagePreview}
                 contentFit="contain"
               />
             </Pressable>
+
+            {/* Next / Prev navigation in modal if multiple images */}
+            {postImages.length > 1 && (
+              <View style={layoutStyles.modalNavRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Previous image"
+                  disabled={activePreviewIndex === 0}
+                  style={[
+                    layoutStyles.modalNavButton,
+                    activePreviewIndex === 0 && { opacity: 0.3 },
+                  ]}
+                  onPress={() =>
+                    setActivePreviewIndex((prev) => Math.max(0, prev - 1))
+                  }
+                >
+                  <Icon name="chevron-left" size={22} color="#ffffff" />
+                </Pressable>
+                <Text style={layoutStyles.modalCounterText}>
+                  {activePreviewIndex + 1} / {postImages.length}
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Next image"
+                  disabled={activePreviewIndex === postImages.length - 1}
+                  style={[
+                    layoutStyles.modalNavButton,
+                    activePreviewIndex === postImages.length - 1 && {
+                      opacity: 0.3,
+                    },
+                  ]}
+                  onPress={() =>
+                    setActivePreviewIndex((prev) =>
+                      Math.min(postImages.length - 1, prev + 1),
+                    )
+                  }
+                >
+                  <Icon name="chevron-right" size={22} color="#ffffff" />
+                </Pressable>
+              </View>
+            )}
           </View>
         </Modal>
 
@@ -793,4 +1150,155 @@ const styles = StyleSheet.create({
   skeletonCaption: { height: 13, width: "90%", marginBottom: 6 },
   skeletonCaptionShort: { height: 13, width: "60%", marginBottom: spacing.sm },
   skeletonAction: { height: 34, width: 70, borderRadius: 999 },
+});
+
+const layoutStyles = StyleSheet.create({
+  container: {
+    width: "100%",
+    borderRadius: 14,
+    overflow: "hidden",
+    position: "relative",
+    marginBottom: spacing.xs,
+    backgroundColor: "rgba(0,0,0,0.04)",
+  },
+  plusBadgeButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 5,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(15, 23, 42, 0.78)",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+  },
+  plusBadgeText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  singleWrapper: {
+    width: "100%",
+    aspectRatio: 1.6,
+  },
+  fullImage: {
+    width: "100%",
+    height: "100%",
+  },
+  row2: {
+    width: "100%",
+    height: 220,
+    flexDirection: "row",
+    gap: 3,
+  },
+  halfCell: {
+    flex: 1,
+    height: "100%",
+    overflow: "hidden",
+  },
+  row3: {
+    width: "100%",
+    height: 240,
+    flexDirection: "row",
+    gap: 3,
+  },
+  threeLeftCell: {
+    flex: 1.25,
+    height: "100%",
+    overflow: "hidden",
+  },
+  threeRightCol: {
+    flex: 1,
+    height: "100%",
+    flexDirection: "column",
+    gap: 3,
+  },
+  threeSubCell: {
+    flex: 1,
+    overflow: "hidden",
+  },
+  grid2x2: {
+    width: "100%",
+    height: 260,
+    flexDirection: "column",
+    gap: 3,
+  },
+  gridRow: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 3,
+  },
+  quarterCell: {
+    flex: 1,
+    height: "100%",
+    overflow: "hidden",
+    position: "relative",
+  },
+  moreOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0, 0, 0, 0.58)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  moreOverlayPlus: {
+    color: "#ffffff",
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  moreOverlayLabel: {
+    color: "rgba(255, 255, 255, 0.9)",
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  modalSeeAllButton: {
+    position: "absolute",
+    top: spacing.xl,
+    left: spacing.lg,
+    zIndex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+  },
+  modalSeeAllText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  modalNavRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 20,
+    marginTop: 12,
+  },
+  modalNavButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalCounterText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });
