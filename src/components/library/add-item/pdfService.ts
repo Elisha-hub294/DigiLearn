@@ -214,9 +214,37 @@ export const extractDocxText = async (
     .join("\n");
 };
 
-export const extractPptxText = async (
+export type PptxContent = {
+  text: string;
+  images: string[];
+};
+
+const getImageMimeType = (path: string): string | null => {
+  const extension = path.split(".").pop()?.toLowerCase();
+  const mimeTypes: Record<string, string> = {
+    bmp: "image/bmp",
+    gif: "image/gif",
+    jpeg: "image/jpeg",
+    jpg: "image/jpeg",
+    png: "image/png",
+    svg: "image/svg+xml",
+    webp: "image/webp",
+  };
+  return extension ? (mimeTypes[extension] ?? null) : null;
+};
+
+const resolveZipPath = (fromPath: string, targetPath: string): string => {
+  const parts = fromPath.split("/").slice(0, -1);
+  for (const part of targetPath.split("/")) {
+    if (part === "..") parts.pop();
+    else if (part && part !== ".") parts.push(part);
+  }
+  return parts.join("/");
+};
+
+export const extractPptxContent = async (
   data: ArrayBuffer | string,
-): Promise<string> => {
+): Promise<PptxContent> => {
   const zip = await JSZip.loadAsync(
     data,
     typeof data === "string" ? { base64: true } : undefined,
@@ -236,7 +264,7 @@ export const extractPptxText = async (
   const slides = await Promise.all(
     slideFiles.map(async (path, index) => {
       const slideXml = await zip.file(path)?.async("text");
-      if (!slideXml) return "";
+      if (!slideXml) return { text: "", images: [] };
       const paragraphs = [
         ...slideXml.matchAll(/<a:p(?: [^>]*)?>([\s\S]*?)<\/a:p>/g),
       ]
@@ -251,13 +279,53 @@ export const extractPptxText = async (
         )
         .filter(Boolean);
 
-      return paragraphs.length
-        ? `Slide ${index + 1}\n${paragraphs.join("\n")}`
-        : "";
+      const relationshipXml = await zip
+        .file(path.replace(/^(.*\/)([^/]+)$/, "$1_rels/$2.rels"))
+        ?.async("text");
+      const imageTargets = new Map<string, string>();
+      for (const [, attributes] of relationshipXml?.matchAll(
+        /<Relationship\b([^>]*)\/?>(?:<\/Relationship>)?/g,
+      ) ?? []) {
+        const relationshipId = attributes.match(/\bId="([^"]+)"/)?.[1];
+        const target = attributes.match(/\bTarget="([^"]+)"/)?.[1];
+        if (relationshipId && target) imageTargets.set(relationshipId, target);
+      }
+
+      const imageIds = [
+        ...slideXml.matchAll(/<a:blip\b[^>]*\br:embed="([^"]+)"/g),
+      ].map(([, relationshipId]) => relationshipId);
+      const images = await Promise.all(
+        [...new Set(imageIds)].map(async (relationshipId) => {
+          const target = imageTargets.get(relationshipId);
+          if (!target) return null;
+          const imagePath = resolveZipPath(path, target);
+          const mimeType = getImageMimeType(imagePath);
+          const image = zip.file(imagePath);
+          if (!mimeType || !image) return null;
+          return `data:${mimeType};base64,${await image.async("base64")}`;
+        }),
+      );
+
+      return {
+        text: paragraphs.length
+          ? `Slide ${index + 1}\n${paragraphs.join("\n")}`
+          : `Slide ${index + 1}`,
+        images: images.filter((image): image is string => Boolean(image)),
+      };
     }),
   );
 
-  return slides.filter(Boolean).join("\n\n");
+  return {
+    text: slides.map((slide) => slide.text).join("\n\n"),
+    images: slides.flatMap((slide) => slide.images),
+  };
+};
+
+export const extractPptxText = async (
+  data: ArrayBuffer | string,
+): Promise<string> => {
+  const { text } = await extractPptxContent(data);
+  return text;
 };
 
 const generateOfficeThumbnail = async (text: string): Promise<string> => {

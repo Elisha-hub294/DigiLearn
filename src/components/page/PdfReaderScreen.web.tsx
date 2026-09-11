@@ -2,7 +2,14 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { colors, radius, spacing } from "../../constants/theme";
 import { recordPageVisit } from "../../services/activityService";
 import {
@@ -19,7 +26,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import {
   extractDocxText,
-  extractPptxText,
+  extractPptxContent,
 } from "../library/add-item/pdfService";
 import { ActionDialog } from "../ui/ActionDialog";
 
@@ -82,6 +89,7 @@ export function PdfReaderScreen() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [localBlobUri, setLocalBlobUri] = useState<string | null>(null);
   const [officeText, setOfficeText] = useState<string | null>(null);
+  const [officeImages, setOfficeImages] = useState<string[]>([]);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -128,16 +136,21 @@ export function PdfReaderScreen() {
     if (!isTextOfficeFile || !decodedUri) return;
 
     let active = true;
+    setOfficeText(null);
+    setOfficeImages([]);
     const loadOfficeText = async () => {
       try {
         const response = await fetch(decodedUri);
         if (!response.ok)
           throw new Error(`Office document request failed: ${response.status}`);
         const data = await response.arrayBuffer();
-        const text = isDocxFile
-          ? await extractDocxText(data)
-          : await extractPptxText(data);
-        if (active) setOfficeText(text);
+        const content = isDocxFile
+          ? { text: await extractDocxText(data), images: [] }
+          : await extractPptxContent(data);
+        if (active) {
+          setOfficeText(content.text);
+          setOfficeImages(content.images);
+        }
       } catch (error) {
         console.warn("Failed to open Office document:", error);
         if (active) setIframeError(true);
@@ -478,6 +491,16 @@ export function PdfReaderScreen() {
               {paragraph || " "}
             </Text>
           ))}
+          {isPptxFile &&
+            officeImages.map((imageUri, index) => (
+              <Image
+                key={`pptx-image-${index}`}
+                source={{ uri: imageUri }}
+                style={styles.pptxImage}
+                resizeMode="contain"
+                accessibilityLabel={`Presentation image ${index + 1}`}
+              />
+            ))}
         </ScrollView>
       ) : !decodedUri || iframeError ? (
         <View
@@ -526,6 +549,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 25,
     marginBottom: spacing.md,
+  },
+  pptxImage: {
+    width: "100%",
+    height: 260,
+    marginBottom: spacing.lg,
   },
 
   // Header

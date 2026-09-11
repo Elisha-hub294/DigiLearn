@@ -6,6 +6,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
+  Image,
   NativeModules,
   Platform,
   Pressable,
@@ -30,7 +31,7 @@ import {
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import {
   extractDocxText,
-  extractPptxText,
+  extractPptxContent,
 } from "../library/add-item/pdfService";
 import { ActionDialog } from "../ui/ActionDialog";
 
@@ -132,6 +133,7 @@ export function PdfReaderScreen() {
   const [remoteBase64, setRemoteBase64] = useState<string | null>(null);
   const [remoteFetchError, setRemoteFetchError] = useState(false);
   const [officeText, setOfficeText] = useState<string | null>(null);
+  const [officeImages, setOfficeImages] = useState<string[]>([]);
   const [noticeDialog, setNoticeDialog] = useState<{
     title: string;
     message: string;
@@ -270,6 +272,8 @@ export function PdfReaderScreen() {
     if (!isTextOfficeFile || !decodedUri) return;
 
     let active = true;
+    setOfficeText(null);
+    setOfficeImages([]);
 
     const loadOfficeText = async () => {
       try {
@@ -278,11 +282,12 @@ export function PdfReaderScreen() {
               encoding: FileSystem.EncodingType?.Base64 ?? "base64",
             })
           : await (await fetch(decodedUri)).arrayBuffer();
-        const text = isDocxFile
-          ? await extractDocxText(data)
-          : await extractPptxText(data);
+        const content = isDocxFile
+          ? { text: await extractDocxText(data), images: [] }
+          : await extractPptxContent(data);
         if (active) {
-          setOfficeText(text);
+          setOfficeText(content.text);
+          setOfficeImages(content.images);
           setLoaded(true);
         }
       } catch (error) {
@@ -893,6 +898,16 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
                 {paragraph || " "}
               </Text>
             ))}
+            {isPptxFile &&
+              officeImages.map((imageUri, index) => (
+                <Image
+                  key={`pptx-image-${index}`}
+                  source={{ uri: imageUri }}
+                  style={styles.pptxImage}
+                  resizeMode="contain"
+                  accessibilityLabel={`Presentation image ${index + 1}`}
+                />
+              ))}
           </ScrollView>
         )}
 
@@ -1071,6 +1086,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 25,
     marginBottom: spacing.md,
+  },
+  pptxImage: {
+    width: "100%",
+    height: 260,
+    marginBottom: spacing.lg,
   },
   // Hide (but keep mounted) while loading, so it silently fetches in the background
   webviewHidden: {
