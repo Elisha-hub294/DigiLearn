@@ -99,7 +99,7 @@ export const SearchResultTeacherCard = memo(function SearchResultTeacherCard({
           >
             <Image
               source={{
-                uri: item.rawItem?.avatar || DEFAULT_TEACHER_AVATAR,
+                uri: item.avatar || DEFAULT_TEACHER_AVATAR,
               }}
               style={styles.avatar}
               contentFit="cover"

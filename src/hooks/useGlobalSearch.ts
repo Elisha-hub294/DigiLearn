@@ -600,7 +600,7 @@ export function useGlobalSearch(
       const teacherName = String(t.name || "Teacher");
       const teacherAvatar = resolveTeacherAvatar(
         teacherName,
-        t.avatar || t.image || t.photoURL,
+        t.avatar || t.image || t.imageUrl || t.profileImage || t.photoURL,
       );
 
       addScored(
