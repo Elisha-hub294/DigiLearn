@@ -21,7 +21,7 @@ export function ShareButton({
         styles.button,
         {
           backgroundColor: colors.lightBackground,
-          borderColor: colors.border,
+          borderColor: activeAccent,
         },
         pressed && styles.pressed,
       ]}

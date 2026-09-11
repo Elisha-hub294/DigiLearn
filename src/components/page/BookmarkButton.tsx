@@ -30,7 +30,7 @@ export function BookmarkButton({
                 styles.unselectedButton,
                 {
                   backgroundColor: colors.lightBackground,
-                  borderColor: colors.border,
+                  borderColor: activeAccent,
                 },
               ],
         ]}
@@ -38,7 +38,7 @@ export function BookmarkButton({
         <Ionicons
           name={selected ? "bookmark" : "bookmark-outline"}
           size={22}
-          color={selected ? activeAccent : colors.inactive}
+          color={activeAccent}
         />
       </View>
     </Pressable>

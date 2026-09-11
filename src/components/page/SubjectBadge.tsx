@@ -84,9 +84,17 @@ export function SubjectBadge({
         {subjects.map((sub) => (
           <View
             key={sub}
-            style={[styles.chip, { backgroundColor: colors.lightBackground }]}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: colors.lightBackground,
+                borderColor: activeAccent,
+              },
+            ]}
           >
-            <Text style={[styles.chipText, { color: colors.text }]}>{sub}</Text>
+            <Text style={[styles.chipText, { color: activeAccent }]}>
+              {sub}
+            </Text>
           </View>
         ))}
       </View>
@@ -182,6 +190,7 @@ const styles = StyleSheet.create({
   chip: {
     backgroundColor: "#EEF7F3",
     borderRadius: 99,
+    borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
