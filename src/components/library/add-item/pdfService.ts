@@ -6,6 +6,7 @@ let FileSystem: any = null;
 
 if (Platform.OS !== "web") {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     FileSystem = require("expo-file-system");
   } catch (error) {
     console.error("Failed to load FileSystem:", error);

@@ -64,6 +64,7 @@ function getNativeGoogleSigninModule() {
     return null;
   }
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const mod = require("@react-native-google-signin/google-signin");
     if (
       mod &&
@@ -166,8 +167,7 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
       };
     }
 
-    const { GoogleSignin, statusCodes, isErrorWithCode, isSuccessResponse } =
-      googleModule;
+    const { GoogleSignin, isSuccessResponse } = googleModule;
 
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
     const response = await GoogleSignin.signIn();

@@ -3,6 +3,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -101,12 +102,12 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       unsubscribeTeachers();
     };
   }, [user]);
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (user) await ensureUserProfile(user);
-  };
+  }, [user]);
   const value = useMemo(
     () => ({ user, profile, loading, error, refresh }),
-    [user, profile, loading, error],
+    [user, profile, loading, error, refresh],
   );
   return (
     <ProfileContext.Provider value={value}>{children}</ProfileContext.Provider>

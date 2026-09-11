@@ -77,7 +77,7 @@ export const TopicalNotesSlider = () => {
         title: "",
         image: defaultSubjectAvatar,
       })),
-    [],
+    [defaultSubjectAvatar],
   );
 
   const filteredSubjects = useMemo(() => {
@@ -267,7 +267,7 @@ export const TopicalNotesSlider = () => {
     return () => {
       active = false;
     };
-  }, []);
+  }, [defaultSubjectAvatar]);
 
   if (!loadingSubjects && shuffled.length === 0) return null;
 

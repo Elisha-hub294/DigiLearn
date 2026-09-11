@@ -1,18 +1,10 @@
 import { Feather as Icon } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import { useMemo } from "react";
-import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { colors, spacing } from "../../../constants/theme";
+import { Image, Pressable, Text, TextInput, View } from "react-native";
+import { colors } from "../../../constants/theme";
 import PdfPreview from "../../home/PdfPreview";
 import type { FormState } from "./constants";
-import { CLASS_OPTIONS, DESCRIPTION_MAX_LENGTH } from "./constants";
+import { DESCRIPTION_MAX_LENGTH } from "./constants";
 import { FilePickerField } from "./FilePickerField";
 import { FieldLabel } from "./SharedFormControls";
 
@@ -63,25 +55,6 @@ export function PageFormSection({
   isSubmitting,
   styles,
 }: PageFormSectionProps) {
-  const pageClassOptions = useMemo(
-    () =>
-      CLASS_OPTIONS[formData.level === "Advanced" ? "advanced" : "ordinary"],
-    [formData.level],
-  );
-
-  const handleLevelSelect = (level: string) => {
-    updateField("level", level);
-    const nextClassOptions =
-      level === "Advanced" ? CLASS_OPTIONS.advanced : CLASS_OPTIONS.ordinary;
-    if (
-      !nextClassOptions.some((option) => option.value === formData.schoolClass)
-    ) {
-      updateField("schoolClass", "");
-    }
-    setLevelDropdownOpen(false);
-    setClassDropdownOpen(false);
-  };
-
   return (
     <>
       <Text style={styles.fieldLabel}>Description</Text>
@@ -199,9 +172,3 @@ export function PageFormSection({
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  previewContainer: {
-    marginBottom: spacing.md,
-  },
-});

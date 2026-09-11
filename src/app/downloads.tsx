@@ -44,7 +44,7 @@ function formatDate(timestamp: number): string {
 
 export default function DownloadsScreen() {
   const router = useRouter();
-  const { colors: themeColors, isDark } = useTheme();
+  const { colors: themeColors } = useTheme();
   const { width } = useWindowDimensions();
   const [files, setFiles] = useState<DownloadedFile[]>([]);
   const [loading, setLoading] = useState(true);

@@ -35,7 +35,6 @@ import {
 const TYPING_INTERVAL_MS = 32;
 const MESSAGE_PAUSE_MS = 8000;
 const MESSAGE_HIDDEN_MS = 40000;
-const IDLE_FLOAT_DURATION_MS = 2600;
 const MIN_TOUCH_SIZE = 44;
 
 const getBubbleWidth = (width: number) =>
@@ -108,7 +107,7 @@ export function FloatingAssistantButton() {
         opacity.value = withSpring(1, { damping: 18, stiffness: 120 });
         translateY.value = withSpring(0, { damping: 18, stiffness: 120 });
         scale.value = withSpring(1, { damping: 18, stiffness: 120 });
-      } catch (error) {
+      } catch {
         if (!cancelled) {
           setMessages(["Need help with your studies?"]);
           setActiveMessage("Need help with your studies?");

@@ -15,7 +15,7 @@ import { colors, radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 
 export function PublicHome() {
-  const { colors: themeColors, isDark } = useTheme();
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const horizontalPadding = width >= 1200 ? 64 : width >= 600 ? 36 : 20;

@@ -21,7 +21,7 @@ import { fetchUserActivity } from "../services/activityService";
 import { ActivityItem } from "../types/activity";
 
 export default function ActivityScreen() {
-  const { colors: themeColors, isDark } = useTheme();
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const navigation = useNavigation();
   const { user } = useProfile();

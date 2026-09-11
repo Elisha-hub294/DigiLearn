@@ -29,8 +29,6 @@ import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { shareResource } from "../../services/shareLinks";
 import {
   getSavedItemsProfile,
-  PaperRevisionStatus,
-  setPaperRevisionStatus,
   toggleSavedItem,
 } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
@@ -160,8 +158,6 @@ export function PaperPreviewScreen() {
   const [paper, setPaper] = useState<PaperPreviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookmarked, setBookmarked] = useState(false);
-  const [revisionStatus, setRevisionStatus] =
-    useState<PaperRevisionStatus | null>(null);
   const [showGuestSaveAlert, setShowGuestSaveAlert] = useState(false);
   const [relatedPapers, setRelatedPapers] = useState<PaperPreviewData[]>([]);
   const { width } = useWindowDimensions();
@@ -263,25 +259,12 @@ export function PaperPreviewScreen() {
 
     const loadUserPaperState = async () => {
       try {
-        const [savedProfile, userSnap] = await Promise.all([
-          getSavedItemsProfile(userId),
-          getDoc(doc(db, "users", userId)),
-        ]);
+        const savedProfile = await getSavedItemsProfile(userId);
         const savedPapers = Array.isArray(savedProfile?.["saved-papers"])
           ? savedProfile["saved-papers"]
           : [];
-        const revisionMap =
-          userSnap.data()?.["paper-revision-status"] &&
-          typeof userSnap.data()?.["paper-revision-status"] === "object"
-            ? (userSnap.data()?.["paper-revision-status"] as Record<
-                string,
-                PaperRevisionStatus
-              >)
-            : {};
-
         if (active) {
           setBookmarked(savedPapers.includes(paper.id));
-          setRevisionStatus(revisionMap[paper.id] ?? null);
         }
       } catch (error) {
         console.error("Failed to check paper bookmark status", error);
@@ -412,24 +395,6 @@ export function PaperPreviewScreen() {
       );
     } catch (error) {
       console.error("Failed to toggle paper bookmark", error);
-    }
-  };
-
-  const updateRevisionStatus = async (nextStatus: PaperRevisionStatus) => {
-    if (!paper) return;
-
-    const userId = auth.currentUser?.uid;
-    if (!userId) {
-      setShowGuestSaveAlert(true);
-      return;
-    }
-
-    try {
-      await setPaperRevisionStatus(userId, paper.id, nextStatus);
-      setRevisionStatus(nextStatus);
-      showNativeToast(feedbackMessages.revisionUpdated);
-    } catch (error) {
-      console.error("Failed to update revision status", error);
     }
   };
 

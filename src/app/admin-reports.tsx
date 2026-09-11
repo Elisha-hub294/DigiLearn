@@ -28,7 +28,7 @@ const dateLabel = (value?: { seconds?: number }) =>
     : "Unknown date";
 
 export default function AdminReportsScreen() {
-  const { colors: themeColors, isDark } = useTheme();
+  const { colors: themeColors } = useTheme();
   const router = useRouter();
   const { profile } = useProfile();
   const { width } = useWindowDimensions();

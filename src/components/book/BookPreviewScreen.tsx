@@ -240,7 +240,7 @@ export function BookPreviewScreen() {
     };
 
     checkBookmarked();
-  }, [book?.id]);
+  }, [book]);
 
   const authorsWithAvatars = useMemo(() => {
     if (!book) return [];

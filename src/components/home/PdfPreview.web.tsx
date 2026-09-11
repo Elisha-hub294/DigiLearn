@@ -1,6 +1,9 @@
 import { Image } from "expo-image";
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { getThemeAsset } from "../../constants/themeAssets";
+import { useTheme } from "../../contexts/ThemeContext";
+import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import { Skeleton } from "../ui/Skeleton";
 
 interface PdfPreviewProps {
@@ -30,10 +33,6 @@ const loadPdfJs = () => {
     document.head.appendChild(script);
   });
 };
-
-import { getThemeAsset } from "../../constants/themeAssets";
-import { useTheme } from "../../contexts/ThemeContext";
-import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 
 export default function PdfPreview({
   uri,
@@ -114,7 +113,7 @@ export default function PdfPreview({
     return () => {
       active = false;
     };
-  }, [resolvedUri]);
+  }, [onError, onLoad, resolvedUri]);
 
   if (error) {
     return (

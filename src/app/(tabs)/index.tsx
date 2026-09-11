@@ -28,13 +28,13 @@ import {
 } from "../../components/home/FeaturedNoteCard";
 import { FloatingAssistantButton } from "../../components/home/FloatingAssistantButton";
 import { PublicHome } from "../../components/home/PublicHome";
+import { TeacherFollowCarousel } from "../../components/home/TeacherFollowCarousel";
 import {
   loadTeacherMetadata,
   loadTeacherPosts,
   TeacherPost,
   TeacherPostItem,
 } from "../../components/home/TeacherPostCard";
-import { TeacherFollowCarousel } from "../../components/home/TeacherFollowCarousel";
 import { TopicalNotesSlider } from "../../components/home/TopicalNotesSlider";
 import { BookCard } from "../../components/library/BookCard";
 import { PaperCard } from "../../components/library/PaperCard";
@@ -401,7 +401,7 @@ export default function HomeScreen() {
     });
 
     return items;
-  }, [filteredPaperCollections, router]);
+  }, [filteredPaperCollections, router, shuffleSeed]);
 
   // Interleave and randomize individual items into a continuous social feed!
   const feedItems = useMemo<FeedItem[]>(() => {

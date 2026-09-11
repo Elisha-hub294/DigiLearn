@@ -111,7 +111,7 @@ export default function VerifyEmailScreen() {
     } finally {
       setIsSending(false);
     }
-  }, [email, isSending]);
+  }, [email, emailParam, isSending]);
 
   const handleSignOut = useCallback(async () => {
     await signOut(auth);

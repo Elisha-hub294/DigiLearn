@@ -45,7 +45,10 @@ try {
   const hasNativePdf =
     !!NativeModules.RNPDFPdfViewManager ||
     !!UIManager.getViewManagerConfig?.("RNPDFPdfView");
-  if (hasNativePdf) NativePdfComponent = require("react-native-pdf").default;
+  if (hasNativePdf) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    NativePdfComponent = require("react-native-pdf").default;
+  }
 } catch {
   NativePdfComponent = null;
 }

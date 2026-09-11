@@ -24,9 +24,7 @@ import { db } from "../../../firebaseConfig";
 import { radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import {
-  setTeacherCommunityMembership,
-} from "../../services/teacherCommunity";
+import { setTeacherCommunityMembership } from "../../services/teacherCommunity";
 import { showNativeToast } from "../../utils/nativeToast";
 import { SectionHeader } from "../ui/SectionHeader";
 
@@ -147,10 +145,7 @@ function FollowButton({
         />
       )}
       <Text
-        style={[
-          styles.followBtnText,
-          { color: isFollowed ? accent : "#fff" },
-        ]}
+        style={[styles.followBtnText, { color: isFollowed ? accent : "#fff" }]}
       >
         {isFollowed ? "Following" : "Follow"}
       </Text>
@@ -203,11 +198,7 @@ function TeacherCard({
 
   return (
     <Animated.View
-      style={[
-        styles.card,
-        animStyle,
-        { backgroundColor: themeColors.surface },
-      ]}
+      style={[styles.card, animStyle, { backgroundColor: themeColors.surface }]}
     >
       <Pressable onPress={handlePress} style={styles.cardInner}>
         {/* Subtle accent gradient strip at top */}
@@ -269,10 +260,7 @@ function TeacherCard({
             {subjects.map((sub) => (
               <View
                 key={sub}
-                style={[
-                  styles.subjectChip,
-                  { backgroundColor: accent + "18" },
-                ]}
+                style={[styles.subjectChip, { backgroundColor: accent + "18" }]}
               >
                 <Text
                   style={[styles.subjectChipText, { color: accent }]}
@@ -301,7 +289,7 @@ function TeacherCard({
 
 // ─── TeacherFollowCarousel (Main export) ─────────────────────────────────────
 
-export function TeacherFollowCarousel({ seed = Date.now() }: { seed?: number }) {
+export function TeacherFollowCarousel({ seed = 0 }: { seed?: number }) {
   const { colors: themeColors } = useTheme();
   const { profile, user } = useProfile();
 
@@ -338,7 +326,10 @@ export function TeacherFollowCarousel({ seed = Date.now() }: { seed?: number }) 
             id: docSnap.id,
             name,
             avatar: typeof d.avatar === "string" ? d.avatar : undefined,
-            bio: typeof d.bio === "string" && d.bio.trim() ? d.bio.trim() : undefined,
+            bio:
+              typeof d.bio === "string" && d.bio.trim()
+                ? d.bio.trim()
+                : undefined,
             subjects: Array.isArray(d.subjects)
               ? d.subjects.filter(
                   (s: unknown): s is string => typeof s === "string",
@@ -410,9 +401,7 @@ export function TeacherFollowCarousel({ seed = Date.now() }: { seed?: number }) 
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => (
-            <View style={{ width: spacing.md }} />
-          )}
+          ItemSeparatorComponent={() => <View style={{ width: spacing.md }} />}
           renderItem={({ item, index }) => (
             <TeacherCard
               teacher={item}

@@ -241,7 +241,7 @@ export default function LoginScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => setShowLogoutDialog(true)}
+              onPress={handleLogout}
               style={[
                 styles.continueButton,
                 {

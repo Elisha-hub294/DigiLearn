@@ -1,6 +1,9 @@
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import { NativeModules, StyleSheet, UIManager, View } from "react-native";
+import { getThemeAsset } from "../../constants/themeAssets";
+import { useTheme } from "../../contexts/ThemeContext";
+import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 
 interface PdfPreviewProps {
   uri: string;
@@ -17,15 +20,12 @@ try {
     !!NativeModules.RNPDFPdfViewManager ||
     !!UIManager.getViewManagerConfig?.("RNPDFPdfView");
   if (hasNativeModule) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     PdfComponent = require("react-native-pdf").default;
   }
-} catch (e) {
+} catch {
   PdfComponent = null;
 }
-
-import { getThemeAsset } from "../../constants/themeAssets";
-import { useTheme } from "../../contexts/ThemeContext";
-import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 
 export default function PdfPreview({
   uri,
