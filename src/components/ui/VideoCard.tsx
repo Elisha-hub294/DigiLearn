@@ -142,7 +142,10 @@ export function VideoCard({
   const openTeacherProfile = () => {
     router.push({
       pathname: "/teacher-profile",
-      params: { name: item.teacher },
+      params: {
+        ...(rawItem.owner ? { id: rawItem.owner } : {}),
+        name: item.teacher,
+      },
     } as any);
   };
 

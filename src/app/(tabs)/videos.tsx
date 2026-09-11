@@ -40,6 +40,7 @@ type FirestoreLesson = {
   description?: string;
   avatar?: string;
   visits?: number | string;
+  owner?: string;
 };
 
 type LessonRecord = VideoLesson & { _uploadedAtDate?: Date; link?: string };
@@ -140,6 +141,7 @@ function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
     avatar: item.avatar ?? "",
     link,
     description: item.description ?? "",
+    owner: item.owner,
     isNew: isNewLesson(uploadedAtValue),
     visits: parseVisits(item.visits),
     _uploadedAtDate: uploadedAtDate ?? undefined,
