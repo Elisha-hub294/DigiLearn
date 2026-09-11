@@ -1,3 +1,6 @@
+import { Image } from "expo-image";
+import subjectDefault from "../../../../assets/images/subject-default.png";
+
 export type FormType = "book" | "banner" | "paper" | "page";
 
 export type FormState = {
@@ -40,7 +43,7 @@ export const INITIAL_FORM_STATE: FormState = {
   notifyUsers: true,
 };
 
-export const FALLBACK_ICON_URL = "icons/default-2d.png";
+export const FALLBACK_ICON_URL = Image.resolveAssetSource(subjectDefault).uri;
 export const TITLE_MAX_LENGTH = 100;
 export const DESCRIPTION_MAX_LENGTH = 500;
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB

@@ -1,4 +1,6 @@
+import { Image } from "expo-image";
 import { ImageSourcePropType } from "react-native";
+import subjectDefault from "../../../assets/images/subject-default.png";
 
 export type TopicalNote = {
   id: string;
@@ -32,4 +34,5 @@ export type SourceBook = {
   author?: string;
 };
 
-export const DEFAULT_SUBJECT_AVATAR = "icons/default-2d.png";
+export const DEFAULT_SUBJECT_AVATAR =
+  Image.resolveAssetSource(subjectDefault).uri;

@@ -1,6 +1,18 @@
+import { Image } from "expo-image";
 import { getDownloadURL, listAll, ref } from "firebase/storage";
 import { useEffect, useState } from "react";
+import subjectDefault from "../../assets/images/subject-default.png";
 import { storage } from "../../firebaseConfig";
+
+const STALE_FIREBASE_DEFAULT_ASSET_PATHS = new Set([
+  "icons/default-2d.png",
+  "icons/default-3d.png",
+  "default-2d.png",
+  "default-3d.png",
+]);
+
+const DEFAULT_LOCAL_SUBJECT_AVATAR =
+  Image.resolveAssetSource(subjectDefault).uri;
 
 // Cache to prevent duplicate getDownloadURL calls
 const urlCache = new Map<string, string>();
@@ -196,6 +208,11 @@ export async function getFirebaseStorageUrl(
   }
 
   if (!storagePath) return url;
+
+  const normalizedStoragePath = storagePath.trim().replace(/^\/+/, "");
+  if (STALE_FIREBASE_DEFAULT_ASSET_PATHS.has(normalizedStoragePath)) {
+    return DEFAULT_LOCAL_SUBJECT_AVATAR;
+  }
 
   // Normalize folder changes:
   if (storagePath.startsWith("Book Covers/")) {
