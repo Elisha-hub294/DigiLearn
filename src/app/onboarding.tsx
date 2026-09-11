@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from "react";
 import {
   Animated,
   FlatList,
+  Image,
   Platform,
   Pressable,
   StatusBar,
@@ -27,18 +28,18 @@ const VIEWABILITY_CONFIG = { viewAreaCoveragePercentThreshold: 50 };
 const SLIDES = [
   {
     id: "slide1",
-    headline: "Learn Without\nLimits",
+    headline: "Welcome to\nOpero Stephen platform",
     subtitle:
-      "Access thousands of lessons, books and past papers — all in one place.",
+      "Discover a library of lessons, books and past papers to help you learn, grow and achieve more.",
 
-    animation: require("../../assets/animations/onboarding1.json"),
-    accentColor: "#4F8EF7",
+    image: require("../../assets/images/opero-stephen.jpeg"),
+    accentColor: "#F2A65A",
   },
   {
     id: "slide2",
     headline: "Study Smarter\nwith AI",
     subtitle:
-      "Our AI assistant answers questions, summarises notes and helps you master any topic.",
+      "OSplatform AI assistant answers questions, summarises notes and helps you master any topic.",
 
     animation: require("../../assets/animations/onboarding2.json"),
     accentColor: "#A78BFA",
@@ -101,13 +102,17 @@ function SlideItem({ item, width }: { item: Slide; width: number }) {
           },
         ]}
       >
-        <LottieView
-          source={item.animation}
-          autoPlay
-          loop
-          style={styles.animation}
-          resizeMode="contain"
-        />
+        {"image" in item ? (
+          <Image source={item.image} style={styles.image} resizeMode="cover" />
+        ) : (
+          <LottieView
+            source={item.animation}
+            autoPlay
+            loop
+            style={styles.animation}
+            resizeMode="contain"
+          />
+        )}
       </View>
     </View>
   );
@@ -307,7 +312,7 @@ const styles = StyleSheet.create({
   animationWrapper: {
     width: 280,
     height: 280,
-    borderRadius: 24,
+    borderRadius: 999,
     overflow: "hidden",
     backgroundColor: "rgba(255,255,255,0.05)",
     alignItems: "center",
@@ -324,6 +329,10 @@ const styles = StyleSheet.create({
   animation: {
     width: 260,
     height: 260,
+  },
+  image: {
+    width: "100%",
+    height: "100%",
   },
   bottom: {
     paddingHorizontal: 32,
