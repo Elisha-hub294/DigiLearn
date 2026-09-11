@@ -288,12 +288,14 @@ export const CoursesCarousel = () => {
                   </Text>
                 </View>
                 {!!item.duration && (
-                  <View style={styles.durationBadge}>
+                  <View
+                    style={[
+                      styles.durationBadge,
+                      { backgroundColor: themeColors.surface },
+                    ]}
+                  >
                     <Text
-                      style={[
-                        styles.durationText,
-                        { color: themeColors.white },
-                      ]}
+                      style={[styles.durationText, { color: themeColors.text }]}
                     >
                       {item.duration}
                     </Text>
@@ -393,9 +395,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: radius.pill,
-    backgroundColor: "rgba(0,0,0,0.5)",
   },
-  durationText: { color: colors.white, fontSize: 11, fontWeight: "500" },
+  durationText: { fontSize: 11, fontWeight: "500" },
   body: { padding: spacing.sm },
   title: {
     color: colors.text,

@@ -116,7 +116,10 @@ export const BookCarousel = () => {
             <View
               style={[
                 styles.card,
-                { backgroundColor: themeColors.white, width: defaultCardWidth },
+                {
+                  backgroundColor: themeColors.surface,
+                  width: defaultCardWidth,
+                },
               ]}
             >
               <Skeleton style={[styles.image, { height: 300 }]} />
@@ -161,7 +164,7 @@ export const BookCarousel = () => {
             <View
               style={[
                 styles.card,
-                { backgroundColor: themeColors.white, width: cardWidth },
+                { backgroundColor: themeColors.surface, width: cardWidth },
               ]}
             >
               <Pressable

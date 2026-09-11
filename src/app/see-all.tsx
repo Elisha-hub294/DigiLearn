@@ -606,8 +606,15 @@ function BookTile({ item, onPress }: { item: Book; onPress: () => void }) {
               onError={() => setImageFailed(true)}
             />
           )}
-          <View style={styles.bookTypeBadge}>
-            <Feather name="book" size={12} color={themeColors.white} />
+          <View
+            style={[
+              styles.bookTypeBadge,
+              {
+                backgroundColor: themeColors.surface,
+              },
+            ]}
+          >
+            <Feather name="book" size={12} color={themeColors.text} />
           </View>
         </View>
         <View style={styles.cardContent}>
@@ -1058,7 +1065,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 5,
     borderRadius: radius.pill,
-    backgroundColor: "rgba(15, 23, 42, 0.78)",
   },
   bookTypeText: {
     color: colors.white,
