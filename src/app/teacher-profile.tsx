@@ -1472,7 +1472,7 @@ export default function TeacherProfileScreen() {
               tintColor={accentColor}
             />
           }
-          ListHeaderComponent={renderHeader}
+          ListHeaderComponent={renderHeader()}
           ListEmptyComponent={() =>
             activeTab === "Saved" && canViewSaved ? (
               <SavedResources profile={profile} signedIn />
