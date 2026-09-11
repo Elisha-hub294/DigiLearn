@@ -168,6 +168,7 @@ export function ContinueLearningShelf() {
                 <Text
                   style={[styles.title, { color: colors.text }]}
                   numberOfLines={2}
+                  ellipsizeMode="tail"
                   maxFontSizeMultiplier={1.3}
                 >
                   {item.title}
