@@ -13,6 +13,7 @@ import {
 import { radius, spacing } from "../../constants/theme";
 import { recordPageVisit } from "../../services/activityService";
 import {
+  getDocumentUniqueName,
   getDownloadedFiles,
   getWebDownloadedFileUrl,
   saveDownloadedFile,
@@ -234,6 +235,7 @@ export function PdfReaderScreen() {
     document: pdfDocument,
     pageId,
     title,
+    uniqueName,
     initialPage,
     fileType,
   } = useLocalSearchParams<{
@@ -241,6 +243,7 @@ export function PdfReaderScreen() {
     document?: string;
     pageId?: string;
     title?: string;
+    uniqueName?: string;
     initialPage?: string;
     fileType?: string;
   }>();
@@ -288,6 +291,8 @@ export function PdfReaderScreen() {
   const resolvedUri = useFirebaseStorageUrl(sourceUri ?? undefined);
   // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
   const decodedUri = resolvedUri ?? null;
+  const documentUniqueName =
+    uniqueName || getDocumentUniqueName(decodedUri || rawUri);
   const isResolving = rawUri != null && decodedUri == null;
   // Blob URLs used for web downloads do not include their original filename.
   // The Downloads screen supplies the persisted source extension so a cached
@@ -430,7 +435,7 @@ export function PdfReaderScreen() {
           (decodedUri && f.localUri === decodedUri) ||
           (rawUri && f.uri === rawUri) ||
           (rawUri && f.localUri === rawUri) ||
-          (title && f.title === title),
+          (documentUniqueName && f.uniqueName === documentUniqueName),
       );
       if (isAlreadyDownloaded) {
         setDownloaded(true);
@@ -439,7 +444,7 @@ export function PdfReaderScreen() {
     return () => {
       active = false;
     };
-  }, [decodedUri, rawUri, title]);
+  }, [decodedUri, documentUniqueName, rawUri]);
 
   const handleDownload = async () => {
     if (!decodedUri || downloading || downloaded) return;
@@ -459,6 +464,7 @@ export function PdfReaderScreen() {
         const blob = await response.blob();
         await saveDownloadedFile({
           title: title || "PDF Document",
+          uniqueName: documentUniqueName,
           uri: decodedUri,
           localUri: "",
           webBlob: blob,
@@ -493,6 +499,7 @@ export function PdfReaderScreen() {
       setDownloadProgress(1);
       await saveDownloadedFile({
         title: title || "PDF Document",
+        uniqueName: documentUniqueName,
         uri: decodedUri,
         localUri: "",
         webBlob: blob,

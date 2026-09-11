@@ -5,6 +5,7 @@ import { Platform } from "react-native";
 export interface DownloadedFile {
   id: string;
   title: string;
+  uniqueName: string;
   uri: string;
   localUri: string;
   downloadedAt: number;
@@ -15,9 +16,24 @@ const STORAGE_KEY = "@digilearn_downloaded_files";
 const WEB_DB_NAME = "digilearn-downloads";
 const WEB_STORE_NAME = "files";
 
-type DownloadedFileInput = Omit<DownloadedFile, "id" | "downloadedAt"> & {
+type DownloadedFileInput = Omit<
+  DownloadedFile,
+  "id" | "downloadedAt" | "uniqueName"
+> & {
+  uniqueName?: string;
   webBlob?: Blob;
 };
+
+export function getDocumentUniqueName(uri: string | null | undefined): string {
+  if (!uri) return "";
+  const withoutQuery = uri.split(/[?#]/, 1)[0];
+  const encodedName = withoutQuery.split("/").pop() ?? "";
+  try {
+    return decodeURIComponent(encodedName);
+  } catch {
+    return encodedName;
+  }
+}
 
 function openWebDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -122,8 +138,11 @@ export async function getDownloadedFiles(): Promise<DownloadedFile[]> {
     );
     const validFiles = availability
       .filter(({ available }) => available)
-      .map(({ file }) => file);
-    if (validFiles.length !== files.length) {
+      .map(({ file }) => ({
+        ...file,
+        uniqueName: file.uniqueName || getDocumentUniqueName(file.uri),
+      }));
+    if (JSON.stringify(validFiles) !== JSON.stringify(files)) {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(validFiles));
     }
     return validFiles;
@@ -139,9 +158,14 @@ export async function saveDownloadedFile(
   try {
     const existing = await getDownloadedFiles();
 
-    // Check if item already exists by uri or title to prevent duplicates
+    const uniqueName = file.uniqueName || getDocumentUniqueName(file.uri);
+
+    // Check if item already exists by its document name or URI to prevent duplicates.
     const filtered = existing.filter(
-      (f) => f.uri !== file.uri && f.localUri !== file.localUri,
+      (f) =>
+        f.uniqueName !== uniqueName &&
+        f.uri !== file.uri &&
+        f.localUri !== file.localUri,
     );
 
     const id = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -152,6 +176,7 @@ export async function saveDownloadedFile(
 
     const newEntry: DownloadedFile = {
       title: file.title,
+      uniqueName,
       uri: file.uri,
       localUri,
       fileSize: file.fileSize,

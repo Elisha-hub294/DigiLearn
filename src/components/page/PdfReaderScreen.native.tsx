@@ -5,33 +5,34 @@ import { useNetworkState } from "expo-network";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    NativeModules,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    UIManager,
-    View,
+  Animated,
+  Image,
+  NativeModules,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  UIManager,
+  View,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordPageVisit } from "../../services/activityService";
 import {
-    getDownloadedFiles,
-    saveDownloadedFile,
+  getDocumentUniqueName,
+  getDownloadedFiles,
+  saveDownloadedFile,
 } from "../../services/downloadService";
 import {
-    getPageReadingProgress,
-    savePageReadingProgress,
+  getPageReadingProgress,
+  savePageReadingProgress,
 } from "../../services/readingProgressService";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import {
-    extractDocxText,
-    extractPptxContent,
+  extractDocxText,
+  extractPptxContent,
 } from "../library/add-item/pdfService";
 import { ActionDialog } from "../ui/ActionDialog";
 
@@ -101,6 +102,7 @@ export function PdfReaderScreen() {
     document: pdfDocument,
     pageId,
     title,
+    uniqueName,
     initialPage,
     fileType,
   } = useLocalSearchParams<{
@@ -108,6 +110,7 @@ export function PdfReaderScreen() {
     document?: string;
     pageId?: string;
     title?: string;
+    uniqueName?: string;
     initialPage?: string;
     fileType?: string;
   }>();
@@ -148,6 +151,8 @@ export function PdfReaderScreen() {
   const resolvedUri = useFirebaseStorageUrl(rawUri ?? undefined);
   // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
   const decodedUri = resolvedUri ?? null;
+  const documentUniqueName =
+    uniqueName || getDocumentUniqueName(decodedUri || rawUri);
   const isResolving = rawUri != null && decodedUri == null;
   const isLocalFile = Boolean(decodedUri?.startsWith("file://"));
   const requestedFileType =
@@ -197,7 +202,7 @@ export function PdfReaderScreen() {
           (decodedUri && f.localUri === decodedUri) ||
           (rawUri && f.uri === rawUri) ||
           (rawUri && f.localUri === rawUri) ||
-          (title && f.title === title),
+          (documentUniqueName && f.uniqueName === documentUniqueName),
       );
       if (isAlreadyDownloaded || isLocalFile) {
         setDownloaded(true);
@@ -206,7 +211,7 @@ export function PdfReaderScreen() {
     return () => {
       active = false;
     };
-  }, [decodedUri, isLocalFile, rawUri, title]);
+  }, [decodedUri, documentUniqueName, isLocalFile, rawUri]);
 
   // Read local file as base64 on Android for pdf.js offline rendering
   useEffect(() => {
@@ -562,6 +567,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
         // Save to Downloaded files registry
         await saveDownloadedFile({
           title: title || "PDF Document",
+          uniqueName: documentUniqueName,
           uri: decodedUri,
           localUri: downloadResult.uri,
           fileSize,
