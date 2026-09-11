@@ -90,14 +90,15 @@ function getNativeGoogleSigninModule() {
 }
 
 export function parseAuthError(error: unknown): string {
-  if (typeof error === "string") return error;
   const message =
-    error &&
-    typeof error === "object" &&
-    "message" in error &&
-    typeof error.message === "string"
-      ? error.message
-      : "";
+    typeof error === "string"
+      ? error
+      : error &&
+          typeof error === "object" &&
+          "message" in error &&
+          typeof error.message === "string"
+        ? error.message
+        : "";
 
   if (
     /app not active|app is not accessible right now|app developer is aware/i.test(
@@ -119,6 +120,8 @@ export function parseAuthError(error: unknown): string {
       case "ERR_REQUEST_CANCELED":
       case "dismiss":
         return "Authentication was cancelled.";
+      case "auth/popup-blocked":
+        return "Your browser blocked the sign-in window. Please allow pop-ups for DigiLearn and try again.";
       case "auth/account-exists-with-different-credential":
         return "An account already exists with this email using a different sign-in method.";
       case "auth/network-request-failed":
@@ -128,13 +131,10 @@ export function parseAuthError(error: unknown): string {
       case "auth/invalid-credential":
         return "Invalid credentials. Please try signing in again.";
       default:
-        if (message) {
-          return message;
-        }
         return "Authentication failed. Please try again.";
     }
   }
-  return "An unexpected error occurred during authentication.";
+  return "Authentication failed. Please try again.";
 }
 
 /**
@@ -227,7 +227,7 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
         default:
           return {
             success: false,
-            error: error.message || "Google sign-in failed. Please try again.",
+            error: parseAuthError(error),
           };
       }
     }
