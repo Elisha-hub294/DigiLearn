@@ -3,10 +3,9 @@ import { useTheme } from "../../contexts/ThemeContext";
 
 export function OverviewSection({ description }: { description?: string }) {
   const { colors } = useTheme();
-  const text =
-    description && description.trim()
-      ? description
-      : "No detailed overview available for this page.";
+  const text = description?.trim();
+
+  if (!text) return null;
 
   return (
     <View style={styles.container}>

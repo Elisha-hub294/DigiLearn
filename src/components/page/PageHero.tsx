@@ -17,16 +17,23 @@ export function PageHero({
   note,
   dateText,
   onBack,
+  onOpen,
+  openLabel,
 }: {
   note: TopicalNote;
   dateText: string;
   onBack: () => void;
+  onOpen: () => void;
+  openLabel: string;
 }) {
   const { colors } = useTheme();
-  const { height } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  const heroHeight = Math.min(Math.max(height * 0.5, 320), 500);
+  const heroHeight =
+    width < 600
+      ? Math.min(Math.max(height * 0.4, 280), 400)
+      : Math.min(Math.max(height * 0.46, 340), 500);
   const coverUri = note.cover || note.preview;
 
   return (
@@ -84,6 +91,17 @@ export function PageHero({
           {note.title || "Untitled Page"}
         </Text>
         <Text style={styles.subtitle}>{dateText}</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={openLabel}
+          onPress={onOpen}
+          style={({ pressed }) => [styles.openButton, pressed && styles.pressed]}
+        >
+          <Feather name="file-text" size={17} color={colors.primary} />
+          <Text style={[styles.openButtonText, { color: colors.primary }]}>
+            {openLabel}
+          </Text>
+        </Pressable>
       </Animated.View>
     </Animated.View>
   );
@@ -133,5 +151,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
     marginTop: 8,
+  },
+  openButton: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 16,
+    paddingHorizontal: 16,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "#FFFFFF",
+  },
+  openButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
   },
 });

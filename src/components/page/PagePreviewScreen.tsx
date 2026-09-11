@@ -615,7 +615,17 @@ export function PagePreviewScreen() {
           ]}
         >
           {/* Hero Section */}
-          <PageHero note={note} dateText={dateFormatted} onBack={goBack} />
+          <PageHero
+            note={note}
+            dateText={dateFormatted}
+            onBack={goBack}
+            onOpen={handleOpenPdf}
+            openLabel={
+              readingProgress && readingProgress.lastPage > 1
+                ? `Continue p. ${readingProgress.lastPage}`
+                : "Open PDF"
+            }
+          />
 
           {/* White Information Sheet */}
           <Animated.View
@@ -628,7 +638,6 @@ export function PagePreviewScreen() {
             {/* Header with Avatar & Page Information */}
             <SubjectBadge
               avatarUrl={subjectAvatar}
-              title={note.title || "Untitled Note"}
               subjects={subjectsList}
               pagesCount={note.pages}
               isRecommended={note.isRecommended}

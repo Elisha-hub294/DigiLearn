@@ -8,7 +8,6 @@ import { DEFAULT_SUBJECT_AVATAR } from "./pageTypes";
 
 export function SubjectBadge({
   avatarUrl,
-  title,
   subjects = [],
   pagesCount,
   isRecommended,
@@ -16,7 +15,6 @@ export function SubjectBadge({
   accentColor = "#000000",
 }: {
   avatarUrl?: string;
-  title: string;
   subjects?: string[];
   pagesCount?: string | number;
   isRecommended?: boolean;
@@ -47,11 +45,11 @@ export function SubjectBadge({
         </Animated.View>
 
         <View style={styles.infoBlock}>
-          <Text
-            style={[styles.title, { color: activeAccent }]}
-            numberOfLines={2}
-          >
-            {title}
+          <Text style={[styles.eyebrow, { color: activeAccent }]}>
+            {subjects[0] || "Study note"}
+          </Text>
+          <Text style={[styles.supportingText, { color: colors.subtitle }]}>
+            Learning resource
           </Text>
         </View>
       </View>
@@ -125,10 +123,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
-  title: {
-    fontSize: 22,
+  eyebrow: {
+    fontSize: 16,
     fontWeight: "700",
-    lineHeight: 28,
+    lineHeight: 21,
+  },
+  supportingText: {
+    fontSize: 14,
+    marginTop: 3,
   },
   badgesRow: {
     flexDirection: "row",
