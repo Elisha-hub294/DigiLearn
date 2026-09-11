@@ -10,7 +10,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  Animated as RNAnimated,
   StyleSheet,
   Text,
   TextStyle,
@@ -31,6 +30,7 @@ import {
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
 import { ResourceDeleteMenu } from "../ui/ResourceDeleteMenu";
+import { Skeleton } from "../ui/Skeleton";
 
 export type TeacherPost = {
   id: string;
@@ -628,26 +628,6 @@ export const TeacherPostItem = ({
 
 const SkeletonTeacherPostCard = () => {
   const { colors } = useTheme();
-  const [pulseAnim] = useState(() => new RNAnimated.Value(0.3));
-
-  useEffect(() => {
-    const pulse = RNAnimated.loop(
-      RNAnimated.sequence([
-        RNAnimated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: Platform.OS !== "web",
-        }),
-        RNAnimated.timing(pulseAnim, {
-          toValue: 0.3,
-          duration: 800,
-          useNativeDriver: Platform.OS !== "web",
-        }),
-      ]),
-    );
-    pulse.start();
-    return () => pulse.stop();
-  }, [pulseAnim]);
 
   return (
     <View
@@ -656,82 +636,25 @@ const SkeletonTeacherPostCard = () => {
         { backgroundColor: colors.white, marginBottom: spacing.xl },
       ]}
     >
-      <RNAnimated.View
-        style={[
-          styles.skeletonBox,
-          { backgroundColor: colors.skeleton },
-          styles.skeletonPreview,
-          { opacity: pulseAnim },
-        ]}
-      />
+      <Skeleton style={styles.skeletonPreview} />
 
       <View style={styles.header}>
         <View style={styles.profileRow}>
-          <RNAnimated.View
-            style={[
-              styles.skeletonBox,
-              { backgroundColor: colors.skeleton },
-              styles.skeletonAvatar,
-              { opacity: pulseAnim },
-            ]}
-          />
+          <Skeleton style={styles.skeletonAvatar} />
           <View style={{ flex: 1 }}>
-            <RNAnimated.View
-              style={[
-                styles.skeletonBox,
-                { backgroundColor: colors.skeleton },
-                styles.skeletonName,
-                { opacity: pulseAnim },
-              ]}
-            />
-            <RNAnimated.View
-              style={[
-                styles.skeletonBox,
-                { backgroundColor: colors.skeleton },
-                styles.skeletonTime,
-                { opacity: pulseAnim },
-              ]}
-            />
+            <Skeleton style={styles.skeletonName} />
+            <Skeleton style={styles.skeletonTime} />
           </View>
         </View>
-        <RNAnimated.View
-          style={[
-            styles.skeletonBox,
-            { backgroundColor: colors.skeleton },
-            styles.skeletonBadge,
-            { opacity: pulseAnim },
-          ]}
-        />
+        <Skeleton style={styles.skeletonBadge} />
       </View>
 
-      <RNAnimated.View
-        style={[
-          styles.skeletonBox,
-          { backgroundColor: colors.skeleton },
-          styles.skeletonCaption,
-          { opacity: pulseAnim },
-        ]}
-      />
-      <RNAnimated.View
-        style={[
-          styles.skeletonBox,
-          { backgroundColor: colors.skeleton },
-          styles.skeletonCaptionShort,
-          { opacity: pulseAnim },
-        ]}
-      />
+      <Skeleton style={styles.skeletonCaption} />
+      <Skeleton style={styles.skeletonCaptionShort} />
 
       <View style={styles.actions}>
         {[0, 1, 2].map((i) => (
-          <RNAnimated.View
-            key={i}
-            style={[
-              styles.skeletonBox,
-              { backgroundColor: colors.skeleton },
-              styles.skeletonAction,
-              { opacity: pulseAnim },
-            ]}
-          />
+          <Skeleton key={i} style={styles.skeletonAction} />
         ))}
       </View>
     </View>
@@ -852,7 +775,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   actionLabel: { fontSize: 12, fontWeight: "500" },
-  skeletonBox: { borderRadius: radius.sm },
   skeletonPreview: {
     aspectRatio: 1.5,
     marginBottom: spacing.xs,

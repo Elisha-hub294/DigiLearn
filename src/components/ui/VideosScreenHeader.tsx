@@ -8,7 +8,7 @@ import { VideoLesson } from "@/components/ui/TrendingVideoCard";
 import React from "react";
 import { LayoutChangeEvent, StyleSheet, View } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
-import { spacing } from "../../constants/theme";
+import { radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 
 type VideosScreenHeaderProps = {
@@ -78,7 +78,8 @@ export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
               >
                 <Skeleton style={styles.skeletonImage} />
                 <Skeleton style={styles.skeletonTitle} />
-                <Skeleton style={styles.skeletonLine} />
+                <Skeleton style={styles.skeletonMeta} />
+                <Skeleton style={styles.skeletonMenu} />
               </View>
             ))}
           </View>
@@ -117,8 +118,28 @@ const styles = StyleSheet.create({
     minHeight: 120,
   },
   skeletonRow: { flexDirection: "row", gap: spacing.md, overflow: "hidden" },
-  skeletonCard: { gap: spacing.sm },
-  skeletonImage: { width: "100%", height: 132, borderRadius: 8 },
-  skeletonTitle: { width: "82%", height: 14 },
-  skeletonLine: { width: "52%", height: 11 },
+  skeletonCard: { position: "relative" },
+  skeletonImage: {
+    width: "100%",
+    aspectRatio: 1.5,
+    borderRadius: radius.sm,
+  },
+  skeletonTitle: {
+    width: "82%",
+    height: 17,
+    marginTop: 5,
+  },
+  skeletonMeta: {
+    width: "64%",
+    height: 13,
+    marginTop: 5,
+  },
+  skeletonMenu: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
 });

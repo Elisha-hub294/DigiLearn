@@ -3,7 +3,7 @@
  * Copy and paste these into your screens and services
  */
 
-import { ReactNode } from "react";
+import { ReactNode, useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -13,14 +13,8 @@ import {
   ViewStyle,
 } from "react-native";
 
-// ============================================================================
-// UTILITY HOOKS
-// ============================================================================
-
-/**
- * Hook to handle pagination state transitions
- */
-import { useCallback, useState } from "react";
+import { useTheme } from "../../contexts/ThemeContext";
+import { Skeleton } from "./Skeleton";
 
 // ============================================================================
 // UI COMPONENTS
@@ -39,14 +33,9 @@ export function PaginationSkeleton({
   return (
     <View>
       {Array.from({ length: count }).map((_, i) => (
-        <View
+        <Skeleton
           key={i}
-          style={{
-            height,
-            backgroundColor: "#e0e0e0",
-            marginBottom: 10,
-            borderRadius: 8,
-          }}
+          style={{ height, marginBottom: 10, borderRadius: 8 }}
         />
       ))}
     </View>
@@ -61,9 +50,11 @@ export function PaginationLoader({
 }: {
   size?: "small" | "large";
 }) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.loaderContainer}>
-      <ActivityIndicator size={size} color="#666" />
+      <ActivityIndicator size={size} color={colors.subtitle} />
     </View>
   );
 }

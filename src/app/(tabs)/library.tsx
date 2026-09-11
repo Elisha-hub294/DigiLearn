@@ -366,10 +366,19 @@ export default function LibraryScreen() {
           </View>
           <View style={styles.skeletonCards}>
             {[0, 1, 2].map((item) => (
-              <View key={item} style={styles.skeletonCard}>
+              <View
+                key={item}
+                style={[
+                  styles.skeletonCard,
+                  { backgroundColor: themeColors.white },
+                ]}
+              >
                 <Skeleton style={styles.skeletonCardImage} />
-                <Skeleton style={styles.skeletonCardTitle} />
-                <Skeleton style={styles.skeletonCardLine} />
+                <View style={styles.skeletonCardBody}>
+                  <Skeleton style={styles.skeletonCardTitle} />
+                  <Skeleton style={styles.skeletonCardLine} />
+                  <Skeleton style={styles.skeletonCardDescription} />
+                </View>
               </View>
             ))}
           </View>
@@ -605,9 +614,37 @@ export default function LibraryScreen() {
                 <View style={styles.feedFooter}>
                   {loadingMore ? (
                     <View style={styles.loaderWrap}>
-                      {[0, 1].map((item) => (
-                        <Skeleton key={item} style={styles.loaderSkeleton} />
-                      ))}
+                      <View
+                        style={[
+                          styles.loaderCard,
+                          {
+                            backgroundColor: themeColors.white,
+                            borderColor: themeColors.border,
+                          },
+                        ]}
+                      >
+                        <Skeleton style={styles.loaderPreview} />
+                        <View style={styles.loaderBody}>
+                          <Skeleton style={styles.loaderTitle} />
+                          <Skeleton style={styles.loaderLine} />
+                          <Skeleton style={styles.loaderLineShort} />
+                        </View>
+                      </View>
+                      <View
+                        style={[
+                          styles.loaderCard,
+                          {
+                            backgroundColor: themeColors.white,
+                            borderColor: themeColors.border,
+                          },
+                        ]}
+                      >
+                        <Skeleton style={styles.loaderPreview} />
+                        <View style={styles.loaderBody}>
+                          <Skeleton style={styles.loaderTitleShort} />
+                          <Skeleton style={styles.loaderLine} />
+                        </View>
+                      </View>
                     </View>
                   ) : isAllLoaded && libraryFeedItems.length > 0 ? (
                     <Text
@@ -787,10 +824,38 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: spacing.sm,
   },
-  loaderSkeleton: {
+  loaderCard: {
     width: "100%",
-    height: 72,
-    borderRadius: 12,
+    overflow: "hidden",
+    borderRadius: radius.sm,
+    borderWidth: 1,
+  },
+  loaderPreview: {
+    width: "100%",
+    height: 180,
+    borderRadius: 0,
+  },
+  loaderBody: {
+    padding: spacing.md,
+  },
+  loaderTitle: {
+    width: "70%",
+    height: 16,
+    marginBottom: 8,
+  },
+  loaderTitleShort: {
+    width: "52%",
+    height: 16,
+    marginBottom: 8,
+  },
+  loaderLine: {
+    width: "90%",
+    height: 12,
+    marginBottom: 6,
+  },
+  loaderLineShort: {
+    width: "56%",
+    height: 12,
   },
   endText: {
     color: colors.subtitle,
@@ -827,22 +892,20 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   skeletonHeader: {
-    width: 140,
-    height: 34,
-    backgroundColor: "#ECECEC",
+    width: "100%",
+    height: 44,
     borderRadius: radius.md,
     marginBottom: spacing.md,
   },
   skeletonSearch: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: "#F0F0F0",
     marginBottom: spacing.lg,
   },
   skeletonHero: {
-    height: 190,
-    borderRadius: radius.xl,
-    backgroundColor: "#F3F4F6",
+    width: "78%",
+    height: 300,
+    borderRadius: radius.sm,
     marginBottom: spacing.xl,
   },
   skeletonCategoryRow: {
@@ -859,20 +922,30 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   skeletonCard: {
-    gap: spacing.sm,
+    borderRadius: radius.sm,
+    overflow: "hidden",
     marginBottom: spacing.sm,
   },
   skeletonCardImage: {
     width: "100%",
-    height: 140,
-    borderRadius: radius.xl,
+    height: 220,
+    borderRadius: 0,
+  },
+  skeletonCardBody: {
+    padding: spacing.md,
   },
   skeletonCardTitle: {
     width: "68%",
     height: 16,
+    marginBottom: 8,
   },
   skeletonCardLine: {
     width: "42%",
+    height: 12,
+    marginBottom: 8,
+  },
+  skeletonCardDescription: {
+    width: "82%",
     height: 12,
   },
 });

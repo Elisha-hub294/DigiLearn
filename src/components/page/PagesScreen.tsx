@@ -39,6 +39,7 @@ import { matchesUserInterests } from "../../utils/interestFilter";
 import { FeaturedNoteCard } from "../home/FeaturedNoteCard";
 import { NotifyToggle } from "../library/add-item/SharedFormControls";
 import { SearchBar } from "../ui/SearchBar";
+import { Skeleton } from "../ui/Skeleton";
 
 type PageNote = {
   id: string;
@@ -611,78 +612,28 @@ export default function PagesScreen() {
             ]}
           >
             <View style={styles.skeletonHeaderRow}>
-              <View
-                style={[
-                  styles.skeletonBackButton,
-                  { backgroundColor: themeColors.border },
-                ]}
-              />
-              <View
-                style={[
-                  styles.skeletonHeaderTitle,
-                  { backgroundColor: themeColors.border },
-                ]}
-              />
+              <Skeleton style={styles.skeletonBackButton} />
+              <Skeleton style={styles.skeletonHeaderTitle} />
             </View>
             <View style={styles.skeletonSearchSection}>
-              <View
-                style={[
-                  styles.skeletonSearchRow,
-                  { backgroundColor: themeColors.lightBackground },
-                ]}
-              />
-              <View
-                style={[
-                  styles.skeletonFilterButton,
-                  { backgroundColor: themeColors.border },
-                ]}
-              />
+              <Skeleton style={styles.skeletonSearchRow} />
+              <Skeleton style={styles.skeletonFilterButton} />
             </View>
             <View style={styles.skeletonListSection}>
-              <View
-                style={[
-                  styles.skeletonItemsCount,
-                  { backgroundColor: themeColors.border },
-                ]}
-              />
+              <Skeleton style={styles.skeletonItemsCount} />
               <View
                 style={[
                   styles.skeletonCard,
                   { backgroundColor: themeColors.white },
                 ]}
               >
-                <View
-                  style={[
-                    styles.skeletonPreview,
-                    { backgroundColor: themeColors.lightBackground },
-                  ]}
-                />
+                <Skeleton style={styles.skeletonPreview} />
                 <View style={styles.skeletonCardContent}>
-                  <View
-                    style={[
-                      styles.skeletonAvatar,
-                      { backgroundColor: themeColors.border },
-                    ]}
-                  />
+                  <Skeleton style={styles.skeletonAvatar} />
                   <View style={styles.skeletonCardCopy}>
-                    <View
-                      style={[
-                        styles.skeletonCardTitle,
-                        { backgroundColor: themeColors.lightBackground },
-                      ]}
-                    />
-                    <View
-                      style={[
-                        styles.skeletonCardDescription,
-                        { backgroundColor: themeColors.lightBackground },
-                      ]}
-                    />
-                    <View
-                      style={[
-                        styles.skeletonCardDescriptionShort,
-                        { backgroundColor: themeColors.lightBackground },
-                      ]}
-                    />
+                    <Skeleton style={styles.skeletonCardTitle} />
+                    <Skeleton style={styles.skeletonCardDescription} />
+                    <Skeleton style={styles.skeletonCardDescriptionShort} />
                   </View>
                 </View>
               </View>

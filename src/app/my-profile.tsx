@@ -23,6 +23,7 @@ import { auth, db, functions } from "../../firebaseConfig";
 import WebProfilePictureCropper from "../components/profile/WebProfilePictureCropper";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { FirebaseImage } from "../components/ui/FirebaseImage";
+import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { getThemeAsset } from "../constants/themeAssets";
@@ -388,9 +389,9 @@ export default function MyProfileScreen() {
             ) : null}
             {loading ? (
               <View style={styles.loading}>
-                <View style={styles.avatarSkeleton} />
-                <View style={styles.lineSkeleton} />
-                <View style={styles.lineSkeleton} />
+                <Skeleton style={styles.avatarSkeleton} />
+                <Skeleton style={styles.lineSkeleton} />
+                <Skeleton style={styles.lineSkeleton} />
               </View>
             ) : !user ? (
               <View style={styles.authPrompt}>
@@ -734,13 +735,11 @@ const styles = StyleSheet.create({
     width: 130,
     height: 130,
     borderRadius: 999,
-    backgroundColor: "#EDF2F8",
   },
   lineSkeleton: {
     height: 54,
     width: "100%",
     borderRadius: 8,
-    backgroundColor: "#EDF2F8",
   },
   authPrompt: { paddingTop: 86, alignItems: "center" },
   authTitle: { fontSize: 22, fontWeight: "700", marginTop: 14 },

@@ -494,13 +494,11 @@ const styles = StyleSheet.create({
     height: 36,
     width: "78%",
     borderRadius: 6,
-    backgroundColor: "#EDF2F8",
   },
   skeletonHeading: {
     height: 20,
     width: 110,
     borderRadius: 6,
-    backgroundColor: "#EDF2F8",
     marginTop: 18,
   },
   skeletonChips: {

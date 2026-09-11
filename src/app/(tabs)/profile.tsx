@@ -24,15 +24,38 @@ import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAdminReviewSignals } from "../../hooks/useAdminReviewSignals";
 function Skeleton() {
+  const { width } = useWindowDimensions();
+  const avatarSize = Math.min(150, Math.max(104, width * 0.32));
+
   return (
     <View style={s.skeleton}>
-      <UiSkeleton style={s.skeletonHero} />
+      <View style={s.skeletonHeader}>
+        <UiSkeleton style={s.skeletonBanner} />
+        <UiSkeleton
+          style={[
+            s.skeletonAvatar,
+            {
+              width: avatarSize,
+              height: avatarSize,
+              borderRadius: avatarSize / 2,
+            },
+          ]}
+        />
+      </View>
       <View style={s.skeletonIdentity}>
-        <UiSkeleton style={s.skeletonAvatar} />
         <View style={s.skeletonIdentityCopy}>
           <UiSkeleton style={s.skeletonName} />
           <UiSkeleton style={s.skeletonBio} />
         </View>
+      </View>
+      <View style={s.skeletonInfoRow}>
+        {[0, 1, 2].map((item) => (
+          <View key={item} style={s.skeletonInfoStat}>
+            <UiSkeleton style={s.skeletonInfoIcon} />
+            <UiSkeleton style={s.skeletonInfoLabel} />
+            <UiSkeleton style={s.skeletonInfoValue} />
+          </View>
+        ))}
       </View>
       <View style={s.skeletonResourceList}>
         {[0, 1, 2].map((item) => (
@@ -311,12 +334,32 @@ const s = StyleSheet.create({
   roleValue: { fontSize: 16, fontWeight: "700", marginTop: 4 },
   roleStatusText: { fontSize: 12, fontWeight: "600", marginTop: 4 },
   skeleton: { gap: 20 },
-  skeletonHero: { height: 280, borderRadius: 24 },
-  skeletonIdentity: { flexDirection: "row", alignItems: "center", gap: 14 },
-  skeletonAvatar: { width: 64, height: 64, borderRadius: 32 },
-  skeletonIdentityCopy: { flex: 1, gap: 9 },
+  skeletonHeader: { height: 210, position: "relative" },
+  skeletonBanner: { height: 132, borderRadius: 0 },
+  skeletonAvatar: {
+    alignSelf: "center",
+    position: "absolute",
+    bottom: 0,
+    borderRadius: 999,
+  },
+  skeletonIdentity: {
+    alignItems: "center",
+    paddingTop: 14,
+    paddingBottom: 14,
+  },
+  skeletonIdentityCopy: { width: "100%", alignItems: "center", gap: 9 },
   skeletonName: { width: "58%", height: 17 },
   skeletonBio: { width: "82%", height: 12 },
+  skeletonInfoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8,
+    marginBottom: 20,
+  },
+  skeletonInfoStat: { flex: 1, alignItems: "center", gap: 6 },
+  skeletonInfoIcon: { width: 28, height: 28, borderRadius: 14 },
+  skeletonInfoLabel: { width: "54%", height: 11 },
+  skeletonInfoValue: { width: "72%", height: 11 },
   skeletonResourceList: { gap: 12 },
   skeletonResource: {
     flexDirection: "row",
