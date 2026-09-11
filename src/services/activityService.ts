@@ -5,6 +5,8 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
+  query,
   runTransaction,
   setDoc,
 } from "firebase/firestore";
@@ -16,6 +18,7 @@ const MAX_ACTIVITY_ITEMS = 50;
 const ACTIVITY_EVENT_BATCH_SIZE = 20;
 const ACTIVITY_EVENT_QUEUE_KEY = "@digilearn/activity-event-queue";
 const ACTIVITY_FETCH_TIMEOUT_MS = 15000;
+const MAX_ADMIN_ACTIVITY_DOCUMENTS = 500;
 
 const ACTIVITY_FIELD_MAP: Record<ActivityType, string> = {
   lesson: "activity-lessons",
@@ -330,7 +333,9 @@ export type ActivityEvent = {
 };
 
 export async function fetchActivityEvents(): Promise<ActivityEvent[]> {
-  const snapshot = await getDocs(collection(db, "activityEvents"));
+  const snapshot = await getDocs(
+    query(collection(db, "activityEvents"), limit(MAX_ADMIN_ACTIVITY_DOCUMENTS)),
+  );
   return snapshot.docs
     .flatMap((item) => {
       const data = item.data();

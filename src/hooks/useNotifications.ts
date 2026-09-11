@@ -2,12 +2,13 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import {
   collection,
   doc,
+  limit,
   onSnapshot,
   query,
   updateDoc,
   where,
 } from "firebase/firestore";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { auth, db } from "../../firebaseConfig";
 import { useProfile } from "../contexts/ProfileContext";
 import {
@@ -26,8 +27,13 @@ export function useNotifications() {
   const [readReportIds, setReadReportIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const readReportIdsRef = useRef(readReportIds);
   const { profile } = useProfile();
   const profileCollection = profile?.type === "teacher" ? "teachers" : "users";
+
+  useEffect(() => {
+    readReportIdsRef.current = readReportIds;
+  }, [readReportIds]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
@@ -99,7 +105,11 @@ export function useNotifications() {
     if (!user || profile?.type !== "admin") return;
 
     return onSnapshot(
-      query(collection(db, "reports"), where("status", "==", "new")),
+      query(
+        collection(db, "reports"),
+        where("status", "==", "new"),
+        limit(50),
+      ),
       (snapshot) => {
         const fallbackNotifications = snapshot.docs
           .map((report) => {
@@ -119,7 +129,7 @@ export function useNotifications() {
               adminKind: "report",
               storage: "admin",
               createdAt: data.createdAt,
-              read: readReportIds.has(`report-${report.id}`),
+              read: readReportIdsRef.current.has(`report-${report.id}`),
             });
           })
           .filter(Boolean) as NotificationRecord[];
@@ -142,7 +152,7 @@ export function useNotifications() {
       (reason) =>
         setError(reason?.message ?? "Unable to load new report alerts."),
     );
-  }, [profile?.type, readReportIds, user]);
+  }, [profile?.type, user]);
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.read).length,

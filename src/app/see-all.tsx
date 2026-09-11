@@ -26,10 +26,7 @@ import {
   useBooksPagination,
   useTrendingLessonsPagination,
 } from "../hooks/useLibraryPagination";
-import {
-  TrendingLesson,
-  useTrendingLessons,
-} from "../hooks/useTrendingLessons";
+import type { TrendingLesson } from "../hooks/useTrendingLessons";
 import { recordUserActivity } from "../services/activityService";
 import {
   getSavedItemsProfile,
@@ -88,13 +85,6 @@ export default function SeeAllScreen() {
   // Pagination hooks
   const booksPagination = useBooksPagination();
   const lessonsPagination = useTrendingLessonsPagination();
-
-  // Legacy hook for fallback
-  const {
-    lessons: legacyLessons,
-    loading: legacyCoursesLoading,
-    error: coursesError,
-  } = useTrendingLessons();
 
   const [selectedPaperType, setSelectedPaperType] = useState(
     params.paperType?.trim() || "All",
@@ -387,46 +377,49 @@ export default function SeeAllScreen() {
               </View>
             ))}
           </View>
-        ) : data.length === 0 || (mode === "courses" && coursesError) ? (
+        ) : data.length === 0 ||
+          (mode === "courses" && lessonsPagination.error) ? (
           <View style={styles.state}>
             <Feather
-              name={coursesError ? "wifi-off" : "inbox"}
+              name={lessonsPagination.error ? "wifi-off" : "inbox"}
               size={30}
               color={themeColors.subtitle}
             />
             <Text style={[styles.stateTitle, { color: themeColors.text }]}>
-              {coursesError ? "Could not load resources" : "Nothing here yet"}
+              {lessonsPagination.error
+                ? "Could not load resources"
+                : "Nothing here yet"}
             </Text>
             <Text style={[styles.stateText, { color: themeColors.subtitle }]}>
-              {coursesError
+              {lessonsPagination.error
                 ? "Check your connection and try again."
                 : mode === "papers" &&
                     (selectedPaperType !== "All" || selectedPaperYear !== "All")
                   ? "Try clearing the filters to see all past papers."
                   : `Check back soon for more ${title.toLowerCase()}.`}
             </Text>
-            {(coursesError ||
+            {(lessonsPagination.error ||
               (mode === "papers" &&
                 (selectedPaperType !== "All" ||
                   selectedPaperYear !== "All"))) && (
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={
-                  coursesError ? "Retry loading" : "Clear filters"
+                  lessonsPagination.error ? "Retry loading" : "Clear filters"
                 }
                 style={[
                   styles.retryButton,
                   { backgroundColor: themeColors.primary },
                 ]}
                 onPress={() => {
-                  if (coursesError) void lessonsPagination.refresh();
+                  if (lessonsPagination.error) void lessonsPagination.refresh();
                   setSelectedPaperType("All");
                   setSelectedPaperYear("All");
                   setFilterVersion((value) => value + 1);
                 }}
               >
                 <Text style={styles.retryText}>
-                  {coursesError ? "Try again" : "Clear filters"}
+                  {lessonsPagination.error ? "Try again" : "Clear filters"}
                 </Text>
               </Pressable>
             )}

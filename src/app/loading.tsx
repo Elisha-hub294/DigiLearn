@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -54,7 +54,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 36,
-    fontWeight: "800",
-    letterSpacing: 1,
+    fontWeight: "700",
+    letterSpacing: 0,
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
   },
 });
