@@ -397,7 +397,7 @@ export default function SignUpScreen() {
               <Pressable
                 onPress={handleLoginNavigation}
                 accessibilityRole="button"
-                accessibilityLabel="Log in to DigiLearn"
+                accessibilityLabel="Log in to OS platform"
               >
                 <Text style={styles.footerLink}>Log in</Text>
               </Pressable>

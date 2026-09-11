@@ -59,7 +59,7 @@ export const getWebViewHtml = (): string => `
           context.fillRect(0, 0, pageWidth, pageHeight);
           context.fillStyle = '#172033';
           context.font = 'bold 24px sans-serif';
-          context.fillText('DigiLearn document', 48, 64);
+          context.fillText('OS platform document', 48, 64);
           context.strokeStyle = '#D9E0EA';
           context.beginPath();
           context.moveTo(48, 84);
@@ -341,7 +341,7 @@ const generateOfficeThumbnail = async (text: string): Promise<string> => {
   context.fillRect(0, 0, pageWidth, pageHeight);
   context.fillStyle = "#172033";
   context.font = "bold 24px sans-serif";
-  context.fillText("DigiLearn document", 48, 64);
+  context.fillText("OS platform document", 48, 64);
   context.strokeStyle = "#D9E0EA";
   context.beginPath();
   context.moveTo(48, 84);

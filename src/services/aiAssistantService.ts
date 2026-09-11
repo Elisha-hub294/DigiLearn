@@ -219,7 +219,7 @@ async function generateAIContentFromKnowledge(
     const response = await generate({
       prompt: "Generate startup assistant content.",
       conversation: "",
-      systemPrompt: `Base the suggestions on this DigiLearn overview when relevant: ${appOverview ?? "No overview is available."}`,
+      systemPrompt: `Base the suggestions on this OS platform overview when relevant: ${appOverview ?? "No overview is available."}`,
       startupContent: true,
     });
     const generated = response.data.text

@@ -92,7 +92,7 @@ export async function setRemindersEnabled(enabled: boolean) {
 
   const reminderId = await Notifications.scheduleNotificationAsync({
     content: {
-      title: "Keep learning with DigiLearn",
+      title: "Keep learning with OS platform",
       body: "Continue reading one of your recently opened resources.",
       data: { type: "learning-reminder" },
     },

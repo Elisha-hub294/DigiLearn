@@ -234,7 +234,7 @@ export default function OnboardingScreen() {
             ]}
             accessibilityRole="button"
             accessibilityLabel={
-              isLast ? "Get started with DigiLearn" : "Next slide"
+              isLast ? "Get started with OS platform" : "Next slide"
             }
           >
             <Text style={styles.ctaText}>

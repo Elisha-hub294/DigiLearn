@@ -235,7 +235,7 @@ export default function AssistantScreen() {
       const message =
         error instanceof Error && error.message
           ? error.message
-          : "DigiLearn AI couldn't respond right now. Please try again in a moment.";
+          : "OS platform AI couldn't respond right now. Please try again in a moment.";
       setErrorText(message);
       setFailedPrompt(prompt);
     }
@@ -321,7 +321,7 @@ export default function AssistantScreen() {
           ]}
         >
           <AssistantHeader
-            title="DigiLearn AI"
+            title="OS platform AI"
             subtitle="Study support"
             quotaBadge={
               quota ? `${quota.remaining}/${quota.limit} left` : undefined
@@ -561,7 +561,7 @@ export default function AssistantScreen() {
       </KeyboardAvoidingView>
       <ActionDialog
         visible={showAuthDialog}
-        title="Sign in to use DigiLearn AI"
+        title="Sign in to use OS platform AI"
         message="Create an account or log in to send messages and save your conversations."
         primaryText="Log in"
         secondaryText="Sign up"

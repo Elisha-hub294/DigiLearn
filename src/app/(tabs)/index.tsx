@@ -414,7 +414,8 @@ export default function HomeScreen() {
 
     const noteItems: FeedItem[] = filteredFeaturedNotes.map((note) => ({
       kind: "featuredNote",
-      id: `note-${note.id}`,
+      id: 
+ote-${note.id}`,
       data: note,
       subject: Array.isArray(note.subject) ? note.subject[0] : note.subject,
     }));
@@ -513,7 +514,7 @@ export default function HomeScreen() {
             }
           >
             <Header showPublishButton />
-            <SearchBar placeholder="Search DigiLearn..." />
+            <SearchBar placeholder="Search OS platform..." />
 
             {/* Daily Learning Streak Card */}
             {/* <StreakCard /> */}

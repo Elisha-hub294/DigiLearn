@@ -165,7 +165,7 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
             />
           </View>
           <Text style={[styles.brandTitle, { color: colors.text }]}>
-            DigiLearn
+            OS platform
           </Text>
         </View>
         <View style={styles.desktopTabList}>

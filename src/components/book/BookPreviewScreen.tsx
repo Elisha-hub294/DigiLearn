@@ -582,7 +582,7 @@ export function BookPreviewScreen() {
 
       <ActionDialog
         visible={showGetYoursDialog}
-        title="You're leaving DigiLearn"
+        title="You're leaving OS platform"
         message="To get this book, you'll be redirected to an external service. Choose how you'd like to reach the seller."
         primaryText="WhatsApp"
         secondaryText="Phone Call"
@@ -596,7 +596,7 @@ export function BookPreviewScreen() {
           const cleaned = phone.replace(/[^\d+]/g, "");
           if (!cleaned) return;
           Linking.openURL(
-            `https://wa.me/${cleaned}?text=${encodeURIComponent(`Hi, I'm interested in the book "${book?.title}" from DigiLearn.`)}`,
+            `https://wa.me/${cleaned}?text=${encodeURIComponent(`Hi, I'm interested in the book "${book?.title}" from OS platform.`)}`,
           );
         }}
         onSecondary={() => {

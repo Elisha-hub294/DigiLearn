@@ -30,7 +30,7 @@ async function requireVerifiedUser(
   return {
     success: false,
     error:
-      "Your email must be verified before you can create a DigiLearn account.",
+      "Your email must be verified before you can create a OS platform account.",
   };
 }
 
@@ -121,7 +121,7 @@ export function parseAuthError(error: unknown): string {
       case "dismiss":
         return "Authentication was cancelled.";
       case "auth/popup-blocked":
-        return "Your browser blocked the sign-in window. Please allow pop-ups for DigiLearn and try again.";
+        return "Your browser blocked the sign-in window. Please allow pop-ups for OS platform and try again.";
       case "auth/account-exists-with-different-credential":
         return "An account already exists with this email using a different sign-in method.";
       case "auth/network-request-failed":

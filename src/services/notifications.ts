@@ -29,7 +29,7 @@ export type NotificationRecord = {
   adminKind?: "report" | "teacher-application";
 };
 
-export const DIGILEARN_PUBLISHER_NAME = "DigiLearn";
+export const DIGILEARN_PUBLISHER_NAME = "OS platform";
 export const DIGILEARN_PUBLISHER_AVATAR = "@/assets/images/panda.png";
 export const MAX_SAVED_NOTIFICATIONS = 50;
 export type NotificationProfileCollection = "users" | "teachers";

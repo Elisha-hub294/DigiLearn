@@ -290,7 +290,7 @@ export default function AccountQuickSettingsScreen() {
         You&apos;re not signed in
       </Text>
       <Text style={[styles.authText, { color: themeColors.subtitle }]}>
-        Log in or create an account to finish setting up your DigiLearn profile.
+        Log in or create an account to finish setting up your OS platform profile.
       </Text>
 
       <View style={styles.authActions}>
@@ -502,7 +502,7 @@ export default function AccountQuickSettingsScreen() {
                   </Pressable>
 
                   <InfoMessage>
-                    Your level helps DigiLearn personalize the learning
+                    Your level helps OS platform personalize the learning
                     resources and recommendations shown in your feed.
                   </InfoMessage>
                 </View>

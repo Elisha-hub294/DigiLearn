@@ -725,7 +725,7 @@ export const manageTeacherCommunity = onCall(async (request) => {
       const followerName =
         typeof followerData.name === "string" && followerData.name.trim()
           ? followerData.name.trim()
-          : (request.auth.token?.name ?? "A DigiLearn user");
+          : (request.auth.token?.name ?? "An OS platform user");
       const followerAvatar =
         typeof followerData.photoURL === "string"
           ? followerData.photoURL
@@ -902,7 +902,7 @@ async function sendUserNotification(event: any) {
   await messaging.sendEachForMulticast({
     tokens,
     notification: {
-      title: "DigiLearn",
+      title: "OS platform",
       body:
         newItems[0].resourceTitle ??
         newItems[0].message ??
@@ -944,7 +944,7 @@ function applicantNotification(message: string, title: string) {
     id: `teacher-review-${Date.now()}`,
     type: "announcement",
     notificationKind: "teacher-review",
-    publisherName: "DigiLearn",
+    publisherName: "OS platform",
     publisherAvatar: "@/assets/images/panda.png",
     message,
     resourceTitle: title,
@@ -1001,7 +1001,7 @@ export const reviewTeacherApplication = onCall(async (request) => {
     const status = decision === "approve" ? "approved" : "rejected";
     const notification = applicantNotification(
       decision === "approve"
-        ? "Your teacher application has been approved. You can now publish books, lessons, pages, announcements, and past papers on DigiLearn."
+        ? "Your teacher application has been approved. You can now publish books, lessons, pages, announcements, and past papers on OS platform."
         : `Your teacher application needs updates: ${reason}. Please resolve the issue and resend your request.`,
       decision === "approve"
         ? "Teacher account approved"
@@ -1376,7 +1376,7 @@ export const notifyAdminsOfReport = onDocumentCreated(
       .set({
         id: `report-${reportId}`,
         type: "announcement",
-        publisherName: "DigiLearn",
+        publisherName: "OS platform",
         publisherAvatar: "@/assets/images/panda.png",
         message: "A new resource report needs review.",
         resourceTitle: report.item?.name || "Reported resource",
@@ -1476,7 +1476,7 @@ export const notifyAdminsOfTeacherApplication = onDocumentWritten(
           {
             id: notificationId,
             type: "announcement",
-            publisherName: "DigiLearn",
+            publisherName: "OS platform",
             publisherAvatar:
               typeof application.photoURL === "string"
                 ? application.photoURL
@@ -1526,7 +1526,7 @@ export const remindOverdueTeacherApplications = onSchedule(
         {
           id: `sla-${application.id}`,
           type: "announcement",
-          publisherName: "DigiLearn",
+          publisherName: "OS platform",
           publisherAvatar: "@/assets/images/panda.png",
           message:
             "A teacher application has been waiting for more than 3 days.",

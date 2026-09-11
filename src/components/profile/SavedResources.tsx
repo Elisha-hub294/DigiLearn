@@ -6,15 +6,15 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
 import {
-  TeacherPostCard,
-  normalizeTeacherPost,
+    TeacherPostCard,
+    normalizeTeacherPost,
 } from "../../components/home/TeacherPostCard";
 import { BookCard } from "../../components/library/BookCard";
 import { PaperCard } from "../../components/library/PaperCard";
 import { Skeleton } from "../../components/ui/Skeleton";
 import {
-  TrendingVideoCard,
-  VideoLesson,
+    TrendingVideoCard,
+    VideoLesson,
 } from "../../components/ui/TrendingVideoCard";
 import { colors, radius, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
@@ -151,8 +151,8 @@ export function SavedResources({
             Sign in to keep your learning organized
           </Text>
           <Text style={[s.emptyCopy, { color: themeColors.subtitle }]}>
-            Log in or create a DigiLearn account to save books, lessons, notes,
-            and posts and keep your learning progress with you.
+            Log in or create an OS platform account to save books, lessons,
+            notes, and posts and keep your learning progress with you.
           </Text>
           <View style={s.authActions}>
             <Pressable
@@ -346,7 +346,7 @@ function renderItems(
                 {
                   id: x.id,
                   title: x.data.title ?? "Untitled lesson",
-                  teacher: x.data.teacher ?? "DigiLearn",
+                  teacher: x.data.teacher ?? "OS platform",
                   subject: x.data.subject ?? "",
                   uploadedAt: x.data.uploadedAt ?? "",
                   duration: x.data.duration ?? "",

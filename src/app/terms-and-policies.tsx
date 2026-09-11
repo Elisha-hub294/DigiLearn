@@ -269,7 +269,7 @@ function PrivacyPolicyContent({
   return (
     <View style={styles.contentWrapper}>
       <Text style={[styles.introText, { color: themeColors.text }]}>
-        DigiLearn (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) is
+        OS platform (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) is
         dedicated to safeguarding your privacy and ensuring your educational
         experience is secure. This Privacy Policy explains what personal data we
         collect, why we collect it, how we handle it, and your complete rights
@@ -341,7 +341,7 @@ function PrivacyPolicyContent({
       </Section>
 
       <Section
-        title="3. DigiLearn AI Study Assistant"
+        title="3. OS platform AI Study Assistant"
         icon="cpu"
         themeColors={themeColors}
       >
@@ -408,7 +408,7 @@ function PrivacyPolicyContent({
         themeColors={themeColors}
       >
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • DigiLearn is designed for primary, secondary, and advanced learners.
+          • OS platform is designed for primary, secondary, and advanced learners.
           We do not display behavioral advertising, tracking cookies, or sell
           student data to third parties.
         </Text>
@@ -450,7 +450,7 @@ function TermsOfServiceContent({
     <View style={styles.contentWrapper}>
       <Text style={[styles.introText, { color: themeColors.text }]}>
         These Terms of Service (&quot;Terms&quot;) govern your access to and use
-        of DigiLearn. By creating an account or accessing learning materials on
+        of OS platform. By creating an account or accessing learning materials on
         the platform, you agree to be bound by these Terms.
       </Text>
 
@@ -500,12 +500,12 @@ function TermsOfServiceContent({
         themeColors={themeColors}
       >
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • DigiLearn, including its logo, interface, branding, algorithms, and
-          software, is the exclusive intellectual property of DigiLearn.
+          • OS platform, including its logo, interface, branding, algorithms, and
+          software, is the exclusive intellectual property of OS platform.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • Authors and creators retain copyright in their original educational
-          works, granting DigiLearn a non-exclusive license to host and
+          works, granting OS platform a non-exclusive license to host and
           distribute the content to registered learners on the platform.
         </Text>
       </Section>
@@ -537,13 +537,13 @@ function TermsOfServiceContent({
         themeColors={themeColors}
       >
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • DigiLearn is provided on an &quot;as is&quot; and &quot;as
+          • OS platform is provided on an &quot;as is&quot; and &quot;as
           available&quot; basis. While we strive for 100% curriculum accuracy,
           we do not warrant that study materials will guarantee specific
           examination grades.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • DigiLearn shall not be liable for indirect, incidental, or
+          • OS platform shall not be liable for indirect, incidental, or
           consequential damages resulting from service interruptions or loss of
           downloaded data.
         </Text>
@@ -559,7 +559,7 @@ function TermsOfServiceContent({
           these terms or community guidelines.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • We may update these Terms periodically. Continued use of DigiLearn
+          • We may update these Terms periodically. Continued use of OS platform
           following notice of changes constitutes agreement to the updated
           Terms.
         </Text>

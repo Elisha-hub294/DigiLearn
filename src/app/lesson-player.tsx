@@ -617,7 +617,7 @@ export default function LessonPlayerScreen() {
                     ]}
                     maxFontSizeMultiplier={1.3}
                   >
-                    Ask DigiLearn AI for concept breakdowns, summaries, or
+                    Ask OS platform AI for concept breakdowns, summaries, or
                     practice questions.
                   </Text>
                 </View>

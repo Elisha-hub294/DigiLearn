@@ -227,7 +227,7 @@ export default function LoginScreen() {
           </View>
 
           <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
-            You&apos;re already signed in to DigiLearn. You can continue
+            You&apos;re already signed in to OS platform. You can continue
             learning or log out to switch accounts.
           </Text>
 
@@ -237,7 +237,7 @@ export default function LoginScreen() {
               style={styles.continueButton}
               accessibilityRole="button"
             >
-              <Text style={styles.continueButtonText}>Go to DigiLearn</Text>
+              <Text style={styles.continueButtonText}>Go to OS platform</Text>
             </Pressable>
 
             <Pressable
@@ -460,7 +460,7 @@ export default function LoginScreen() {
                   })
                 }
                 accessibilityRole="button"
-                accessibilityLabel="Sign up for DigiLearn"
+                accessibilityLabel="Sign up for OS platform"
               >
                 <Text style={styles.footerLink}>Sign up</Text>
               </Pressable>

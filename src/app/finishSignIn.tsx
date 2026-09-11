@@ -36,7 +36,7 @@ export default function FinishSignInScreen() {
         const user = await completeEmailLink(url, emailOverride);
         if (!user) throw new Error("EMAIL_LINK_INVALID");
 
-        // Keep this page as a confirmation handoff. The DigiLearn tab's
+        // Keep this page as a confirmation handoff. The OS platform tab's
         // "I verified my email" action creates the profile and continues the
         // normal onboarding flow.
         setIsComplete(true);
@@ -103,7 +103,7 @@ export default function FinishSignInScreen() {
       </Text>
       <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
         {isComplete
-          ? 'Return to the DigiLearn web app, then select "I verified my email" to continue.'
+          ? 'Return to the OS platform web app, then select "I verified my email" to continue.'
           : needsEmail
             ? "Enter the email address used to request this link."
             : errorMessage || "Finishing your email verification..."}

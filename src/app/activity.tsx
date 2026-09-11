@@ -132,7 +132,7 @@ export default function ActivityScreen() {
           </Text>
           <Text style={[styles.emptySubtitle, { color: themeColors.subtitle }]}>
             Log in or sign up to keep track of the lessons, pages, and books
-            you&apos;ve opened on DigiLearn.
+            you&apos;ve opened on OS platform.
           </Text>
           <Pressable
             style={({ pressed }) => [
@@ -209,12 +209,12 @@ export default function ActivityScreen() {
             ]}
             onPress={() => router.push("/" as never)}
             accessibilityRole="button"
-            accessibilityLabel="Explore DigiLearn"
+            accessibilityLabel="Explore OS platform"
           >
             <Text
               style={[styles.primaryButtonText, { color: themeColors.white }]}
             >
-              Explore DigiLearn
+              Explore OS platform
             </Text>
           </Pressable>
         </View>

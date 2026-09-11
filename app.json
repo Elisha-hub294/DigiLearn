@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "DigiLearn",
-    "slug": "DigiLearn",
+    "name": "OS platform",
+    "slug": "os-platform",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/images/main.png",
@@ -95,7 +95,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "DigiLearn uses your photos so you can choose a profile picture.",
+          "photosPermission": "OS platform uses your photos so you can choose a profile picture.",
           "microphonePermission": false,
           "colors": {
             "cropToolbarColor": "#006eff",

@@ -32,7 +32,7 @@ function applicantNotification(message, title) {
   return {
     id: `teacher-review-${Date.now()}`,
     type: "announcement",
-    publisherName: "DigiLearn",
+    publisherName: "OS platform",
     publisherAvatar: "@/assets/images/panda.png",
     message,
     resourceTitle: title,
@@ -177,7 +177,7 @@ exports.notifyAdminsOfTeacherApplication = (0, firestore_2.onDocumentCreated)(
         {
           id: applicationId,
           type: "announcement",
-          publisherName: "DigiLearn",
+          publisherName: "OS platform",
           publisherAvatar:
             typeof application.photoURL === "string"
               ? application.photoURL
@@ -213,7 +213,7 @@ exports.remindOverdueTeacherApplications = (0, scheduler_1.onSchedule)(
         {
           id: `sla-${application.id}`,
           type: "announcement",
-          publisherName: "DigiLearn",
+          publisherName: "OS platform",
           publisherAvatar: "@/assets/images/panda.png",
           message:
             "A teacher application has been waiting for more than 3 days.",

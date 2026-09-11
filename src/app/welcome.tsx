@@ -62,7 +62,7 @@ export default function WelcomeScreen() {
               contentFit="contain"
               accessible
               accessibilityRole="image"
-              alt="Welcome to DigiLearn illustration"
+              alt="Welcome to OS platform illustration"
             />
             <Text style={styles.brand} accessibilityRole="header">
               <Text style={[styles.brandBlack, { color: themeColors.dark }]}>
@@ -84,7 +84,7 @@ export default function WelcomeScreen() {
                 pressed && styles.buttonPressed,
               ]}
               accessibilityRole="button"
-              accessibilityLabel="Sign up for DigiLearn"
+              accessibilityLabel="Sign up for OS platform"
             >
               <Text style={styles.primaryButtonText}>Sign up</Text>
             </Pressable>
@@ -100,7 +100,7 @@ export default function WelcomeScreen() {
                 pressed && styles.buttonPressed,
               ]}
               accessibilityRole="button"
-              accessibilityLabel="Log in to DigiLearn"
+              accessibilityLabel="Log in to OS platform"
             >
               <Text
                 style={[

@@ -184,7 +184,7 @@ export default function AccountTypeScreen() {
         if (selectedAccountType === "teacher") {
           Alert.alert(
             "Application under review",
-            "Your teacher application was sent to the DigiLearn team. We will notify you when a decision is made.",
+            "Your teacher application was sent to the OS platform team. We will notify you when a decision is made.",
             [
               {
                 text: "Continue",
@@ -288,7 +288,7 @@ export default function AccountTypeScreen() {
             <Text
               style={[styles.authSubtitle, { color: themeColors.subtitle }]}
             >
-              Log in or create an account to set up your DigiLearn profile.
+              Log in or create an account to set up your OS platform profile.
             </Text>
 
             <View style={styles.authActions}>
@@ -356,7 +356,7 @@ export default function AccountTypeScreen() {
             {openedFromSettings ? "Choose your account type" : "Account type"}
           </Text>
           <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
-            Choose the experience that fits how you use DigiLearn. Compare the
+            Choose the experience that fits how you use OS platform. Compare the
             features before deciding.
           </Text>
 

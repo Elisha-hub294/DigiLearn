@@ -320,10 +320,10 @@ export default function SettingsScreen() {
               />
             </SettingsSection>
 
-            {/* DigiLearn Assistant */}
+            {/* OS platform Assistant */}
             <View style={{ height: spacing.xxl }} />
             <Text style={[styles.sectionTitle, { color: colors.dark }]}>
-              DigiLearn Assistant
+              OS platform Assistant
             </Text>
             <SettingsSection>
               <SettingsRow
@@ -388,7 +388,7 @@ export default function SettingsScreen() {
         visible={isLogoutDialogVisible}
         icon={<Icon name="log-out" size={24} color="#DC2626" />}
         title="Log out?"
-        message="Are you sure you want to log out of DigiLearn?"
+        message="Are you sure you want to log out of OS platform?"
         primaryText="Log out"
         secondaryText="Cancel"
         primaryButtonColor="#DC2626"

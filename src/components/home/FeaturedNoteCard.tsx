@@ -468,7 +468,7 @@ export const FeaturedNoteItem = ({
   const handleToggleRead = async () => {
     if (!user) {
       showAuthPrompt(
-        "Sign in to personalize DigiLearn",
+        "Sign in to personalize OS platform",
         "Create an account or log in to save your reading progress and personalize your experience.",
       );
       return;

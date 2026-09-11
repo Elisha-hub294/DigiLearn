@@ -43,14 +43,14 @@ const FAQ_DATA: Record<string, FaqDetail> = {
     actionText: "Email Support",
     onAction: () => {
       Linking.openURL(
-        "mailto:elishabagalwa.dev@gmail.com?subject=DigiLearn%20Problem%20Report",
+        "mailto:elishabagalwa.dev@gmail.com?subject=OS platform%20Problem%20Report",
       );
     },
   },
   Email: {
     title: "Email & Verification",
     message:
-      "Your email is your primary key for logging in and recovering your account. Mandatory email verification protects your account and keeps the DigiLearn community safe.",
+      "Your email is your primary key for logging in and recovering your account. Mandatory email verification protects your account and keeps the OS platform community safe.",
   },
   "Academic level": {
     title: "Academic Level",
@@ -181,7 +181,7 @@ export default function HelpScreen() {
   const handleOpenWhatsApp = () => {
     setChatDialogOpen(false);
     const message = encodeURIComponent(
-      "Hello DigiLearn Support, I need help with the app.",
+      "Hello OS platform Support, I need help with the app.",
     );
     Linking.openURL(`https://wa.me/256700000000?text=${message}`);
   };
@@ -189,7 +189,7 @@ export default function HelpScreen() {
   const handleOpenEmail = () => {
     setChatDialogOpen(false);
     Linking.openURL(
-      "mailto:elishabagalwa.dev@gmail.com?subject=DigiLearn%20Support%20Inquiry",
+      "mailto:elishabagalwa.dev@gmail.com?subject=OS platform%20Support%20Inquiry",
     );
   };
 
@@ -237,7 +237,7 @@ export default function HelpScreen() {
               onSelectItem={handleSelectItem}
             />
             <HelpSection
-              title="Using DigiLearn"
+              title="Using OS platform"
               items={["Video guide", "Finding teachers"]}
               onSelectItem={handleSelectItem}
             />
@@ -290,7 +290,7 @@ export default function HelpScreen() {
       {/* Chat With Us Support Channel Dialog */}
       <ActionDialog
         visible={isChatDialogOpen}
-        title="Contact DigiLearn Support"
+        title="Contact OS platform Support"
         message="Our support team is here to assist you. Choose how you would like to reach us:"
         primaryText="WhatsApp Support"
         secondaryText="Email Support"

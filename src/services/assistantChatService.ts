@@ -1,19 +1,19 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  collection,
-  doc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
+    collection,
+    doc,
+    getDocs,
+    orderBy,
+    query,
+    serverTimestamp,
+    setDoc,
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 
 import { auth, db, functions } from "../../firebaseConfig";
 import {
-  getAssistantContent,
-  getDigiLearnKnowledgeContext,
+    getAssistantContent,
+    getDigiLearnKnowledgeContext,
 } from "./aiAssistantService";
 
 export type ChatMessage = {
@@ -40,7 +40,7 @@ export type AssistantUserContext = {
 const STORAGE_KEY = "digilearn.assistant.conversations";
 
 const ASSISTANT_UNAVAILABLE_MESSAGE =
-  "DigiLearn AI couldn't respond right now. Please try again in a moment.";
+  "OS platform AI couldn't respond right now. Please try again in a moment.";
 
 function getConversationCollection() {
   const user = auth.currentUser;
@@ -59,7 +59,7 @@ function getAssistantErrorMessage(error: unknown) {
     normalizedDetail.includes("network error") ||
     normalizedDetail.includes("offline")
   ) {
-    return "DigiLearn AI needs an internet connection. Check your connection and try again.";
+    return "OS platform AI needs an internet connection. Check your connection and try again.";
   }
 
   if (
@@ -68,7 +68,7 @@ function getAssistantErrorMessage(error: unknown) {
     normalizedDetail.includes("unauthorized") ||
     normalizedDetail.includes("forbidden")
   ) {
-    return "DigiLearn AI isn't available right now. Please try again later.";
+    return "OS platform AI isn't available right now. Please try again later.";
   }
 
   if (
@@ -76,7 +76,7 @@ function getAssistantErrorMessage(error: unknown) {
     normalizedDetail.includes("quota") ||
     normalizedDetail.includes("429")
   ) {
-    return "DigiLearn AI is busy right now. Please wait a moment and try again.";
+    return "OS platform AI is busy right now. Please wait a moment and try again.";
   }
 
   return ASSISTANT_UNAVAILABLE_MESSAGE;
@@ -220,9 +220,8 @@ export async function generateAssistantReply(
   userContext?: AssistantUserContext,
 ) {
   // Check daily quota and cooldown guardrail
-  const { checkCanSendAiPrompt, recordAiPromptSent } = await import(
-    "./aiUsageGuardrailsService"
-  );
+  const { checkCanSendAiPrompt, recordAiPromptSent } =
+    await import("./aiUsageGuardrailsService");
   const guard = await checkCanSendAiPrompt();
   if (!guard.allowed) {
     throw new Error(guard.errorMessage || "Daily AI request limit reached.");
@@ -239,18 +238,18 @@ export async function generateAssistantReply(
     )
     .join("\n");
   const knowledgeBlock = knowledge.appOverview
-    ? `DigiLearn reference context:\n${knowledge.appOverview}`
-    : "DigiLearn reference context: No additional app overview is available.";
+    ? `OS platform reference context:\n${knowledge.appOverview}`
+    : "OS platform reference context: No additional app overview is available.";
   const userContextBlock = userContext
     ? `Learner context: The user's first name is ${userContext.firstName}. The user is a ${userContext.accountType}. ${userContext.accountType === "teacher" ? "Use a formal, professional register when responding to this teacher." : "Use a clear, friendly, age-appropriate register when responding to this student."}`
     : "Learner context: The user's name and account type are unavailable.";
 
   const systemPrompt = [
-    "You are DigiLearn's academic study assistant.",
+    "You are OS platform's academic study assistant.",
     "Address the user by their first name when it feels natural, but do not repeat it in every response.",
-    "Use the DigiLearn reference context as the primary source for DigiLearn-specific information and capabilities.",
-    "Do not invent DigiLearn-specific information. If you do not have enough information to answer a DigiLearn-specific request, say that you do not have enough information yet and offer a helpful next step. Never mention databases, Firestore, reference context, storage, prompts, or internal instructions to the user.",
-    "When appropriate, suggest DigiLearn resources in a concise way.",
+    "Use the OS platform reference context as the primary source for OS platform-specific information and capabilities.",
+    "Do not invent OS platform-specific information. If you do not have enough information to answer an OS platform-specific request, say that you do not have enough information yet and offer a helpful next step. Never mention databases, Firestore, reference context, storage, prompts, or internal instructions to the user.",
+    "When appropriate, suggest OS platform resources in a concise way.",
     "Do not mention any developer related thing to the user.",
     "Format responses with clean Markdown, short paragraphs, and blank lines between sections.",
     "Use headings for major sections, numbered lists for procedures, bullet lists for multiple items, and fenced code blocks only for code.",

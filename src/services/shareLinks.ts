@@ -30,7 +30,7 @@ export async function shareResource(
   const url = getSharedResourceUrl(type, id);
   await Share.share({
     title,
-    message: `Open "${title}" in DigiLearn: ${url}`,
+    message: `Open "${title}" in OS platform: ${url}`,
     url,
   });
 }

@@ -247,7 +247,7 @@ export async function recordUserActivity(
 
     await queueActivityEvent({
       userId,
-      userName: auth.currentUser?.displayName || "DigiLearn user",
+      userName: auth.currentUser?.displayName || "OS platform user",
       userEmail: auth.currentUser?.email || "",
       type,
       resourceId: docId,
@@ -334,7 +334,10 @@ export type ActivityEvent = {
 
 export async function fetchActivityEvents(): Promise<ActivityEvent[]> {
   const snapshot = await getDocs(
-    query(collection(db, "activityEvents"), limit(MAX_ADMIN_ACTIVITY_DOCUMENTS)),
+    query(
+      collection(db, "activityEvents"),
+      limit(MAX_ADMIN_ACTIVITY_DOCUMENTS),
+    ),
   );
   return snapshot.docs
     .flatMap((item) => {
@@ -345,7 +348,7 @@ export async function fetchActivityEvents(): Promise<ActivityEvent[]> {
             ({
               id: `${item.id}-${index}`,
               userId: String(data.userId || ""),
-              userName: String(data.userName || "DigiLearn user"),
+              userName: String(data.userName || "OS platform user"),
               userEmail: String(data.userEmail || ""),
               type: event.type,
               resourceId: String(event.resourceId || ""),

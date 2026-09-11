@@ -1,8 +1,8 @@
-# DigiLearn – AI-Powered Learning Platform
+# OS platform (Opero Stephen platform) – AI-Powered Learning Platform
 
 <div align="center">
 
-**DigiLearn** is a mobile-first educational platform designed to empower African students with AI-assisted learning, curated academic resources, and direct access to qualified educators.
+**OS platform (Opero Stephen platform)** is a mobile-first educational platform designed to empower African students with AI-assisted learning, curated academic resources, and direct access to qualified educators.
 
 Built with **React Native**, **Expo**, **Firebase**, and **Google Gemini API**.
 
@@ -14,7 +14,7 @@ Built with **React Native**, **Expo**, **Firebase**, and **Google Gemini API**.
 
 ## Overview
 
-DigiLearn bridges the gap between students and quality educational resources in underserved regions. The platform combines:
+OS platform bridges the gap between students and quality educational resources in underserved regions. The platform combines:
 
 - **Comprehensive Study Materials**: Curated textbooks, past papers, notes, and marking guides
 - **AI-Powered Study Assistant**: Personalized learning support powered by Google Gemini
@@ -221,7 +221,7 @@ DigiLearn/
 
 ### AI Assistant Architecture
 
-- **Context-Aware Responses**: Uses app knowledge base for DigiLearn-specific answers
+- **Context-Aware Responses**: Uses app knowledge base for OS platform-specific answers
 - **Conversation Management**: Stores chat history per user for continuity
 - **Multi-Subject Support**: Formatted output for math, science, and humanities
 
@@ -412,6 +412,6 @@ For questions, feedback, or collaboration opportunities, feel free to reach out!
 
 **Made with ❤️ for African students and educators**
 
-⭐ If you find DigiLearn helpful, please consider starring this repository!
+⭐ If you find OS platform helpful, please consider starring this repository!
 
 </div>

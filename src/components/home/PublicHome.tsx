@@ -49,10 +49,10 @@ export function PublicHome() {
                 contentFit="contain"
                 accessible
                 accessibilityRole="image"
-                alt="DigiLearn logo"
+                alt="OS platform logo"
               />
               <Text style={[styles.brand, { color: themeColors.dark }]}>
-                DigiLearn
+                OS platform
               </Text>
             </View>
             <View style={styles.navActions}>
@@ -61,7 +61,7 @@ export function PublicHome() {
                   router.push("/terms-and-policies?tab=privacy" as never)
                 }
                 accessibilityRole="link"
-                accessibilityLabel="Read DigiLearn privacy policy"
+                accessibilityLabel="Read OS platform privacy policy"
               >
                 <Text style={[styles.navLink, { color: themeColors.text }]}>
                   Privacy
@@ -76,7 +76,7 @@ export function PublicHome() {
                 }
                 style={styles.navButton}
                 accessibilityRole="button"
-                accessibilityLabel="Log in to DigiLearn"
+                accessibilityLabel="Log in to OS platform"
               >
                 <Text style={styles.navButtonText}>Log in</Text>
               </Pressable>
@@ -103,7 +103,7 @@ export function PublicHome() {
               <Text
                 style={[styles.description, { color: themeColors.subtitle }]}
               >
-                DigiLearn is an educational platform for students and teachers
+                OS platform is an educational platform for students and teachers
                 to discover study materials, revise with past papers, learn from
                 qualified educators, and get help from an AI study assistant.
               </Text>
@@ -117,7 +117,7 @@ export function PublicHome() {
                   }
                   style={styles.primaryButton}
                   accessibilityRole="button"
-                  accessibilityLabel="Create a DigiLearn account"
+                  accessibilityLabel="Create a OS platform account"
                 >
                   <Text style={styles.primaryButtonText}>
                     Create an account
@@ -131,7 +131,7 @@ export function PublicHome() {
                     { borderColor: colors.primary },
                   ]}
                   accessibilityRole="button"
-                  accessibilityLabel="Explore DigiLearn"
+                  accessibilityLabel="Explore OS platform"
                 >
                   <Text
                     style={[
@@ -139,7 +139,7 @@ export function PublicHome() {
                       { color: colors.primary },
                     ]}
                   >
-                    Explore DigiLearn
+                    Explore OS platform
                   </Text>
                 </Pressable>
                 <Pressable
@@ -147,7 +147,7 @@ export function PublicHome() {
                     router.push("/terms-and-policies?tab=privacy" as never)
                   }
                   accessibilityRole="link"
-                  accessibilityLabel="Read how DigiLearn handles privacy"
+                  accessibilityLabel="Read how OS platform handles privacy"
                 >
                   <Text style={[styles.policyLink, { color: colors.primary }]}>
                     How we handle privacy
@@ -169,7 +169,7 @@ export function PublicHome() {
                 contentFit="contain"
                 accessible
                 accessibilityRole="image"
-                alt="DigiLearn learning illustration"
+                alt="OS platform learning illustration"
               />
             </View>
           </View>
@@ -208,7 +208,7 @@ export function PublicHome() {
 
           <View style={[styles.footer, { borderTopColor: themeColors.border }]}>
             <Text style={[styles.footerText, { color: themeColors.subtitle }]}>
-              DigiLearn helps students and educators access focused, practical
+              OS platform helps students and educators access focused, practical
               learning support.
             </Text>
             <View style={styles.footerLinks}>

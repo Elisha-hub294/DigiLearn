@@ -40,7 +40,7 @@ export default function LoadingScreen({
       <Animated.Text
         style={[styles.title, { color: colors.primary }, animatedStyle]}
       >
-        DigiLearn
+        OS platform
       </Animated.Text>
     </Animated.View>
   );

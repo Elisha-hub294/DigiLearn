@@ -121,7 +121,7 @@ export const SearchResultTeacherCard = memo(function SearchResultTeacherCard({
               style={[styles.bioText, { color: colors.subtitle }]}
               numberOfLines={2}
             >
-              {item.description || `${item.subtitle || "Teacher"} at DigiLearn`}
+              {item.description || `${item.subtitle || "Teacher"} at OS platform`}
             </Text>
           </View>
         </Pressable>

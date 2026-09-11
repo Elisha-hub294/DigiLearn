@@ -178,7 +178,7 @@ export function ContinueLearningShelf() {
                   numberOfLines={1}
                   maxFontSizeMultiplier={1.3}
                 >
-                  {item.documentUri ? "DigiLearn Page" : "Page document"}
+                  {item.documentUri ? "OS platform Page" : "Page document"}
                 </Text>
 
                 {item.totalPages && item.totalPages > 0 ? (

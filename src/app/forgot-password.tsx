@@ -131,7 +131,7 @@ export default function ForgotPasswordScreen() {
             </View>
 
             <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
-              Enter the email address associated with your DigiLearn account and
+              Enter the email address associated with your OS platform account and
               we&apos;ll send you a password reset link.
             </Text>
 

@@ -113,7 +113,7 @@ export default function PublishScreen() {
           </Pressable>
           <View>
             <Text style={[styles.title, { color: themeColors.dark }]}>
-              Post on DigiLearn
+              Post on OS platform
             </Text>
           </View>
         </View>

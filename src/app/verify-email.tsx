@@ -140,11 +140,11 @@ export default function VerifyEmailScreen() {
           <Text style={styles.title}>Check your email</Text>
           <Text style={styles.subtitle}>
             We sent a verification link to {email}. Verify your email before
-            continuing to DigiLearn.
+            continuing to OS platform.
           </Text>
           <Text style={styles.infoMessage}>
             If you do not see the email, check your spam or junk folder and
-            search for DigiLearn.
+            search for OS platform.
           </Text>
 
           {message ? (

@@ -520,7 +520,7 @@ export default function TeacherAccountQuickSettingsScreen() {
                 You&apos;re not signed in
               </Text>
               <Text style={[styles.authText, { color: themeColors.subtitle }]}>
-                Log in or create an account to finish setting up your DigiLearn
+                Log in or create an account to finish setting up your OS platform
                 teacher profile.
               </Text>
 
@@ -922,7 +922,7 @@ export default function TeacherAccountQuickSettingsScreen() {
                     })}
                   </View>
                   <InfoMessage>
-                    Socials help students connect with you outside DigiLearn.
+                    Socials help students connect with you outside OS platform.
                     Add only the contact details or social links you want
                     students to use.
                   </InfoMessage>

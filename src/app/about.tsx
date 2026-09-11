@@ -21,7 +21,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import { formatAppVersion, getAppVersion } from "../services/appInfoService";
 
 const ABOUT_DESCRIPTION =
-  "DigiLearn is an educational platform that helps learners access academic resources, lessons, books, past papers, and teachers in one place, making quality learning more accessible and convenient.";
+  "OS platform is an educational platform that helps learners access academic resources, lessons, books, past papers, and teachers in one place, making quality learning more accessible and convenient.";
 
 const BRAND_BLUE = "#3B82F6";
 
@@ -169,7 +169,7 @@ export default function AboutScreen() {
 
   const handleFeedback = useCallback(() => {
     Linking.openURL(
-      "mailto:elishabagalwa.dev@gmail.com?subject=DigiLearn%20Feedback%20%26%20Support",
+      "mailto:elishabagalwa.dev@gmail.com?subject=OS platform%20Feedback%20%26%20Support",
     );
   }, []);
 
@@ -218,7 +218,7 @@ export default function AboutScreen() {
                 contentFit="contain"
                 accessible
                 accessibilityRole="image"
-                accessibilityLabel="DigiLearn panda mascot"
+                accessibilityLabel="OS platform panda mascot"
               />
               <Text style={styles.brand} accessibilityRole="header">
                 <Text style={styles.brandBlack}>Digi</Text>
@@ -294,7 +294,7 @@ export default function AboutScreen() {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>
-                Copyright © 2026 DigiLearn. All rights reserved.
+                Copyright © 2026 OS platform. All rights reserved.
               </Text>
               <Text style={styles.footerText}>
                 Developed with passion in Kampala.
