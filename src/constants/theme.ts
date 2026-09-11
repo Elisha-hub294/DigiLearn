@@ -34,6 +34,8 @@ export const colors = {
   warmAccentBackground: "#FFEDD5",
   success: "#238636",
   successBackground: "#DCFCE7",
+  skeleton: "#E8EDF3",
+  skeletonHighlight: "rgba(255, 255, 255, 0.8)",
 } as const;
 
 export const spacing = {

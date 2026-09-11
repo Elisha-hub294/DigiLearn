@@ -659,7 +659,7 @@ const SkeletonTeacherPostCard = () => {
       <RNAnimated.View
         style={[
           styles.skeletonBox,
-          { backgroundColor: colors.border },
+          { backgroundColor: colors.skeleton },
           styles.skeletonPreview,
           { opacity: pulseAnim },
         ]}
@@ -670,7 +670,7 @@ const SkeletonTeacherPostCard = () => {
           <RNAnimated.View
             style={[
               styles.skeletonBox,
-              { backgroundColor: colors.border },
+              { backgroundColor: colors.skeleton },
               styles.skeletonAvatar,
               { opacity: pulseAnim },
             ]}
@@ -679,7 +679,7 @@ const SkeletonTeacherPostCard = () => {
             <RNAnimated.View
               style={[
                 styles.skeletonBox,
-                { backgroundColor: colors.border },
+                { backgroundColor: colors.skeleton },
                 styles.skeletonName,
                 { opacity: pulseAnim },
               ]}
@@ -687,7 +687,7 @@ const SkeletonTeacherPostCard = () => {
             <RNAnimated.View
               style={[
                 styles.skeletonBox,
-                { backgroundColor: colors.border },
+                { backgroundColor: colors.skeleton },
                 styles.skeletonTime,
                 { opacity: pulseAnim },
               ]}
@@ -697,7 +697,7 @@ const SkeletonTeacherPostCard = () => {
         <RNAnimated.View
           style={[
             styles.skeletonBox,
-            { backgroundColor: colors.border },
+            { backgroundColor: colors.skeleton },
             styles.skeletonBadge,
             { opacity: pulseAnim },
           ]}
@@ -707,7 +707,7 @@ const SkeletonTeacherPostCard = () => {
       <RNAnimated.View
         style={[
           styles.skeletonBox,
-          { backgroundColor: colors.border },
+          { backgroundColor: colors.skeleton },
           styles.skeletonCaption,
           { opacity: pulseAnim },
         ]}
@@ -715,7 +715,7 @@ const SkeletonTeacherPostCard = () => {
       <RNAnimated.View
         style={[
           styles.skeletonBox,
-          { backgroundColor: colors.border },
+          { backgroundColor: colors.skeleton },
           styles.skeletonCaptionShort,
           { opacity: pulseAnim },
         ]}
@@ -727,7 +727,7 @@ const SkeletonTeacherPostCard = () => {
             key={i}
             style={[
               styles.skeletonBox,
-              { backgroundColor: colors.border },
+              { backgroundColor: colors.skeleton },
               styles.skeletonAction,
               { opacity: pulseAnim },
             ]}

@@ -664,9 +664,35 @@ export default function HomeScreen() {
                   style={styles.loaderWrap}
                   accessibilityLabel="Loading more feed resources"
                 >
-                  {[0, 1, 2].map((item) => (
-                    <Skeleton key={item} style={styles.loaderSkeleton} />
-                  ))}
+                  <View style={styles.feedSkeletonCard}>
+                    <Skeleton style={styles.feedSkeletonPreview} />
+                    <View style={styles.feedSkeletonBody}>
+                      <View style={styles.feedSkeletonHeader}>
+                        <Skeleton style={styles.feedSkeletonAvatar} />
+                        <View style={styles.feedSkeletonIdentity}>
+                          <Skeleton style={styles.feedSkeletonName} />
+                          <Skeleton style={styles.feedSkeletonMeta} />
+                        </View>
+                        <Skeleton style={styles.feedSkeletonBadge} />
+                      </View>
+                      <Skeleton style={styles.feedSkeletonTitle} />
+                      <Skeleton style={styles.feedSkeletonDescription} />
+                      <Skeleton style={styles.feedSkeletonDescriptionShort} />
+                      <View style={styles.feedSkeletonActions}>
+                        <Skeleton style={styles.feedSkeletonAction} />
+                        <Skeleton style={styles.feedSkeletonAction} />
+                        <Skeleton style={styles.feedSkeletonAction} />
+                      </View>
+                    </View>
+                  </View>
+                  <View style={styles.feedSkeletonCard}>
+                    <Skeleton style={styles.feedSkeletonPreviewShort} />
+                    <View style={styles.feedSkeletonBody}>
+                      <Skeleton style={styles.feedSkeletonTitle} />
+                      <Skeleton style={styles.feedSkeletonDescription} />
+                      <Skeleton style={styles.feedSkeletonDescriptionShort} />
+                    </View>
+                  </View>
                 </View>
               ) : isAllLoaded && feedItems.length > 0 ? (
                 <Text style={[styles.endText, { color: themeColors.subtitle }]}>
@@ -737,10 +763,75 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: spacing.sm,
   },
-  loaderSkeleton: {
+  feedSkeletonCard: {
     width: "100%",
-    height: 72,
-    borderRadius: 12,
+    overflow: "hidden",
+    borderRadius: 10,
+  },
+  feedSkeletonPreview: {
+    width: "100%",
+    aspectRatio: 1.8,
+    borderRadius: 0,
+  },
+  feedSkeletonPreviewShort: {
+    width: "100%",
+    height: 150,
+    borderRadius: 0,
+  },
+  feedSkeletonBody: {
+    padding: spacing.md,
+  },
+  feedSkeletonHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.md,
+  },
+  feedSkeletonAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    marginRight: spacing.sm,
+  },
+  feedSkeletonIdentity: {
+    flex: 1,
+    gap: 6,
+  },
+  feedSkeletonName: {
+    width: "48%",
+    height: 14,
+  },
+  feedSkeletonMeta: {
+    width: "30%",
+    height: 11,
+  },
+  feedSkeletonBadge: {
+    width: 64,
+    height: 28,
+    borderRadius: 999,
+  },
+  feedSkeletonTitle: {
+    width: "70%",
+    height: 16,
+    marginBottom: 8,
+  },
+  feedSkeletonDescription: {
+    width: "92%",
+    height: 12,
+    marginBottom: 6,
+  },
+  feedSkeletonDescriptionShort: {
+    width: "58%",
+    height: 12,
+  },
+  feedSkeletonActions: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  feedSkeletonAction: {
+    width: 64,
+    height: 32,
+    borderRadius: 999,
   },
   endText: {
     color: colors.subtitle,

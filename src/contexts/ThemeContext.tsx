@@ -32,6 +32,8 @@ const darkColors = {
   warmAccentBackground: "#431407",
   success: "#86EFAC",
   successBackground: "#14532D",
+  skeleton: "#243247",
+  skeletonHighlight: "rgba(255, 255, 255, 0.12)",
 } as const;
 
 export type ThemeMode = "light" | "dark";

@@ -4,7 +4,7 @@ import { spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { Skeleton } from "./Skeleton";
 
-export const NotificationSkeleton = memo(() => {
+export const NotificationSkeleton = memo(function NotificationSkeleton() {
   const { colors } = useTheme();
 
   return (
@@ -51,7 +51,6 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: "#E2E2E2",
     marginRight: 12,
   },
   content: {
@@ -62,7 +61,6 @@ const styles = StyleSheet.create({
   line: {
     height: 12,
     borderRadius: 999,
-    backgroundColor: "#E7E7E7",
     marginBottom: 6,
   },
   lineShort: {
@@ -75,7 +73,6 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 12,
-    backgroundColor: "#E7E7E7",
     marginLeft: 8,
   },
 });

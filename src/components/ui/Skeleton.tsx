@@ -44,7 +44,7 @@ export function Skeleton({ style }: SkeletonProps) {
       accessible={false}
       style={[
         styles.base,
-        { backgroundColor: colors.border },
+        { backgroundColor: colors.skeleton },
         style,
         { opacity },
       ]}
@@ -52,8 +52,8 @@ export function Skeleton({ style }: SkeletonProps) {
       <AnimatedGradient
         colors={
           isDark
-            ? ["transparent", "rgba(255, 255, 255, 0.12)", "transparent"]
-            : ["transparent", "rgba(255, 255, 255, 0.72)", "transparent"]
+            ? ["transparent", colors.skeletonHighlight, "transparent"]
+            : ["transparent", colors.skeletonHighlight, "transparent"]
         }
         locations={[0, 0.5, 1]}
         start={{ x: 0, y: 0.5 }}
