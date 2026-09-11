@@ -1,7 +1,6 @@
-import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
+import { Feather as Icon } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 
 type SearchEmptyStateProps = {
@@ -14,15 +13,11 @@ export function SearchEmptyState({
   subtitle = "Try another keyword, subject, author or teacher.",
 }: SearchEmptyStateProps) {
   const router = useRouter();
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <View style={styles.container}>
-      <Image
-        source={getThemeAsset("empty", isDark)}
-        style={styles.illustration}
-        contentFit="contain"
-      />
+      <Icon name="inbox" size={38} color={colors.primary} />
       <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       <Text style={[styles.subtitle, { color: colors.subtitle }]}>
         {subtitle}
@@ -48,15 +43,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     width: "100%",
   },
-  illustration: {
-    width: 220,
-    height: 170,
-    marginBottom: 20,
-  },
   title: {
     fontSize: 20,
     fontWeight: "700",
     textAlign: "center",
+    marginTop: 16,
     marginBottom: 8,
   },
   subtitle: {

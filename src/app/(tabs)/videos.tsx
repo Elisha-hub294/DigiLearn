@@ -3,8 +3,8 @@ import { VideoLesson } from "@/components/ui/TrendingVideoCard";
 import { VideoCard } from "@/components/ui/VideoCard";
 import { VideosScreenHeader } from "@/components/ui/VideosScreenHeader";
 import { getVideoThumbnailUrl } from "@/utils/videoUtils";
+import { Feather as Icon } from "@expo/vector-icons";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
-import { Image } from "expo-image";
 import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -20,7 +20,6 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
-import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import { loadTrendingLessons } from "../../services/trendingLessonsService";
 import {
@@ -149,7 +148,7 @@ function toLessonRecord(item: FirestoreLesson, index: number): LessonRecord {
 }
 
 export default function VideosScreen() {
-  const { colors: themeColors, isDark } = useTheme();
+  const { colors: themeColors } = useTheme();
   const navigation = useNavigation<any>();
   const route = useRoute();
   const { width } = useWindowDimensions();
@@ -316,11 +315,7 @@ export default function VideosScreen() {
           >
             <View style={styles.emptyHeader}>{header}</View>
             <View style={styles.emptyState}>
-              <Image
-                source={getThemeAsset("empty", isDark)}
-                style={styles.emptyImage}
-                contentFit="contain"
-              />
+              <Icon name="inbox" size={38} color={themeColors.primary} />
               <Text style={[styles.emptyTitle, { color: themeColors.text }]}>
                 {onlineEmptyTitle}
               </Text>
@@ -383,15 +378,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 24,
   },
-  emptyImage: {
-    height: 220,
-    marginBottom: 10,
-    width: "100%",
-  },
   emptyTitle: {
     color: colors.text,
     fontSize: 15,
     fontWeight: "600",
+    marginTop: 10,
     textAlign: "center",
   },
   emptyText: {
