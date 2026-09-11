@@ -622,7 +622,9 @@ exports.notifyTeacherFollowersOfNewPost = (0, firestore_2.onDocumentCreated)("te
     if (!teacherSnapshot.exists)
         return;
     const teacher = teacherSnapshot.data() ?? {};
-    const followers = await db.collection(`teachers/${teacherId}/followers`).get();
+    const followers = await db
+        .collection(`teachers/${teacherId}/followers`)
+        .get();
     if (followers.empty)
         return;
     const title = typeof post?.title === "string" ? post.title.trim() : "";
