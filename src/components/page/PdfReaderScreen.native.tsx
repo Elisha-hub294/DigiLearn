@@ -98,12 +98,14 @@ export function PdfReaderScreen() {
     pageId,
     title,
     initialPage,
+    fileType,
   } = useLocalSearchParams<{
     uri?: string;
     document?: string;
     pageId?: string;
     title?: string;
     initialPage?: string;
+    fileType?: string;
   }>();
 
   const [startPage, setStartPage] = useState<number>(() => {
@@ -143,7 +145,11 @@ export function PdfReaderScreen() {
   const decodedUri = resolvedUri ?? null;
   const isResolving = rawUri != null && decodedUri == null;
   const isLocalFile = Boolean(decodedUri?.startsWith("file://"));
-  const fileExtension = getFileExtension(decodedUri);
+  const requestedFileType =
+    typeof fileType === "string" && /^(pdf|docx|pptx|ppt)$/i.test(fileType)
+      ? fileType.toLowerCase()
+      : null;
+  const fileExtension = requestedFileType ?? getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
   const isDocxFile = fileExtension === "docx";
   const useNativePdf =

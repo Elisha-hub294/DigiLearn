@@ -91,6 +91,9 @@ export default function DownloadsScreen() {
       params: {
         uri: encodeURIComponent(file.localUri),
         title: file.title,
+        fileType:
+          file.uri.split("?")[0].match(/\.(pdf|docx|pptx|ppt)$/i)?.[1] ??
+          "pdf",
       },
     });
   };

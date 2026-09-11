@@ -56,12 +56,14 @@ export function PdfReaderScreen() {
     pageId,
     title,
     initialPage,
+    fileType,
   } = useLocalSearchParams<{
     uri?: string;
     document?: string;
     pageId?: string;
     title?: string;
     initialPage?: string;
+    fileType?: string;
   }>();
   const [startPage, setStartPage] = useState<number>(() => {
     const p = parseInt(initialPage ?? "", 10);
@@ -106,7 +108,14 @@ export function PdfReaderScreen() {
   // While the hook is resolving, resolvedUri is undefined — don't fall back to the raw path
   const decodedUri = resolvedUri ?? null;
   const isResolving = rawUri != null && decodedUri == null;
-  const fileExtension = getFileExtension(decodedUri);
+  // Blob URLs used for web downloads do not include their original filename.
+  // The Downloads screen supplies the persisted source extension so a cached
+  // DOCX is not mistaken for a PDF.
+  const requestedFileType =
+    typeof fileType === "string" && /^(pdf|docx|pptx|ppt)$/i.test(fileType)
+      ? fileType.toLowerCase()
+      : null;
+  const fileExtension = requestedFileType ?? getFileExtension(decodedUri);
   const isOfficeFile = ["docx", "ppt", "pptx"].includes(fileExtension);
   const isDocxFile = fileExtension === "docx";
 
