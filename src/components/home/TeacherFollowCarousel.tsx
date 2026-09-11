@@ -382,8 +382,8 @@ export function TeacherFollowCarousel({ seed = 0 }: { seed?: number }) {
   return (
     <Animated.View entering={FadeIn.duration(400)} style={styles.container}>
       <SectionHeader
-        title="Teachers to Follow"
-        subtitle="Discover educators on DigiLearn"
+        title="Join your Teachers"
+        subtitle="Discover educators on OSplatform"
       />
 
       {loading ? (
