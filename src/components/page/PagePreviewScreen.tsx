@@ -122,14 +122,15 @@ const extractAccentColor = (rawAccent: unknown): string => {
 export function PagePreviewScreen() {
   const { colors: themeColors } = useTheme();
   const { profile } = useProfile();
-  const { id, source, returnTo, teacherId, teacherName, title } = useLocalSearchParams<{
-    id: string;
-    source?: "home" | "library" | "pages" | "activity";
-    returnTo?: string;
-    teacherId?: string;
-    teacherName?: string;
-    title?: string;
-  }>();
+  const { id, source, returnTo, teacherId, teacherName, title } =
+    useLocalSearchParams<{
+      id: string;
+      source?: "home" | "library" | "pages" | "activity";
+      returnTo?: string;
+      teacherId?: string;
+      teacherName?: string;
+      title?: string;
+    }>();
 
   const [note, setNote] = useState<TopicalNote>();
   const [allNotes, setAllNotes] = useState<TopicalNote[]>([]);
