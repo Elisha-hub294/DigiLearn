@@ -595,18 +595,21 @@ exports.manageTeacherCommunity = (0, https_1.onCall)(async (request) => {
     const followerSnapshot = await followerRef.get();
     return { joined: followerSnapshot.exists };
 });
-/** Returns memberships created both before and after profile mirroring. */
+/** Returns the followed-teacher IDs mirrored onto the authenticated profile. */
 exports.getFollowedTeachers = (0, https_1.onCall)(async (request) => {
     if (!request.auth) {
         throw new https_1.HttpsError("unauthenticated", "Sign in required.");
     }
-    const followers = await db
-        .collectionGroup("followers")
-        .where(firestore_1.FieldPath.documentId(), "==", request.auth.uid)
-        .get();
-    const teacherIds = followers.docs
-        .map((follower) => follower.ref.parent.parent?.id)
-        .filter((teacherId) => Boolean(teacherId));
+    const [userSnapshot, teacherSnapshot] = await Promise.all([
+        db.doc(`users/${request.auth.uid}`).get(),
+        db.doc(`teachers/${request.auth.uid}`).get(),
+    ]);
+    const teacherIds = [userSnapshot, teacherSnapshot].flatMap((snapshot) => {
+        const followedTeacherIds = snapshot.data()?.followedTeacherIds;
+        return Array.isArray(followedTeacherIds)
+            ? followedTeacherIds.filter((teacherId) => typeof teacherId === "string")
+            : [];
+    });
     return { teacherIds: [...new Set(teacherIds)] };
 });
 /** New teacher posts always notify each follower of that teacher. */

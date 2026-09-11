@@ -306,9 +306,9 @@ export function PdfReaderScreen() {
     if (!isTextOfficeFile || !decodedUri) return;
 
     let active = true;
-    setOfficeText(null);
-    setOfficeImages([]);
     const loadOfficeText = async () => {
+      setOfficeText(null);
+      setOfficeImages([]);
       try {
         const response = await fetch(decodedUri);
         if (!response.ok)
@@ -339,31 +339,30 @@ export function PdfReaderScreen() {
 
   useEffect(() => {
     let active = true;
-    if (!pageId) {
-      setProgressReady(true);
-      return () => {
-        active = false;
-      };
-    }
+    const initializeProgress = async () => {
+      if (!pageId) {
+        setProgressReady(true);
+        return;
+      }
 
-    setProgressReady(false);
-    if (initialPage) {
-      const page = parseInt(initialPage, 10);
-      if (!isNaN(page) && page > 0) setCurrentPage(page);
-      setProgressReady(true);
-      return () => {
-        active = false;
-      };
-    }
+      setProgressReady(false);
+      if (initialPage) {
+        const page = parseInt(initialPage, 10);
+        if (!isNaN(page) && page > 0) setCurrentPage(page);
+        setProgressReady(true);
+        return;
+      }
 
-    getPageReadingProgress(pageId).then((prog) => {
+      const prog = await getPageReadingProgress(pageId);
       if (!active) return;
       if (prog && prog.lastPage > 1) {
         setStartPage(prog.lastPage);
         setCurrentPage(prog.lastPage);
       }
       setProgressReady(true);
-    });
+    };
+
+    void initializeProgress();
     return () => {
       active = false;
     };

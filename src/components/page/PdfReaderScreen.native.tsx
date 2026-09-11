@@ -5,33 +5,33 @@ import { useNetworkState } from "expo-network";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  NativeModules,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  UIManager,
-  View,
+    Animated,
+    Image,
+    NativeModules,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    UIManager,
+    View,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import { radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordPageVisit } from "../../services/activityService";
 import {
-  getDownloadedFiles,
-  saveDownloadedFile,
+    getDownloadedFiles,
+    saveDownloadedFile,
 } from "../../services/downloadService";
 import {
-  getPageReadingProgress,
-  savePageReadingProgress,
+    getPageReadingProgress,
+    savePageReadingProgress,
 } from "../../services/readingProgressService";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import {
-  extractDocxText,
-  extractPptxContent,
+    extractDocxText,
+    extractPptxContent,
 } from "../library/add-item/pdfService";
 import { ActionDialog } from "../ui/ActionDialog";
 
@@ -272,10 +272,10 @@ export function PdfReaderScreen() {
     if (!isTextOfficeFile || !decodedUri) return;
 
     let active = true;
-    setOfficeText(null);
-    setOfficeImages([]);
 
     const loadOfficeText = async () => {
+      setOfficeText(null);
+      setOfficeImages([]);
       try {
         const data = isLocalFile
           ? await FileSystem.readAsStringAsync(decodedUri, {
@@ -647,8 +647,15 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
             </Text>
           </View>
         </View>
-        <View style={[styles.loadingOverlay, { backgroundColor: themeColors.background }]}>
-          <View style={[styles.loadingCard, { backgroundColor: themeColors.white }]}>
+        <View
+          style={[
+            styles.loadingOverlay,
+            { backgroundColor: themeColors.background },
+          ]}
+        >
+          <View
+            style={[styles.loadingCard, { backgroundColor: themeColors.white }]}
+          >
             <Feather name="file-text" size={36} color={themeColors.primary} />
             <Text style={[styles.loadingLabel, { color: themeColors.text }]}>
               Loading PDF…
@@ -847,7 +854,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
             <Animated.View
               style={[
                 styles.progressBar,
-                { width: progressBarWidth, backgroundColor: themeColors.primary },
+                {
+                  width: progressBarWidth,
+                  backgroundColor: themeColors.primary,
+                },
               ]}
             />
           </View>
@@ -880,7 +890,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
                 <Animated.View
                   style={[
                     styles.loadingFill,
-                    { width: progressBarWidth, backgroundColor: themeColors.primary },
+                    {
+                      width: progressBarWidth,
+                      backgroundColor: themeColors.primary,
+                    },
                   ]}
                 />
               </View>
@@ -893,7 +906,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
           <View
             style={[styles.center, { backgroundColor: themeColors.background }]}
           >
-            <Feather name="alert-triangle" size={52} color={themeColors.warning} />
+            <Feather
+              name="alert-triangle"
+              size={52}
+              color={themeColors.warning}
+            />
           </View>
         )}
 

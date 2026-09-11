@@ -653,10 +653,7 @@ export const FeaturedNoteItem = ({
             styles.card,
             { backgroundColor: themeColors.white },
             isDark && {
-              borderTopLeftRadius: 10,
-              borderTopRightRadius: 10,
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
+              borderRadius: 10,
             },
             hovered && { backgroundColor: themeColors.lightBackground },
           ]}
@@ -923,8 +920,7 @@ const styles = StyleSheet.create({
     transitionProperty: "background-color",
     transitionTimingFunction: "ease-in-out",
     marginBottom: spacing.xl,
-    borderRadius: 10,
-    overflow: "hidden",
+    padding: 10,
   },
   cardHovered: {
     backgroundColor: "#e8efffff",
@@ -1001,6 +997,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     gap: 6,
+    marginBottom: 10,
   },
   continueButtonText: {
     color: "#FFFFFF",
