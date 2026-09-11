@@ -50,7 +50,6 @@ import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
   PaperItem,
-  PaperSection,
   useLibraryData,
 } from "../../hooks/useLibraryData";
 import { recordUserActivity } from "../../services/activityService";
@@ -73,52 +72,6 @@ type FeedItem =
   | { kind: "book"; id: string; data: BookRecord; subject?: string }
   | { kind: "paper"; id: string; data: PaperItem; subject?: string }
   | { kind: "break"; id: string; type: string; render: () => React.ReactNode };
-
-function HomePastPapers({
-  collections,
-  onSeeAll,
-}: {
-  collections: PaperSection[];
-  onSeeAll: (paperType?: string, paperYear?: string) => void;
-}) {
-  const groups = useMemo(() => {
-    const grouped = new Map<string, PaperSection[]>();
-
-    collections.forEach((section) => {
-      const type = section.type.trim() || "Other";
-      const sections = grouped.get(type) ?? [];
-      sections.push(section);
-      grouped.set(type, sections);
-    });
-
-    return Array.from(grouped.entries()).map(([type, sections]) => ({
-      type: type || "Other",
-      paperType: type,
-      sections: sections.sort(
-        (a, b) => Number.parseInt(b.year, 10) - Number.parseInt(a.year, 10),
-      ),
-    }));
-  }, [collections]);
-
-  return (
-    <View style={styles.breakSection}>
-      {groups.map((group) => (
-        <View key={group.type} style={styles.paperTypeSection}>
-          {group.sections.map((section) => (
-            <View key={`${section.type}-${section.year}`}>
-              <SectionHeader
-                title={section.title}
-                onSeeAll={() => onSeeAll(section.type, section.year)}
-                actionLabel="See all"
-              />
-              <PaperCarousel items={section.items} />
-            </View>
-          ))}
-        </View>
-      ))}
-    </View>
-  );
-}
 
 export default function HomeScreen() {
   const { colors: themeColors } = useTheme();
@@ -376,32 +329,35 @@ export default function HomeScreen() {
       },
     ];
 
-    if (filteredPaperCollections.length > 0) {
+    filteredPaperCollections.forEach((section) => {
+      const paperType = section.type.trim() || "Other";
+      const paperYear = section.year.trim();
+
       items.push({
         kind: "break",
-        id: "break-papers",
+        id: `break-papers-${paperType}-${paperYear}`,
         type: "papers",
         render: () => (
-          <HomePastPapers
-            collections={filteredPaperCollections}
-            onSeeAll={(paperType, paperYear) =>
-              router.push(
-                paperType
-                  ? ({
-                      pathname: "/see-all",
-                      params: {
-                        type: "papers",
-                        paperType,
-                        ...(paperYear ? { paperYear } : {}),
-                      },
-                    } as any)
-                  : "/see-all?type=papers",
-              )
-            }
-          />
+          <View style={styles.breakSection}>
+            <SectionHeader
+              title={section.title}
+              onSeeAll={() =>
+                router.push({
+                  pathname: "/see-all",
+                  params: {
+                    type: "papers",
+                    paperType,
+                    ...(paperYear ? { paperYear } : {}),
+                  },
+                } as any)
+              }
+              actionLabel="See all"
+            />
+            <PaperCarousel items={section.items} />
+          </View>
         ),
       });
-    }
+    });
 
     return items;
   }, [filteredPaperCollections, router]);
@@ -726,9 +682,6 @@ const styles = StyleSheet.create({
   },
   breakSection: {
     marginBottom: spacing.md,
-  },
-  paperTypeSection: {
-    marginBottom: spacing.lg,
   },
   itemHeaderBadge: {
     marginBottom: 6,
