@@ -1,7 +1,8 @@
-import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
+import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
+import { FirebaseImage } from "../ui/FirebaseImage";
 
 type AuthorCardProps = {
   name: string;
@@ -11,7 +12,8 @@ type AuthorCardProps = {
 };
 
 export function AuthorCard({ name, avatar, index, onPress }: AuthorCardProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const fallbackAvatar = getThemeAsset("userDefault", isDark);
 
   return (
     <Animated.View
@@ -24,8 +26,10 @@ export function AuthorCard({ name, avatar, index, onPress }: AuthorCardProps) {
         accessibilityRole={onPress ? "button" : undefined}
         accessibilityLabel={onPress ? `Open ${name}'s profile` : name}
       >
-        <Image
+        <FirebaseImage
           source={avatar ? { uri: avatar } : undefined}
+          fallbackSource={fallbackAvatar}
+          placeholder={fallbackAvatar}
           style={styles.avatar}
           contentFit="cover"
         />

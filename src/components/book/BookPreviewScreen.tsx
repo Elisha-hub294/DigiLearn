@@ -474,7 +474,16 @@ export function BookPreviewScreen() {
           </Animated.View>
         </ScrollView>
       </View>
-      <View style={[styles.action, { backgroundColor: themeColors.white }]}>
+      <View
+        style={[
+          styles.action,
+          {
+            backgroundColor: themeColors.white,
+            left: horizontalPadding,
+            right: horizontalPadding,
+          },
+        ]}
+      >
         <View
           style={[
             styles.actionContent,
