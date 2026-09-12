@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "851245099108",
+    "project_id": "digilearn-af86d",
+    "storage_bucket": "digilearn-af86d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:851245099108:android:26e58401f828e3f70a9771",
+        "android_client_info": {
+          "package_name": "com.osplatform.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "851245099108-ucqb4g3pucuj32qpnvv6mdoh8lrjaldh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.osplatform.app",
+            "certificate_hash": "4d514d50dd264e02b6567cb53ef1d1d6a3022c82"
+          }
+        },
+        {
+          "client_id": "851245099108-ckatv1djqhf5h2m40ni879p8nsb2vne5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjsuxnSnLgJK8F71hKas3B_9I6EHUK_4o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "851245099108-ckatv1djqhf5h2m40ni879p8nsb2vne5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
