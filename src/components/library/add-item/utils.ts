@@ -23,9 +23,66 @@ export const getTitleDocId = (title: string): string => {
 };
 
 /**
- * Converts URI to Blob for web uploads
+ * Converts base64 content to a Blob object.
+ * This is required for native file URIs, where XHR cannot fetch file:// URLs.
  */
-export const uriToBlob = (uri: string): Promise<Blob> => {
+export const base64ToBlob = (
+  base64: string,
+  mimeType = "application/octet-stream",
+): Blob => {
+  const normalized = base64.includes(",") ? base64.split(",")[1] : base64;
+  const cleaned = normalized.replace(/\s/g, "");
+  const binary = atob(cleaned);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new Blob([bytes], { type: mimeType });
+};
+
+/**
+ * Converts a local or remote file URI into a Blob.
+ * Native file URIs must be read as base64 because XMLHttpRequest cannot fetch
+ * file:// URIs on Android/iOS.
+ */
+export const uriToBlob = async (uri: string): Promise<Blob> => {
+  if (!uri) {
+    throw new Error("File URI is required");
+  }
+
+  if (uri.startsWith("data:")) {
+    const [header, payload] = uri.split(",");
+    const mimeType =
+      header.match(/data:([^;]+);base64/i)?.[1] || "application/octet-stream";
+    return base64ToBlob(payload || "", mimeType);
+  }
+
+  const isNativeFileUri = /^(file:|content:|ph:|assets-library:)/i.test(uri);
+
+  if (isNativeFileUri) {
+    let FileSystem: any = null;
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      FileSystem = require("expo-file-system");
+    } catch (error) {
+      console.error("Failed to load expo-file-system for native upload", error);
+      throw new Error(
+        "Expo FileSystem is not available for this native upload.",
+      );
+    }
+
+    const base64 = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const mimeType = uri.toLowerCase().endsWith(".pdf")
+      ? "application/pdf"
+      : "application/octet-stream";
+    return base64ToBlob(base64, mimeType);
+  }
+
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.onload = function () {
