@@ -473,95 +473,105 @@ export function PagePreviewScreen() {
 
   if (loading) {
     return (
-      <View
-        style={[
-          styles.loadingContainer,
-          { alignItems: "center", backgroundColor: themeColors.background },
-        ]}
-        accessibilityLabel="Loading page preview"
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+        edges={["top", "bottom"]}
       >
         <View
           style={[
-            styles.contentContainer,
-            {
-              maxWidth: contentMaxWidth,
-              paddingHorizontal: horizontalPadding,
-            },
+            styles.loadingContainer,
+            { alignItems: "center", backgroundColor: themeColors.background },
           ]}
+          accessibilityLabel="Loading page preview"
         >
-          <Skeleton
-            style={[
-              styles.skeletonHero,
-              { backgroundColor: themeColors.border },
-            ]}
-          />
           <View
             style={[
-              styles.skeletonSheet,
-              { backgroundColor: themeColors.white },
+              styles.contentContainer,
+              {
+                maxWidth: contentMaxWidth,
+                paddingHorizontal: horizontalPadding,
+              },
             ]}
           >
-            <View style={styles.skeletonAvatarRow}>
+            <Skeleton
+              style={[
+                styles.skeletonHero,
+                { backgroundColor: themeColors.border },
+              ]}
+            />
+            <View
+              style={[
+                styles.skeletonSheet,
+                { backgroundColor: themeColors.white },
+              ]}
+            >
+              <View style={styles.skeletonAvatarRow}>
+                <Skeleton
+                  style={[
+                    styles.skeletonAvatar,
+                    { backgroundColor: themeColors.border },
+                  ]}
+                />
+                <View style={styles.skeletonHeaderCopy}>
+                  <Skeleton
+                    style={[
+                      styles.skeletonTitle,
+                      { backgroundColor: themeColors.lightBackground },
+                    ]}
+                  />
+                  <Skeleton
+                    style={[
+                      styles.skeletonSub,
+                      { backgroundColor: themeColors.lightBackground },
+                    ]}
+                  />
+                </View>
+              </View>
               <Skeleton
                 style={[
-                  styles.skeletonAvatar,
-                  { backgroundColor: themeColors.border },
+                  styles.skeletonLine,
+                  { backgroundColor: themeColors.lightBackground },
                 ]}
               />
-              <View style={styles.skeletonHeaderCopy}>
-                <Skeleton
-                  style={[
-                    styles.skeletonTitle,
-                    { backgroundColor: themeColors.lightBackground },
-                  ]}
-                />
-                <Skeleton
-                  style={[
-                    styles.skeletonSub,
-                    { backgroundColor: themeColors.lightBackground },
-                  ]}
-                />
-              </View>
+              <Skeleton
+                style={[
+                  styles.skeletonLine,
+                  { backgroundColor: themeColors.lightBackground },
+                ]}
+              />
+              <Skeleton
+                style={[
+                  styles.skeletonLineShort,
+                  { backgroundColor: themeColors.lightBackground },
+                ]}
+              />
             </View>
-            <Skeleton
-              style={[
-                styles.skeletonLine,
-                { backgroundColor: themeColors.lightBackground },
-              ]}
-            />
-            <Skeleton
-              style={[
-                styles.skeletonLine,
-                { backgroundColor: themeColors.lightBackground },
-              ]}
-            />
-            <Skeleton
-              style={[
-                styles.skeletonLineShort,
-                { backgroundColor: themeColors.lightBackground },
-              ]}
-            />
           </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!note) {
     return (
-      <View
-        style={[
-          styles.loadingContainer,
-          { alignItems: "center", backgroundColor: themeColors.background },
-        ]}
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+        edges={["top", "bottom"]}
       >
-        <MissingResourceDialog
-          resourceType="page"
-          resourceId={id}
-          resourceName={title || "Study note"}
-          onGoBack={() => router.back()}
-        />
-      </View>
+        <View
+          style={[
+            styles.loadingContainer,
+            { alignItems: "center", backgroundColor: themeColors.background },
+          ]}
+        >
+          <MissingResourceDialog
+            resourceType="page"
+            resourceId={id}
+            resourceName={title || "Study note"}
+            onGoBack={() => router.back()}
+          />
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -665,22 +675,26 @@ export function PagePreviewScreen() {
   const subjectsList = normalizeArray(note.subject);
 
   return (
-    <Animated.View
-      key={id}
-      entering={FadeIn.duration(260)}
-      style={[
-        styles.screen,
-        { alignItems: "center", backgroundColor: themeColors.background },
-      ]}
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      edges={["top", "bottom"]}
     >
-      <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: 120, paddingHorizontal: horizontalPadding },
-          ]}
-        >
+      <Animated.View
+        key={id}
+        entering={FadeIn.duration(260)}
+        style={[
+          styles.screen,
+          { alignItems: "center", backgroundColor: themeColors.background },
+        ]}
+      >
+        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: 120, paddingHorizontal: horizontalPadding },
+            ]}
+          >
           {/* Hero Section */}
           <PageHero
             note={note}

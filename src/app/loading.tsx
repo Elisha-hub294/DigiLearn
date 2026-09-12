@@ -2,10 +2,11 @@ import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { Platform, StyleSheet } from "react-native";
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
 } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../contexts/ThemeContext";
 
 export default function LoadingScreen({
@@ -34,19 +35,28 @@ export default function LoadingScreen({
   }));
 
   return (
-    <Animated.View
-      style={[styles.container, { backgroundColor: colors.background }]}
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+      edges={["top", "bottom"]}
     >
-      <Animated.Text
-        style={[styles.title, { color: colors.primary }, animatedStyle]}
+      <Animated.View
+        style={[styles.container, { backgroundColor: colors.background }]}
       >
-        OS platform
-      </Animated.Text>
-    </Animated.View>
+        <Animated.Text
+          style={[styles.title, { color: colors.primary }, animatedStyle]}
+        >
+          OS platform
+        </Animated.Text>
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   container: {
     flex: 1,
     justifyContent: "center",

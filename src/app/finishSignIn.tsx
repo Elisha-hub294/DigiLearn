@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
@@ -36,9 +37,6 @@ export default function FinishSignInScreen() {
         const user = await completeEmailLink(url, emailOverride);
         if (!user) throw new Error("EMAIL_LINK_INVALID");
 
-        // Keep this page as a confirmation handoff. The OS platform tab's
-        // "I verified my email" action creates the profile and continues the
-        // normal onboarding flow.
         setIsComplete(true);
         setIsCompleting(false);
       } catch (error) {
@@ -76,6 +74,7 @@ export default function FinishSignInScreen() {
         setIsCompleting(false);
       }
     });
+
     return () => {
       cancelled = true;
     };
@@ -88,59 +87,71 @@ export default function FinishSignInScreen() {
   }, [email, finishSignIn, isCompleting, linkUrl]);
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: themeColors.background }]}
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      edges={["top", "bottom"]}
     >
-      {isCompleting ? (
-        <ActivityIndicator color={colors.primary} size="large" />
-      ) : null}
-      <Text style={[styles.title, { color: themeColors.text }]}>
-        {isComplete
-          ? "Email confirmed"
-          : needsEmail || errorMessage
-            ? "Confirm your email address"
-            : "Signing you in"}
-      </Text>
-      <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
-        {isComplete
-          ? 'Return to the OS platform app, then select "I verified my email" to continue.'
-          : needsEmail
-            ? "Enter the email address used to request this link."
-            : errorMessage || "Finishing your email verification..."}
-      </Text>
-      {needsEmail ? (
-        <View style={styles.emailForm}>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="email-address"
-            placeholder="you@example.com"
-            placeholderTextColor={themeColors.subtitle}
-            style={[
-              styles.emailInput,
-              { color: themeColors.text, borderColor: themeColors.border },
-            ]}
-          />
-          <Pressable
-            onPress={submitEmail}
-            disabled={!email.trim() || isCompleting}
-            style={({ pressed }) => [
-              styles.continueButton,
-              (!email.trim() || isCompleting) && styles.disabledButton,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={styles.continueButtonText}>Continue</Text>
-          </Pressable>
-        </View>
-      ) : null}
-    </View>
+      <View
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+      >
+        {isCompleting ? (
+          <ActivityIndicator color={colors.primary} size="large" />
+        ) : null}
+
+        <Text style={[styles.title, { color: themeColors.text }]}>
+          {isComplete
+            ? "Email confirmed"
+            : needsEmail || errorMessage
+              ? "Confirm your email address"
+              : "Signing you in"}
+        </Text>
+
+        <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
+          {isComplete
+            ? 'Return to the OS platform app, then select "I verified my email" to continue.'
+            : needsEmail
+              ? "Enter the email address used to request this link."
+              : errorMessage || "Finishing your email verification..."}
+        </Text>
+
+        {needsEmail ? (
+          <View style={styles.emailForm}>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              placeholder="you@example.com"
+              placeholderTextColor={themeColors.subtitle}
+              style={[
+                styles.emailInput,
+                { color: themeColors.text, borderColor: themeColors.border },
+              ]}
+            />
+            <Pressable
+              onPress={submitEmail}
+              disabled={!email.trim() || isCompleting}
+              style={({ pressed }) => [
+                styles.continueButton,
+                (!email.trim() || isCompleting) && styles.disabledButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.continueButtonText}>Continue</Text>
+            </Pressable>
+          </View>
+        ) : null}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   container: {
     flex: 1,
     alignItems: "center",
@@ -177,7 +188,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: colors.primary,
   },
-  continueButtonText: { color: colors.white, fontSize: 15, fontWeight: "600" },
-  disabledButton: { opacity: 0.55 },
-  pressed: { opacity: 0.8 },
+  continueButtonText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  disabledButton: {
+    opacity: 0.55,
+  },
+  pressed: {
+    opacity: 0.8,
+  },
 });

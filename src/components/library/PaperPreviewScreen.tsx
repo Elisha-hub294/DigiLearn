@@ -2,24 +2,25 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  query,
-  where,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    limit,
+    query,
+    where,
 } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-  FlatList,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    FlatList,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
@@ -27,13 +28,13 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import {
-  getOpenedResourceCache,
-  saveOpenedResourceCache,
+    getOpenedResourceCache,
+    saveOpenedResourceCache,
 } from "../../services/openedResourceCache";
 import { shareResource } from "../../services/shareLinks";
 import {
-  getSavedItemsProfile,
-  toggleSavedItem,
+    getSavedItemsProfile,
+    toggleSavedItem,
 } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
@@ -413,252 +414,98 @@ export function PaperPreviewScreen() {
 
   if (loading) {
     return (
-      <View
-        style={[
-          styles.loadingContainer,
-          { backgroundColor: themeColors.background },
-        ]}
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+        edges={["top", "bottom"]}
       >
-        <Skeleton
+        <View
           style={[
-            styles.loadingHeroSkeleton,
-            { backgroundColor: themeColors.surface },
+            styles.loadingContainer,
+            { backgroundColor: themeColors.background },
           ]}
-        />
-        <Skeleton
-          style={[
-            styles.loadingTitleSkeleton,
-            { backgroundColor: themeColors.surface },
-          ]}
-        />
-        <Skeleton
-          style={[
-            styles.loadingLineSkeleton,
-            { backgroundColor: themeColors.surface },
-          ]}
-        />
-        <Skeleton
-          style={[
-            styles.loadingLineShortSkeleton,
-            { backgroundColor: themeColors.surface },
-          ]}
-        />
-      </View>
+        >
+          <Skeleton
+            style={[
+              styles.loadingHeroSkeleton,
+              { backgroundColor: themeColors.surface },
+            ]}
+          />
+          <Skeleton
+            style={[
+              styles.loadingTitleSkeleton,
+              { backgroundColor: themeColors.surface },
+            ]}
+          />
+          <Skeleton
+            style={[
+              styles.loadingLineSkeleton,
+              { backgroundColor: themeColors.surface },
+            ]}
+          />
+          <Skeleton
+            style={[
+              styles.loadingLineShortSkeleton,
+              { backgroundColor: themeColors.surface },
+            ]}
+          />
+        </View>
+      </SafeAreaView>
     );
   }
 
   if (!paper) {
     return (
-      <View
-        style={[
-          styles.loadingContainer,
-          { backgroundColor: themeColors.background },
-        ]}
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+        edges={["top", "bottom"]}
       >
-        <MissingResourceDialog
-          resourceType="paper"
-          resourceId={params.id ?? "unknown"}
-          resourceName={params.title ?? "Past paper"}
-          onGoBack={() => router.back()}
-        />
-      </View>
+        <View
+          style={[
+            styles.loadingContainer,
+            { backgroundColor: themeColors.background },
+          ]}
+        >
+          <MissingResourceDialog
+            resourceType="paper"
+            resourceId={params.id ?? "unknown"}
+            resourceName={params.title ?? "Past paper"}
+            onGoBack={() => router.back()}
+          />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View
-      style={[
-        styles.screen,
-        { alignItems: "center", backgroundColor: themeColors.background },
-      ]}
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      edges={["top", "bottom"]}
     >
-      <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
-        <ScrollView
-          style={[styles.screen, { backgroundColor: themeColors.background }]}
-          contentContainerStyle={[
-            styles.content,
-            {
-              paddingHorizontal: horizontalPadding,
-              backgroundColor: themeColors.background,
-            },
-          ]}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.headerRow}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-              onPress={() => router.back()}
-              style={[
-                styles.backButton,
-                {
-                  backgroundColor: themeColors.white,
-                  borderColor: themeColors.border,
-                },
-              ]}
-            >
-              <Text
-                style={[styles.backButtonText, { color: themeColors.text }]}
-              >
-                ←
-              </Text>
-            </Pressable>
-            <View style={styles.headerMeta}>
-              <Text style={[styles.eyebrow, { color: themeColors.primary }]}>
-                {paper.type?.toUpperCase() || "PAST PAPER"}
-              </Text>
-              <Text style={[styles.headerTitle, { color: themeColors.text }]}>
-                Paper preview
-              </Text>
-            </View>
-          </View>
-
-          <View
-            style={[
-              styles.heroCard,
+      <View
+        style={[
+          styles.screen,
+          { alignItems: "center", backgroundColor: themeColors.background },
+        ]}
+      >
+        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+          <ScrollView
+            style={[styles.screen, { backgroundColor: themeColors.background }]}
+            contentContainerStyle={[
+              styles.content,
               {
-                backgroundColor: themeColors.white,
-                borderColor: themeColors.border,
+                paddingHorizontal: horizontalPadding,
+                backgroundColor: themeColors.background,
               },
             ]}
+            showsVerticalScrollIndicator={false}
           >
-            <View style={styles.heroImageWrap}>
-              {paper.image ? (
-                <Image
-                  source={{ uri: paper.image }}
-                  style={styles.heroImage}
-                  contentFit="cover"
-                  contentPosition="top left"
-                />
-              ) : (
-                <View
-                  style={[
-                    styles.placeholderCover,
-                    { backgroundColor: themeColors.primary },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.placeholderText,
-                      { color: themeColors.white },
-                    ]}
-                  >
-                    {paper.title.slice(0, 2).toUpperCase()}
-                  </Text>
-                </View>
-              )}
-              <View style={styles.heroOverlay} />
-            </View>
-
-            <View style={styles.heroContent}>
-              <Text
+            <View style={styles.headerRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+                onPress={() => router.back()}
                 style={[
-                  styles.subjectBadge,
-                  {
-                    backgroundColor: themeColors.primaryLight,
-                    color: themeColors.primary,
-                  },
-                ]}
-              >
-                {paper.subject || "General"}
-              </Text>
-              <Text style={[styles.title, { color: themeColors.text }]}>
-                {paper.title}
-              </Text>
-              <Text style={[styles.metaLine, { color: themeColors.subtitle }]}>
-                {paper.year || "Recent paper"} • {paperRef}
-              </Text>
-
-              <View style={styles.actionRow}>
-                <Pressable
-                  accessibilityRole="button"
-                  style={[
-                    styles.primaryButton,
-                    !paper.document && styles.disabledButton,
-                  ]}
-                  onPress={openDocument}
-                  disabled={!paper.document}
-                >
-                  <View style={styles.buttonContent}>
-                    <Feather name="book-open" size={16} color={colors.white} />
-                    <Text style={styles.primaryButtonText}>
-                      {paper.document ? "Open" : "No document"}
-                    </Text>
-                  </View>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  style={[
-                    styles.secondaryButton,
-                    {
-                      backgroundColor: themeColors.lightBackground,
-                      borderColor: themeColors.border,
-                    },
-                  ]}
-                  onPress={sharePaper}
-                >
-                  <View style={styles.buttonContent}>
-                    <Feather
-                      name="share-2"
-                      size={15}
-                      color={themeColors.text}
-                    />
-                    <Text
-                      style={[
-                        styles.secondaryButtonText,
-                        { color: themeColors.text },
-                      ]}
-                    >
-                      Share
-                    </Text>
-                  </View>
-                </Pressable>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    bookmarked ? "Remove saved paper" : "Save paper"
-                  }
-                  style={[
-                    styles.secondaryButton,
-                    {
-                      backgroundColor: themeColors.lightBackground,
-                      borderColor: themeColors.border,
-                    },
-                    bookmarked && {
-                      backgroundColor: themeColors.primaryLight,
-                      borderColor: themeColors.primary,
-                    },
-                  ]}
-                  onPress={toggleBookmark}
-                >
-                  <View style={styles.buttonContent}>
-                    <Ionicons
-                      name={bookmarked ? "bookmark" : "bookmark-outline"}
-                      size={15}
-                      color={
-                        bookmarked ? themeColors.primary : themeColors.text
-                      }
-                    />
-                    <Text
-                      style={[
-                        styles.secondaryButtonText,
-                        { color: themeColors.text },
-                      ]}
-                    >
-                      {bookmarked ? "Saved" : "Save"}
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.statsWrap}>
-            {stats.map((stat) => (
-              <View
-                key={stat.label}
-                style={[
-                  styles.statCard,
+                  styles.backButton,
                   {
                     backgroundColor: themeColors.white,
                     borderColor: themeColors.border,
@@ -666,75 +513,194 @@ export function PaperPreviewScreen() {
                 ]}
               >
                 <Text
-                  style={[styles.statLabel, { color: themeColors.subtitle }]}
+                  style={[styles.backButtonText, { color: themeColors.text }]}
                 >
-                  {stat.label}
+                  ←
                 </Text>
-                <Text style={[styles.statValue, { color: themeColors.text }]}>
-                  {stat.value}
+              </Pressable>
+              <View style={styles.headerMeta}>
+                <Text style={[styles.eyebrow, { color: themeColors.primary }]}>
+                  {paper.type?.toUpperCase() || "PAST PAPER"}
+                </Text>
+                <Text style={[styles.headerTitle, { color: themeColors.text }]}>
+                  Paper preview
                 </Text>
               </View>
-            ))}
-          </View>
-
-          <View
-            style={[
-              styles.detailsCard,
-              {
-                backgroundColor: themeColors.white,
-                borderColor: themeColors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-              Overview
-            </Text>
-            <Text style={[styles.description, { color: themeColors.text }]}>
-              {paper.description || "No description provided for this paper."}
-            </Text>
-          </View>
-
-          <View
-            style={[
-              styles.detailsCard,
-              {
-                backgroundColor: themeColors.white,
-                borderColor: themeColors.border,
-              },
-            ]}
-          >
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-              Paper details
-            </Text>
-            <View style={styles.detailList}>
-              <DetailRow
-                label="Subject"
-                value={paper.subject || "General"}
-                icon="book-open"
-              />
-              <DetailRow
-                label="Level"
-                value={formatLevelLabel(paper.level)}
-                icon="bar-chart-2"
-              />
-              <DetailRow
-                label="Pages"
-                value={formatPageCount(paper.pageNumber)}
-                icon="file-text"
-              />
-              <DetailRow label="Reference" value={paperRef} icon="hash" />
-              <DetailRow
-                label="Year"
-                value={paper.year || "Recent"}
-                icon="calendar"
-              />
             </View>
-          </View>
 
-          {relatedPapers.length > 0 && (
             <View
               style={[
-                styles.relatedCard,
+                styles.heroCard,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                },
+              ]}
+            >
+              <View style={styles.heroImageWrap}>
+                {paper.image ? (
+                  <Image
+                    source={{ uri: paper.image }}
+                    style={styles.heroImage}
+                    contentFit="cover"
+                    contentPosition="top left"
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.placeholderCover,
+                      { backgroundColor: themeColors.primary },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.placeholderText,
+                        { color: themeColors.white },
+                      ]}
+                    >
+                      {paper.title.slice(0, 2).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.heroOverlay} />
+              </View>
+
+              <View style={styles.heroContent}>
+                <Text
+                  style={[
+                    styles.subjectBadge,
+                    {
+                      backgroundColor: themeColors.primaryLight,
+                      color: themeColors.primary,
+                    },
+                  ]}
+                >
+                  {paper.subject || "General"}
+                </Text>
+                <Text style={[styles.title, { color: themeColors.text }]}>
+                  {paper.title}
+                </Text>
+                <Text
+                  style={[styles.metaLine, { color: themeColors.subtitle }]}
+                >
+                  {paper.year || "Recent paper"} • {paperRef}
+                </Text>
+
+                <View style={styles.actionRow}>
+                  <Pressable
+                    accessibilityRole="button"
+                    style={[
+                      styles.primaryButton,
+                      !paper.document && styles.disabledButton,
+                    ]}
+                    onPress={openDocument}
+                    disabled={!paper.document}
+                  >
+                    <View style={styles.buttonContent}>
+                      <Feather
+                        name="book-open"
+                        size={16}
+                        color={colors.white}
+                      />
+                      <Text style={styles.primaryButtonText}>
+                        {paper.document ? "Open" : "No document"}
+                      </Text>
+                    </View>
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    style={[
+                      styles.secondaryButton,
+                      {
+                        backgroundColor: themeColors.lightBackground,
+                        borderColor: themeColors.border,
+                      },
+                    ]}
+                    onPress={sharePaper}
+                  >
+                    <View style={styles.buttonContent}>
+                      <Feather
+                        name="share-2"
+                        size={15}
+                        color={themeColors.text}
+                      />
+                      <Text
+                        style={[
+                          styles.secondaryButtonText,
+                          { color: themeColors.text },
+                        ]}
+                      >
+                        Share
+                      </Text>
+                    </View>
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      bookmarked ? "Remove saved paper" : "Save paper"
+                    }
+                    style={[
+                      styles.secondaryButton,
+                      {
+                        backgroundColor: themeColors.lightBackground,
+                        borderColor: themeColors.border,
+                      },
+                      bookmarked && {
+                        backgroundColor: themeColors.primaryLight,
+                        borderColor: themeColors.primary,
+                      },
+                    ]}
+                    onPress={toggleBookmark}
+                  >
+                    <View style={styles.buttonContent}>
+                      <Ionicons
+                        name={bookmarked ? "bookmark" : "bookmark-outline"}
+                        size={15}
+                        color={
+                          bookmarked ? themeColors.primary : themeColors.text
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.secondaryButtonText,
+                          { color: themeColors.text },
+                        ]}
+                      >
+                        {bookmarked ? "Saved" : "Save"}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.statsWrap}>
+              {stats.map((stat) => (
+                <View
+                  key={stat.label}
+                  style={[
+                    styles.statCard,
+                    {
+                      backgroundColor: themeColors.white,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.statLabel, { color: themeColors.subtitle }]}
+                  >
+                    {stat.label}
+                  </Text>
+                  <Text style={[styles.statValue, { color: themeColors.text }]}>
+                    {stat.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View
+              style={[
+                styles.detailsCard,
                 {
                   backgroundColor: themeColors.white,
                   borderColor: themeColors.border,
@@ -742,128 +708,186 @@ export function PaperPreviewScreen() {
               ]}
             >
               <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-                {`More of ${paper?.subject || "this"}`}
+                Overview
               </Text>
-              <Text
-                style={[styles.relatedHint, { color: themeColors.subtitle }]}
+              <Text style={[styles.description, { color: themeColors.text }]}>
+                {paper.description || "No description provided for this paper."}
+              </Text>
+            </View>
+
+            <View
+              style={[
+                styles.detailsCard,
+                {
+                  backgroundColor: themeColors.white,
+                  borderColor: themeColors.border,
+                },
+              ]}
+            >
+              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+                Paper details
+              </Text>
+              <View style={styles.detailList}>
+                <DetailRow
+                  label="Subject"
+                  value={paper.subject || "General"}
+                  icon="book-open"
+                />
+                <DetailRow
+                  label="Level"
+                  value={formatLevelLabel(paper.level)}
+                  icon="bar-chart-2"
+                />
+                <DetailRow
+                  label="Pages"
+                  value={formatPageCount(paper.pageNumber)}
+                  icon="file-text"
+                />
+                <DetailRow label="Reference" value={paperRef} icon="hash" />
+                <DetailRow
+                  label="Year"
+                  value={paper.year || "Recent"}
+                  icon="calendar"
+                />
+              </View>
+            </View>
+
+            {relatedPapers.length > 0 && (
+              <View
+                style={[
+                  styles.relatedCard,
+                  {
+                    backgroundColor: themeColors.white,
+                    borderColor: themeColors.border,
+                  },
+                ]}
               >
-                Similar papers to build comprehensive coverage
-              </Text>
-              <FlatList
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                data={relatedPapers}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.relatedList}
-                ItemSeparatorComponent={() => (
-                  <View style={{ width: spacing.md }} />
-                )}
-                renderItem={({ item: relatedPaper }) => (
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: "/paper-preview",
-                        params: {
-                          id: relatedPaper.id,
-                          title: relatedPaper.title,
-                          subject: relatedPaper.subject,
-                          year: relatedPaper.year,
-                          type: relatedPaper.type,
-                          document: relatedPaper.document,
-                          image: relatedPaper.image,
+                <Text
+                  style={[styles.sectionTitle, { color: themeColors.text }]}
+                >
+                  {`More of ${paper?.subject || "this"}`}
+                </Text>
+                <Text
+                  style={[styles.relatedHint, { color: themeColors.subtitle }]}
+                >
+                  Similar papers to build comprehensive coverage
+                </Text>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={relatedPapers}
+                  keyExtractor={(item) => item.id}
+                  contentContainerStyle={styles.relatedList}
+                  ItemSeparatorComponent={() => (
+                    <View style={{ width: spacing.md }} />
+                  )}
+                  renderItem={({ item: relatedPaper }) => (
+                    <Pressable
+                      onPress={() =>
+                        router.push({
+                          pathname: "/paper-preview",
+                          params: {
+                            id: relatedPaper.id,
+                            title: relatedPaper.title,
+                            subject: relatedPaper.subject,
+                            year: relatedPaper.year,
+                            type: relatedPaper.type,
+                            document: relatedPaper.document,
+                            image: relatedPaper.image,
+                          },
+                        } as any)
+                      }
+                      style={[
+                        styles.relatedItem,
+                        {
+                          backgroundColor: themeColors.lightBackground,
+                          borderColor: themeColors.border,
                         },
-                      } as any)
-                    }
-                    style={[
-                      styles.relatedItem,
-                      {
-                        backgroundColor: themeColors.lightBackground,
-                        borderColor: themeColors.border,
-                      },
-                    ]}
-                  >
-                    <View style={styles.relatedImageWrap}>
-                      {relatedPaper.image ? (
-                        <Image
-                          source={{ uri: relatedPaper.image }}
-                          style={styles.relatedImage}
-                          contentFit="cover"
-                          contentPosition="top left"
-                        />
-                      ) : (
-                        <View
-                          style={[
-                            styles.relatedPlaceholder,
-                            { backgroundColor: themeColors.primary },
-                          ]}
-                        >
-                          <Text
+                      ]}
+                    >
+                      <View style={styles.relatedImageWrap}>
+                        {relatedPaper.image ? (
+                          <Image
+                            source={{ uri: relatedPaper.image }}
+                            style={styles.relatedImage}
+                            contentFit="cover"
+                            contentPosition="top left"
+                          />
+                        ) : (
+                          <View
                             style={[
-                              styles.relatedPlaceholderText,
-                              { color: themeColors.white },
+                              styles.relatedPlaceholder,
+                              { backgroundColor: themeColors.primary },
                             ]}
                           >
-                            {relatedPaper.title.slice(0, 2).toUpperCase()}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.relatedContent}>
-                      <Text
-                        style={[
-                          styles.relatedYear,
-                          { color: themeColors.primary },
-                        ]}
-                      >
-                        {relatedPaper.year || "Recent"}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.relatedTitle,
-                          { color: themeColors.text },
-                        ]}
-                        numberOfLines={2}
-                      >
-                        {relatedPaper.title}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.relatedMeta,
-                          { color: themeColors.subtitle },
-                        ]}
-                      >
-                        {relatedPaper.type || "Paper"}
-                      </Text>
-                    </View>
-                  </Pressable>
-                )}
-              />
-            </View>
-          )}
+                            <Text
+                              style={[
+                                styles.relatedPlaceholderText,
+                                { color: themeColors.white },
+                              ]}
+                            >
+                              {relatedPaper.title.slice(0, 2).toUpperCase()}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <View style={styles.relatedContent}>
+                        <Text
+                          style={[
+                            styles.relatedYear,
+                            { color: themeColors.primary },
+                          ]}
+                        >
+                          {relatedPaper.year || "Recent"}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.relatedTitle,
+                            { color: themeColors.text },
+                          ]}
+                          numberOfLines={2}
+                        >
+                          {relatedPaper.title}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.relatedMeta,
+                            { color: themeColors.subtitle },
+                          ]}
+                        >
+                          {relatedPaper.type || "Paper"}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )}
+                />
+              </View>
+            )}
 
-          <ActionDialog
-            visible={showGuestSaveAlert}
-            title="Save this resource"
-            message="Log in or sign up to save past papers and resources for later."
-            primaryText="Log in"
-            secondaryText="Sign up"
-            onPrimary={() =>
-              router.push({
-                pathname: "/login",
-                params: { from: paperPreviewRoute },
-              } as any)
-            }
-            onSecondary={() =>
-              router.push({
-                pathname: "/signup",
-                params: { from: paperPreviewRoute },
-              } as any)
-            }
-            onClose={() => setShowGuestSaveAlert(false)}
-          />
-        </ScrollView>
+            <ActionDialog
+              visible={showGuestSaveAlert}
+              title="Save this resource"
+              message="Log in or sign up to save past papers and resources for later."
+              primaryText="Log in"
+              secondaryText="Sign up"
+              onPrimary={() =>
+                router.push({
+                  pathname: "/login",
+                  params: { from: paperPreviewRoute },
+                } as any)
+              }
+              onSecondary={() =>
+                router.push({
+                  pathname: "/signup",
+                  params: { from: paperPreviewRoute },
+                } as any)
+              }
+              onClose={() => setShowGuestSaveAlert(false)}
+            />
+          </ScrollView>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -894,6 +918,9 @@ function DetailRow({
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   screen: {
     flex: 1,
     backgroundColor: colors.lightBackground,

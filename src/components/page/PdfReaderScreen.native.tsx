@@ -5,34 +5,35 @@ import { useNetworkState } from "expo-network";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  NativeModules,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  UIManager,
-  View,
+    Animated,
+    Image,
+    NativeModules,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    UIManager,
+    View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordPageVisit } from "../../services/activityService";
 import {
-  getDocumentUniqueName,
-  getDownloadedFiles,
-  saveDownloadedFile,
+    getDocumentUniqueName,
+    getDownloadedFiles,
+    saveDownloadedFile,
 } from "../../services/downloadService";
 import {
-  getPageReadingProgress,
-  savePageReadingProgress,
+    getPageReadingProgress,
+    savePageReadingProgress,
 } from "../../services/readingProgressService";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import {
-  extractDocxText,
-  extractPptxContent,
+    extractDocxText,
+    extractPptxContent,
 } from "../library/add-item/pdfService";
 import { ActionDialog } from "../ui/ActionDialog";
 
@@ -243,12 +244,7 @@ export function PdfReaderScreen() {
   // lose signed query parameters) and pdf.js in the WebView (which is subject
   // to CORS). Keep the file for the native view until this screen unmounts.
   useEffect(() => {
-    if (
-      Platform.OS !== "android" ||
-      isLocalFile ||
-      isOfficeFile ||
-      !decodedUri
-    )
+    if (Platform.OS !== "android" || isLocalFile || isOfficeFile || !decodedUri)
       return;
 
     let active = true;
@@ -644,53 +640,61 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 
   if (isResolving || isPreFetching) {
     return (
-      <View
-        style={[styles.screen, { backgroundColor: themeColors.background }]}
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+        edges={["top", "bottom"]}
       >
         <View
-          style={[
-            styles.header,
-            {
-              backgroundColor: themeColors.white,
-              borderBottomColor: themeColors.border,
-            },
-          ]}
-        >
-          <Pressable
-            style={[
-              styles.headerBack,
-              { backgroundColor: themeColors.lightBackground },
-            ]}
-            onPress={goBack}
-            accessibilityLabel="Close PDF"
-          >
-            <Feather name="arrow-left" size={22} color={themeColors.text} />
-          </Pressable>
-          <View style={styles.headerCenter}>
-            <Text
-              style={[styles.headerTitle, { color: themeColors.primary }]}
-              numberOfLines={1}
-            >
-              {title || "PDF Reader"}
-            </Text>
-          </View>
-        </View>
-        <View
-          style={[
-            styles.loadingOverlay,
-            { backgroundColor: themeColors.background },
-          ]}
+          style={[styles.screen, { backgroundColor: themeColors.background }]}
         >
           <View
-            style={[styles.loadingCard, { backgroundColor: themeColors.white }]}
+            style={[
+              styles.header,
+              {
+                backgroundColor: themeColors.white,
+                borderBottomColor: themeColors.border,
+              },
+            ]}
           >
-            <Feather name="file-text" size={36} color={themeColors.primary} />
-            <Text style={[styles.loadingLabel, { color: themeColors.text }]}>
-              Loading PDF…
-            </Text>
+            <Pressable
+              style={[
+                styles.headerBack,
+                { backgroundColor: themeColors.lightBackground },
+              ]}
+              onPress={goBack}
+              accessibilityLabel="Close PDF"
+            >
+              <Feather name="arrow-left" size={22} color={themeColors.text} />
+            </Pressable>
+            <View style={styles.headerCenter}>
+              <Text
+                style={[styles.headerTitle, { color: themeColors.primary }]}
+                numberOfLines={1}
+              >
+                {title || "PDF Reader"}
+              </Text>
+            </View>
+          </View>
+          <View
+            style={[
+              styles.loadingOverlay,
+              { backgroundColor: themeColors.background },
+            ]}
+          >
+            <View
+              style={[
+                styles.loadingCard,
+                { backgroundColor: themeColors.white },
+              ]}
+            >
+              <Feather name="file-text" size={36} color={themeColors.primary} />
+              <Text style={[styles.loadingLabel, { color: themeColors.text }]}>
+                Loading PDF…
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -724,7 +728,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
   }
 
   return (
-    <>
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      edges={["top", "bottom"]}
+    >
       <ActionDialog
         visible={
           Boolean(noticeDialog) ||
@@ -1021,11 +1028,14 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
           />
         )}
       </View>
-    </>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   screen: {
     flex: 1,
   },

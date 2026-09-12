@@ -10,7 +10,10 @@ import {
   useWindowDimensions,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -294,72 +297,82 @@ export function BookPreviewScreen() {
 
   if (loading)
     return (
-      <View
-        style={[styles.loading, { backgroundColor: themeColors.background }]}
-        accessibilityLabel="Loading book preview"
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+        edges={["top", "bottom"]}
       >
         <View
-          style={[
-            styles.contentContainer,
-            {
-              maxWidth: contentMaxWidth,
-              paddingHorizontal: horizontalPadding,
-            },
-          ]}
+          style={[styles.loading, { backgroundColor: themeColors.background }]}
+          accessibilityLabel="Loading book preview"
         >
-          <Skeleton
-            style={[
-              styles.skeletonHero,
-              { backgroundColor: themeColors.surfaceMuted },
-            ]}
-          />
           <View
             style={[
-              styles.skeletonSheet,
-              { backgroundColor: themeColors.surface },
+              styles.contentContainer,
+              {
+                maxWidth: contentMaxWidth,
+                paddingHorizontal: horizontalPadding,
+              },
             ]}
           >
             <Skeleton
               style={[
-                styles.skeletonTitle,
+                styles.skeletonHero,
                 { backgroundColor: themeColors.surfaceMuted },
               ]}
             />
-            <Skeleton
+            <View
               style={[
-                styles.skeletonLine,
-                { backgroundColor: themeColors.surfaceMuted },
+                styles.skeletonSheet,
+                { backgroundColor: themeColors.surface },
               ]}
-            />
-            <Skeleton
-              style={[
-                styles.skeletonLineShort,
-                { backgroundColor: themeColors.surfaceMuted },
-              ]}
-            />
-            <Skeleton
-              style={[
-                styles.skeletonAvatars,
-                { backgroundColor: themeColors.surfaceMuted },
-              ]}
-            />
+            >
+              <Skeleton
+                style={[
+                  styles.skeletonTitle,
+                  { backgroundColor: themeColors.surfaceMuted },
+                ]}
+              />
+              <Skeleton
+                style={[
+                  styles.skeletonLine,
+                  { backgroundColor: themeColors.surfaceMuted },
+                ]}
+              />
+              <Skeleton
+                style={[
+                  styles.skeletonLineShort,
+                  { backgroundColor: themeColors.surfaceMuted },
+                ]}
+              />
+              <Skeleton
+                style={[
+                  styles.skeletonAvatars,
+                  { backgroundColor: themeColors.surfaceMuted },
+                ]}
+              />
+            </View>
           </View>
         </View>
-      </View>
+      </SafeAreaView>
     );
 
   if (!book) {
     return (
-      <View
-        style={[styles.loading, { backgroundColor: themeColors.background }]}
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+        edges={["top", "bottom"]}
       >
-        <MissingResourceDialog
-          resourceType="book"
-          resourceId={id}
-          resourceName="Book"
-          onGoBack={() => router.back()}
-        />
-      </View>
+        <View
+          style={[styles.loading, { backgroundColor: themeColors.background }]}
+        >
+          <MissingResourceDialog
+            resourceType="book"
+            resourceId={id}
+            resourceName="Book"
+            onGoBack={() => router.back()}
+          />
+        </View>
+      </SafeAreaView>
     );
   }
   const goBack = () => {
@@ -434,90 +447,94 @@ export function BookPreviewScreen() {
   };
 
   return (
-    <Animated.View
-      key={id}
-      entering={FadeIn.duration(260)}
-      style={[
-        styles.screen,
-        { alignItems: "center", backgroundColor: themeColors.background },
-      ]}
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      edges={["top", "bottom"]}
     >
-      <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.scrollContent,
-            {
-              paddingBottom: 120 + insets.bottom,
-              paddingHorizontal: horizontalPadding,
-            },
-          ]}
-        >
-          <BookHero book={book} onBack={goBack} />
-          <Animated.View
-            entering={FadeInUp.duration(430)}
-            style={[
-              styles.sheet,
-              { paddingHorizontal: 10, backgroundColor: themeColors.surface },
-            ]}
-          >
-            <BookQuickInfo book={book} />
-            <BookOverview book={book} />
-            <AuthorsCarousel
-              authors={authorsWithAvatars}
-              onAuthorPress={(name) =>
-                router.push({
-                  pathname: "/teacher-profile",
-                  params: { name },
-                } as any)
-              }
-            />
-            <SimilarBooks
-              books={similar}
-              onSelect={(nextId) =>
-                router.replace({
-                  pathname: "/book-preview",
-                  params: {
-                    id: nextId,
-                    source: source ?? "library",
-                    returnTo:
-                      typeof returnTo === "string"
-                        ? returnTo
-                        : source === "home"
-                          ? "/"
-                          : "/library",
-                  },
-                } as any)
-              }
-            />
-          </Animated.View>
-        </ScrollView>
-      </View>
-      <View
+      <Animated.View
+        key={id}
+        entering={FadeIn.duration(260)}
         style={[
-          styles.action,
-          {
-            backgroundColor: themeColors.white,
-            left: horizontalPadding,
-            right: horizontalPadding,
-          },
+          styles.screen,
+          { alignItems: "center", backgroundColor: themeColors.background },
         ]}
       >
+        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.scrollContent,
+              {
+                paddingBottom: 120 + insets.bottom,
+                paddingHorizontal: horizontalPadding,
+              },
+            ]}
+          >
+            <BookHero book={book} onBack={goBack} />
+            <Animated.View
+              entering={FadeInUp.duration(430)}
+              style={[
+                styles.sheet,
+                { paddingHorizontal: 10, backgroundColor: themeColors.surface },
+              ]}
+            >
+              <BookQuickInfo book={book} />
+              <BookOverview book={book} />
+              <AuthorsCarousel
+                authors={authorsWithAvatars}
+                onAuthorPress={(name) =>
+                  router.push({
+                    pathname: "/teacher-profile",
+                    params: { name },
+                  } as any)
+                }
+              />
+              <SimilarBooks
+                books={similar}
+                onSelect={(nextId) =>
+                  router.replace({
+                    pathname: "/book-preview",
+                    params: {
+                      id: nextId,
+                      source: source ?? "library",
+                      returnTo:
+                        typeof returnTo === "string"
+                          ? returnTo
+                          : source === "home"
+                            ? "/"
+                            : "/library",
+                    },
+                  } as any)
+                }
+              />
+            </Animated.View>
+          </ScrollView>
+        </View>
         <View
           style={[
-            styles.actionContent,
+            styles.action,
             {
-              maxWidth: contentMaxWidth,
-              paddingHorizontal: horizontalPadding,
-              paddingBottom: Math.max(insets.bottom, 10),
+              backgroundColor: themeColors.white,
+              left: horizontalPadding,
+              right: horizontalPadding,
             },
           ]}
         >
-          <BottomActionBar
-            gradient={gradient}
-            bookmarked={bookmarked}
-            onPreview={book.sampleUri ? openSample : undefined}
-            onGetYours={() => {
+          <View
+            style={[
+              styles.actionContent,
+              {
+                maxWidth: contentMaxWidth,
+                paddingHorizontal: horizontalPadding,
+                paddingBottom: Math.max(insets.bottom, 10),
+              },
+            ]}
+          >
+            <BottomActionBar
+              gradient={gradient}
+              bookmarked={bookmarked}
+              onPreview={book.sampleUri ? openSample : undefined}
+              onGetYours={() => {
               const phone = book.author.length
                 ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
                 : "";

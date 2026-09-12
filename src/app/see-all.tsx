@@ -284,10 +284,14 @@ export default function SeeAllScreen() {
   };
 
   return (
-    <View
-      style={[styles.screen, { backgroundColor: themeColors.lightBackground }]}
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: themeColors.lightBackground }]}
+      edges={["top", "bottom"]}
     >
-      <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+      <View
+        style={[styles.screen, { backgroundColor: themeColors.lightBackground }]}
+      >
+        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
         <View
           style={[
             styles.header,
