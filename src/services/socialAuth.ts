@@ -84,6 +84,23 @@ function getNativeGoogleSigninModule() {
   }
 }
 
+function getNativeFacebookModule() {
+  if (
+    Platform.OS === "web" ||
+    !NativeModules?.FBLoginManager ||
+    !NativeModules?.FBAccessToken
+  ) {
+    return null;
+  }
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("react-native-fbsdk-next");
+  } catch {
+    return null;
+  }
+}
+
 export function parseAuthError(error: unknown): string {
   const message =
     typeof error === "string"
@@ -125,6 +142,8 @@ export function parseAuthError(error: unknown): string {
         return "This account has been disabled. Please contact support.";
       case "auth/invalid-credential":
         return "Invalid credentials. Please try signing in again.";
+      case "auth/operation-not-supported-in-this-environment":
+        return "Facebook sign-in is not available in this version of the app. Install the latest app update and try again.";
       default:
         return "Authentication failed. Please try again.";
     }
@@ -246,10 +265,43 @@ export async function signInWithFacebook(): Promise<SocialAuthResult> {
     const provider = new FacebookAuthProvider();
     provider.addScope("email");
     provider.addScope("public_profile");
-    const credential = await signInWithPopup(auth, provider);
-    const verificationError = await requireVerifiedUser(credential.user);
+
+    if (Platform.OS === "web") {
+      const credential = await signInWithPopup(auth, provider);
+      const verificationError = await requireVerifiedUser(credential.user);
+      if (verificationError) return verificationError;
+      return { success: true, user: credential.user };
+    }
+
+    const facebookModule = getNativeFacebookModule();
+    if (!facebookModule) {
+      return {
+        success: false,
+        error:
+          "Facebook sign-in requires the latest OS platform app. Please install the app update and try again.",
+      };
+    }
+
+    facebookModule.Settings.initializeSDK();
+    const loginResult = await facebookModule.LoginManager.logInWithPermissions(
+      ["public_profile", "email"],
+    );
+    if (loginResult.isCancelled) return { success: false, cancelled: true };
+
+    const accessToken =
+      await facebookModule.AccessToken.getCurrentAccessToken();
+    if (!accessToken?.accessToken) {
+      return {
+        success: false,
+        error: "Facebook did not return an access token. Please try again.",
+      };
+    }
+
+    const credential = FacebookAuthProvider.credential(accessToken.accessToken);
+    const userCredential = await signInWithCredential(auth, credential);
+    const verificationError = await requireVerifiedUser(userCredential.user);
     if (verificationError) return verificationError;
-    return { success: true, user: credential.user };
+    return { success: true, user: userCredential.user };
   } catch (error: any) {
     const errorMsg = parseAuthError(error);
     if (

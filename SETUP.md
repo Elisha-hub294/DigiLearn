@@ -126,6 +126,13 @@ Facebook Login uses the Firebase web OAuth flow. Configure it before testing:
    ```
 
 4. While the Meta app is in development mode, only app roles and test users can sign in. Submit the app for review before opening Facebook Login to everyone.
+5. Add the Meta App ID to your local `.env` file, then create a new native build:
+
+   ```
+   EXPO_PUBLIC_FACEBOOK_APP_ID=<your_meta_app_id>
+   ```
+
+   The native Facebook SDK configuration is compiled into the app, so an OTA update alone cannot enable Facebook Login.
 
 ### Email-Link Delivery
 
