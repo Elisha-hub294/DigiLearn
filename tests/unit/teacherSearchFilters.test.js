@@ -26,14 +26,16 @@ test("filterApprovedTeachers excludes teachers not approved by admin", () => {
       teacherApprovalStatus: "rejected",
     },
     { id: "4", name: "Legacy Teacher", type: "teacher" },
+    { id: "5", name: "Verified Teacher", type: "teacher", verified: true },
   ];
 
   const approved = filterApprovedTeachers(teachers);
 
   assert.deepEqual(
     approved.map((teacher) => teacher.id),
-    ["1"],
+    ["1", "5"],
   );
   assert.equal(isApprovedTeacher(teachers[1]), false);
   assert.equal(isApprovedTeacher(teachers[3]), false);
+  assert.equal(isApprovedTeacher(teachers[4]), true);
 });

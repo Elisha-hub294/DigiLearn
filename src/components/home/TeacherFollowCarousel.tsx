@@ -26,6 +26,7 @@ import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { setTeacherCommunityMembership } from "../../services/teacherCommunity";
 import { showNativeToast } from "../../utils/nativeToast";
+import { isApprovedTeacher } from "../../utils/teacherSearchFilters";
 import { SectionHeader } from "../ui/SectionHeader";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -325,6 +326,8 @@ export function TeacherFollowCarousel({ seed = 0 }: { seed?: number }) {
         const list: TeacherSuggestion[] = [];
         snap.docs.forEach((docSnap) => {
           const d = docSnap.data();
+          if (!isApprovedTeacher(d)) return;
+
           const name = typeof d.name === "string" ? d.name.trim() : "";
           if (!name) return;
           list.push({

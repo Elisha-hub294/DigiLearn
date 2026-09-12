@@ -1,6 +1,9 @@
 function isApprovedTeacher(teacher) {
   if (!teacher || typeof teacher !== "object") return false;
-  return teacher.teacherApprovalStatus === "approved";
+  const approvalStatus = teacher.teacherApprovalStatus;
+  if (approvalStatus === "approved") return true;
+  if (typeof teacher.verified === "boolean") return teacher.verified;
+  return false;
 }
 
 function filterApprovedTeachers(teachers) {
