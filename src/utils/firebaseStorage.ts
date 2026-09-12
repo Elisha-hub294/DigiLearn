@@ -1,5 +1,7 @@
+import { Image } from "expo-image";
 import { getDownloadURL, listAll, ref } from "firebase/storage";
 import { useEffect, useState } from "react";
+import { Platform } from "react-native";
 import subjectDefault from "../../assets/images/subject-default.png";
 import { storage } from "../../firebaseConfig";
 
@@ -16,6 +18,22 @@ const DEFAULT_LOCAL_SUBJECT_AVATAR =
 // Cache to prevent duplicate getDownloadURL calls
 const urlCache = new Map<string, string>();
 const urlPromises = new Map<string, Promise<string>>();
+const nativePrefetchQueue = new Set<string>();
+
+export function prefetchNativeImage(url: string | undefined): void {
+  if (!url || Platform.OS === "web") return;
+  if (!url.startsWith("http://") && !url.startsWith("https://")) return;
+  if (nativePrefetchQueue.has(url)) return;
+
+  nativePrefetchQueue.add(url);
+  void Image.prefetch(url, { cachePolicy: "disk" })
+    .catch((error) => {
+      console.warn("Unable to prefetch image for native startup cache", error);
+    })
+    .finally(() => {
+      nativePrefetchQueue.delete(url);
+    });
+}
 
 /**
  * Resolves a Supabase storage URL or bare storage path to its equivalent Firebase Storage download URL.
@@ -237,6 +255,7 @@ export async function getFirebaseStorageUrl(
       const downloadUrl = await getDownloadURL(ref(storage, storagePath!));
       urlCache.set(storagePath!, downloadUrl);
       urlPromises.delete(storagePath!);
+      prefetchNativeImage(downloadUrl);
       return downloadUrl;
     } catch (err) {
       const discoveredPath = await findStoragePathByFileName(storagePath!);
@@ -267,6 +286,7 @@ export async function getFirebaseStorageUrl(
       }
       urlCache.set(storagePath!, fallbackUrl);
       urlPromises.delete(storagePath!);
+      prefetchNativeImage(fallbackUrl);
       return fallbackUrl;
     }
   })();

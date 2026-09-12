@@ -26,6 +26,10 @@ import { colors, radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
+import {
+  getOpenedResourceCache,
+  saveOpenedResourceCache,
+} from "../../services/openedResourceCache";
 import { shareResource } from "../../services/shareLinks";
 import {
   getSavedItemsProfile,
@@ -176,13 +180,22 @@ export function PaperPreviewScreen() {
             recordUserActivity(auth.currentUser.uid, "paper", params.id);
           }
 
+          const cachedPaper = await getOpenedResourceCache<
+            Record<string, unknown>
+          >("paper", params.id);
+          if (cachedPaper && active) {
+            setPaper(mapPaperData(params.id, cachedPaper));
+            setLoading(false);
+          }
+
           const snap = await getDoc(doc(db, "pastPaper", params.id));
           if (!active) return;
 
           if (snap.exists()) {
-            setPaper(
-              mapPaperData(snap.id, snap.data() as Record<string, unknown>),
-            );
+            const data = snap.data() as Record<string, unknown>;
+            const mapped = mapPaperData(snap.id, data);
+            setPaper(mapped);
+            await saveOpenedResourceCache("paper", snap.id, data);
             return;
           }
 

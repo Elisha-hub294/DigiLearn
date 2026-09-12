@@ -145,6 +145,15 @@ export function BookPreviewScreen() {
         }
         void recordBookVisit(id);
 
+        const cachedBook = id
+          ? await getOpenedResourceCache<Record<string, unknown>>("book", id)
+          : null;
+        if (cachedBook && active) {
+          const cachedMapped = mapBook(id, cachedBook);
+          setBook(cachedMapped);
+          setLoading(false);
+        }
+
         const [selected, booksSnapshot, teachersSnapshot, defaultSnapshot] =
           await Promise.all([
             getDoc(doc(db, "books", id)),
@@ -166,6 +175,11 @@ export function BookPreviewScreen() {
           setAllBooks([]);
           return;
         }
+
+        const selectedData = selected.data() as Record<string, unknown>;
+        const mappedBook = mapBook(selected.id, selectedData);
+        setBook(mappedBook);
+        await saveOpenedResourceCache("book", selected.id, selectedData);
 
         // Extract default user avatar from 'default' collection
         let defaultAvatar = "";
@@ -197,10 +211,6 @@ export function BookPreviewScreen() {
         setTeacherAvatars(avatarsMap);
         setTeacherPhones(phonesMap);
 
-        // Set Book Data
-        setBook(
-          mapBook(selected.id, selected.data() as Record<string, unknown>),
-        );
         setAllBooks(
           booksSnapshot.docs.map((d) =>
             mapBook(d.id, d.data() as Record<string, unknown>),

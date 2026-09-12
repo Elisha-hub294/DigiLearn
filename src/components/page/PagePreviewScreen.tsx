@@ -15,6 +15,10 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import {
+  getOpenedResourceCache,
+  saveOpenedResourceCache,
+} from "../../services/openedResourceCache";
+import {
   getPageReadingProgress,
   ReadingProgress,
 } from "../../services/readingProgressService";
@@ -178,6 +182,60 @@ export function PagePreviewScreen() {
           recordUserActivity(auth.currentUser.uid, "page", id);
         }
 
+        const cachedPage = await getOpenedResourceCache<
+          Record<string, unknown>
+        >("page", id);
+        if (cachedPage && active) {
+          const pageDoc = {
+            id,
+            title:
+              typeof cachedPage.title === "string"
+                ? cachedPage.title
+                : "Untitled note",
+            description:
+              typeof cachedPage.description === "string"
+                ? cachedPage.description
+                : "",
+            preview:
+              typeof cachedPage.preview === "string"
+                ? cachedPage.preview
+                : undefined,
+            cover:
+              typeof cachedPage.cover === "string"
+                ? cachedPage.cover
+                : undefined,
+            document:
+              [
+                cachedPage.doc,
+                cachedPage.document,
+                cachedPage.pdf,
+                cachedPage.url,
+              ].find(
+                (v): v is string => typeof v === "string" && v.length > 0,
+              ) ?? undefined,
+            createdAt: cachedPage.createdAt,
+            updatedAt: cachedPage.updatedAt,
+            subject: normalizeArray(cachedPage.subject),
+            book: normalizeArray(cachedPage.book),
+            pages: (cachedPage.pages ??
+              cachedPage.pageCount ??
+              cachedPage.pagesCount) as string | number,
+            level:
+              typeof cachedPage.level === "string"
+                ? cachedPage.level
+                : undefined,
+            schoolClass:
+              typeof cachedPage.schoolClass === "string"
+                ? cachedPage.schoolClass
+                : undefined,
+            isRecommended: Boolean(
+              cachedPage.isRecommended || cachedPage.featured,
+            ),
+          } satisfies TopicalNote;
+          setNote(pageDoc);
+          setLoading(false);
+        }
+
         const [selectedSnap, notesSnap, booksSnap, subjectsSnap] =
           await Promise.all([
             getDoc(doc(db, "pages", id)),
@@ -225,6 +283,7 @@ export function PagePreviewScreen() {
           isRecommended: Boolean(data.isRecommended || data.featured),
         };
         setNote(currentDoc);
+        await saveOpenedResourceCache("page", id, data);
 
         // Map all notes for Similar Pages
         const mappedNotes: TopicalNote[] = notesSnap.docs.map((d) => {

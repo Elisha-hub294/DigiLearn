@@ -27,6 +27,7 @@ import {
   getUserOnboardingState,
   initializeUserProfile,
 } from "../services/userProfile";
+import { warmNativeStartupCache } from "../utils/startupNativeCache";
 import LoadingScreen from "./loading";
 
 const ONBOARDING_KEY = "onboarding_complete";
@@ -41,6 +42,12 @@ function AppShell() {
   const [showStartupLoading, setShowStartupLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (Platform.OS !== "web") {
+      void warmNativeStartupCache();
+    }
+  }, []);
 
   useEffect(() => {
     if (!isHydrated) return;
