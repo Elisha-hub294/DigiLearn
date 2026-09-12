@@ -78,7 +78,7 @@ export default function PdfPreview({
         minScale={1}
         maxScale={1}
         enablePaging={false}
-        fitPolicy={[0, 1]}
+        fitPolicy={0}
         onError={(err: any) => {
           console.warn("PdfPreview render error:", err);
           setError(true);
