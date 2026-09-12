@@ -1,22 +1,23 @@
 import {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    serverTimestamp,
-    setDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  serverTimestamp,
+  setDoc,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "../../../../firebaseConfig";
 import { invalidateFirestoreReadCache } from "../../../services/firestoreReadCache";
 import {
-    appendNotificationToAllUsers,
-    buildLibraryNotification,
+  appendNotificationToAllUsers,
+  buildLibraryNotification,
 } from "../../../services/notifications";
 import {
-    invalidateLocalCaches,
-    LOCAL_CACHE_KEYS,
+  invalidateLocalCaches,
+  LOCAL_CACHE_KEYS,
 } from "../../../utils/localCache";
+import { resolveTeacherPublisherProfile } from "../../../utils/teacherNotificationPublisher";
 import { getVideoThumbnailUrl } from "../../../utils/videoUtils";
 import { getTitleDocId } from "./utils";
 
@@ -348,12 +349,38 @@ export const notifyUsersAboutNewItem = async (
           ? item.cover.trim()
           : undefined;
 
+    const ownerId =
+      typeof item?.owner === "string" && item.owner.trim() ? item.owner : "";
+
+    const teacherProfile = ownerId
+      ? await Promise.all([
+          getDoc(doc(db, "teachers", ownerId)),
+          getDoc(doc(db, "users", ownerId)),
+        ]).then(([teacherSnapshot, userSnapshot]) => {
+          const teacherData = teacherSnapshot.exists
+            ? teacherSnapshot.data()
+            : {};
+          const userData = userSnapshot.exists ? userSnapshot.data() : {};
+          return teacherSnapshot.exists &&
+            (teacherData.type === "teacher" ||
+              typeof teacherData.teacherApprovalStatus === "string")
+            ? teacherData
+            : userData.type === "teacher"
+              ? userData
+              : null;
+        })
+      : null;
+
+    const resolvedPublisher = teacherProfile
+      ? resolveTeacherPublisherProfile(teacherProfile)
+      : { publisherName: undefined, publisherAvatar: undefined };
+
     await appendNotificationToAllUsers(
       buildLibraryNotification(
         itemType,
         itemId,
-        undefined,
-        undefined,
+        resolvedPublisher.publisherName,
+        resolvedPublisher.publisherAvatar,
         resourceTitle,
         previewImage,
       ),

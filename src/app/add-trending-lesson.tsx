@@ -41,6 +41,7 @@ import {
   buildLibraryNotification,
 } from "../services/notifications";
 import { invalidateLocalCaches, LOCAL_CACHE_KEYS } from "../utils/localCache";
+import { resolveTeacherPublisherProfile } from "../utils/teacherNotificationPublisher";
 
 function formatLessonTitle(value: string): string {
   return value.replace(/[^\p{L}\p{N}\s\/]/gu, "").replace(/\s+/g, " ");
@@ -237,12 +238,20 @@ export default function AddTrendingLessonScreen() {
       invalidateFirestoreReadCache("collection:trendingLessons");
 
       if (notifyUsers) {
+        const lessonPublisher = resolveTeacherPublisherProfile({
+          type: profile?.type,
+          teacherApprovalStatus: profile?.teacherApprovalStatus,
+          name: teacherName,
+          avatar: teacherAvatar,
+          photoURL: teacherAvatar,
+        });
+
         await appendNotificationToAllUsers(
           buildLibraryNotification(
             "lesson",
             lessonId,
-            undefined,
-            undefined,
+            lessonPublisher.publisherName,
+            lessonPublisher.publisherAvatar,
             formattedTitle,
             finalThumbnail,
           ),
