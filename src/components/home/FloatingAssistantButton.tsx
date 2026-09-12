@@ -31,6 +31,11 @@ import {
   isAssistantEnabled,
   setCachedAssistantMessage,
 } from "../../services/aiAssistantService";
+import {
+  DEFAULT_ASSISTANT_FALLBACK_MESSAGE,
+  normalizeAssistantMessage,
+  sanitizeAssistantMessages,
+} from "../../utils/assistantMessageUtils";
 
 const TYPING_INTERVAL_MS = 32;
 const MESSAGE_PAUSE_MS = 8000;
@@ -92,13 +97,17 @@ export function FloatingAssistantButton() {
           return;
         }
 
-        const cachedMessage = getCachedAssistantMessage();
+        const sanitizedMessages = sanitizeAssistantMessages(content.messages);
+        const cachedMessage = normalizeAssistantMessage(
+          getCachedAssistantMessage(),
+          sanitizedMessages[0] ?? DEFAULT_ASSISTANT_FALLBACK_MESSAGE,
+        );
         const initialMessage =
-          cachedMessage ??
-          content.messages[0] ??
-          "Need help with your studies?";
+          cachedMessage ||
+          sanitizedMessages[0] ||
+          DEFAULT_ASSISTANT_FALLBACK_MESSAGE;
 
-        setMessages(content.messages);
+        setMessages(sanitizedMessages);
         setActiveMessage(initialMessage);
         currentMessage.value = initialMessage;
         setAvatarUri(content.avatar ?? null);
@@ -109,9 +118,10 @@ export function FloatingAssistantButton() {
         scale.value = withSpring(1, { damping: 18, stiffness: 120 });
       } catch {
         if (!cancelled) {
-          setMessages(["Need help with your studies?"]);
-          setActiveMessage("Need help with your studies?");
-          currentMessage.value = "Need help with your studies?";
+          const fallbackMessage = DEFAULT_ASSISTANT_FALLBACK_MESSAGE;
+          setMessages([fallbackMessage]);
+          setActiveMessage(fallbackMessage);
+          currentMessage.value = fallbackMessage;
           setAvatarUri(null);
           setIsVisible(true);
         }
@@ -144,10 +154,10 @@ export function FloatingAssistantButton() {
     let typingTimer: ReturnType<typeof setTimeout> | undefined;
 
     const animateMessageCycle = () => {
-      const nextMessage = messages[Math.floor(Math.random() * messages.length)];
-      if (!nextMessage) {
-        return;
-      }
+      const nextMessage = normalizeAssistantMessage(
+        messages[Math.floor(Math.random() * messages.length)],
+        DEFAULT_ASSISTANT_FALLBACK_MESSAGE,
+      );
 
       setCachedAssistantMessage(nextMessage);
       setActiveMessage("");
@@ -163,6 +173,7 @@ export function FloatingAssistantButton() {
 
         if (typingIndex.value >= nextMessage.length) {
           visiblePauseTimeout = setTimeout(() => {
+            setActiveMessage("");
             bubbleOpacity.value = withTiming(0, {
               duration: 300,
               easing: Easing.in(Easing.ease),
@@ -249,8 +260,11 @@ export function FloatingAssistantButton() {
   };
 
   const handlePress = () => {
-    const fullMessage = currentMessage.value.trim();
-    const isBubbleVisible = bubbleOpacity.value > 0.1 && fullMessage.length > 0;
+    const fullMessage = normalizeAssistantMessage(currentMessage.value);
+    const isBubbleVisible =
+      bubbleOpacity.value > 0.1 &&
+      fullMessage.length > 0 &&
+      activeMessage.length > 0;
 
     if (isBubbleVisible) {
       router.push({
