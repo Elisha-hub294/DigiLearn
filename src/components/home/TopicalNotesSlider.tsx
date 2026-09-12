@@ -298,6 +298,7 @@ export const TopicalNotesSlider = () => {
         ref={listRef}
         horizontal
         data={data}
+        style={styles.list}
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item._key}
         getItemLayout={(_, index) => ({
@@ -343,7 +344,7 @@ export const TopicalNotesSlider = () => {
             </Text>
           </Pressable>
         )}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={styles.listContent}
       />
 
       {/* Right arrow — web only */}
@@ -369,9 +370,13 @@ const styles = StyleSheet.create({
   wrapper: {
     flexDirection: "row",
     alignItems: "center",
+    width: "100%",
     marginBottom: spacing.xl,
   },
-  list: {},
+  list: {
+    width: "100%",
+  },
+  listContent: {},
   card: {
     alignItems: "center",
     marginRight: CARD_GAP,

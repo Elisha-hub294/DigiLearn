@@ -108,7 +108,6 @@ export default function ProfileScreen() {
     });
   }, [navigation, onRefresh, route.key]);
   const padding = getHorizontalPadding(width);
-  const maxWidth = Math.min(1100, width - padding * 2);
   return (
     <SafeAreaView
       style={[s.safe, { backgroundColor: themeColors.background }]}
@@ -119,7 +118,7 @@ export default function ProfileScreen() {
         contentContainerStyle={[
           s.content,
           !loading && !user && s.guestContent,
-          { paddingHorizontal: padding, maxWidth },
+          { paddingHorizontal: padding },
         ]}
         refreshControl={
           <RefreshControl

@@ -149,6 +149,7 @@ export function ProfileHeader({
 }
 const s = StyleSheet.create({
   wrap: {
+    width: "100%",
     overflow: "hidden",
     backgroundColor: colors.white,
   },
@@ -196,6 +197,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   sheet: {
+    width: "100%",
     alignItems: "center",
     paddingHorizontal: 24,
     paddingBottom: 20,
