@@ -12,10 +12,7 @@ import {
   TextStyle,
   View,
 } from "react-native";
-import {
-  PinchGestureHandler,
-  type PinchGestureHandlerGestureEvent,
-} from "react-native-gesture-handler";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   FadeInUp,
   useAnimatedStyle,
@@ -69,6 +66,7 @@ export const TeacherPostCard = ({
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const imageScale = useSharedValue(1);
+  const pinchStartScale = useSharedValue(1);
   const contentStyle = [
     styles.content,
     post.type === "announcement" && styles.announcementContent,
@@ -77,17 +75,28 @@ export const TeacherPostCard = ({
   useEffect(() => {
     if (!showImagePreview) {
       imageScale.value = withTiming(1);
+      pinchStartScale.value = 1;
     }
-  }, [imageScale, showImagePreview]);
+  }, [imageScale, pinchStartScale, showImagePreview]);
 
   const imagePreviewStyle = useAnimatedStyle(() => ({
     transform: [{ scale: imageScale.value }],
   }));
 
-  const handlePinchGesture = (event: PinchGestureHandlerGestureEvent) => {
-    const nextScale = Math.min(Math.max(event.nativeEvent.scale, 1), 4);
-    imageScale.value = nextScale;
-  };
+  const pinchGesture = Gesture.Pinch()
+    .onStart(() => {
+      pinchStartScale.value = imageScale.value;
+    })
+    .onUpdate((event) => {
+      const nextScale = Math.min(
+        Math.max(pinchStartScale.value * event.scale, 1),
+        4,
+      );
+      imageScale.value = nextScale;
+    })
+    .onEnd(() => {
+      pinchStartScale.value = imageScale.value;
+    });
   const title = post.title || post.content;
   const hasNoCover = post.hasCover === false || post.hasCover === "false";
   const hideOwner = post.ownerType?.trim().toLowerCase() === "admin";
@@ -246,7 +255,7 @@ export const TeacherPostCard = ({
             >
               <Icon name="x" size={24} color={colors.white} />
             </Pressable>
-            <PinchGestureHandler onGestureEvent={handlePinchGesture}>
+            <GestureDetector gesture={pinchGesture}>
               <Animated.View
                 style={[styles.fullImagePreviewFrame, imagePreviewStyle]}
               >
@@ -258,7 +267,7 @@ export const TeacherPostCard = ({
                   />
                 </Pressable>
               </Animated.View>
-            </PinchGestureHandler>
+            </GestureDetector>
           </View>
         </Modal>
         <ActionDialog
