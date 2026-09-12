@@ -3,7 +3,6 @@ import { collection, getDocs, limit, query } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 
 import { auth, db, functions } from "../../firebaseConfig";
-import { getFirebaseStorageUrl } from "../utils/firebaseStorage";
 import { shouldSkipStartupSuggestionGeneration } from "./aiStartupGuard";
 import { checkCanSendAiPrompt } from "./aiUsageGuardrailsService";
 
@@ -78,22 +77,14 @@ const getAssistantAssetName = (
   return isNonEmptyString(value) ? value.trim() : null;
 };
 
+// AI avatars are intentionally kept local and theme-aware. Remote Firebase asset
+// URLs are not used here so the same light/dark assistant art is shown across
+// the app without network fetches.
 async function resolveAssistantAsset(
   fileName: string | null,
 ): Promise<string | null> {
-  if (!fileName) {
-    return null;
-  }
-
-  const storagePath =
-    fileName.startsWith("icons/ai/") ||
-    fileName.startsWith("http://") ||
-    fileName.startsWith("https://") ||
-    fileName.startsWith("gs://")
-      ? fileName
-      : `icons/ai/${fileName.replace(/^\/+/, "")}`;
-
-  return getFirebaseStorageUrl(storagePath);
+  void fileName;
+  return null;
 }
 
 const normalizeKnowledgeKey = (value: unknown): string => {
@@ -273,13 +264,13 @@ export async function getAssistantContent(
 
     const firstAvatar =
       assistantEntries.find((entry) => entry.avatar)?.avatar ?? null;
-    const avatar = await resolveAssistantAsset(firstAvatar);
+    await resolveAssistantAsset(firstAvatar);
 
     const { floatingMessages, suggestions } =
       await generateAIContentFromKnowledge(knowledgeContext.appOverview);
 
     const content = {
-      avatar,
+      avatar: null,
       messages: floatingMessages,
       suggestions,
       geminiApiKey: null,
