@@ -31,10 +31,7 @@
               "pathPrefix": "/__/auth/links"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         },
         {
           "action": "VIEW",
@@ -46,10 +43,7 @@
               "pathPrefix": "/share"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         },
         {
           "action": "VIEW",
@@ -61,10 +55,7 @@
               "pathPrefix": "/__/auth/links"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         },
         {
           "action": "VIEW",
@@ -76,10 +67,7 @@
               "pathPrefix": "/share"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ],
       "adaptiveIcon": {
@@ -99,7 +87,7 @@
         {
           "backgroundColor": "#208AEF",
           "android": {
-            "image": "./assets/images/panda.png",
+            "image": "./assets/images/main.png",
             "imageWidth": 76
           }
         }
