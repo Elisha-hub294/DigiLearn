@@ -42,7 +42,7 @@ const getBubbleWidth = (width: number) =>
 
 export function FloatingAssistantButton() {
   const router = useRouter();
-  const { isDark } = useTheme();
+  const { isDark, colors: themeColors } = useTheme();
   const fallbackAvatar = getThemeAsset("panda", isDark);
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -318,7 +318,12 @@ export function FloatingAssistantButton() {
           ]}
         >
           <Animated.View style={[styles.avatarWrapper, animatedAvatarStyle]}>
-            <View style={styles.avatarFrame}>
+            <View
+              style={[
+                styles.avatarFrame,
+                !isDark && { backgroundColor: themeColors.surfaceMuted },
+              ]}
+            >
               <Image
                 source={avatarUri ? { uri: avatarUri } : fallbackAvatar}
                 placeholder={fallbackAvatar}
@@ -391,6 +396,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "transparent",
+    borderRadius: 42,
+    overflow: "hidden",
   },
   avatarShadow: {
     position: "absolute",

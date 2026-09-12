@@ -151,7 +151,7 @@ export function PagePreviewScreen() {
   } | null>(null);
 
   const { width } = useWindowDimensions();
-  const horizontalPadding = width < 600 ? 0 : getHorizontalPadding(width);
+  const horizontalPadding = width < 600 ? 16 : getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   useEffect(() => {
