@@ -3,7 +3,7 @@ import MaskedView from "@react-native-masked-view/masked-view";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -12,7 +12,16 @@ import {
   TextStyle,
   View,
 } from "react-native";
-import Animated, { FadeInUp } from "react-native-reanimated";
+import {
+  PinchGestureHandler,
+  type PinchGestureHandlerGestureEvent,
+} from "react-native-gesture-handler";
+import Animated, {
+  FadeInUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { type TeacherPost } from "../constants/homeData";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
@@ -59,10 +68,26 @@ export const TeacherPostCard = ({
   const { colors: themeColors } = useTheme();
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const imageScale = useSharedValue(1);
   const contentStyle = [
     styles.content,
     post.type === "announcement" && styles.announcementContent,
   ];
+
+  useEffect(() => {
+    if (!showImagePreview) {
+      imageScale.value = withTiming(1);
+    }
+  }, [imageScale, showImagePreview]);
+
+  const imagePreviewStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: imageScale.value }],
+  }));
+
+  const handlePinchGesture = (event: PinchGestureHandlerGestureEvent) => {
+    const nextScale = Math.min(Math.max(event.nativeEvent.scale, 1), 4);
+    imageScale.value = nextScale;
+  };
   const title = post.title || post.content;
   const hasNoCover = post.hasCover === false || post.hasCover === "false";
   const hideOwner = post.ownerType?.trim().toLowerCase() === "admin";
@@ -214,20 +239,26 @@ export const TeacherPostCard = ({
               accessibilityRole="button"
               accessibilityLabel="Close image preview"
               style={styles.closePreviewButton}
-              onPress={() => setShowImagePreview(false)}
+              onPress={() => {
+                imageScale.value = withTiming(1);
+                setShowImagePreview(false);
+              }}
             >
               <Icon name="x" size={24} color={colors.white} />
             </Pressable>
-            <Pressable
-              style={styles.fullImagePreviewFrame}
-              onPress={(event) => event.stopPropagation()}
-            >
-              <Image
-                source={post.previewImage}
-                style={styles.fullImagePreview}
-                contentFit="contain"
-              />
-            </Pressable>
+            <PinchGestureHandler onGestureEvent={handlePinchGesture}>
+              <Animated.View
+                style={[styles.fullImagePreviewFrame, imagePreviewStyle]}
+              >
+                <Pressable onPress={(event) => event.stopPropagation()}>
+                  <Image
+                    source={post.previewImage}
+                    style={styles.fullImagePreview}
+                    contentFit="contain"
+                  />
+                </Pressable>
+              </Animated.View>
+            </PinchGestureHandler>
           </View>
         </Modal>
         <ActionDialog
