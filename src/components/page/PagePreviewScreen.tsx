@@ -737,7 +737,8 @@ export function PagePreviewScreen() {
                       id: bookId,
                       source: source ?? "library",
                       returnTo:
-                        returnTo ?? (source === "pages" ? "/pages" : "/library"),
+                        returnTo ??
+                        (source === "pages" ? "/pages" : "/library"),
                     },
                   } as any)
                 }

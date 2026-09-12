@@ -140,7 +140,9 @@ export default function ProfileScreen() {
           </View>
         ) : profile ? (
           <Animated.View entering={FadeIn.duration(220)} style={s.sections}>
-            <ProfileHeader profile={profile} photoURL={user.photoURL} />
+            <View style={[s.profileHeader, { marginHorizontal: -padding }]}>
+              <ProfileHeader profile={profile} photoURL={user.photoURL} />
+            </View>
             <View
               style={[
                 s.roleStatus,
@@ -305,6 +307,9 @@ const s = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
     paddingBottom: spacing.xxl,
+  },
+  profileHeader: {
+    width: "100%",
   },
   rejectedBanner: {},
   rejectedEyebrow: {
