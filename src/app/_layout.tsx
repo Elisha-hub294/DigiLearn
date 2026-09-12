@@ -6,7 +6,6 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Appearance,
   Platform,
   StyleSheet,
   Text,
@@ -34,8 +33,7 @@ const ONBOARDING_KEY = "onboarding_complete";
 
 void SplashScreen.preventAutoHideAsync();
 
-const startupBackground =
-  Appearance.getColorScheme() === "dark" ? "#101827" : "#FFFFFF";
+const startupBackground = "#FFFFFF";
 
 function AppShell() {
   const { isDark, isHydrated } = useTheme();

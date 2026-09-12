@@ -8,8 +8,8 @@ test("prefers a stored theme mode when available", () => {
   assert.equal(resolveInitialThemeMode("light", "dark"), "light");
 });
 
-test("falls back to the system color scheme when no stored theme is set", () => {
-  assert.equal(resolveInitialThemeMode(null, "dark"), "dark");
+test("defaults to light on first launch regardless of the device scheme", () => {
+  assert.equal(resolveInitialThemeMode(null, "dark"), "light");
   assert.equal(resolveInitialThemeMode(null, "light"), "light");
 });
 

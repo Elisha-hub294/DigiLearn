@@ -8,9 +8,7 @@ export function resolveInitialThemeMode(
     return storedMode;
   }
 
-  if (systemMode === "dark" || systemMode === "light") {
-    return systemMode;
-  }
-
+  // Keep the app's first launch in light mode even when the device is set to dark
+  // mode, while still respecting any previously saved user preference.
   return "light";
 }
