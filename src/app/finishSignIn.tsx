@@ -103,7 +103,7 @@ export default function FinishSignInScreen() {
       </Text>
       <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
         {isComplete
-          ? 'Return to the OS platform web app, then select "I verified my email" to continue.'
+          ? 'Return to the OS platform app, then select "I verified my email" to continue.'
           : needsEmail
             ? "Enter the email address used to request this link."
             : errorMessage || "Finishing your email verification..."}

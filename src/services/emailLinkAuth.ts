@@ -29,7 +29,10 @@ const actionCodeSettings: ActionCodeSettings = {
   handleCodeInApp: true,
   iOS: { bundleId: "com.digilearn.app" },
   android: {
-    packageName: "com.digilearn.app",
+    // This must match `expo.android.package` and google-services.json. If it
+    // differs, Firebase completes the link in the browser instead of returning
+    // to the installed Android app.
+    packageName: "com.osplatform.app",
     installApp: true,
     minimumVersion: "1",
   },
