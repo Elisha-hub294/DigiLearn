@@ -1,15 +1,54 @@
+import MaskedView from "@react-native-masked-view/masked-view";
 import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+    type TextStyle,
+} from "react-native";
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 
 import { colors, radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
+
+const GradientTitle = ({
+  text,
+  style,
+}: {
+  text: string;
+  style?: TextStyle;
+}) => {
+  if (Platform.OS === "web") {
+    return <Text style={[style, styles.webGradientTitle]}>{text}</Text>;
+  }
+
+  return (
+    <MaskedView
+      style={styles.gradientTitleMask}
+      maskElement={
+        <Text style={[style, { backgroundColor: "transparent" }]}>{text}</Text>
+      }
+    >
+      <LinearGradient
+        colors={["#3b82f6", "#8b5cf6", "#f59e0b"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientTitleGradient}
+      >
+        <Text style={[style, styles.gradientTitleText]}>{text}</Text>
+      </LinearGradient>
+    </MaskedView>
+  );
+};
 
 export function AssistantHeader({
   title,
@@ -70,9 +109,10 @@ export function AssistantHeader({
 
       <View style={styles.headerTextWrap}>
         <View style={styles.titleRow}>
-          <Text style={[styles.headerTitle, { color: themeColors.text }]}>
-            {title}
-          </Text>
+          <GradientTitle
+            text={title}
+            style={[styles.headerTitle, { color: themeColors.text }]}
+          />
           {quotaBadge && (
             <View
               style={[
@@ -141,6 +181,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     color: "#16A34A",
+  },
+  gradientTitleMask: {
+    alignSelf: "flex-start",
+  },
+  gradientTitleGradient: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  gradientTitleText: {
+    opacity: 0,
+  },
+  webGradientTitle: {
+    backgroundImage:
+      "linear-gradient(90deg, #3b82f6 0%, #8b5cf6 45%, #f59e0b 100%)",
+    WebkitBackgroundClip: "text",
+    backgroundClip: "text",
+    color: "transparent",
   },
   headerTitle: {
     color: colors.text,
