@@ -1081,6 +1081,14 @@ export const changeAccountType = onCall(async (request) => {
     ...defaultProfileFields(request),
     ...(teacherSnapshot.data() ?? userSnapshot.data() ?? {}),
   };
+  const currentType = (userData.type as string | undefined) || "";
+
+  if (currentType === accountType) {
+    throw new HttpsError(
+      "failed-precondition",
+      `You already have a ${currentType || "selected"} account. Choose a different account type to continue.`,
+    );
+  }
 
   if (userData.teacherApprovalStatus === "pending") {
     throw new HttpsError(

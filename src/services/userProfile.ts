@@ -484,6 +484,12 @@ export async function saveAccountTypeDecision(
   accountType: AccountType,
 ) {
   if (accountType !== "student" && accountType !== "teacher") return;
+
+  const currentType = (await getUserOnboardingState(user.uid)).type;
+  if (!currentType || currentType === accountType) {
+    return;
+  }
+
   const callable = httpsCallable(getFunctions(app), "changeAccountType");
   await callable({ accountType });
 

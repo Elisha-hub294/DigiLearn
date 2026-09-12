@@ -33,6 +33,10 @@ import {
   getUserOnboardingState,
   saveAccountTypeDecision,
 } from "../services/userProfile";
+import {
+  canChangeAccountType,
+  getAccountTypeChangeError,
+} from "../utils/accountTypeRules";
 
 const ACCOUNT_OPTIONS: {
   type: AccountType;
@@ -73,6 +77,7 @@ export default function AccountTypeScreen() {
   const [user, setUser] = useState<User | null>(null);
   const [selectedAccountType, setSelectedAccountType] =
     useState<AccountType | null>(null);
+  const [currentAccountType, setCurrentAccountType] = useState<AccountType>("");
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isReviewPending, setIsReviewPending] = useState(false);
@@ -101,6 +106,7 @@ export default function AccountTypeScreen() {
 
       try {
         const onboarding = await getUserOnboardingState(nextUser.uid);
+        setCurrentAccountType(onboarding.type ?? "");
         setIsReviewPending(onboarding.teacherApprovalStatus === "pending");
         if (onboarding.accountTypeCompleted && !openedFromSettings) {
           router.replace("/" as never);
@@ -151,10 +157,17 @@ export default function AccountTypeScreen() {
       if (isReviewPending) {
         return;
       }
+
+      if (!canChangeAccountType(currentAccountType, accountType)) {
+        setSelectedAccountType(null);
+        setErrorMessage(getAccountTypeChangeError(currentAccountType));
+        return;
+      }
+
       setErrorMessage("");
       setSelectedAccountType(accountType);
     },
-    [isReviewPending],
+    [currentAccountType, isReviewPending],
   );
 
   const handleCarouselScrollEnd = useCallback(
@@ -179,6 +192,11 @@ export default function AccountTypeScreen() {
 
   const handleSave = useCallback(async () => {
     if (!user || !selectedAccountType || isSubmitting || isReviewPending) {
+      return;
+    }
+
+    if (!canChangeAccountType(currentAccountType, selectedAccountType)) {
+      setErrorMessage(getAccountTypeChangeError(currentAccountType));
       return;
     }
 
@@ -217,6 +235,7 @@ export default function AccountTypeScreen() {
       setIsSubmitting(false);
     }
   }, [
+    currentAccountType,
     isReviewPending,
     isSubmitting,
     openedFromSettings,
