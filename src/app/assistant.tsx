@@ -311,7 +311,8 @@ export default function AssistantScreen() {
       style={[styles.safeArea, { backgroundColor: themeColors.background }]}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
         style={styles.container}
       >
         <View
