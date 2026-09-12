@@ -9,7 +9,7 @@ import type { SearchCategory } from "../../hooks/useGlobalSearch";
 type SearchBarProps = {
   value?: string;
   onChangeText?: (text: string) => void;
-  onSubmit?: () => void;
+  onSubmit?: (value?: string) => void;
   onClear?: () => void;
   placeholder?: string;
   accessibilityLabel?: string;
@@ -118,7 +118,7 @@ export function SearchBar({
             accessibilityLabel={accessibilityLabel}
             value={value}
             onChangeText={onChangeText}
-            onSubmitEditing={onSubmit}
+            onSubmitEditing={() => onSubmit?.(value)}
             placeholder={placeholder}
             placeholderTextColor={resolvedPlaceholderColor}
             style={[styles.input, { color: colors.text }, inputStyle]}
@@ -141,7 +141,7 @@ export function SearchBar({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Submit search"
-              onPress={onSubmit}
+              onPress={() => onSubmit(value)}
               style={[styles.submitBtn, { backgroundColor: colors.primary }]}
             >
               <Icon name="search" size={18} color="#FFFFFF" />

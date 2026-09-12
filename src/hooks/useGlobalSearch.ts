@@ -1,21 +1,21 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-    collection,
-    endAt,
-    query as firestoreQuery,
-    getDocs,
-    limit,
-    orderBy,
-    startAt,
+  collection,
+  endAt,
+  query as firestoreQuery,
+  getDocs,
+  limit,
+  orderBy,
+  startAt,
 } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { db } from "../../firebaseConfig";
 import { DEFAULT_SUBJECT_AVATAR } from "../components/page/pageTypes";
 import { loadSubjects } from "../services/subjectsService";
 import {
-    LOCAL_CACHE_KEYS,
-    readLocalCache,
-    writeLocalCache,
+  LOCAL_CACHE_KEYS,
+  readLocalCache,
+  writeLocalCache,
 } from "../utils/localCache";
 import { filterApprovedTeachers } from "../utils/teacherSearchFilters";
 import { getVideoThumbnailUrl } from "../utils/videoUtils";
@@ -731,6 +731,7 @@ export function useGlobalSearch(
         return;
       }
 
+      setQuery(searchTerm);
       setDebouncedQuery(trimmed);
       setHasSubmittedSearch(true);
       if (trimmed.length >= 2) {
