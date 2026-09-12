@@ -137,6 +137,9 @@ export function PdfReaderScreen() {
   const [localBase64, setLocalBase64] = useState<string | null>(null);
   // For Android remote PDFs: pre-fetched base64 to avoid CORS inside WebView
   const [remoteBase64, setRemoteBase64] = useState<string | null>(null);
+  // The native Android PDF view is more reliable with a local file than a
+  // Firebase Storage URL (whose signed query string it does not always retain).
+  const [remoteLocalUri, setRemoteLocalUri] = useState<string | null>(null);
   const [remoteFetchError, setRemoteFetchError] = useState(false);
   const [officeText, setOfficeText] = useState<string | null>(null);
   const [officeImages, setOfficeImages] = useState<string[]>([]);
@@ -235,16 +238,16 @@ export function PdfReaderScreen() {
     }
   }, [isLocalFile, decodedUri]);
 
-  // Android remote PDF: download to a temp file and read as base64 to avoid
-  // CORS errors when pdf.js tries to fetch() the Firebase Storage URL from
-  // inside a WebView (the native-layer download has no CORS restrictions).
+  // Android remote PDF: download to a local file before opening it. This avoids
+  // direct Firebase Storage requests from both the native PDF view (which can
+  // lose signed query parameters) and pdf.js in the WebView (which is subject
+  // to CORS). Keep the file for the native view until this screen unmounts.
   useEffect(() => {
     if (
       Platform.OS !== "android" ||
       isLocalFile ||
       isOfficeFile ||
-      !decodedUri ||
-      useNativePdf
+      !decodedUri
     )
       return;
 
@@ -260,6 +263,11 @@ export function PdfReaderScreen() {
           if (active) setRemoteFetchError(true);
           return;
         }
+        if (useNativePdf) {
+          setRemoteFetchError(false);
+          setRemoteLocalUri(result.uri);
+          return;
+        }
         const b64 = await FileSystem.readAsStringAsync(result.uri, {
           encoding: FileSystem.EncodingType?.Base64 ?? "base64",
         });
@@ -267,7 +275,7 @@ export function PdfReaderScreen() {
           setRemoteFetchError(false);
           setRemoteBase64(b64);
         }
-        // Clean up temp file (fire-and-forget)
+        // The WebView receives an in-memory copy, so its temp file can go.
         FileSystem.deleteAsync(result.uri, { idempotent: true }).catch(
           () => {},
         );
@@ -279,6 +287,9 @@ export function PdfReaderScreen() {
 
     return () => {
       active = false;
+      if (useNativePdf) {
+        FileSystem.deleteAsync(tmpPath, { idempotent: true }).catch(() => {});
+      }
     };
   }, [decodedUri, isLocalFile, isOfficeFile, useNativePdf]);
 
@@ -326,6 +337,7 @@ export function PdfReaderScreen() {
   // – for local files it's read directly; for Android remote PDFs it's pre-fetched
   //   at the native layer to avoid CORS restrictions inside the WebView.
   const pdfBase64 = isLocalFile ? localBase64 : remoteBase64;
+  const nativePdfUri = isLocalFile ? decodedUri : remoteLocalUri;
 
   // Shared pdf.js HTML template that loads a PDF from a base64 buffer
   function buildBase64PdfHtml(b64: string, page: number): string {
@@ -626,9 +638,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     Platform.OS === "android" &&
     !isLocalFile &&
     !isOfficeFile &&
-    !useNativePdf &&
     decodedUri != null &&
-    remoteBase64 == null &&
+    (useNativePdf ? remoteLocalUri == null : remoteBase64 == null) &&
     !remoteFetchError;
 
   if (isResolving || isPreFetching) {
@@ -683,7 +694,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     );
   }
 
-  if (!decodedUri || (!webViewSource && !useNativePdf && !isTextOfficeFile)) {
+  if (
+    !decodedUri ||
+    (!webViewSource && (!useNativePdf || !nativePdfUri) && !isTextOfficeFile)
+  ) {
     return (
       <>
         <ActionDialog
@@ -961,9 +975,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
         )}
 
         {/* ── WebView — always mounted so it loads in the background ── */}
-        {!loadError && useNativePdf && decodedUri && (
+        {!loadError && useNativePdf && nativePdfUri && (
           <NativePdfComponent
-            source={{ uri: decodedUri, cache: true }}
+            source={{ uri: nativePdfUri, cache: false }}
             page={startPage}
             style={styles.webview}
             onLoadComplete={(numberOfPages: number) => {
