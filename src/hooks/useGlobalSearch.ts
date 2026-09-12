@@ -1,21 +1,21 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  collection,
-  endAt,
-  query as firestoreQuery,
-  getDocs,
-  limit,
-  orderBy,
-  startAt,
+    collection,
+    endAt,
+    query as firestoreQuery,
+    getDocs,
+    limit,
+    orderBy,
+    startAt,
 } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { db } from "../../firebaseConfig";
 import { DEFAULT_SUBJECT_AVATAR } from "../components/page/pageTypes";
 import { loadSubjects } from "../services/subjectsService";
 import {
-  LOCAL_CACHE_KEYS,
-  readLocalCache,
-  writeLocalCache,
+    LOCAL_CACHE_KEYS,
+    readLocalCache,
+    writeLocalCache,
 } from "../utils/localCache";
 import { filterApprovedTeachers } from "../utils/teacherSearchFilters";
 import { getVideoThumbnailUrl } from "../utils/videoUtils";
@@ -380,7 +380,6 @@ export function useGlobalSearch(
 
       if (!trimmed) {
         setDebouncedQuery("");
-        setHasSubmittedSearch(false);
         return;
       }
 
@@ -390,6 +389,12 @@ export function useGlobalSearch(
     },
     [hasSubmittedSearch],
   );
+
+  const clearSearch = useCallback(() => {
+    setQuery("");
+    setDebouncedQuery("");
+    setHasSubmittedSearch(false);
+  }, []);
 
   // 5. Recent searches persistence
   const addRecentSearch = useCallback(async (term: string) => {
@@ -719,18 +724,26 @@ export function useGlobalSearch(
     (overrideQuery?: string) => {
       const searchTerm =
         typeof overrideQuery === "string" ? overrideQuery : query;
-      setDebouncedQuery(searchTerm);
+      const trimmed = searchTerm.trim();
+
+      if (!trimmed) {
+        clearSearch();
+        return;
+      }
+
+      setDebouncedQuery(trimmed);
       setHasSubmittedSearch(true);
-      if (searchTerm.trim().length >= 2) {
-        addRecentSearch(searchTerm.trim());
+      if (trimmed.length >= 2) {
+        addRecentSearch(trimmed);
       }
     },
-    [query, addRecentSearch],
+    [query, addRecentSearch, clearSearch],
   );
 
   return {
     query,
     setQuery: handleSetQuery,
+    clearSearch,
     debouncedQuery,
     hasSubmittedSearch,
     selectedCategory,

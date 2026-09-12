@@ -17,6 +17,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import WebView from "react-native-webview";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
@@ -2612,7 +2613,19 @@ export function AddItemModal({
     </View>
   );
 
-  if (screen) return composerContent;
+  if (screen) {
+    return (
+      <SafeAreaView
+        style={[
+          styles.screenSafeArea,
+          { backgroundColor: themeColors.background },
+        ]}
+        edges={["top", "bottom"]}
+      >
+        {composerContent}
+      </SafeAreaView>
+    );
+  }
 
   return (
     <Modal
@@ -2638,6 +2651,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: spacing.lg,
     maxHeight: "85%",
+  },
+  screenSafeArea: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
   screenContainer: {
     flex: 1,

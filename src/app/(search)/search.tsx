@@ -74,6 +74,7 @@ export default function SearchScreen() {
   const {
     query,
     setQuery,
+    clearSearch,
     debouncedQuery,
     hasSubmittedSearch,
     selectedCategory,
@@ -104,7 +105,7 @@ export default function SearchScreen() {
   useFocusEffect(
     useCallback(() => {
       const handleSystemBack = () => {
-        setQuery("");
+        clearSearch();
         if (params.returnTo) {
           router.replace(params.returnTo as never);
         } else if (router.canGoBack()) {
@@ -121,7 +122,7 @@ export default function SearchScreen() {
       );
 
       return () => subscription.remove();
-    }, [params.returnTo, router, setQuery]),
+    }, [params.returnTo, router, clearSearch]),
   );
 
   // Responsive max content width calculation
@@ -307,10 +308,10 @@ export default function SearchScreen() {
           value={query}
           onChangeText={setQuery}
           onSubmit={triggerManualSearch}
-          onClear={() => setQuery("")}
+          onClear={clearSearch}
           onBack={() => {
             // Clear the search query when user explicitly presses the back button from the search screen
-            setQuery("");
+            clearSearch();
             if (params.returnTo) {
               router.replace(params.returnTo as never);
             } else if (router.canGoBack()) {

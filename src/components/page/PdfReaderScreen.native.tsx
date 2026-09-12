@@ -5,16 +5,17 @@ import { useNetworkState } from "expo-network";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    NativeModules,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    UIManager,
-    View,
+  Animated,
+  Image,
+  NativeModules,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  UIManager,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
@@ -22,18 +23,18 @@ import { radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordPageVisit } from "../../services/activityService";
 import {
-    getDocumentUniqueName,
-    getDownloadedFiles,
-    saveDownloadedFile,
+  getDocumentUniqueName,
+  getDownloadedFiles,
+  saveDownloadedFile,
 } from "../../services/downloadService";
 import {
-    getPageReadingProgress,
-    savePageReadingProgress,
+  getPageReadingProgress,
+  savePageReadingProgress,
 } from "../../services/readingProgressService";
 import { useFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import {
-    extractDocxText,
-    extractPptxContent,
+  extractDocxText,
+  extractPptxContent,
 } from "../library/add-item/pdfService";
 import { ActionDialog } from "../ui/ActionDialog";
 
@@ -118,6 +119,9 @@ export function PdfReaderScreen() {
     initialPage?: string;
     fileType?: string;
   }>();
+
+  const { width } = useWindowDimensions();
+  const isCompactPhoneLayout = width < 600;
 
   const [startPage, setStartPage] = useState<number>(() => {
     const p = parseInt(initialPage ?? "", 10);
@@ -653,6 +657,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
               {
                 backgroundColor: themeColors.white,
                 borderBottomColor: themeColors.border,
+                paddingHorizontal: isCompactPhoneLayout ? 0 : spacing.md,
               },
             ]}
           >
@@ -780,6 +785,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
             {
               backgroundColor: themeColors.white,
               borderBottomColor: themeColors.border,
+              paddingHorizontal: isCompactPhoneLayout ? 0 : spacing.md,
             },
           ]}
         >
@@ -852,6 +858,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
               {
                 backgroundColor: themeColors.white,
                 borderBottomColor: themeColors.border,
+                paddingHorizontal: isCompactPhoneLayout ? 0 : spacing.md,
               },
             ]}
           >
