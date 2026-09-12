@@ -521,7 +521,12 @@ export default function HomeScreen() {
             {/* <StreakCard /> */}
 
             {/* Story-style topical discovery slider always at top */}
-            <View style={styles.storiesSection}>
+            <View
+              style={[
+                styles.storiesSection,
+                { marginHorizontal: -horizontalPadding },
+              ]}
+            >
               <TopicalNotesSlider />
             </View>
 
@@ -735,6 +740,7 @@ const styles = StyleSheet.create({
   },
   storiesSection: {
     marginBottom: spacing.md,
+    width: "100%",
   },
   feedCardWrapper: {
     marginBottom: spacing.lg,
