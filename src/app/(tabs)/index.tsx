@@ -81,7 +81,6 @@ export default function HomeScreen() {
   const { paperCollections, onRefresh: refreshLibraryData } = useLibraryData();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [showLoading, setShowLoading] = useState(Platform.OS !== "web");
   const [authCheckReady, setAuthCheckReady] = useState(Platform.OS === "web");
   const [authUser, setAuthUser] = useState<User | null>(auth.currentUser);
   const [shuffleSeed, setShuffleSeed] = useState(() => Date.now());
@@ -157,12 +156,8 @@ export default function HomeScreen() {
     void Promise.resolve().then(() => {
       if (active) void loadAllFeedPools();
     });
-    const timer = setTimeout(() => {
-      if (active) setShowLoading(false);
-    }, 1000);
     return () => {
       active = false;
-      clearTimeout(timer);
     };
   }, [loadAllFeedPools]);
 
@@ -484,7 +479,7 @@ export default function HomeScreen() {
     }
   };
 
-  if (showLoading || !authCheckReady) {
+  if (!authCheckReady) {
     return <LoadingScreen />;
   }
 
