@@ -144,6 +144,8 @@ export function PagePreviewScreen() {
     DEFAULT_SUBJECT_AVATAR,
   );
   const [subjectAccent, setSubjectAccent] = useState<string>("#000000");
+  const resolvedSubjectAccent =
+    subjectAccent === "#000000" ? themeColors.primary : subjectAccent;
   const [loading, setLoading] = useState(true);
   const [currentTime] = useState(() => Date.now());
   const [bookmarked, setBookmarked] = useState(false);
@@ -721,7 +723,7 @@ export function PagePreviewScreen() {
                 pagesCount={note.pages}
                 isRecommended={note.isRecommended}
                 isRecentlyUpdated={isRecentlyUpdated}
-                accentColor={subjectAccent}
+                accentColor={resolvedSubjectAccent}
               />
 
               <OverviewSection description={note.description} />
@@ -746,7 +748,7 @@ export function PagePreviewScreen() {
 
               <SimilarPages
                 pages={similarPages}
-                accentColor={subjectAccent}
+                accentColor={resolvedSubjectAccent}
                 onSelectPage={(nextId) =>
                   router.replace({
                     pathname: "/page-preview",
@@ -809,7 +811,7 @@ export function PagePreviewScreen() {
               }}
               onOpen={handleOpenPdf}
               onShare={handleShare}
-              accentColor={subjectAccent}
+              accentColor={resolvedSubjectAccent}
               openLabel={
                 readingProgress && readingProgress.lastPage > 1
                   ? `Continue (p. ${readingProgress.lastPage})`
