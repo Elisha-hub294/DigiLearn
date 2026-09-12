@@ -11,7 +11,10 @@
       "icon": "./assets/images/main.png",
       "bundleIdentifier": "com.digilearn.app",
       "buildNumber": "1",
-      "associatedDomains": ["applinks:digilearn-af86d.firebaseapp.com"]
+      "associatedDomains": [
+        "applinks:digilearn-af86d.firebaseapp.com",
+        "applinks:digilearn-af86d.firebaseapp.com"
+      ]
     },
     "android": {
       "package": "com.digilearn.app",
@@ -27,7 +30,10 @@
               "pathPrefix": "/__/auth/links"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         },
         {
           "action": "VIEW",
@@ -39,7 +45,40 @@
               "pathPrefix": "/share"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "digilearn-af86d.firebaseapp.com",
+              "pathPrefix": "/__/auth/links"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "digilearn-af86d.firebaseapp.com",
+              "pathPrefix": "/share"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "adaptiveIcon": {
@@ -95,6 +134,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a6d49351-d62e-4890-b965-bae6d123e41b"
+      }
+    },
+    "owner": "elisha.dev",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/a6d49351-d62e-4890-b965-bae6d123e41b"
     }
   }
 }
