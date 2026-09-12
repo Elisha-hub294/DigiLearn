@@ -9,6 +9,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BackHandler,
+  Dimensions,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -145,6 +146,13 @@ export default function AssistantScreen() {
   const contentMaxWidth = useMemo(
     () => (Platform.OS === "web" ? 760 : undefined),
     [],
+  );
+  const screenWidth = Dimensions.get("window").width;
+  const visibleSuggestionCount =
+    screenWidth < 360 ? 3 : screenWidth < 420 ? 4 : 6;
+  const visibleSuggestions = useMemo(
+    () => suggestions.slice(0, visibleSuggestionCount),
+    [suggestions, visibleSuggestionCount],
   );
 
   const createConversationTitle = (prompt: string) => {
@@ -365,7 +373,7 @@ export default function AssistantScreen() {
                       How can I help you today?
                     </Text>
                     <View style={styles.suggestionWrap}>
-                      {suggestions.map((suggestion) => (
+                      {visibleSuggestions.map((suggestion) => (
                         <PromptChip
                           key={suggestion}
                           label={suggestion}
