@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Linking from "expo-linking";
 import {
   ActionCodeSettings,
   deleteUser,
@@ -21,7 +22,11 @@ function getEmailLinkContinueUrl() {
     return `${window.location.origin}/finishSignIn`;
   }
 
-  return "https://digilearn-af86d.web.app/finishSignIn";
+  if (Platform.OS === "web") {
+    return `${window.location.origin}/finishSignIn`;
+  }
+
+  return Linking.createURL("finishSignIn");
 }
 
 const actionCodeSettings: ActionCodeSettings = {
