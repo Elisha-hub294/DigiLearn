@@ -22,6 +22,10 @@ import {
   recordUserActivity,
 } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
+import {
+  getOpenedResourceCache,
+  saveOpenedResourceCache,
+} from "../../services/openedResourceCache";
 import { shareResource } from "../../services/shareLinks";
 import {
   getSavedItemsProfile,
@@ -510,6 +514,7 @@ export function BookPreviewScreen() {
             </Animated.View>
           </ScrollView>
         </View>
+
         <View
           style={[
             styles.action,
@@ -535,112 +540,114 @@ export function BookPreviewScreen() {
               bookmarked={bookmarked}
               onPreview={book.sampleUri ? openSample : undefined}
               onGetYours={() => {
-              const phone = book.author.length
-                ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
-                : "";
-              if (!phone.replace(/[^\d+]/g, "")) {
-                showNativeToast("Seller contact information is unavailable.");
-                return;
-              }
-              setShowGetYoursDialog(true);
-            }}
-            onShare={() => {
-              if (book) void shareResource("book", book.id, book.title);
-            }}
-            onBookmark={async () => {
-              if (!book) return;
+                const phone = book.author.length
+                  ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
+                  : "";
+                if (!phone.replace(/[^\d+]/g, "")) {
+                  showNativeToast("Seller contact information is unavailable.");
+                  return;
+                }
+                setShowGetYoursDialog(true);
+              }}
+              onShare={() => {
+                if (book) void shareResource("book", book.id, book.title);
+              }}
+              onBookmark={async () => {
+                if (!book) return;
 
-              if (!auth.currentUser?.uid) {
-                setShowGuestSaveAlert(true);
-                return;
-              }
+                if (!auth.currentUser?.uid) {
+                  setShowGuestSaveAlert(true);
+                  return;
+                }
 
-              try {
-                await toggleSavedItem(
-                  auth.currentUser.uid,
-                  "saved-books",
-                  book.id,
-                  bookmarked,
-                );
-                setBookmarked((value) => !value);
-                showNativeToast(
-                  bookmarked
-                    ? feedbackMessages.itemUnsaved
-                    : feedbackMessages.itemSaved,
-                );
-              } catch (e) {
-                console.error("Failed to toggle bookmark", e);
-              }
-            }}
-          />
+                try {
+                  await toggleSavedItem(
+                    auth.currentUser.uid,
+                    "saved-books",
+                    book.id,
+                    bookmarked,
+                  );
+                  setBookmarked((value) => !value);
+                  showNativeToast(
+                    bookmarked
+                      ? feedbackMessages.itemUnsaved
+                      : feedbackMessages.itemSaved,
+                  );
+                } catch (e) {
+                  console.error("Failed to toggle bookmark", e);
+                }
+              }}
+            />
+          </View>
         </View>
-      </View>
 
-      <ActionDialog
-        visible={showGuestSaveAlert}
-        title="Save this resource"
-        message="Log in or sign up to save books and resources for later."
-        primaryText="Log in"
-        secondaryText="Sign up"
-        onPrimary={() =>
-          router.push({
-            pathname: "/login",
-            params: {
-              from:
-                typeof returnTo === "string" && returnTo.trim()
-                  ? returnTo
-                  : "/",
-            },
-          } as any)
-        }
-        onSecondary={() =>
-          router.push({
-            pathname: "/signup",
-            params: {
-              from:
-                typeof returnTo === "string" && returnTo.trim()
-                  ? returnTo
-                  : "/",
-            },
-          } as any)
-        }
-        onClose={() => setShowGuestSaveAlert(false)}
-      />
+        <ActionDialog
+          visible={showGuestSaveAlert}
+          title="Save this resource"
+          message="Log in or sign up to save books and resources for later."
+          primaryText="Log in"
+          secondaryText="Sign up"
+          onPrimary={() =>
+            router.push({
+              pathname: "/login",
+              params: {
+                from:
+                  typeof returnTo === "string" && returnTo.trim()
+                    ? returnTo
+                    : "/",
+              },
+            } as any)
+          }
+          onSecondary={() =>
+            router.push({
+              pathname: "/signup",
+              params: {
+                from:
+                  typeof returnTo === "string" && returnTo.trim()
+                    ? returnTo
+                    : "/",
+              },
+            } as any)
+          }
+          onClose={() => setShowGuestSaveAlert(false)}
+        />
 
-      <ActionDialog
-        visible={showGetYoursDialog}
-        title="You're leaving OS platform"
-        message="To get this book, you'll be redirected to an external service. Choose how you'd like to reach the seller."
-        primaryText="WhatsApp"
-        secondaryText="Phone Call"
-        secondaryButtonColor={colors.primary}
-        secondaryButtonTextColor="#fff"
-        primaryButtonColor="#25D366"
-        onPrimary={() => {
-          const phone = book?.author.length
-            ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
-            : "";
-          const cleaned = phone.replace(/[^\d+]/g, "");
-          if (!cleaned) return;
-          Linking.openURL(
-            `https://wa.me/${cleaned}?text=${encodeURIComponent(`Hi, I'm interested in the book "${book?.title}" from OS platform.`)}`,
-          );
-        }}
-        onSecondary={() => {
-          const phone = book?.author.length
-            ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
-            : "";
-          const cleaned = phone.replace(/[^\d+]/g, "");
-          if (!cleaned) return;
-          Linking.openURL(`tel:${cleaned}`);
-        }}
-        onClose={() => setShowGetYoursDialog(false)}
-      />
-    </Animated.View>
+        <ActionDialog
+          visible={showGetYoursDialog}
+          title="You're leaving OS platform"
+          message="To get this book, you'll be redirected to an external service. Choose how you'd like to reach the seller."
+          primaryText="WhatsApp"
+          secondaryText="Phone Call"
+          secondaryButtonColor={colors.primary}
+          secondaryButtonTextColor="#fff"
+          primaryButtonColor="#25D366"
+          onPrimary={() => {
+            const phone = book?.author.length
+              ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
+              : "";
+            const cleaned = phone.replace(/[^\d+]/g, "");
+            if (!cleaned) return;
+            Linking.openURL(
+              `https://wa.me/${cleaned}?text=${encodeURIComponent(`Hi, I'm interested in the book "${book?.title}" from OS platform.`)}`,
+            );
+          }}
+          onSecondary={() => {
+            const phone = book?.author.length
+              ? (teacherPhones[normalizeKey(book.author[0])] ?? "")
+              : "";
+            const cleaned = phone.replace(/[^\d+]/g, "");
+            if (!cleaned) return;
+            Linking.openURL(`tel:${cleaned}`);
+          }}
+          onClose={() => setShowGetYoursDialog(false)}
+        />
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.background },
   screen: { flex: 1 },
   scrollContent: { flexGrow: 1 },
   contentContainer: { flex: 1, width: "100%" },

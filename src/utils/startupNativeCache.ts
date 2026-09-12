@@ -15,7 +15,14 @@ const STARTUP_CACHE_URLS = [
 const IMAGE_CACHE_POLICY = "disk" as const;
 
 function normalizeStartupUrls(urls: Iterable<string>): string[] {
-  return Array.from(new Set(urls.filter((value) => Boolean(value.trim()))));
+  return Array.from(
+    new Set(
+      Array.from(urls).filter(
+        (value): value is string =>
+          typeof value === "string" && value.trim().length > 0,
+      ),
+    ),
+  );
 }
 
 export async function prefetchNativeUrl(url: string): Promise<boolean> {

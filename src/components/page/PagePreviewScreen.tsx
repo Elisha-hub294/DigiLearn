@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../../../firebaseConfig";
 import { getHorizontalPadding } from "../../constants/layout";
 import { useProfile } from "../../contexts/ProfileContext";
@@ -695,160 +696,158 @@ export function PagePreviewScreen() {
               { paddingBottom: 120, paddingHorizontal: horizontalPadding },
             ]}
           >
-          {/* Hero Section */}
-          <PageHero
-            note={note}
-            dateText={dateFormatted}
-            onBack={goBack}
-            onOpen={handleOpenPdf}
-            openLabel={
-              readingProgress && readingProgress.lastPage > 1
-                ? `Continue p. ${readingProgress.lastPage}`
-                : "Open PDF"
-            }
-          />
+            <PageHero
+              note={note}
+              dateText={dateFormatted}
+              onBack={goBack}
+              onOpen={handleOpenPdf}
+              openLabel={
+                readingProgress && readingProgress.lastPage > 1
+                  ? `Continue p. ${readingProgress.lastPage}`
+                  : "Open PDF"
+              }
+            />
 
-          {/* White Information Sheet */}
-          <Animated.View
-            entering={FadeInUp.duration(430)}
+            <Animated.View
+              entering={FadeInUp.duration(430)}
+              style={[
+                styles.sheet,
+                { paddingHorizontal: 24, backgroundColor: themeColors.white },
+              ]}
+            >
+              <SubjectBadge
+                avatarUrl={subjectAvatar}
+                subjects={subjectsList}
+                pagesCount={note.pages}
+                isRecommended={note.isRecommended}
+                isRecentlyUpdated={isRecentlyUpdated}
+                accentColor={subjectAccent}
+              />
+
+              <OverviewSection description={note.description} />
+
+              <PageDetailsSection note={note} dateText={dateFormatted} />
+
+              <SourceBooks
+                books={sourceBooks}
+                onSelectBook={(bookId) =>
+                  router.push({
+                    pathname: "/book-preview",
+                    params: {
+                      id: bookId,
+                      source: source ?? "library",
+                      returnTo:
+                        returnTo ?? (source === "pages" ? "/pages" : "/library"),
+                    },
+                  } as any)
+                }
+              />
+
+              <SimilarPages
+                pages={similarPages}
+                accentColor={subjectAccent}
+                onSelectPage={(nextId) =>
+                  router.replace({
+                    pathname: "/page-preview",
+                    params: { id: nextId, source: source ?? "library" },
+                  } as any)
+                }
+                onSeeAll={() => {
+                  router.push({
+                    pathname: "/see-all",
+                    params: {
+                      type: "pages",
+                      pages: encodeURIComponent(JSON.stringify(similarPages)),
+                    },
+                  } as any);
+                }}
+              />
+            </Animated.View>
+          </ScrollView>
+        </View>
+
+        <ActionDialog
+          visible={Boolean(noticeDialog)}
+          title={noticeDialog?.title ?? "Notice"}
+          message={noticeDialog?.message ?? ""}
+          primaryText="OK"
+          onPrimary={() => setNoticeDialog(null)}
+          onClose={() => setNoticeDialog(null)}
+        />
+
+        <View style={styles.actionContainer}>
+          <View
             style={[
-              styles.sheet,
-              { paddingHorizontal: 24, backgroundColor: themeColors.white },
+              styles.actionContent,
+              {
+                maxWidth: contentMaxWidth,
+                paddingHorizontal: horizontalPadding,
+              },
             ]}
           >
-            {/* Header with Avatar & Page Information */}
-            <SubjectBadge
-              avatarUrl={subjectAvatar}
-              subjects={subjectsList}
-              pagesCount={note.pages}
-              isRecommended={note.isRecommended}
-              isRecentlyUpdated={isRecentlyUpdated}
-              accentColor={subjectAccent}
-            />
+            <BottomActionBar
+              bookmarked={bookmarked}
+              onBookmark={async () => {
+                const userId = auth.currentUser?.uid;
+                if (!userId) {
+                  setShowGuestSaveAlert(true);
+                  return;
+                }
 
-            {/* Overview Section */}
-            <OverviewSection description={note.description} />
-
-            {/* All available page metadata */}
-            <PageDetailsSection note={note} dateText={dateFormatted} />
-
-            {/* Source Section (Hidden if empty) */}
-            <SourceBooks
-              books={sourceBooks}
-              onSelectBook={(bookId) =>
-                router.push({
-                  pathname: "/book-preview",
-                  params: {
-                    id: bookId,
-                    source: source ?? "library",
-                    returnTo:
-                      returnTo ?? (source === "pages" ? "/pages" : "/library"),
-                  },
-                } as any)
-              }
-            />
-
-            {/* Similar Pages Section (Hidden if empty) */}
-            <SimilarPages
-              pages={similarPages}
-              accentColor={subjectAccent}
-              onSelectPage={(nextId) =>
-                router.replace({
-                  pathname: "/page-preview",
-                  params: { id: nextId, source: source ?? "library" },
-                } as any)
-              }
-              onSeeAll={() => {
-                router.push({
-                  pathname: "/see-all",
-                  params: {
-                    type: "pages",
-                    pages: encodeURIComponent(JSON.stringify(similarPages)),
-                  },
-                } as any);
+                try {
+                  await toggleSavedItem(userId, "saved-pages", id, bookmarked);
+                  setBookmarked((value) => !value);
+                  showNativeToast(
+                    bookmarked
+                      ? feedbackMessages.itemUnsaved
+                      : feedbackMessages.itemSaved,
+                  );
+                } catch (error) {
+                  console.error("Failed to toggle page bookmark", error);
+                }
               }}
+              onOpen={handleOpenPdf}
+              onShare={handleShare}
+              accentColor={subjectAccent}
+              openLabel={
+                readingProgress && readingProgress.lastPage > 1
+                  ? `Continue (p. ${readingProgress.lastPage})`
+                  : "Open"
+              }
             />
-          </Animated.View>
-        </ScrollView>
-      </View>
-
-      <ActionDialog
-        visible={Boolean(noticeDialog)}
-        title={noticeDialog?.title ?? "Notice"}
-        message={noticeDialog?.message ?? ""}
-        primaryText="OK"
-        onPrimary={() => setNoticeDialog(null)}
-        onClose={() => setNoticeDialog(null)}
-      />
-      {/* Fixed Bottom Action Bar */}
-      <View style={styles.actionContainer}>
-        <View
-          style={[
-            styles.actionContent,
-            {
-              maxWidth: contentMaxWidth,
-              paddingHorizontal: horizontalPadding,
-            },
-          ]}
-        >
-          <BottomActionBar
-            bookmarked={bookmarked}
-            onBookmark={async () => {
-              const userId = auth.currentUser?.uid;
-              if (!userId) {
-                setShowGuestSaveAlert(true);
-                return;
-              }
-
-              try {
-                await toggleSavedItem(userId, "saved-pages", id, bookmarked);
-                setBookmarked((value) => !value);
-                showNativeToast(
-                  bookmarked
-                    ? feedbackMessages.itemUnsaved
-                    : feedbackMessages.itemSaved,
-                );
-              } catch (error) {
-                console.error("Failed to toggle page bookmark", error);
-              }
-            }}
-            onOpen={handleOpenPdf}
-            onShare={handleShare}
-            accentColor={subjectAccent}
-            openLabel={
-              readingProgress && readingProgress.lastPage > 1
-                ? `Continue (p. ${readingProgress.lastPage})`
-                : "Open"
-            }
-          />
+          </View>
         </View>
-      </View>
 
-      <ActionDialog
-        visible={showGuestSaveAlert}
-        title="Save this resource"
-        message="Log in or sign up to save pages and resources for later."
-        primaryText="Log in"
-        secondaryText="Sign up"
-        onPrimary={() =>
-          router.push({
-            pathname: "/login",
-            params: { from: pagePreviewRoute },
-          } as any)
-        }
-        onSecondary={() =>
-          router.push({
-            pathname: "/signup",
-            params: { from: pagePreviewRoute },
-          } as any)
-        }
-        onClose={() => setShowGuestSaveAlert(false)}
-      />
-    </Animated.View>
+        <ActionDialog
+          visible={showGuestSaveAlert}
+          title="Save this resource"
+          message="Log in or sign up to save pages and resources for later."
+          primaryText="Log in"
+          secondaryText="Sign up"
+          onPrimary={() =>
+            router.push({
+              pathname: "/login",
+              params: { from: pagePreviewRoute },
+            } as any)
+          }
+          onSecondary={() =>
+            router.push({
+              pathname: "/signup",
+              params: { from: pagePreviewRoute },
+            } as any)
+          }
+          onClose={() => setShowGuestSaveAlert(false)}
+        />
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   screen: {
     flex: 1,
   },

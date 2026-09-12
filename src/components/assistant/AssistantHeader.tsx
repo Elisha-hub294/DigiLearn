@@ -3,18 +3,19 @@ import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-    type TextStyle,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type TextStyle,
 } from "react-native";
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-    withTiming,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 
 import { colors, radius, spacing } from "../../constants/theme";
@@ -25,10 +26,15 @@ const GradientTitle = ({
   style,
 }: {
   text: string;
-  style?: TextStyle;
+  style?: StyleProp<TextStyle>;
 }) => {
   if (Platform.OS === "web") {
-    return <Text style={[style, styles.webGradientTitle]}>{text}</Text>;
+    const webStyle = {
+      ...(style ?? {}),
+      ...(styles.webGradientTitle as unknown as TextStyle),
+    } as TextStyle;
+
+    return <Text style={webStyle}>{text}</Text>;
   }
 
   return (
@@ -198,7 +204,7 @@ const styles = StyleSheet.create({
     WebkitBackgroundClip: "text",
     backgroundClip: "text",
     color: "transparent",
-  },
+  } as TextStyle,
   headerTitle: {
     color: colors.text,
     fontSize: 18,

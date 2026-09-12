@@ -357,15 +357,17 @@ export const notifyUsersAboutNewItem = async (
           getDoc(doc(db, "teachers", ownerId)),
           getDoc(doc(db, "users", ownerId)),
         ]).then(([teacherSnapshot, userSnapshot]) => {
-          const teacherData = teacherSnapshot.exists
-            ? teacherSnapshot.data()
+          const teacherData = teacherSnapshot.exists()
+            ? (teacherSnapshot.data() ?? {})
             : {};
-          const userData = userSnapshot.exists ? userSnapshot.data() : {};
-          return teacherSnapshot.exists &&
-            (teacherData.type === "teacher" ||
-              typeof teacherData.teacherApprovalStatus === "string")
+          const userData = userSnapshot.exists()
+            ? (userSnapshot.data() ?? {})
+            : {};
+          return teacherSnapshot.exists() &&
+            (teacherData?.type === "teacher" ||
+              typeof teacherData?.teacherApprovalStatus === "string")
             ? teacherData
-            : userData.type === "teacher"
+            : userData?.type === "teacher"
               ? userData
               : null;
         })

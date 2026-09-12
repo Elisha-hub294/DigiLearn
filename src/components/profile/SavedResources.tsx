@@ -1,20 +1,27 @@
 import { useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { db } from "../../../firebaseConfig";
 import { FeaturedNoteCard } from "../../components/home/FeaturedNoteCard";
 import {
-    TeacherPostCard,
-    normalizeTeacherPost,
+  normalizeTeacherPost,
+  TeacherPostCard,
 } from "../../components/home/TeacherPostCard";
 import { BookCard } from "../../components/library/BookCard";
 import { PaperCard } from "../../components/library/PaperCard";
 import { Skeleton } from "../../components/ui/Skeleton";
 import {
-    TrendingVideoCard,
-    VideoLesson,
+  TrendingVideoCard,
+  VideoLesson,
 } from "../../components/ui/TrendingVideoCard";
 import { colors, radius, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
@@ -72,6 +79,7 @@ export function SavedResources({
   signedIn: boolean;
 }) {
   const router = useRouter();
+  const { width: screenWidth } = useWindowDimensions();
   const { isDark, colors: themeColors } = useTheme();
   const [filter, setFilter] = useState<Filter>("All");
   const [items, setItems] = useState<Entry[]>([]);
@@ -143,6 +151,14 @@ export function SavedResources({
       filter === "All" ? items : items.filter((item) => item.type === filter),
     [items, filter],
   );
+
+  const getCardWidth = (availableWidth: number) => {
+    if (!availableWidth) return Math.min(360, screenWidth * 0.9);
+    if (screenWidth < 420) return Math.min(availableWidth, 400);
+    if (screenWidth < 768) return Math.min(availableWidth * 0.92, 360);
+    return Math.min(availableWidth * 0.7, 420);
+  };
+
   if (!signedIn)
     return (
       <View style={[s.card, { backgroundColor: themeColors.white }]}>
@@ -266,7 +282,7 @@ export function SavedResources({
             ? renderItems(
                 displayed,
                 router,
-                (resultsWidth - spacing.lg * 2) * 0.8,
+                getCardWidth(resultsWidth),
                 resultsWidth,
                 isDark,
               )
@@ -372,7 +388,8 @@ function renderItems(
             <PaperCard
               id={x.id}
               title={x.data.title ?? x.data.name ?? "Untitled past paper"}
-              width={(resultsWidth - spacing.lg * 2) * 0.6}
+              width={itemWidth}
+              marginRight={0}
               subject={x.data.subject ?? x.data.topic}
               year={x.data.year ?? x.data.examYear}
               description={x.data.description ?? x.data.summary}
@@ -413,9 +430,13 @@ const s = StyleSheet.create({
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText: { fontSize: 13, fontWeight: "700" },
   chipTextActive: {},
-  results: { paddingHorizontal: spacing.lg },
-  centeredItem: { width: "100%", alignItems: "center" },
-  videoItem: { marginBottom: spacing.md },
+  results: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
+  },
+  centeredItem: { width: "100%", alignItems: "center", marginBottom: 0 },
+  videoItem: { marginBottom: 0 },
   loading: { paddingHorizontal: spacing.lg, gap: 10 },
   savedSkeletonCard: {
     flexDirection: "row",

@@ -15,6 +15,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { auth } from "../../firebaseConfig";
 import { TopicalNote } from "../components/page/pageTypes";
 import { DownloadedResources } from "../components/profile/DownloadedResources";
@@ -105,10 +106,7 @@ export default function SeeAllScreen() {
         : (params.type as ViewMode)
       : "books";
   const pages = useMemo(() => parsePages(params.pages), [params.pages]);
-  const postImages = useMemo(
-    () => parseImages(params.images),
-    [params.images],
-  );
+  const postImages = useMemo(() => parseImages(params.images), [params.images]);
   const [selectedLightboxIndex, setSelectedLightboxIndex] = useState<
     number | null
   >(() => {
@@ -118,6 +116,7 @@ export default function SeeAllScreen() {
     }
     return null;
   });
+  const isPhoneScreen = width < 480;
   const minimumCardWidth =
     mode === "post-images"
       ? contentMaxWidth >= 900
@@ -130,13 +129,15 @@ export default function SeeAllScreen() {
         : contentMaxWidth >= 600
           ? 180
           : 145;
-  const columns = Math.max(
-    1,
-    Math.min(
-      mode === "post-images" ? 4 : 3,
-      Math.floor(contentMaxWidth / minimumCardWidth),
-    ),
-  );
+  const columns = isPhoneScreen
+    ? 1
+    : Math.max(
+        1,
+        Math.min(
+          mode === "post-images" ? 4 : 3,
+          Math.floor(contentMaxWidth / minimumCardWidth),
+        ),
+      );
   const { paperCollections, loading: papersLoading } = useLibraryData();
 
   // Pagination hooks
@@ -285,433 +286,444 @@ export default function SeeAllScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: themeColors.lightBackground }]}
+      style={[
+        styles.safeArea,
+        { backgroundColor: themeColors.lightBackground },
+      ]}
       edges={["top", "bottom"]}
     >
       <View
-        style={[styles.screen, { backgroundColor: themeColors.lightBackground }]}
+        style={[
+          styles.screen,
+          { backgroundColor: themeColors.lightBackground },
+        ]}
       >
         <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
-        <View
-          style={[
-            styles.header,
-            {
-              paddingHorizontal: horizontalPadding,
-              backgroundColor: themeColors.white,
-            },
-          ]}
-        >
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            onPress={() => router.back()}
-          >
-            <Feather name="chevron-left" size={22} color={themeColors.text} />
-          </Pressable>
-          <View>
-            <Text style={[styles.eyebrow, { color: themeColors.primary }]}>
-              {mode === "post-images"
-                ? "Teacher Announcement"
-                : "Explore library"}
-            </Text>
-            <Text style={[styles.heading, { color: themeColors.text }]}>
-              {title}
-            </Text>
-          </View>
-        </View>
-        {mode === "papers" && (
           <View
             style={[
-              styles.filterBar,
+              styles.header,
               {
+                paddingHorizontal: horizontalPadding,
                 backgroundColor: themeColors.white,
-                borderBottomColor: themeColors.border,
               },
             ]}
           >
-            <View style={styles.filterGroup}>
-              <FlatList
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                data={paperTypeOptions}
-                keyExtractor={(item) => item}
-                style={styles.filterOptions}
-                contentContainerStyle={styles.filterList}
-                renderItem={({ item }) => (
-                  <Pressable
-                    accessibilityRole="button"
-                    style={[
-                      styles.filterChip,
-                      { backgroundColor: themeColors.lightBackground },
-                      selectedPaperType === item && {
-                        backgroundColor: themeColors.primaryLight,
-                        borderColor: themeColors.primary,
-                      },
-                    ]}
-                    onPress={() => setSelectedPaperType(item)}
-                  >
-                    <Text
-                      style={[
-                        styles.filterChipText,
-                        { color: themeColors.text },
-                        selectedPaperType === item && {
-                          color: themeColors.primary,
-                        },
-                      ]}
-                    >
-                      {item}
-                    </Text>
-                  </Pressable>
-                )}
-              />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              onPress={() => router.back()}
+            >
+              <Feather name="chevron-left" size={22} color={themeColors.text} />
+            </Pressable>
+            <View>
+              <Text style={[styles.eyebrow, { color: themeColors.primary }]}>
+                {mode === "post-images"
+                  ? "Teacher Announcement"
+                  : "Explore library"}
+              </Text>
+              <Text style={[styles.heading, { color: themeColors.text }]}>
+                {title}
+              </Text>
             </View>
+          </View>
 
-            <View style={styles.filterGroup}>
-              <FlatList
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                data={paperYearOptions}
-                keyExtractor={(item) => item}
-                style={styles.filterOptions}
-                contentContainerStyle={styles.filterList}
-                renderItem={({ item }) => (
-                  <Pressable
-                    accessibilityRole="button"
-                    style={[
-                      styles.filterChip,
-                      { backgroundColor: themeColors.lightBackground },
-                      selectedPaperYear === item && {
-                        backgroundColor: themeColors.primaryLight,
-                        borderColor: themeColors.primary,
-                      },
-                    ]}
-                    onPress={() => setSelectedPaperYear(item)}
-                  >
-                    <Text
+          {mode === "papers" && (
+            <View
+              style={[
+                styles.filterBar,
+                {
+                  backgroundColor: themeColors.white,
+                  borderBottomColor: themeColors.border,
+                },
+              ]}
+            >
+              <View style={styles.filterGroup}>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={paperTypeOptions}
+                  keyExtractor={(item) => item}
+                  style={styles.filterOptions}
+                  contentContainerStyle={styles.filterList}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      accessibilityRole="button"
                       style={[
-                        styles.filterChipText,
-                        { color: themeColors.text },
-                        selectedPaperYear === item && {
-                          color: themeColors.primary,
+                        styles.filterChip,
+                        { backgroundColor: themeColors.lightBackground },
+                        selectedPaperType === item && {
+                          backgroundColor: themeColors.primaryLight,
+                          borderColor: themeColors.primary,
                         },
                       ]}
+                      onPress={() => setSelectedPaperType(item)}
                     >
-                      {item}
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          { color: themeColors.text },
+                          selectedPaperType === item && {
+                            color: themeColors.primary,
+                          },
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </Pressable>
+                  )}
+                />
+              </View>
+
+              <View style={styles.filterGroup}>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={paperYearOptions}
+                  keyExtractor={(item) => item}
+                  style={styles.filterOptions}
+                  contentContainerStyle={styles.filterList}
+                  renderItem={({ item }) => (
+                    <Pressable
+                      accessibilityRole="button"
+                      style={[
+                        styles.filterChip,
+                        { backgroundColor: themeColors.lightBackground },
+                        selectedPaperYear === item && {
+                          backgroundColor: themeColors.primaryLight,
+                          borderColor: themeColors.primary,
+                        },
+                      ]}
+                      onPress={() => setSelectedPaperYear(item)}
+                    >
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          { color: themeColors.text },
+                          selectedPaperYear === item && {
+                            color: themeColors.primary,
+                          },
+                        ]}
+                      >
+                        {item}
+                      </Text>
+                    </Pressable>
+                  )}
+                />
+                {(selectedPaperType !== "All" ||
+                  selectedPaperYear !== "All") && (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear paper filters"
+                    style={styles.clearFilters}
+                    onPress={() => {
+                      setSelectedPaperType("All");
+                      setSelectedPaperYear("All");
+                      setFilterVersion((value) => value + 1);
+                    }}
+                  >
+                    <Feather
+                      name="x-circle"
+                      size={15}
+                      color={themeColors.primary}
+                    />
+                    <Text
+                      style={[
+                        styles.clearFiltersText,
+                        { color: themeColors.primary },
+                      ]}
+                    >
+                      Clear
                     </Text>
                   </Pressable>
                 )}
+              </View>
+            </View>
+          )}
+
+          {mode === "downloads" ? (
+            <DownloadedResources showAll />
+          ) : loading ? (
+            <View
+              style={styles.skeletonGrid}
+              accessibilityLabel={`Loading ${title.toLowerCase()}`}
+            >
+              {[0, 1, 2, 3, 4, 5].map((item) => (
+                <View
+                  key={item}
+                  style={[styles.skeletonCard, { width: `${100 / columns}%` }]}
+                >
+                  <Skeleton style={styles.skeletonImage} />
+                  <Skeleton style={styles.skeletonCardTitle} />
+                  <Skeleton style={styles.skeletonCardLine} />
+                </View>
+              ))}
+            </View>
+          ) : data.length === 0 ||
+            (mode === "courses" && lessonsPagination.error) ? (
+            <View style={styles.state}>
+              <Feather
+                name={lessonsPagination.error ? "wifi-off" : "inbox"}
+                size={30}
+                color={themeColors.subtitle}
               />
-              {(selectedPaperType !== "All" || selectedPaperYear !== "All") && (
+              <Text style={[styles.stateTitle, { color: themeColors.text }]}>
+                {lessonsPagination.error
+                  ? "Could not load resources"
+                  : "Nothing here yet"}
+              </Text>
+              <Text style={[styles.stateText, { color: themeColors.subtitle }]}>
+                {lessonsPagination.error
+                  ? "Check your connection and try again."
+                  : mode === "papers" &&
+                      (selectedPaperType !== "All" ||
+                        selectedPaperYear !== "All")
+                    ? "Try clearing the filters to see all past papers."
+                    : `Check back soon for more ${title.toLowerCase()}.`}
+              </Text>
+              {(lessonsPagination.error ||
+                (mode === "papers" &&
+                  (selectedPaperType !== "All" ||
+                    selectedPaperYear !== "All"))) && (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="Clear paper filters"
-                  style={styles.clearFilters}
+                  accessibilityLabel={
+                    lessonsPagination.error ? "Retry loading" : "Clear filters"
+                  }
+                  style={[
+                    styles.retryButton,
+                    { backgroundColor: themeColors.primary },
+                  ]}
                   onPress={() => {
+                    if (lessonsPagination.error)
+                      void lessonsPagination.refresh();
                     setSelectedPaperType("All");
                     setSelectedPaperYear("All");
                     setFilterVersion((value) => value + 1);
                   }}
                 >
-                  <Feather
-                    name="x-circle"
-                    size={15}
-                    color={themeColors.primary}
-                  />
-                  <Text
-                    style={[
-                      styles.clearFiltersText,
-                      { color: themeColors.primary },
-                    ]}
-                  >
-                    Clear
+                  <Text style={styles.retryText}>
+                    {lessonsPagination.error ? "Try again" : "Clear filters"}
                   </Text>
                 </Pressable>
               )}
             </View>
-          </View>
-        )}
-
-        {mode === "downloads" ? (
-          <DownloadedResources showAll />
-        ) : loading ? (
-          <View
-            style={styles.skeletonGrid}
-            accessibilityLabel={`Loading ${title.toLowerCase()}`}
-          >
-            {[0, 1, 2, 3, 4, 5].map((item) => (
-              <View
-                key={item}
-                style={[styles.skeletonCard, { width: `${100 / columns}%` }]}
-              >
-                <Skeleton style={styles.skeletonImage} />
-                <Skeleton style={styles.skeletonCardTitle} />
-                <Skeleton style={styles.skeletonCardLine} />
-              </View>
-            ))}
-          </View>
-        ) : data.length === 0 ||
-          (mode === "courses" && lessonsPagination.error) ? (
-          <View style={styles.state}>
-            <Feather
-              name={lessonsPagination.error ? "wifi-off" : "inbox"}
-              size={30}
-              color={themeColors.subtitle}
-            />
-            <Text style={[styles.stateTitle, { color: themeColors.text }]}>
-              {lessonsPagination.error
-                ? "Could not load resources"
-                : "Nothing here yet"}
-            </Text>
-            <Text style={[styles.stateText, { color: themeColors.subtitle }]}>
-              {lessonsPagination.error
-                ? "Check your connection and try again."
-                : mode === "papers" &&
-                    (selectedPaperType !== "All" || selectedPaperYear !== "All")
-                  ? "Try clearing the filters to see all past papers."
-                  : `Check back soon for more ${title.toLowerCase()}.`}
-            </Text>
-            {(lessonsPagination.error ||
-              (mode === "papers" &&
-                (selectedPaperType !== "All" ||
-                  selectedPaperYear !== "All"))) && (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={
-                  lessonsPagination.error ? "Retry loading" : "Clear filters"
-                }
-                style={[
-                  styles.retryButton,
-                  { backgroundColor: themeColors.primary },
-                ]}
-                onPress={() => {
-                  if (lessonsPagination.error) void lessonsPagination.refresh();
-                  setSelectedPaperType("All");
-                  setSelectedPaperYear("All");
-                  setFilterVersion((value) => value + 1);
-                }}
-              >
-                <Text style={styles.retryText}>
-                  {lessonsPagination.error ? "Try again" : "Clear filters"}
-                </Text>
-              </Pressable>
-            )}
-          </View>
-        ) : (
-          <FlatList
-            key={`${columns}-${filterVersion}`}
-            data={data}
-            numColumns={columns}
-            showsVerticalScrollIndicator={false}
-            keyExtractor={(item: any) => item.id}
-            contentContainerStyle={[
-              styles.grid,
-              { paddingHorizontal: horizontalPadding },
-            ]}
-            columnWrapperStyle={columns > 1 ? styles.row : undefined}
-            onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.5}
-            refreshControl={
-              <RefreshControl
-                refreshing={loading && data.length === 0}
-                onRefresh={handleRefresh}
-                tintColor={themeColors.primary}
-              />
-            }
-            ListFooterComponent={
-              loading && hasMore ? (
-                <View style={styles.footerLoader}>
-                  <ActivityIndicator size="small" color={themeColors.primary} />
-                </View>
-              ) : null
-            }
-            renderItem={({ item }: { item: any }) => (
-              <View style={[styles.cell, { width: `${100 / columns}%` }]}>
-                {mode === "books" ? (
-                  <BookTile
-                    item={item}
-                    onPress={() => {
-                      if (auth.currentUser?.uid)
-                        void recordUserActivity(
-                          auth.currentUser.uid,
-                          "book",
-                          item.id,
-                        );
-                      router.push({
-                        pathname: "/book-preview",
-                        params: {
-                          id: item.id,
-                          source: "see-all",
-                          returnTo: "/see-all?type=books",
-                        },
-                      } as any);
-                    }}
-                  />
-                ) : mode === "courses" ? (
-                  <CourseTile
-                    item={item}
-                    isDark={isDark}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/lesson-player",
-                        params: {
-                          title: item.title,
-                          teacher: item.teacher,
-                          subject: item.subject,
-                          duration: item.duration,
-                          description: item.description,
-                          link: item.link,
-                          thumbnail: item.thumbnail,
-                        },
-                      } as any)
-                    }
-                  />
-                ) : mode === "pages" ? (
-                  <PageTile
-                    item={item}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/page-preview",
-                        params: {
-                          id: item.id,
-                          source: "see-all",
-                        },
-                      } as any)
-                    }
-                  />
-                ) : mode === "post-images" ? (
-                  <PostPhotoTile
-                    item={item}
-                    onPress={() => setSelectedLightboxIndex(item.index)}
-                  />
-                ) : (
-                  <PaperTile
-                    item={item}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/paper-preview",
-                        params: {
-                          id: item.id,
-                          title: item.title,
-                          subject: item.subject,
-                          year: item.year,
-                          description: item.description,
-                          level: item.level,
-                          pageNumber: item.pageNumber,
-                          paperCode: item.paperCode,
-                          paperNumber: item.paperNumber,
-                          image: item.image,
-                          document: item.document,
-                          type: "Past Paper",
-                        },
-                      } as any)
-                    }
-                  />
-                )}
-              </View>
-            )}
-          />
-        )}
-
-        {/* Fullscreen Photo Lightbox Modal */}
-        <Modal
-          visible={selectedLightboxIndex !== null && mode === "post-images"}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setSelectedLightboxIndex(null)}
-        >
-          {selectedLightboxIndex !== null &&
-          postImages[selectedLightboxIndex] ? (
-            <View style={styles.lightboxBackdrop}>
-              {/* Top Bar */}
-              <View style={styles.lightboxHeader}>
-                <Text style={styles.lightboxCounter}>
-                  {selectedLightboxIndex + 1} of {postImages.length}
-                </Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Close lightbox"
-                  style={styles.lightboxCloseButton}
-                  onPress={() => setSelectedLightboxIndex(null)}
-                >
-                  <Feather name="x" size={22} color="#ffffff" />
-                </Pressable>
-              </View>
-
-              {/* Main Image Display with Navigation Arrows */}
-              <View style={styles.lightboxMain}>
-                {selectedLightboxIndex > 0 && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Previous image"
-                    style={styles.lightboxNavLeft}
-                    onPress={() =>
-                      setSelectedLightboxIndex((prev) =>
-                        prev !== null ? Math.max(0, prev - 1) : 0,
-                      )
-                    }
-                  >
-                    <Feather name="chevron-left" size={26} color="#ffffff" />
-                  </Pressable>
-                )}
-
-                <Image
-                  source={{ uri: postImages[selectedLightboxIndex] }}
-                  style={styles.lightboxImage}
-                  contentFit="contain"
+          ) : (
+            <FlatList
+              key={`${columns}-${filterVersion}`}
+              data={data}
+              numColumns={columns}
+              showsVerticalScrollIndicator={false}
+              keyExtractor={(item: any) => item.id}
+              contentContainerStyle={[
+                styles.grid,
+                { paddingHorizontal: horizontalPadding },
+              ]}
+              columnWrapperStyle={columns > 1 ? styles.row : undefined}
+              onEndReached={handleLoadMore}
+              onEndReachedThreshold={0.5}
+              refreshControl={
+                <RefreshControl
+                  refreshing={loading && data.length === 0}
+                  onRefresh={handleRefresh}
+                  tintColor={themeColors.primary}
                 />
-
-                {selectedLightboxIndex < postImages.length - 1 && (
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel="Next image"
-                    style={styles.lightboxNavRight}
-                    onPress={() =>
-                      setSelectedLightboxIndex((prev) =>
-                        prev !== null
-                          ? Math.min(postImages.length - 1, prev + 1)
-                          : 0,
-                      )
-                    }
-                  >
-                    <Feather name="chevron-right" size={26} color="#ffffff" />
-                  </Pressable>
-                )}
-              </View>
-
-              {/* Bottom Thumbnail Strip */}
-              {postImages.length > 1 && (
-                <View style={styles.lightboxThumbnailsBar}>
-                  <FlatList
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    data={postImages}
-                    keyExtractor={(uri, idx) => `thumb-${idx}-${uri}`}
-                    renderItem={({ item: uri, index }) => (
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={`View photo ${index + 1}`}
-                        style={[
-                          styles.lightboxThumb,
-                          selectedLightboxIndex === index &&
-                            styles.lightboxThumbSelected,
-                        ]}
-                        onPress={() => setSelectedLightboxIndex(index)}
-                      >
-                        <Image
-                          source={{ uri }}
-                          style={styles.lightboxThumbImage}
-                          contentFit="cover"
-                        />
-                      </Pressable>
-                    )}
-                  />
+              }
+              ListFooterComponent={
+                loading && hasMore ? (
+                  <View style={styles.footerLoader}>
+                    <ActivityIndicator
+                      size="small"
+                      color={themeColors.primary}
+                    />
+                  </View>
+                ) : null
+              }
+              renderItem={({ item }: { item: any }) => (
+                <View style={[styles.cell, { width: `${100 / columns}%` }]}>
+                  {mode === "books" ? (
+                    <BookTile
+                      item={item}
+                      onPress={() => {
+                        if (auth.currentUser?.uid) {
+                          void recordUserActivity(
+                            auth.currentUser.uid,
+                            "book",
+                            item.id,
+                          );
+                        }
+                        router.push({
+                          pathname: "/book-preview",
+                          params: {
+                            id: item.id,
+                            source: "see-all",
+                            returnTo: "/see-all?type=books",
+                          },
+                        } as any);
+                      }}
+                    />
+                  ) : mode === "courses" ? (
+                    <CourseTile
+                      item={item}
+                      isDark={isDark}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/lesson-player",
+                          params: {
+                            title: item.title,
+                            teacher: item.teacher,
+                            subject: item.subject,
+                            duration: item.duration,
+                            description: item.description,
+                            link: item.link,
+                            thumbnail: item.thumbnail,
+                          },
+                        } as any)
+                      }
+                    />
+                  ) : mode === "pages" ? (
+                    <PageTile
+                      item={item}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/page-preview",
+                          params: {
+                            id: item.id,
+                            source: "see-all",
+                          },
+                        } as any)
+                      }
+                    />
+                  ) : mode === "post-images" ? (
+                    <PostPhotoTile
+                      item={item}
+                      onPress={() => setSelectedLightboxIndex(item.index)}
+                    />
+                  ) : (
+                    <PaperTile
+                      item={item}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/paper-preview",
+                          params: {
+                            id: item.id,
+                            title: item.title,
+                            subject: item.subject,
+                            year: item.year,
+                            description: item.description,
+                            level: item.level,
+                            pageNumber: item.pageNumber,
+                            paperCode: item.paperCode,
+                            paperNumber: item.paperNumber,
+                            image: item.image,
+                            document: item.document,
+                            type: "Past Paper",
+                          },
+                        } as any)
+                      }
+                    />
+                  )}
                 </View>
               )}
-            </View>
-          ) : null}
-        </Modal>
+            />
+          )}
+
+          <Modal
+            visible={selectedLightboxIndex !== null && mode === "post-images"}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setSelectedLightboxIndex(null)}
+          >
+            {selectedLightboxIndex !== null &&
+            postImages[selectedLightboxIndex] ? (
+              <View style={styles.lightboxBackdrop}>
+                <View style={styles.lightboxHeader}>
+                  <Text style={styles.lightboxCounter}>
+                    {selectedLightboxIndex + 1} of {postImages.length}
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Close lightbox"
+                    style={styles.lightboxCloseButton}
+                    onPress={() => setSelectedLightboxIndex(null)}
+                  >
+                    <Feather name="x" size={22} color="#ffffff" />
+                  </Pressable>
+                </View>
+
+                <View style={styles.lightboxMain}>
+                  {selectedLightboxIndex > 0 && (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Previous image"
+                      style={styles.lightboxNavLeft}
+                      onPress={() =>
+                        setSelectedLightboxIndex((prev) =>
+                          prev !== null ? Math.max(0, prev - 1) : 0,
+                        )
+                      }
+                    >
+                      <Feather name="chevron-left" size={26} color="#ffffff" />
+                    </Pressable>
+                  )}
+
+                  <Image
+                    source={{ uri: postImages[selectedLightboxIndex] }}
+                    style={styles.lightboxImage}
+                    contentFit="contain"
+                  />
+
+                  {selectedLightboxIndex < postImages.length - 1 && (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Next image"
+                      style={styles.lightboxNavRight}
+                      onPress={() =>
+                        setSelectedLightboxIndex((prev) =>
+                          prev !== null
+                            ? Math.min(postImages.length - 1, prev + 1)
+                            : 0,
+                        )
+                      }
+                    >
+                      <Feather name="chevron-right" size={26} color="#ffffff" />
+                    </Pressable>
+                  )}
+                </View>
+
+                {postImages.length > 1 && (
+                  <View style={styles.lightboxThumbnailsBar}>
+                    <FlatList
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      data={postImages}
+                      keyExtractor={(uri, idx) => `thumb-${idx}-${uri}`}
+                      renderItem={({ item: uri, index }) => (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={`View photo ${index + 1}`}
+                          style={[
+                            styles.lightboxThumb,
+                            selectedLightboxIndex === index &&
+                              styles.lightboxThumbSelected,
+                          ]}
+                          onPress={() => setSelectedLightboxIndex(index)}
+                        >
+                          <Image
+                            source={{ uri }}
+                            style={styles.lightboxThumbImage}
+                            contentFit="cover"
+                          />
+                        </Pressable>
+                      )}
+                    />
+                  </View>
+                )}
+              </View>
+            ) : null}
+          </Modal>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -1138,6 +1150,7 @@ function SaveButton({
 }
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: colors.lightBackground },
   screen: { flex: 1, backgroundColor: colors.lightBackground },
   contentContainer: { flex: 1, width: "100%", alignSelf: "center" },
   header: {
