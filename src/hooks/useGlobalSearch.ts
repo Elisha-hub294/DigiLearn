@@ -370,11 +370,26 @@ export function useGlobalSearch(
     };
   }, [debouncedQuery, hasSubmittedSearch]);
 
-  // 4. Keep typing separate from the submitted search.
-  const handleSetQuery = useCallback((text: string) => {
-    setQuery(text);
-    setHasSubmittedSearch(false);
-  }, []);
+  // Keep a submitted search active while the user refines it, but clear it
+  // only when the field is emptied so the result set does not flash and vanish
+  // during native typing.
+  const handleSetQuery = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      setQuery(text);
+
+      if (!trimmed) {
+        setDebouncedQuery("");
+        setHasSubmittedSearch(false);
+        return;
+      }
+
+      if (hasSubmittedSearch) {
+        setDebouncedQuery(trimmed);
+      }
+    },
+    [hasSubmittedSearch],
+  );
 
   // 5. Recent searches persistence
   const addRecentSearch = useCallback(async (term: string) => {
