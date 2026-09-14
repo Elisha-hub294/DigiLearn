@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { getDownloadURL, listAll, ref } from "firebase/storage";
 import { useEffect, useState } from "react";
@@ -19,6 +20,43 @@ const DEFAULT_LOCAL_SUBJECT_AVATAR =
 const urlCache = new Map<string, string>();
 const urlPromises = new Map<string, Promise<string>>();
 const nativePrefetchQueue = new Set<string>();
+const ICON_URL_CACHE_PREFIX = "digilearn-icon-url-v1:";
+
+function isIconStoragePath(storagePath: string): boolean {
+  return storagePath === "icons" || storagePath.startsWith("icons/");
+}
+
+async function readPersistedIconUrl(
+  storagePath: string,
+): Promise<string | null> {
+  if (Platform.OS === "web" || !isIconStoragePath(storagePath)) return null;
+
+  try {
+    return await AsyncStorage.getItem(`${ICON_URL_CACHE_PREFIX}${storagePath}`);
+  } catch (error) {
+    console.warn("Unable to read persisted icon URL", error);
+    return null;
+  }
+}
+
+async function persistIconUrl(storagePath: string, downloadUrl: string) {
+  if (
+    Platform.OS === "web" ||
+    !isIconStoragePath(storagePath) ||
+    !downloadUrl
+  ) {
+    return;
+  }
+
+  try {
+    await AsyncStorage.setItem(
+      `${ICON_URL_CACHE_PREFIX}${storagePath}`,
+      downloadUrl,
+    );
+  } catch (error) {
+    console.warn("Unable to persist icon URL", error);
+  }
+}
 
 export function prefetchNativeImage(url: string | undefined): void {
   if (!url || Platform.OS === "web") return;
@@ -251,10 +289,18 @@ export async function getFirebaseStorageUrl(
   }
 
   const promise = (async () => {
+    const persistedUrl = await readPersistedIconUrl(storagePath!);
+    if (persistedUrl) {
+      urlCache.set(storagePath!, persistedUrl);
+      urlPromises.delete(storagePath!);
+      return persistedUrl;
+    }
+
     try {
       const downloadUrl = await getDownloadURL(ref(storage, storagePath!));
       urlCache.set(storagePath!, downloadUrl);
       urlPromises.delete(storagePath!);
+      await persistIconUrl(storagePath!, downloadUrl);
       prefetchNativeImage(downloadUrl);
       return downloadUrl;
     } catch (err) {
@@ -264,6 +310,7 @@ export async function getFirebaseStorageUrl(
         urlCache.set(storagePath!, resolvedUrl);
         urlCache.set(discoveredPath, resolvedUrl);
         urlPromises.delete(storagePath!);
+        await persistIconUrl(storagePath!, resolvedUrl);
         return resolvedUrl;
       }
 
@@ -286,6 +333,7 @@ export async function getFirebaseStorageUrl(
       }
       urlCache.set(storagePath!, fallbackUrl);
       urlPromises.delete(storagePath!);
+      await persistIconUrl(storagePath!, fallbackUrl);
       prefetchNativeImage(fallbackUrl);
       return fallbackUrl;
     }

@@ -1,29 +1,28 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Feather as Icon } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { collection, getDocs } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  FlatList,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    FlatList,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp, useReducedMotion } from "react-native-reanimated";
-import { db } from "../../../firebaseConfig";
 import { colors, radius, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import { loadSubjects } from "../../services/subjectsService";
 import { getFirebaseStorageUrl } from "../../utils/firebaseStorage";
 import {
-  matchesUserInterests,
-  shouldFilterByInterests,
+    matchesUserInterests,
+    shouldFilterByInterests,
 } from "../../utils/interestFilter";
 
 /** Fisher-Yates shuffle runs once per app mount */
@@ -232,24 +231,20 @@ export const TopicalNotesSlider = () => {
 
   useEffect(() => {
     let active = true;
-    const loadSubjects = async () => {
+    const loadSubjectCards = async () => {
       try {
-        const snaps = await getDocs(collection(db, "subject"));
-        if (!active) return;
-
         const list = await Promise.all(
-          snaps.docs.map(async (d) => {
-            const data = d.data() as Record<string, unknown>;
-            const name = typeof data.name === "string" ? data.name.trim() : "";
+          (await loadSubjects()).map(async (subject) => {
+            const name = subject.name.trim();
             const avatar =
-              typeof data.avatar === "string" ? data.avatar.trim() : "";
+              typeof subject.avatar === "string" ? subject.avatar.trim() : "";
             const resolvedAvatar = avatar
               ? await getFirebaseStorageUrl(avatar)
               : "";
 
             return {
-              id: normalizeKey(name) || d.id,
-              title: name || d.id,
+              id: normalizeKey(name) || subject.id,
+              title: name || subject.id,
               image: resolvedAvatar || defaultSubjectAvatar,
             };
           }),
@@ -263,7 +258,7 @@ export const TopicalNotesSlider = () => {
         if (active) setLoadingSubjects(false);
       }
     };
-    loadSubjects();
+    loadSubjectCards();
     return () => {
       active = false;
     };
