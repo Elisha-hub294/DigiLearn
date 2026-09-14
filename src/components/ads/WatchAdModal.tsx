@@ -1,6 +1,10 @@
 import { Feather } from "@expo/vector-icons";
+
+import { RewardedAd, RewardedAdEventType } from "react-native-google-mobile-ads";
+import { REWARDED_AD_UNIT_ID } from "../../constants/ads";
+
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Animated,
   Modal,
@@ -12,6 +16,9 @@ import {
 } from "react-native";
 import { radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
+
+// Create rewarded ad instance
+const rewardedAd = RewardedAd.createForAdRequest(REWARDED_AD_UNIT_ID);
 
 interface WatchAdModalProps {
   visible: boolean;
@@ -71,6 +78,29 @@ export function WatchAdModal({
     setStep("playing");
     setCountdown(5);
     adProgress.setValue(0);
+
+    // Listen for reward earned — fires when user completes the ad
+    const unsubscribeEarned = rewardedAd.addAdEventListener(
+      RewardedAdEventType.EARNED_REWARD,
+      () => {
+        unsubscribeEarned();
+        unsubscribeLoaded();
+        setTimeout(() => {
+          onAdRewardEarned();
+          onClose();
+        }, 500);
+      },
+    );
+
+    // Load & show the ad once it's ready
+    const unsubscribeLoaded = rewardedAd.addAdEventListener(
+      RewardedAdEventType.LOADED,
+      () => {
+        rewardedAd.show();
+      },
+    );
+
+    rewardedAd.load();
   };
 
   if (!visible) return null;
