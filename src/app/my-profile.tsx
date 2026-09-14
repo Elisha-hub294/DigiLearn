@@ -1,5 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import { useNetworkState } from "expo-network";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { doc, updateDoc } from "firebase/firestore";
@@ -68,11 +69,16 @@ function ProfileSettingRow({ icon, label, value, onPress, about }: RowProps) {
       accessibilityLabel={`${hasValue ? "Edit" : "Set"} ${label}`}
       style={({ pressed }) => [
         styles.row,
-        { backgroundColor: themeColors.surface, borderColor: themeColors.border },
+        {
+          backgroundColor: themeColors.surface,
+          borderColor: themeColors.border,
+        },
         pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
       ]}
     >
-      <View style={[styles.iconArea, { backgroundColor: themeColors.primaryLight }]}>
+      <View
+        style={[styles.iconArea, { backgroundColor: themeColors.primaryLight }]}
+      >
         <Feather name={icon} size={18} color={themeColors.primary} />
       </View>
       <View style={styles.rowContent}>
@@ -156,6 +162,7 @@ export default function MyProfileScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, profile, loading } = useProfile();
+  const networkState = useNetworkState();
   const { setIsDeletingAccount } = useAccountDeletion();
   const [menuOpen, setMenuOpen] = useState(false);
   const [field, setField] = useState<Field | null>(null);
@@ -167,6 +174,9 @@ export default function MyProfileScreen() {
   const [pictureError, setPictureError] = useState("");
   const [pendingPicture, setPendingPicture] = useState<string | null>(null);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const isOffline =
+    networkState.isConnected === false ||
+    networkState.isInternetReachable === false;
   const horizontalPadding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - horizontalPadding * 2);
   const openEditor = (nextField: Field) => {
@@ -228,6 +238,12 @@ export default function MyProfileScreen() {
   };
   const uploadProfilePicture = async (uri: string, mimeType = "image/jpeg") => {
     if (!user || pictureSaving) return;
+    if (isOffline) {
+      setPictureError(
+        "Your profile picture can't be changed while you're offline. Please reconnect and try again.",
+      );
+      return;
+    }
 
     setPendingPicture(null);
     try {
@@ -247,6 +263,12 @@ export default function MyProfileScreen() {
   };
   const changeProfilePicture = async () => {
     if (!user || pictureSaving) return;
+    if (isOffline) {
+      setPictureError(
+        "Your profile picture can't be changed while you're offline. Please reconnect and try again.",
+      );
+      return;
+    }
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -752,7 +774,13 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   rowContent: { flex: 1, justifyContent: "center" },
-  rowLabel: { fontSize: 11, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 2 },
+  rowLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 2,
+  },
   rowValue: { fontSize: 15, fontWeight: "600", lineHeight: 20 },
   setAction: { color: "#3B82F6", fontWeight: "700" },
   seeMore: { color: "#3B82F6", fontSize: 13, fontWeight: "600", marginTop: 3 },

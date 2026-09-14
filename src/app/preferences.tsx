@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { useNetworkState } from "expo-network";
 import { useRouter } from "expo-router";
 import { doc, updateDoc } from "firebase/firestore";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -104,6 +105,7 @@ export default function PreferencesScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { user, profile, loading: profileLoading } = useProfile();
+  const networkState = useNetworkState();
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -113,6 +115,10 @@ export default function PreferencesScreen() {
   const [saveError, setSaveError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const isOffline =
+    networkState.isConnected === false ||
+    networkState.isInternetReachable === false;
 
   const initialized = useRef(false);
   const horizontalPadding = getHorizontalPadding(width);
@@ -183,6 +189,10 @@ export default function PreferencesScreen() {
 
   const save = async () => {
     if (!user || saving) return;
+    if (isOffline) {
+      setSaveError(true);
+      return;
+    }
     const originalSubjects = profile?.subjects ?? [];
     const originalFilter = Boolean(profile?.filterFeedByInterests);
     if (
@@ -354,7 +364,9 @@ export default function PreferencesScreen() {
                       { color: themeColors.primaryRed },
                     ]}
                   >
-                    Couldn&apos;t save preferences. Please try again.
+                    {isOffline
+                      ? "You're offline. Reconnect to save your preferences."
+                      : "Couldn&apos;t save preferences. Please try again."}
                   </Text>
                 ) : null}
               </>

@@ -1,4 +1,5 @@
 import { Feather as Icon } from "@expo/vector-icons";
+import { useNetworkState } from "expo-network";
 import { useFocusEffect, useNavigation, useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -41,6 +42,7 @@ export default function SettingsScreen() {
   const { colors, isDark, setThemeMode } = useTheme();
   const { newReportCount, pendingApplicationCount } = useAdminReviewSignals();
   const { width } = useWindowDimensions();
+  const networkState = useNetworkState();
   const horizontalPadding = getHorizontalPadding(width);
   const maxWidth = Math.min(1100, width - horizontalPadding * 2);
 
@@ -49,6 +51,11 @@ export default function SettingsScreen() {
   const [assistantEnabled, setAssistantEnabledState] = useState(true);
   const [isLogoutDialogVisible, setLogoutDialogVisible] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+
+  const isOffline =
+    networkState.isConnected === false ||
+    networkState.isInternetReachable === false;
 
   useEffect(() => {
     let cancelled = false;
@@ -89,6 +96,14 @@ export default function SettingsScreen() {
 
   const togglePushNotifications = useCallback(
     async (value: boolean) => {
+      if (isOffline) {
+        setSettingsError(
+          "Push notification settings can't be changed while you're offline. Please reconnect and try again.",
+        );
+        return;
+      }
+
+      setSettingsError(null);
       setPushEnabled(value);
       try {
         await setPushNotificationsEnabled(
@@ -101,7 +116,7 @@ export default function SettingsScreen() {
         setPushEnabled(!value);
       }
     },
-    [profile, user],
+    [isOffline, profile, user],
   );
 
   const toggleReminders = useCallback(async (value: boolean) => {
@@ -403,6 +418,14 @@ export default function SettingsScreen() {
         primaryText="OK"
         onPrimary={() => setLogoutError(null)}
         onClose={() => setLogoutError(null)}
+      />
+      <ActionDialog
+        visible={settingsError !== null}
+        title="You're offline"
+        message={settingsError ?? ""}
+        primaryText="OK"
+        onPrimary={() => setSettingsError(null)}
+        onClose={() => setSettingsError(null)}
       />
     </SafeAreaView>
   );
