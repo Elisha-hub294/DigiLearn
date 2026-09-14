@@ -1,4 +1,4 @@
-import { Feather, FontAwesome } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -20,14 +20,10 @@ import { auth } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { GoogleIcon } from "../components/ui/GoogleIcon";
 import { getHorizontalPadding } from "../constants/layout";
-import { colors, spacing } from "../constants/theme";
+import { colors, radius, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { sendEmailLink } from "../services/emailLinkAuth";
-import {
-  parseAuthError,
-  signInWithFacebook,
-  signInWithGoogle,
-} from "../services/socialAuth";
+import { parseAuthError, signInWithGoogle } from "../services/socialAuth";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 50;
@@ -143,30 +139,6 @@ export default function LoginScreen() {
       }
     } catch (error) {
       console.error("Google sign-in exception:", error);
-      setGeneralError(parseAuthError(error));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isLoading, router]);
-
-  const handleFacebookSignIn = useCallback(async () => {
-    if (isLoading) return;
-    setGeneralError("");
-    setIsLoading(true);
-
-    try {
-      const result = await signInWithFacebook();
-      if (result.cancelled) {
-        return;
-      }
-      if (result.success && result.user) {
-        router.dismissAll();
-        router.replace("/");
-      } else if (result.error) {
-        setGeneralError(result.error);
-      }
-    } catch (error) {
-      console.error("Facebook sign-in exception:", error);
       setGeneralError(parseAuthError(error));
     } finally {
       setIsLoading(false);
@@ -421,23 +393,6 @@ export default function LoginScreen() {
               </Pressable>
 
               <Pressable
-                onPress={handleFacebookSignIn}
-                style={({ pressed }) => [
-                  styles.socialButton,
-                  {
-                    backgroundColor: themeColors.white,
-                    borderColor: themeColors.border,
-                  },
-                  pressed && styles.socialPressed,
-                ]}
-                disabled={isLoading}
-                accessibilityRole="button"
-                accessibilityLabel="Sign in with Facebook"
-              >
-                <FontAwesome name="facebook" size={20} color="#1877F2" />
-              </Pressable>
-
-              <Pressable
                 onPress={handleEmailIcon}
                 style={({ pressed }) => [
                   styles.socialButton,
@@ -563,7 +518,7 @@ const styles = StyleSheet.create({
   socialButton: {
     flex: 1,
     height: 44,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: "#E5E7EB",

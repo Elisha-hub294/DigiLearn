@@ -1,6 +1,5 @@
 import {
   deleteUser,
-  FacebookAuthProvider,
   GoogleAuthProvider,
   signInWithCredential,
   signInWithPopup,
@@ -84,23 +83,6 @@ function getNativeGoogleSigninModule() {
   }
 }
 
-function getNativeFacebookModule() {
-  if (
-    Platform.OS === "web" ||
-    !NativeModules?.FBLoginManager ||
-    !NativeModules?.FBAccessToken
-  ) {
-    return null;
-  }
-
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("react-native-fbsdk-next");
-  } catch {
-    return null;
-  }
-}
-
 export function parseAuthError(error: unknown): string {
   const message =
     typeof error === "string"
@@ -111,26 +93,6 @@ export function parseAuthError(error: unknown): string {
           typeof error.message === "string"
         ? error.message
         : "";
-
-  if (
-    /app not active|app is not accessible right now|app developer is aware|feature unavailable/i.test(
-      message,
-    )
-  ) {
-    return "Facebook Login is unavailable because the Meta app is inactive or in development mode. Check Meta for Developers, then try again.";
-  }
-
-  if (/key hash|keyhash/i.test(message)) {
-    return "Facebook sign-in failed due to an Android key hash mismatch. Please add your key hash in Meta for Developers.";
-  }
-
-  if (/client token/i.test(message)) {
-    return "Facebook client token is missing or invalid. Please check your Meta app settings.";
-  }
-
-  if (/app ID|application ID/i.test(message)) {
-    return "Facebook App ID is missing or invalid. Please check your app configuration.";
-  }
 
   if (/deleted_client|OAuth client was deleted/i.test(message)) {
     return "Google Sign-In is temporarily unavailable because its OAuth client was deleted. Please contact support.";
@@ -149,21 +111,17 @@ export function parseAuthError(error: unknown): string {
       case "auth/account-exists-with-different-credential":
         return "An account already exists with this email using a different sign-in method.";
       case "auth/operation-not-allowed":
-        return "Facebook sign-in is not enabled in Firebase Console. Please enable Facebook under Authentication > Sign-in method in Firebase Console.";
+        return "This sign-in method is not enabled. Please contact support.";
       case "auth/network-request-failed":
         return "Couldn't connect. Please check your internet connection and try again.";
       case "auth/user-disabled":
         return "This account has been disabled. Please contact support.";
       case "auth/invalid-credential":
         return "Invalid credentials. Please try signing in again.";
-      case "auth/credential-already-in-use":
-        return "This Facebook account is already linked to another user.";
       case "auth/requires-recent-login":
         return "Please log in again to continue.";
       case "auth/app-not-authorized":
         return "This app is not authorized for Firebase Authentication with the current credentials.";
-      case "auth/operation-not-supported-in-this-environment":
-        return "Facebook sign-in is not available in this version of the app. Install the latest app update and try again.";
       default:
         if (message && message !== code && !message.startsWith("Firebase:")) {
           return message;
@@ -276,89 +234,6 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
       }
     }
 
-    const errorMsg = parseAuthError(error);
-    if (
-      errorMsg.includes("cancelled") ||
-      error?.code === "auth/popup-closed-by-user" ||
-      error?.code === "auth/cancelled-popup-request"
-    ) {
-      return { success: false, cancelled: true };
-    }
-    return { success: false, error: errorMsg };
-  }
-}
-
-/**
- * Signs in or signs up a user using Facebook Authentication.
- */
-export async function signInWithFacebook(): Promise<SocialAuthResult> {
-  try {
-    const provider = new FacebookAuthProvider();
-    provider.addScope("email");
-    provider.addScope("public_profile");
-
-    if (Platform.OS === "web") {
-      const credential = await signInWithPopup(auth, provider);
-      const verificationError = await requireVerifiedUser(credential.user);
-      if (verificationError) return verificationError;
-      return { success: true, user: credential.user };
-    }
-
-    const facebookModule = getNativeFacebookModule();
-    if (!facebookModule) {
-      return {
-        success: false,
-        error:
-          "Facebook sign-in requires the latest OS platform app. Please install the app update and try again.",
-      };
-    }
-
-    const appId = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID?.trim();
-    const clientToken = process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN?.trim();
-
-    if (!appId) {
-      console.warn(
-        "[socialAuth] EXPO_PUBLIC_FACEBOOK_APP_ID is not configured in environment.",
-      );
-      return {
-        success: false,
-        error:
-          "Facebook sign-in is not configured. Missing EXPO_PUBLIC_FACEBOOK_APP_ID.",
-      };
-    }
-
-    if (typeof facebookModule.Settings?.setAppID === "function") {
-      facebookModule.Settings.setAppID(appId);
-    }
-    if (
-      clientToken &&
-      typeof facebookModule.Settings?.setClientToken === "function"
-    ) {
-      facebookModule.Settings.setClientToken(clientToken);
-    }
-
-    facebookModule.Settings.initializeSDK();
-    const loginResult = await facebookModule.LoginManager.logInWithPermissions(
-      ["public_profile", "email"],
-    );
-    if (loginResult.isCancelled) return { success: false, cancelled: true };
-
-    const accessToken =
-      await facebookModule.AccessToken.getCurrentAccessToken();
-    if (!accessToken?.accessToken) {
-      return {
-        success: false,
-        error: "Facebook did not return an access token. Please try again.",
-      };
-    }
-
-    const credential = FacebookAuthProvider.credential(accessToken.accessToken);
-    const userCredential = await signInWithCredential(auth, credential);
-    const verificationError = await requireVerifiedUser(userCredential.user);
-    if (verificationError) return verificationError;
-    return { success: true, user: userCredential.user };
-  } catch (error: any) {
-    console.error("Facebook sign-in error:", error);
     const errorMsg = parseAuthError(error);
     if (
       errorMsg.includes("cancelled") ||

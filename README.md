@@ -155,7 +155,7 @@ DigiLearn/
 │   │
 │   ├── services/            # Business logic and API integration
 │   │   ├── firebaseConfig.ts      # Firebase setup
-│   │   ├── socialAuth.ts          # Google/Facebook authentication
+│   │   ├── socialAuth.ts          # Google authentication
 │   │   ├── aiAssistantService.ts  # AI assistant logic
 │   │   ├── assistantChatService.ts # Chat message handling
 │   │   ├── userProfile.ts         # User data management

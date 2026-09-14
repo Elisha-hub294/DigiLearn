@@ -1,4 +1,4 @@
-import { Feather, FontAwesome } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -20,15 +20,10 @@ import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { sendEmailLink } from "../services/emailLinkAuth";
-import {
-  parseAuthError,
-  signInWithFacebook,
-  signInWithGoogle,
-} from "../services/socialAuth";
+import { parseAuthError, signInWithGoogle } from "../services/socialAuth";
 import {
   getUserOnboardingState,
   initializeUserProfile,
-  saveFacebookProfilePicture,
   saveGoogleProfilePicture,
 } from "../services/userProfile";
 
@@ -155,38 +150,6 @@ export default function SignUpScreen() {
       }
     } catch (error) {
       console.error("Google sign-up exception:", error);
-      setGeneralError(parseAuthError(error));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isLoading, router]);
-
-  const handleFacebookSignUp = useCallback(async () => {
-    if (isLoading) return;
-    setGeneralError("");
-    setIsLoading(true);
-
-    try {
-      const result = await signInWithFacebook();
-      if (result.cancelled) {
-        return;
-      }
-      if (result.success && result.user) {
-        await initializeUserProfile();
-        await saveFacebookProfilePicture(result.user);
-        const onboarding = await getUserOnboardingState(result.user.uid);
-        if (onboarding.accountTypeCompleted && onboarding.type) {
-          router.dismissAll();
-          router.replace("/" as never);
-        } else {
-          router.dismissAll();
-          router.replace("/account-type" as never);
-        }
-      } else if (result.error) {
-        setGeneralError(result.error);
-      }
-    } catch (error) {
-      console.error("Facebook sign-up exception:", error);
       setGeneralError(parseAuthError(error));
     } finally {
       setIsLoading(false);
@@ -356,23 +319,6 @@ export default function SignUpScreen() {
                 accessibilityLabel="Sign up with Google"
               >
                 <GoogleIcon size={20} />
-              </Pressable>
-
-              <Pressable
-                onPress={handleFacebookSignUp}
-                style={({ pressed }) => [
-                  styles.socialButton,
-                  {
-                    backgroundColor: themeColors.white,
-                    borderColor: themeColors.border,
-                  },
-                  pressed && styles.socialPressed,
-                ]}
-                disabled={isLoading}
-                accessibilityRole="button"
-                accessibilityLabel="Sign up with Facebook"
-              >
-                <FontAwesome name="facebook" size={20} color="#1877F2" />
               </Pressable>
 
               <Pressable

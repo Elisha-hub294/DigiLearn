@@ -287,14 +287,7 @@ export async function saveGoogleProfilePicture(user: User) {
   return saveSocialProfilePicture(user, "google");
 }
 
-export async function saveFacebookProfilePicture(user: User) {
-  return saveSocialProfilePicture(user, "facebook");
-}
-
-async function saveSocialProfilePicture(
-  user: User,
-  provider: "google" | "facebook",
-) {
+async function saveSocialProfilePicture(user: User, provider: "google") {
   const sourceUrl = user.photoURL?.trim();
   const displayName =
     sanitizeProfileName(user.displayName ?? "") ||
