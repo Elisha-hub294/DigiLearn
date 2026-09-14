@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import type { ComponentProps } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import {
@@ -28,74 +29,122 @@ export function ProfileHeader({
   const { width } = useWindowDimensions();
   const requestedUri = photoURL || profile.photoURL;
   const avatarSize = Math.min(150, Math.max(104, width * 0.32));
+
+  const roleTitle =
+    profile.type === "admin"
+      ? "Administrator"
+      : profile.type === "teacher"
+        ? "Verified Educator"
+        : "Student Learner";
+
+  const roleIcon: ComponentProps<typeof Feather>["name"] =
+    profile.type === "admin"
+      ? "shield"
+      : profile.type === "teacher"
+        ? "award"
+        : "book-open";
+
+  const isHexAccent = /^#([A-Fa-f0-9]{6})$/.test(accentColor);
+  const accentMid = isHexAccent ? `${accentColor}B3` : accentColor;
+  const accentDark = isDark ? "#0A0F1D" : "#111827";
+
   return (
     <View style={[s.wrap, { backgroundColor: themeColors.white }]}>
-      <View style={[s.banner, { backgroundColor: accentColor }]}>
+      {/* Banner Header with Gradient & Decorative Elements */}
+      <LinearGradient
+        colors={[accentColor, accentMid, accentDark]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={s.banner}
+      >
+        {/* Subtle Decorative Background Accents */}
+        <View style={s.bgCircle1} />
+        <View style={s.bgCircle2} />
+
+        {/* Role Badge on Banner */}
         {profile.type === "admin" ? (
           <LinearGradient
-            colors={["rgba(255,255,255,0.18)", "transparent"]}
+            colors={["rgba(239,68,68,0.85)", "rgba(185,28,28,0.7)"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={s.adminBadge}
+            style={s.bannerRoleBadge}
           >
-            <Text style={s.adminText}>ADMIN</Text>
+            <Feather name="shield" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
+            <Text style={s.bannerRoleText}>ADMIN</Text>
           </LinearGradient>
         ) : profile.type === "teacher" ? (
           <LinearGradient
-            colors={["rgba(255,255,255,0.22)", "rgba(255,255,255,0.06)"]}
+            colors={["rgba(16,185,129,0.85)", "rgba(5,150,105,0.7)"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={s.teacherBadge}
+            style={s.bannerRoleBadge}
           >
-            <Feather
-              name="award"
-              size={12}
-              color="#FFFFFF"
-              style={{ marginRight: 4 }}
-            />
-            <Text style={s.adminText}>TEACHER</Text>
+            <Feather name="award" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
+            <Text style={s.bannerRoleText}>TEACHER</Text>
           </LinearGradient>
         ) : null}
+
+        {/* Settings Button */}
         <Pressable
           onPress={() => router.push("/settings")}
           accessibilityRole="button"
           accessibilityLabel="Open settings"
-          style={[
-            s.settings,
-            {
-              backgroundColor: themeColors.surface,
-              borderColor: themeColors.border,
-            },
+          style={({ pressed }) => [
+            s.settingsBtn,
+            pressed && { opacity: 0.8, transform: [{ scale: 0.95 }] },
           ]}
         >
-          <Feather name="settings" size={20} color={themeColors.text} />
+          <Feather name="settings" size={18} color="#FFFFFF" />
         </Pressable>
-      </View>
+      </LinearGradient>
+
+      {/* Main Sheet & Identity */}
       <View style={[s.sheet, { backgroundColor: themeColors.white }]}>
-        <View
-          style={[
-            s.avatarWrap,
-            { backgroundColor: themeColors.white },
-            { borderColor: accentColor },
-            {
-              width: avatarSize,
-              height: avatarSize,
-              marginTop: -avatarSize * 0.47,
-            },
-          ]}
-        >
-          <FirebaseImage
-            source={requestedUri ? { uri: requestedUri } : undefined}
-            fallbackSource={fallbackAvatar}
-            placeholder={fallbackAvatar}
-            style={s.avatar}
-            contentFit="cover"
-            accessibilityLabel="User profile picture"
-          />
+        <View style={s.avatarContainer}>
+          <Pressable
+            onPress={() => router.push("/my-profile")}
+            accessibilityRole="button"
+            accessibilityLabel="Edit profile picture"
+            style={({ pressed }) => [
+              s.avatarWrap,
+              { backgroundColor: themeColors.white, borderColor: accentColor },
+              {
+                width: avatarSize,
+                height: avatarSize,
+                marginTop: -avatarSize * 0.5,
+              },
+              pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+            ]}
+          >
+            <FirebaseImage
+              source={requestedUri ? { uri: requestedUri } : undefined}
+              fallbackSource={fallbackAvatar}
+              placeholder={fallbackAvatar}
+              style={s.avatar}
+              contentFit="cover"
+              accessibilityLabel="User profile picture"
+            />
+            {/* Edit overlay icon */}
+            <View style={[s.editAvatarBadge, { backgroundColor: themeColors.primary }]}>
+              <Feather name="camera" size={12} color="#FFFFFF" />
+            </View>
+          </Pressable>
         </View>
+
+        {/* User Name */}
         <Text style={[s.name, { color: themeColors.text }]}>
           {profile.name}
         </Text>
+
+        {/* Role Pill */}
+        <View style={[s.roleChip, { backgroundColor: themeColors.lightBackground, borderColor: themeColors.border }]}>
+          <Feather name={roleIcon} size={13} color={themeColors.primary} />
+          <Text style={[s.roleChipText, { color: themeColors.text }]}>
+            {roleTitle}
+          </Text>
+        </View>
+
+        {/* Bio Text */}
         {profile.bio ? (
           <Text style={[s.bio, { color: themeColors.subtitle }]}>
             {profile.bio}
@@ -108,45 +157,57 @@ export function ProfileHeader({
             onPress={() => router.push("/my-profile")}
           >
             <Text style={[s.addBio, { color: themeColors.primary }]}>
-              ✎ Talk about yourself
+              ✎ Add a short bio about yourself
             </Text>
           </Pressable>
         )}
 
-        {profile.type === "teacher" && (
+        {/* Header Action Buttons */}
+        <View style={s.actionRow}>
           <Pressable
-            onPress={() => {
-              router.push({
-                pathname: "/(tabs)/teacher-profile",
-                params: { name: profile.name },
-              } as any);
-            }}
-            style={[
-              s.publicProfileButton,
-              { borderColor: themeColors.primary },
+            onPress={() => router.push("/my-profile")}
+            style={({ pressed }) => [
+              s.editProfileButton,
+              { backgroundColor: themeColors.surface, borderColor: themeColors.border },
+              pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
             ]}
             accessibilityRole="button"
-            accessibilityLabel="View public teacher profile"
+            accessibilityLabel="Edit profile details"
           >
-            <Feather
-              name="external-link"
-              size={14}
-              color={themeColors.primary}
-            />
-            <Text
-              style={[
-                s.publicProfileButtonText,
-                { color: themeColors.primary },
-              ]}
-            >
-              View Public Channel & Resources
+            <Feather name="edit-3" size={14} color={themeColors.text} />
+            <Text style={[s.editProfileButtonText, { color: themeColors.text }]}>
+              Edit Profile
             </Text>
           </Pressable>
-        )}
+
+          {profile.type === "teacher" && (
+            <Pressable
+              onPress={() => {
+                router.push({
+                  pathname: "/(tabs)/teacher-profile",
+                  params: { name: profile.name },
+                } as any);
+              }}
+              style={({ pressed }) => [
+                s.publicProfileButton,
+                { backgroundColor: themeColors.primary },
+                pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="View public teacher profile"
+            >
+              <Feather name="external-link" size={14} color="#FFFFFF" />
+              <Text style={s.publicProfileButtonText}>
+                Public Channel
+              </Text>
+            </Pressable>
+          )}
+        </View>
       </View>
     </View>
   );
 }
+
 const s = StyleSheet.create({
   wrap: {
     width: "100%",
@@ -154,92 +215,158 @@ const s = StyleSheet.create({
     backgroundColor: colors.white,
   },
   banner: {
-    height: 132,
-    backgroundColor: colors.primaryDark,
+    height: 140,
+    position: "relative",
     overflow: "hidden",
+    justifyContent: "space-between",
+    paddingTop: 12,
+    paddingHorizontal: 16,
   },
-  adminBadge: {
+  bgCircle1: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderBottomRightRadius: 14,
-    opacity: 0.72,
+    top: -30,
+    right: -20,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
   },
-  teacherBadge: {
+  bgCircle2: {
     position: "absolute",
-    top: 0,
-    left: 0,
+    bottom: -40,
+    left: -30,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+  },
+  bannerRoleBadge: {
+    alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderBottomRightRadius: 14,
-    backgroundColor: "rgba(0,0,0,0.2)",
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 20,
   },
-  adminText: {
+  bannerRoleText: {
     color: "#FFFFFF",
     fontSize: 11,
     fontWeight: "800",
-    letterSpacing: 3,
+    letterSpacing: 1.5,
     textTransform: "uppercase",
   },
-  settings: {
+  settingsBtn: {
     position: "absolute",
     right: 14,
-    top: 13,
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    borderWidth: 1,
+    top: 12,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
   },
   sheet: {
     width: "100%",
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-    minHeight: 130,
+    paddingHorizontal: 20,
+    paddingBottom: 18,
+  },
+  avatarContainer: {
+    position: "relative",
+    alignItems: "center",
   },
   avatarWrap: {
     borderRadius: 999,
-    marginBottom: 10,
-    borderWidth: 5,
+    marginBottom: 8,
+    borderWidth: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   avatar: { width: "100%", height: "100%", borderRadius: 999 },
+  editAvatarBadge: {
+    position: "absolute",
+    bottom: 2,
+    right: 2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
   name: {
-    fontSize: 25,
-    fontWeight: "700",
+    fontSize: 23,
+    fontWeight: "800",
     color: colors.text,
     textAlign: "center",
+    letterSpacing: -0.3,
+  },
+  roleChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  roleChipText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   bio: {
     color: colors.subtitle,
     lineHeight: 20,
-    fontSize: 15,
+    fontSize: 14,
     textAlign: "center",
-    marginTop: 7,
+    marginTop: 10,
+    paddingHorizontal: 10,
   },
   addBio: {
     color: colors.primary,
-    fontSize: 14,
+    fontSize: 13,
     marginTop: 8,
+    fontWeight: "600",
+  },
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    marginTop: 16,
+    flexWrap: "wrap",
+  },
+  editProfileButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  editProfileButtonText: {
+    fontSize: 13,
     fontWeight: "600",
   },
   publicProfileButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 14,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 9,
     borderRadius: 20,
-    borderWidth: 1.5,
-    backgroundColor: "transparent",
   },
   publicProfileButtonText: {
+    color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "700",
   },

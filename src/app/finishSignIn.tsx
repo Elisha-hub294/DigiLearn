@@ -3,7 +3,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -28,7 +27,12 @@ import {
 export default function FinishSignInScreen() {
   const { colors: themeColors } = useTheme();
   const router = useRouter();
-  const params = useLocalSearchParams<Record<string, string | undefined>>();
+  const params = useLocalSearchParams<{
+    link?: string;
+    apiKey?: string;
+    oobCode?: string;
+    email?: string;
+  }>();
 
   const [errorMessage, setErrorMessage] = useState("");
   const [linkUrl, setLinkUrl] = useState<string | null>(null);
@@ -101,7 +105,7 @@ export default function FinishSignInScreen() {
           "digilearn-af86d.firebaseapp.com";
         const query = new URLSearchParams();
         for (const [key, val] of Object.entries(params)) {
-          if (val) query.set(key, val);
+          if (typeof val === "string" && val) query.set(key, val);
         }
         return `https://${authDomain}/finishSignIn?${query.toString()}`;
       }

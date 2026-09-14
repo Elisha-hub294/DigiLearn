@@ -54,6 +54,9 @@ function getSubjectNames(items: unknown): string[] {
     }
   });
 
+  return result;
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   if (
     typeof error === "object" &&

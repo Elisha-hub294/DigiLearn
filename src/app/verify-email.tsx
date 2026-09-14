@@ -4,6 +4,7 @@ import { reload, signOut } from "firebase/auth";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,

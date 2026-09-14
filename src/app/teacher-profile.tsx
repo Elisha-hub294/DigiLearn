@@ -24,6 +24,7 @@ import {
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import { db } from "../../firebaseConfig";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
 import { TeacherPostItem } from "../components/home/TeacherPostCard";
@@ -691,13 +692,23 @@ export default function TeacherProfileScreen() {
     setRefreshing(false);
   }, [loadData]);
 
+  const isHexAccent = /^#([A-Fa-f0-9]{6})$/.test(accentColor);
+  const accentMid = isHexAccent ? `${accentColor}B3` : accentColor;
+  const accentDark = isDark ? "#0A0F1D" : "#111827";
+
   const renderHeader = useCallback(
     () => (
       <>
         <View style={styles.headerWrap}>
-          <View
-            style={[styles.headerPanel, { backgroundColor: accentColor }]}
-          />
+          <LinearGradient
+            colors={[accentColor, accentMid, accentDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.headerPanel}
+          >
+            <View style={styles.bgCircle1} />
+            <View style={styles.bgCircle2} />
+          </LinearGradient>
           {!isOwnProfile && (
             <Pressable
               accessibilityRole="button"
@@ -1563,6 +1574,25 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 150,
+    overflow: "hidden",
+  },
+  bgCircle1: {
+    position: "absolute",
+    top: -20,
+    right: -20,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+  },
+  bgCircle2: {
+    position: "absolute",
+    bottom: -30,
+    left: -20,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
   },
   backButton: {
     position: "absolute",

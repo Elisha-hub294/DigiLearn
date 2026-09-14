@@ -60,35 +60,40 @@ function ProfileSettingRow({ icon, label, value, onPress, about }: RowProps) {
   const { colors: themeColors } = useTheme();
   const hasValue = Boolean(value?.trim());
   const [expanded, setExpanded] = useState(false);
+
   return (
-    <View style={styles.row}>
-      <View style={styles.iconArea}>
-        <Feather name={icon} size={23} color={themeColors.inactive} />
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${hasValue ? "Edit" : "Set"} ${label}`}
+      style={({ pressed }) => [
+        styles.row,
+        { backgroundColor: themeColors.surface, borderColor: themeColors.border },
+        pressed && { opacity: 0.85, transform: [{ scale: 0.99 }] },
+      ]}
+    >
+      <View style={[styles.iconArea, { backgroundColor: themeColors.primaryLight }]}>
+        <Feather name={icon} size={18} color={themeColors.primary} />
       </View>
       <View style={styles.rowContent}>
-        <Text style={[styles.rowLabel, { color: themeColors.text }]}>
+        <Text style={[styles.rowLabel, { color: themeColors.subtitle }]}>
           {label}
         </Text>
-        <Pressable
-          onPress={onPress}
-          accessibilityRole="button"
-          accessibilityLabel={`${hasValue ? "Edit" : "Set"} ${label}`}
+        <Text
+          style={[
+            styles.rowValue,
+            { color: hasValue ? themeColors.text : themeColors.primary },
+            !hasValue && styles.setAction,
+          ]}
+          numberOfLines={about && expanded ? undefined : 2}
         >
-          <Text
-            style={[
-              styles.rowValue,
-              { color: hasValue ? themeColors.text : themeColors.primary },
-              !hasValue && styles.setAction,
-            ]}
-            numberOfLines={about && expanded ? undefined : 2}
-          >
-            {hasValue ? value : `Set ${label}`}
-          </Text>
-        </Pressable>
+          {hasValue ? value : `+ Set ${label}`}
+        </Text>
         {about && hasValue && !expanded && (value?.length ?? 0) > 95 ? (
           <Pressable
             onPress={() => setExpanded(true)}
             accessibilityLabel="See all about text"
+            hitSlop={6}
           >
             <Text style={[styles.seeMore, { color: themeColors.primary }]}>
               ... See more
@@ -96,7 +101,8 @@ function ProfileSettingRow({ icon, label, value, onPress, about }: RowProps) {
           </Pressable>
         ) : null}
       </View>
-    </View>
+      <Feather name="chevron-right" size={18} color={themeColors.inactive} />
+    </Pressable>
   );
 }
 
@@ -722,14 +728,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   teacherSettingsText: { color: "#3B82F6", fontSize: 14, fontWeight: "700" },
-  rows: { marginTop: 40, gap: 30 },
-  row: { flexDirection: "row", minHeight: 60 },
-  iconArea: { width: 48, paddingTop: 2, alignItems: "center" },
-  rowContent: { flex: 1 },
-  rowLabel: { fontSize: 16, fontWeight: "600", marginBottom: 5 },
-  rowValue: { fontSize: 15, lineHeight: 21 },
-  setAction: { color: "#3B82F6", fontWeight: "600" },
-  seeMore: { color: "#3B82F6", fontSize: 14, fontWeight: "600", marginTop: 3 },
+  rows: { marginTop: 24, gap: 12 },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 64,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  iconArea: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  rowContent: { flex: 1, justifyContent: "center" },
+  rowLabel: { fontSize: 11, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 2 },
+  rowValue: { fontSize: 15, fontWeight: "600", lineHeight: 20 },
+  setAction: { color: "#3B82F6", fontWeight: "700" },
+  seeMore: { color: "#3B82F6", fontSize: 13, fontWeight: "600", marginTop: 3 },
   loading: { alignItems: "center", gap: 28, marginTop: 28 },
   avatarSkeleton: {
     width: 130,
