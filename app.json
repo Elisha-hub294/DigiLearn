@@ -11,9 +11,7 @@
       "icon": "./assets/images/main.png",
       "bundleIdentifier": "com.digilearn.app",
       "buildNumber": "1",
-      "associatedDomains": [
-        "applinks:digilearn-af86d.firebaseapp.com"
-      ]
+      "associatedDomains": ["applinks:digilearn-af86d.firebaseapp.com"]
     },
     "android": {
       "package": "com.osplatform.app",
@@ -30,10 +28,7 @@
               "pathPrefix": "/__/auth/links"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         },
         {
           "action": "VIEW",
@@ -45,10 +40,7 @@
               "pathPrefix": "/finishSignIn"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         },
         {
           "action": "VIEW",
@@ -60,10 +52,7 @@
               "pathPrefix": "/share"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ],
       "adaptiveIcon": {
