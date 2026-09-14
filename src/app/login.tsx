@@ -43,6 +43,13 @@ function mapAuthError(code: string | undefined) {
       return "Couldn't connect. Check your internet and try again.";
     case "auth/user-disabled":
       return "This account has been disabled. Contact support.";
+    case "auth/operation-not-allowed":
+      return "Email-link sign-in is not enabled yet. Please enable it in Firebase Authentication and try again.";
+    case "auth/unauthorized-continue-uri":
+    case "auth/unauthorized-domain":
+      return "Email-link sign-in is not configured for this app domain yet. Please contact support.";
+    case "auth/invalid-continue-uri":
+      return "Email-link sign-in is configured with an invalid return URL. Please contact support.";
     case "auth/popup-closed-by-user":
     case "auth/cancelled-popup-request":
       return "Authentication was cancelled.";
@@ -134,6 +141,7 @@ export default function LoginScreen() {
         setGeneralError(result.error);
       }
     } catch (error) {
+      console.error("Google sign-in exception:", error);
       setGeneralError(parseAuthError(error));
     } finally {
       setIsLoading(false);
@@ -157,6 +165,7 @@ export default function LoginScreen() {
         setGeneralError(result.error);
       }
     } catch (error) {
+      console.error("Facebook sign-in exception:", error);
       setGeneralError(parseAuthError(error));
     } finally {
       setIsLoading(false);

@@ -12,7 +12,6 @@
       "bundleIdentifier": "com.digilearn.app",
       "buildNumber": "1",
       "associatedDomains": [
-        "applinks:digilearn-af86d.firebaseapp.com",
         "applinks:digilearn-af86d.firebaseapp.com"
       ]
     },
@@ -40,19 +39,7 @@
             {
               "scheme": "https",
               "host": "digilearn-af86d.firebaseapp.com",
-              "pathPrefix": "/share"
-            }
-          ],
-          "category": ["BROWSABLE", "DEFAULT"]
-        },
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "https",
-              "host": "digilearn-af86d.firebaseapp.com",
-              "pathPrefix": "/__/auth/links"
+              "pathPrefix": "/finishSignIn"
             }
           ],
           "category": ["BROWSABLE", "DEFAULT"]

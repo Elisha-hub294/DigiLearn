@@ -1,4 +1,5 @@
 import { Feather as Icon } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { useEffect, useState } from "react";
@@ -9,12 +10,111 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 import { auth } from "../../../firebaseConfig";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useLiveSession } from "../../hooks/useLiveSession";
 import { useNotifications } from "../../hooks/useNotifications";
 import { NotificationType } from "../../services/notifications";
+import { openGoogleMeetSession } from "../../utils/googleMeet";
+
+// ---------------------------------------------------------------------------
+// Animated Live Join Button
+// ---------------------------------------------------------------------------
+
+const LIVE_RED = "#E53935";
+const LIVE_RED_DEEP = "#B71C1C";
+
+function LiveJoinButton({ meetCode, meetUrl }: { meetCode?: string; meetUrl?: string }) {
+  // Scale pulse: the button breathes in/out subtly
+  const scale = useSharedValue(1);
+  // Glow ring opacity: ripple-out effect
+  const ringOpacity = useSharedValue(0.7);
+  const ringScale = useSharedValue(1);
+
+  useEffect(() => {
+    // Button heartbeat
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.04, { duration: 700, easing: Easing.out(Easing.quad) }),
+        withTiming(1, { duration: 700, easing: Easing.in(Easing.quad) }),
+      ),
+      -1,
+      false,
+    );
+
+    // Ripple ring expands and fades continuously
+    ringScale.value = withRepeat(
+      withTiming(1.9, { duration: 1400, easing: Easing.out(Easing.quad) }),
+      -1,
+      false,
+    );
+    ringOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.6, { duration: 200 }),
+        withTiming(0, { duration: 1200, easing: Easing.out(Easing.cubic) }),
+      ),
+      -1,
+      false,
+    );
+  }, []);
+
+  const buttonStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const ringStyle = useAnimatedStyle(() => ({
+    opacity: ringOpacity.value,
+    transform: [{ scale: ringScale.value }],
+  }));
+
+  const handlePress = async () => {
+    const target = meetUrl || meetCode;
+    if (!target) return;
+    await openGoogleMeetSession(target);
+  };
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Join the live class session on Google Meet"
+      onPress={handlePress}
+      style={styles.liveButtonOuter}
+    >
+      {/* Pulsating glow ring */}
+      <Animated.View style={[styles.liveGlowRing, ringStyle]} />
+
+      {/* Animated button body */}
+      <Animated.View style={[styles.liveButtonBody, buttonStyle]}>
+        <LinearGradient
+          colors={[LIVE_RED, LIVE_RED_DEEP]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.liveGradient}
+        >
+          {/* Pulsing red dot indicator */}
+          <View style={styles.liveDotWrap}>
+            <View style={styles.liveDot} />
+          </View>
+          <Text style={styles.liveButtonText}>Join Live</Text>
+        </LinearGradient>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main Header
+// ---------------------------------------------------------------------------
 
 type HeaderProps = {
   title?: string;
@@ -37,6 +137,17 @@ export const Header = ({
   const { notifications } = useNotifications();
   const { profile } = useProfile();
   const { colors, isDark } = useTheme();
+
+  const liveSession = useLiveSession();
+
+  // Show the Join Live button only to students (not teachers / admins who started it).
+  // We exclude teacher and admin rather than positively listing student types
+  // to avoid TypeScript narrowing issues with the AccountType union.
+  const isStudent =
+    profile?.type !== "teacher" && profile?.type !== "admin";
+  const showLiveButton = isStudent && liveSession !== null;
+
+
   const canPublish =
     showPublishButton &&
     (profile?.type === "teacher" || profile?.type === "admin");
@@ -48,6 +159,7 @@ export const Header = ({
       (!notificationTypes?.length ||
         notificationTypes.includes(notification.type)),
   );
+
   // Scale greeting font: 22px on ~320px screens, up to 34px on ~430px+ screens
   const greetingFontSize = Math.min(
     34,
@@ -111,7 +223,17 @@ export const Header = ({
           </>
         )}
       </View>
+
       <View style={styles.actions}>
+        {/* ── Live Session CTA (students only) ─────────────────────── */}
+        {showLiveButton && liveSession ? (
+          <LiveJoinButton
+            meetCode={liveSession.meetCode}
+            meetUrl={liveSession.meetUrl}
+          />
+        ) : null}
+
+        {/* ── Publish button (teachers / admins) ───────────────────── */}
         {canPublish ? (
           <Pressable
             accessibilityLabel="Publish content"
@@ -129,6 +251,7 @@ export const Header = ({
             />
           </Pressable>
         ) : null}
+
         {showDownloadsButton && (
           <Pressable
             style={styles.notificationButton}
@@ -138,6 +261,7 @@ export const Header = ({
             <Icon name="download-cloud" size={20} color={colors.dark} />
           </Pressable>
         )}
+
         <Pressable
           style={styles.notificationButton}
           accessibilityLabel="Open notifications"
@@ -157,6 +281,10 @@ export const Header = ({
     </View>
   );
 };
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function getFirstName(
   user: User | null,
@@ -206,6 +334,10 @@ function generateGreeting() {
   return "Good evening";
 }
 
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
@@ -236,6 +368,62 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     gap: 10,
   },
+
+  // ── Live button ──────────────────────────────────────────────────────────
+  liveButtonOuter: {
+    alignItems: "center",
+    justifyContent: "center",
+    // extra space so the glow ring isn't clipped
+    width: 88,
+    height: 40,
+  },
+  liveGlowRing: {
+    position: "absolute",
+    width: 80,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: LIVE_RED,
+    // not using boxShadow for the ring itself – rely on opacity+scale animation
+  },
+  liveButtonBody: {
+    borderRadius: 20,
+    overflow: "hidden",
+    elevation: 6,
+    // iOS shadow
+    shadowColor: LIVE_RED,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.55,
+    shadowRadius: 8,
+  },
+  liveGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    gap: 5,
+    borderRadius: 20,
+  },
+  liveDotWrap: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: "#FFFFFF",
+  },
+  liveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+
+  // ── Publish button ───────────────────────────────────────────────────────
   publishButton: {
     width: 42,
     height: 42,
@@ -251,6 +439,8 @@ const styles = StyleSheet.create({
     boxShadow: "none",
     elevation: 0,
   },
+
+  // ── Icon buttons ─────────────────────────────────────────────────────────
   notificationButton: {
     width: 46,
     height: 46,

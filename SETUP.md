@@ -115,7 +115,7 @@ privacy-policy URLs instead.
 
 ### Facebook Login Setup
 
-Facebook Login uses the Firebase web OAuth flow. Configure it before testing:
+Facebook Login uses Firebase Authentication along with the native Facebook SDK on mobile:
 
 1. Create or select the app in [Meta for Developers](https://developers.facebook.com/apps/), add the Facebook Login product, and make sure the app is active.
 2. In Firebase Console, open Authentication > Sign-in method, enable Facebook, and enter the Meta App ID and App Secret.
@@ -125,11 +125,15 @@ Facebook Login uses the Firebase web OAuth flow. Configure it before testing:
    https://digilearn-af86d.firebaseapp.com/__/auth/handler
    ```
 
-4. While the Meta app is in development mode, only app roles and test users can sign in. Submit the app for review before opening Facebook Login to everyone.
-5. Add the Meta App ID to your local `.env` file, then create a new native build:
+4. In Meta for Developers:
+   - Copy the Client Token from **App Settings > Advanced > Security > Client Token**.
+   - In **Settings > Basic > Android**, add your package name (`com.osplatform.app`) and your **Key Hashes** (Base64-encoded SHA-1 of debug & release signing keys).
+   - While the Meta app is in development mode, only app roles and test users can sign in. Add your testing account under **App Roles > Roles** or **Test Users**.
+5. Add your credentials to your local `.env` file, then create a new native build:
 
    ```
    EXPO_PUBLIC_FACEBOOK_APP_ID=<your_meta_app_id>
+   EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN=<your_meta_client_token>
    ```
 
    The native Facebook SDK configuration is compiled into the app, so an OTA update alone cannot enable Facebook Login.

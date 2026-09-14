@@ -69,7 +69,9 @@ export default function VerifyEmailScreen() {
       const user = auth.currentUser;
       if (!user) {
         setErrorMessage(
-          "Return to this web app in the same browser where you started sign-up, then try again.",
+          Platform.OS === "web"
+            ? "Return to this web app in the same browser where you started sign-up, then try again."
+            : "Please open the sign-in link sent to your email on this device to complete verification.",
         );
         return;
       }

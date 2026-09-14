@@ -1,7 +1,9 @@
 import * as Linking from "expo-linking";
-import { useCallback, useEffect, useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -13,6 +15,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { completeEmailLink } from "../services/emailLinkAuth";
+import {
+  getUserOnboardingState,
+  initializeUserProfile,
+} from "../services/userProfile";
 
 /**
  * Firebase email-link authentication opens this path with its action-code
@@ -21,12 +27,32 @@ import { completeEmailLink } from "../services/emailLinkAuth";
  */
 export default function FinishSignInScreen() {
   const { colors: themeColors } = useTheme();
+  const router = useRouter();
+  const params = useLocalSearchParams<Record<string, string | undefined>>();
+
   const [errorMessage, setErrorMessage] = useState("");
   const [linkUrl, setLinkUrl] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [needsEmail, setNeedsEmail] = useState(false);
   const [isCompleting, setIsCompleting] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
+  const hasAttempted = useRef(false);
+
+  const navigateToApp = useCallback(async (uid: string) => {
+    try {
+      await initializeUserProfile();
+      const onboarding = await getUserOnboardingState(uid);
+      router.dismissAll();
+      router.replace(
+        onboarding.accountTypeCompleted && onboarding.type
+          ? ("/" as never)
+          : ("/account-type" as never),
+      );
+    } catch (err) {
+      console.warn("Failed to complete onboarding transition", err);
+      router.replace("/" as never);
+    }
+  }, [router]);
 
   const finishSignIn = useCallback(
     async (url: string, emailOverride?: string) => {
@@ -39,6 +65,8 @@ export default function FinishSignInScreen() {
 
         setIsComplete(true);
         setIsCompleting(false);
+
+        await navigateToApp(user.uid);
       } catch (error) {
         console.warn("Unable to complete email sign-in link", error);
         const code = error instanceof Error ? error.message : "";
@@ -54,37 +82,85 @@ export default function FinishSignInScreen() {
         setIsCompleting(false);
       }
     },
-    [],
+    [navigateToApp],
   );
 
   useEffect(() => {
     let cancelled = false;
 
-    const getLink = async () => {
-      const url = await Linking.getInitialURL();
-      if (!url) throw new Error("EMAIL_LINK_MISSING");
-      if (!cancelled) setLinkUrl(url);
-      await finishSignIn(url);
+    const resolveUrl = async (): Promise<string | null> => {
+      // 1. Check if the link was passed directly in search params
+      if (params.link) {
+        return decodeURIComponent(params.link);
+      }
+
+      // 2. Check if query parameters contain the action code
+      if (params.apiKey && params.oobCode) {
+        const authDomain =
+          process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ||
+          "digilearn-af86d.firebaseapp.com";
+        const query = new URLSearchParams();
+        for (const [key, val] of Object.entries(params)) {
+          if (val) query.set(key, val);
+        }
+        return `https://${authDomain}/finishSignIn?${query.toString()}`;
+      }
+
+      // 3. Fallback to initial deep link URL
+      try {
+        const initialUrl = await Linking.getInitialURL();
+        if (initialUrl) return initialUrl;
+      } catch {
+        // Fall through
+      }
+
+      return null;
     };
 
-    void getLink().catch((error) => {
-      console.warn("Unable to read email sign-in link", error);
-      if (!cancelled) {
-        setErrorMessage("This email link is invalid or incomplete.");
+    const run = async () => {
+      if (hasAttempted.current) return;
+      const url = await resolveUrl();
+      if (cancelled) return;
+
+      if (url) {
+        hasAttempted.current = true;
+        setLinkUrl(url);
+        await finishSignIn(url, params.email);
+      } else {
         setIsCompleting(false);
+        setErrorMessage("This email link is invalid or incomplete.");
+      }
+    };
+
+    void run();
+
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      if (url && !cancelled) {
+        hasAttempted.current = true;
+        setLinkUrl(url);
+        void finishSignIn(url, params.email);
       }
     });
 
     return () => {
       cancelled = true;
+      subscription.remove();
     };
-  }, [finishSignIn]);
+  }, [finishSignIn, params]);
 
   const submitEmail = useCallback(() => {
     if (!linkUrl || !email.trim() || isCompleting) return;
     setNeedsEmail(false);
     void finishSignIn(linkUrl, email);
   }, [email, finishSignIn, isCompleting, linkUrl]);
+
+  const handleContinueManual = useCallback(() => {
+    router.replace("/" as never);
+  }, [router]);
+
+  const handleBackToLogin = useCallback(() => {
+    router.replace("/login" as never);
+  }, [router]);
 
   return (
     <SafeAreaView
@@ -108,11 +184,24 @@ export default function FinishSignInScreen() {
 
         <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
           {isComplete
-            ? 'Return to the OS platform app, then select "I verified my email" to continue.'
+            ? "Redirecting you to OS platform..."
             : needsEmail
               ? "Enter the email address used to request this link."
               : errorMessage || "Finishing your email verification..."}
         </Text>
+
+        {isComplete ? (
+          <Pressable
+            onPress={handleContinueManual}
+            style={({ pressed }) => [
+              styles.continueButton,
+              styles.buttonSpacing,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.continueButtonText}>Continue to app</Text>
+          </Pressable>
+        ) : null}
 
         {needsEmail ? (
           <View style={styles.emailForm}>
@@ -142,6 +231,19 @@ export default function FinishSignInScreen() {
             </Pressable>
           </View>
         ) : null}
+
+        {errorMessage && !needsEmail ? (
+          <Pressable
+            onPress={handleBackToLogin}
+            style={({ pressed }) => [
+              styles.continueButton,
+              styles.buttonSpacing,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.continueButtonText}>Back to Log In</Text>
+          </Pressable>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -167,6 +269,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: spacing.sm,
     textAlign: "center",
+  },
+  buttonSpacing: {
+    marginTop: spacing.xl,
+    width: "100%",
+    maxWidth: 360,
   },
   emailForm: {
     width: "100%",

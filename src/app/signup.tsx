@@ -153,6 +153,7 @@ export default function SignUpScreen() {
         setGeneralError(result.error);
       }
     } catch (error) {
+      console.error("Google sign-up exception:", error);
       setGeneralError(parseAuthError(error));
     } finally {
       setIsLoading(false);
@@ -184,6 +185,7 @@ export default function SignUpScreen() {
         setGeneralError(result.error);
       }
     } catch (error) {
+      console.error("Facebook sign-up exception:", error);
       setGeneralError(parseAuthError(error));
     } finally {
       setIsLoading(false);

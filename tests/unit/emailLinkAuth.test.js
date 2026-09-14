@@ -8,16 +8,21 @@ const emailLinkAuthSource = fs.readFileSync(
   "utf8",
 );
 
-test("email-link continue URL uses the native app deep link instead of a hosted web route", () => {
+test("email-link continue URL uses an authorized https URL and avoids custom deep-link schemes", () => {
   assert.match(
     emailLinkAuthSource,
-    /Linking\.createURL\(["']finishSignIn["']\)|return .*finishSignIn/i,
-    "Expected the email link to redirect to a native deep link for the app.",
+    /return .*finishSignIn/i,
+    "Expected the email link to return a finishSignIn continue URL.",
+  );
+  assert.doesNotMatch(
+    emailLinkAuthSource,
+    /Linking\.createURL/i,
+    "Expected the continue URL to avoid Linking.createURL which produces custom schemes rejected by Firebase.",
   );
   assert.doesNotMatch(
     emailLinkAuthSource,
     /digilearn-af86d\.web\.app\/finishSignIn/i,
-    "Expected the continue URL to avoid the hosted web app path on native devices.",
+    "Expected the continue URL to avoid the deprecated web.app path.",
   );
   assert.match(
     emailLinkAuthSource,
