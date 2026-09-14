@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { updateProfile, User } from "firebase/auth";
 import {
   arrayRemove,
@@ -64,6 +65,43 @@ export type SavedItemType =
   | "saved-lessons"
   | "saved-papers"
   | "saved-posts";
+
+const PROFILE_CACHE_PREFIX = "@digilearn/profile/";
+
+const getProfileCacheKey = (userId: string) =>
+  `${PROFILE_CACHE_PREFIX}${userId}`;
+
+export async function readCachedUserProfile(
+  user: User,
+): Promise<UserProfile | null> {
+  try {
+    const raw = await AsyncStorage.getItem(getProfileCacheKey(user.uid));
+    if (!raw) return null;
+
+    const cached = JSON.parse(raw) as Partial<UserProfile>;
+    return {
+      ...defaultUserProfile(user),
+      ...cached,
+    };
+  } catch (error) {
+    console.warn("Unable to read cached user profile", error);
+    return null;
+  }
+}
+
+export async function cacheUserProfile(
+  userId: string,
+  profile: UserProfile,
+): Promise<void> {
+  try {
+    await AsyncStorage.setItem(
+      getProfileCacheKey(userId),
+      JSON.stringify(profile),
+    );
+  } catch (error) {
+    console.warn("Unable to cache user profile", error);
+  }
+}
 
 const onboardingStateCache: Record<
   string,

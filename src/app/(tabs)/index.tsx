@@ -1,3 +1,4 @@
+import { getNetworkStateAsync } from "expo-network";
 import { useRouter } from "expo-router";
 import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -194,7 +195,18 @@ export default function HomeScreen() {
       if (!user) {
         const guest = await isGuestMode();
         setAuthCheckReady(true);
-        if (!guest && Platform.OS !== "web") {
+        let isOffline = false;
+        if (Platform.OS !== "web") {
+          try {
+            const networkState = await getNetworkStateAsync();
+            isOffline =
+              networkState.isConnected === false ||
+              networkState.isInternetReachable === false;
+          } catch {
+            // Keep the normal welcome redirect when connectivity is unknown.
+          }
+        }
+        if (!guest && !isOffline && Platform.OS !== "web") {
           router.replace("/welcome" as never);
         }
         return;
@@ -225,7 +237,20 @@ export default function HomeScreen() {
         }
       } catch {
         setAuthCheckReady(true);
-        router.replace("/welcome" as never);
+        if (Platform.OS === "web") {
+          router.replace("/welcome" as never);
+          return;
+        }
+
+        try {
+          const networkState = await getNetworkStateAsync();
+          const isOffline =
+            networkState.isConnected === false ||
+            networkState.isInternetReachable === false;
+          if (!isOffline) router.replace("/welcome" as never);
+        } catch {
+          router.replace("/welcome" as never);
+        }
       }
     });
 
@@ -521,12 +546,7 @@ export default function HomeScreen() {
             {/* <StreakCard /> */}
 
             {/* Story-style topical discovery slider always at top */}
-            <View
-              style={[
-                styles.storiesSection,
-                { marginHorizontal: -horizontalPadding },
-              ]}
-            >
+            <View style={[styles.storiesSection]}>
               <TopicalNotesSlider />
             </View>
 

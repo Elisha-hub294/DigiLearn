@@ -65,13 +65,13 @@ export default function WelcomeScreen() {
               alt="Welcome to OS platform illustration"
             />
             <Text style={styles.brand} accessibilityRole="header">
-              <Text style={[styles.brandBlack, { color: themeColors.dark }]}>
-                Digi
-              </Text>
               <Text
                 style={[styles.brandAccent, { color: themeColors.primary }]}
               >
-                Learn
+                OS
+              </Text>
+              <Text style={[styles.brandBlack, { color: themeColors.dark }]}>
+                Platform
               </Text>
             </Text>
           </View>
@@ -164,6 +164,7 @@ const styles = StyleSheet.create({
   },
   brandBlack: {
     color: colors.dark,
+    fontStyle: "italic",
   },
   brandAccent: {
     color: colors.primary,

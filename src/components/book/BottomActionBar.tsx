@@ -1,3 +1,4 @@
+import { radius } from "@/constants/theme";
 import { Feather } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -61,6 +62,7 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: radius.pill,
   },
   preview: {
     height: 44,

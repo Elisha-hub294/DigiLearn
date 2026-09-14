@@ -11,8 +11,10 @@ import {
 } from "react";
 import { auth, db } from "../../firebaseConfig";
 import {
+  cacheUserProfile,
   defaultUserProfile,
   ensureUserProfile,
+  readCachedUserProfile,
   UserProfile,
 } from "../services/userProfile";
 
@@ -35,9 +37,14 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     () =>
       onAuthStateChanged(auth, (nextUser) => {
         setUser(nextUser);
-        setProfile(null);
+        setProfile(nextUser ? defaultUserProfile(nextUser) : null);
         setError(null);
         setLoading(Boolean(nextUser));
+        if (nextUser) {
+          void readCachedUserProfile(nextUser).then((cachedProfile) => {
+            if (cachedProfile) setProfile(cachedProfile);
+          });
+        }
       }),
     [],
   );
@@ -51,20 +58,33 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     let teachersSnapshotReceived = false;
     let usersData: Record<string, unknown> | null = null;
     let teachersData: Record<string, unknown> | null = null;
+    let cachedProfile: UserProfile = defaultUserProfile(user);
+
+    void readCachedUserProfile(user).then((storedProfile) => {
+      if (!active || !storedProfile) return;
+      cachedProfile = storedProfile;
+      if (!usersSnapshotReceived && !teachersSnapshotReceived) {
+        setProfile(storedProfile);
+        setLoading(false);
+      }
+    });
 
     const updateProfile = () => {
       if (!active || (!usersSnapshotReceived && !teachersSnapshotReceived))
         return;
       const data = teachersData ?? usersData;
-      setProfile(
-        data
-          ? ({
-              ...defaultUserProfile(user),
-              ...usersData,
-              ...teachersData,
-            } as UserProfile)
-          : null,
-      );
+      const nextProfile = data
+        ? ({
+            ...defaultUserProfile(user),
+            ...usersData,
+            ...teachersData,
+          } as UserProfile)
+        : cachedProfile;
+      cachedProfile = nextProfile;
+      setProfile(nextProfile);
+      if (data) {
+        void cacheUserProfile(user.uid, nextProfile);
+      }
       setLoading(false);
     };
     const handleError = (reason: Error) => {
