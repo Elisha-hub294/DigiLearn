@@ -4,18 +4,18 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    Pressable,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from "react-native";
 
 import { auth, db } from "../../firebaseConfig";
@@ -27,10 +27,10 @@ import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import {
-  MAX_PROFILE_FIELD_LENGTH,
-  normalizeProfileText,
-  sanitizeProfileText,
-  validateProfileText,
+    MAX_PROFILE_FIELD_LENGTH,
+    normalizeProfileText,
+    sanitizeProfileText,
+    validateProfileText,
 } from "../utils/profileValidation";
 
 type Subject = { id: string; name: string };
@@ -308,7 +308,8 @@ export default function AccountQuickSettingsScreen() {
         You&apos;re not signed in
       </Text>
       <Text style={[styles.authText, { color: themeColors.subtitle }]}>
-        Log in or create an account to finish setting up your OS platform profile.
+        Log in or create an account to finish setting up your OS platform
+        profile.
       </Text>
 
       <View style={styles.authActions}>
@@ -505,8 +506,8 @@ export default function AccountQuickSettingsScreen() {
                   >
                     <Text
                       style={[
-                        { color: themeColors.text },
                         styles.selectText,
+                        { color: themeColors.text },
                         !level && styles.placeholderText,
                       ]}
                     >
@@ -851,7 +852,6 @@ const styles = StyleSheet.create({
   },
   selectText: {
     fontSize: 16,
-    color: "#111827",
     flex: 1,
   },
   placeholderText: {

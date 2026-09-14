@@ -43,7 +43,7 @@ export function BookOverview({ book }: { book: Book }) {
           </Text>
         ) : null} */}
         {typeof book.saves === "number" ? (
-          <Text style={styles.stat}>
+          <Text style={[styles.stat, { color: colors.subtitle }]}>
             <Feather name="heart" size={14} /> {book.saves} saved
           </Text>
         ) : null}

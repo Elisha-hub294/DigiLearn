@@ -12,6 +12,7 @@ const darkColors = {
   background: "#101827",
   lightBackground: "#172235",
   primaryLight: "#19345A",
+  primaryDark: "#9BC4FF",
   text: "#E5E7EB",
   subtitle: "#AAB4C3",
   border: "#334155",

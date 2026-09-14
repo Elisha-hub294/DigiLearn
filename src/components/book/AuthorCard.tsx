@@ -30,7 +30,7 @@ export function AuthorCard({ name, avatar, index, onPress }: AuthorCardProps) {
           source={avatar ? { uri: avatar } : undefined}
           fallbackSource={fallbackAvatar}
           placeholder={fallbackAvatar}
-          style={styles.avatar}
+          style={[styles.avatar, { backgroundColor: colors.surfaceMuted }]}
           contentFit="cover"
         />
         <Text style={[styles.name, { color: colors.text }]} numberOfLines={2}>
@@ -47,10 +47,8 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#E8EDF0",
   },
   name: {
-    color: "#44515A",
     fontSize: 13,
     fontWeight: "600",
     textAlign: "center",

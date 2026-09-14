@@ -3,11 +3,11 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+    useWindowDimensions,
 } from "react-native";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { getThemeAsset } from "../../constants/themeAssets";
@@ -46,10 +46,13 @@ export function BookHero({ book, onBack }: { book: Book; onBack: () => void }) {
   return (
     <Animated.View
       entering={FadeIn.duration(450)}
-      style={[styles.hero, { height: heroHeight }]}
+      style={[
+        styles.hero,
+        { height: heroHeight, backgroundColor: colors.surfaceMuted },
+      ]}
     >
       <LinearGradient
-        colors={["#E7F0F6", "#F7FAFC"]}
+        colors={[colors.surfaceMuted, colors.background]}
         style={StyleSheet.absoluteFill}
       />
 
@@ -71,7 +74,7 @@ export function BookHero({ book, onBack }: { book: Book; onBack: () => void }) {
         <View style={[styles.coverFrame, coverDimensions]}>
           <Image
             source={hasCover ? { uri: book.cover } : fallbackCover}
-            style={styles.cover}
+            style={[styles.cover, { backgroundColor: colors.surface }]}
             contentFit="contain"
             transition={250}
             onLoad={(event) => {
@@ -82,7 +85,7 @@ export function BookHero({ book, onBack }: { book: Book; onBack: () => void }) {
             }}
           />
         </View>
-        <Text style={styles.title} numberOfLines={2}>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>
           {book.title}
         </Text>
         <Text
@@ -97,7 +100,7 @@ export function BookHero({ book, onBack }: { book: Book; onBack: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  hero: { width: "100%", overflow: "hidden", backgroundColor: "#E7F0F6" },
+  hero: { width: "100%", overflow: "hidden" },
   nav: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -122,7 +125,6 @@ const styles = StyleSheet.create({
   coverFrame: {
     marginBottom: 18,
     borderRadius: 8,
-    backgroundColor: "#D8E3EA",
     boxShadow: "0px 8px 14px rgba(23, 43, 58, 0.18)",
     elevation: 7,
     overflow: "hidden",
@@ -130,7 +132,6 @@ const styles = StyleSheet.create({
   cover: { width: "100%", height: "100%" },
   title: {
     maxWidth: "94%",
-    color: "#172B3A",
     fontSize: 25,
     lineHeight: 31,
     fontWeight: "800",
@@ -138,7 +139,6 @@ const styles = StyleSheet.create({
     textTransform: "capitalize",
   },
   meta: {
-    color: "#5B7180",
     fontSize: 15,
     marginTop: 9,
     fontWeight: "600",

@@ -3,25 +3,25 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { reload, signOut } from "firebase/auth";
 import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    ActivityIndicator,
+    Platform,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../firebaseConfig";
 import { getHorizontalPadding } from "../constants/layout";
-import { colors, spacing } from "../constants/theme";
+import { spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { sendEmailLink } from "../services/emailLinkAuth";
 import {
-  getUserOnboardingState,
-  initializeUserProfile,
+    getUserOnboardingState,
+    initializeUserProfile,
 } from "../services/userProfile";
 
 function getErrorMessage(error: unknown) {
@@ -138,23 +138,31 @@ export default function VerifyEmailScreen() {
       >
         <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
           <View style={styles.iconCircle}>
-            <Feather name="mail" size={30} color={colors.primary} />
+            <Feather name="mail" size={30} color={themeColors.primary} />
           </View>
-          <Text style={styles.title}>Check your email</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: themeColors.text }]}>
+            Check your email
+          </Text>
+          <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
             We sent a verification link to {email}. Verify your email before
             continuing to OS platform.
           </Text>
-          <Text style={styles.infoMessage}>
+          <Text style={[styles.infoMessage, { color: themeColors.subtitle }]}>
             If you do not see the email, check your spam or junk folder and
             search for OS platform.
           </Text>
 
           {message ? (
-            <Text style={styles.successMessage}>{message}</Text>
+            <Text
+              style={[styles.successMessage, { color: themeColors.success }]}
+            >
+              {message}
+            </Text>
           ) : null}
           {errorMessage ? (
-            <Text style={styles.errorMessage}>{errorMessage}</Text>
+            <Text style={[styles.errorMessage, { color: themeColors.danger }]}>
+              {errorMessage}
+            </Text>
           ) : null}
 
           <Pressable
@@ -162,15 +170,20 @@ export default function VerifyEmailScreen() {
             disabled={isChecking || isSending}
             style={({ pressed }) => [
               styles.primaryButton,
+              { backgroundColor: themeColors.primary },
               pressed && styles.pressed,
             ]}
             accessibilityRole="button"
             accessibilityLabel="Check email verification status"
           >
             {isChecking ? (
-              <ActivityIndicator color={colors.white} />
+              <ActivityIndicator color={themeColors.white} />
             ) : (
-              <Text style={styles.primaryButtonText}>I verified my email</Text>
+              <Text
+                style={[styles.primaryButtonText, { color: themeColors.white }]}
+              >
+                I verified my email
+              </Text>
             )}
           </Pressable>
 
@@ -179,15 +192,23 @@ export default function VerifyEmailScreen() {
             disabled={isChecking || isSending}
             style={({ pressed }) => [
               styles.secondaryButton,
+              { borderColor: themeColors.primary },
               pressed && styles.pressed,
             ]}
             accessibilityRole="button"
             accessibilityLabel="Resend verification email"
           >
             {isSending ? (
-              <ActivityIndicator color={colors.primary} />
+              <ActivityIndicator color={themeColors.primary} />
             ) : (
-              <Text style={styles.secondaryButtonText}>Resend email</Text>
+              <Text
+                style={[
+                  styles.secondaryButtonText,
+                  { color: themeColors.primary },
+                ]}
+              >
+                Resend email
+              </Text>
             )}
           </Pressable>
 
@@ -196,7 +217,9 @@ export default function VerifyEmailScreen() {
             accessibilityRole="button"
             accessibilityLabel="Sign out"
           >
-            <Text style={styles.signOutText}>Sign out</Text>
+            <Text style={[styles.signOutText, { color: themeColors.primary }]}>
+              Sign out
+            </Text>
           </Pressable>
 
           <Pressable
@@ -204,7 +227,11 @@ export default function VerifyEmailScreen() {
             accessibilityRole="button"
             accessibilityLabel="Modify email"
           >
-            <Text style={styles.modifyEmailText}>Modify email</Text>
+            <Text
+              style={[styles.modifyEmailText, { color: themeColors.primary }]}
+            >
+              Modify email
+            </Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -213,7 +240,7 @@ export default function VerifyEmailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.white },
+  safeArea: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
@@ -224,27 +251,23 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: colors.primaryLight,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: spacing.xl,
   },
   title: {
-    color: colors.dark,
     fontSize: 28,
     fontWeight: "700",
     textAlign: "center",
     marginBottom: spacing.sm,
   },
   subtitle: {
-    color: "#666666",
     fontSize: 14,
     lineHeight: 21,
     textAlign: "center",
     marginBottom: spacing.xl,
   },
   infoMessage: {
-    color: "#666666",
     fontSize: 13,
     lineHeight: 19,
     textAlign: "center",
@@ -254,46 +277,39 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 46,
     borderRadius: 23,
-    backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: spacing.md,
   },
-  primaryButtonText: { color: colors.white, fontSize: 15, fontWeight: "600" },
+  primaryButtonText: { fontSize: 15, fontWeight: "600" },
   secondaryButton: {
     width: "100%",
     height: 46,
     borderRadius: 23,
     borderWidth: 1,
-    borderColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
   },
   secondaryButtonText: {
-    color: colors.primary,
     fontSize: 15,
     fontWeight: "600",
   },
   successMessage: {
-    color: "#16803C",
     fontSize: 13,
     textAlign: "center",
     marginBottom: spacing.md,
   },
   errorMessage: {
-    color: "#EF4444",
     fontSize: 13,
     textAlign: "center",
     marginBottom: spacing.md,
   },
   signOutText: {
-    color: colors.primary,
     fontSize: 14,
     fontWeight: "600",
     marginTop: spacing.xl,
   },
   modifyEmailText: {
-    color: colors.primary,
     fontSize: 14,
     fontWeight: "600",
     marginTop: spacing.md,
