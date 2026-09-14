@@ -6,6 +6,7 @@ interface SectionHeaderProps {
   subtitle?: string;
   onSeeAll?: () => void;
   actionLabel?: string;
+  titleMarginLeft?: number;
 }
 
 export function SectionHeader({
@@ -13,13 +14,21 @@ export function SectionHeader({
   subtitle,
   onSeeAll,
   actionLabel = "See all",
+  titleMarginLeft = 0,
 }: SectionHeaderProps) {
   const { colors } = useTheme();
   return (
     <View>
       <View style={styles.row}>
         <View style={styles.textContainer}>
-          <Text style={[styles.title, { color: colors.primary }]}>{title}</Text>
+          <Text
+            style={[
+              styles.title,
+              { color: colors.primary, marginLeft: titleMarginLeft },
+            ]}
+          >
+            {title}
+          </Text>
           {subtitle ? (
             <Text style={[styles.subtitle, { color: colors.text }]}>
               {subtitle}

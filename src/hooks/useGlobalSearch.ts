@@ -264,12 +264,31 @@ export function useGlobalSearch(
   useEffect(() => {
     let isMounted = true;
 
-    const applyCache = (data: SearchCache) => {
-      setTopicalNotes(data.topicalNotes);
-      setPastPapers(data.pastPapers);
-      setVideos(data.videos);
-      setBooks(data.books);
-      setTeachers(filterApprovedTeachers(data.teachers));
+    const mergeItems = (existing: any[], incoming: any[]) => {
+      const merged = new Map<string, any>();
+      existing.forEach((item) => merged.set(String(item.id), item));
+      incoming.forEach((item) => merged.set(String(item.id), item));
+      return Array.from(merged.values());
+    };
+
+    const applyCache = (data: SearchCache, preserveExisting = false) => {
+      setTopicalNotes((existing) =>
+        preserveExisting ? mergeItems(existing, data.topicalNotes) : data.topicalNotes,
+      );
+      setPastPapers((existing) =>
+        preserveExisting ? mergeItems(existing, data.pastPapers) : data.pastPapers,
+      );
+      setVideos((existing) =>
+        preserveExisting ? mergeItems(existing, data.videos) : data.videos,
+      );
+      setBooks((existing) =>
+        preserveExisting ? mergeItems(existing, data.books) : data.books,
+      );
+      setTeachers((existing) =>
+        filterApprovedTeachers(
+          preserveExisting ? mergeItems(existing, data.teachers) : data.teachers,
+        ),
+      );
       setSubjectsMap(data.subjectsMap);
       setTeachersAvatarMap(data.teachersAvatarMap);
       setLoading(false);
@@ -354,7 +373,7 @@ export function useGlobalSearch(
           subjectsMap,
           teachersAvatarMap,
         };
-        applyCache(next);
+        applyCache(next, hasSubmittedSearch);
         if (!hasSubmittedSearch) {
           await writeLocalCache(SEARCH_CACHE_KEY, next, SEARCH_CACHE_VERSION);
         }
@@ -380,6 +399,7 @@ export function useGlobalSearch(
 
       if (!trimmed) {
         setDebouncedQuery("");
+        setHasSubmittedSearch(false);
         return;
       }
 

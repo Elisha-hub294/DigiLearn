@@ -9,12 +9,12 @@ import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,8 +23,8 @@ import { colors, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { loadTrendingLessons } from "../../services/trendingLessonsService";
 import {
-  alternateByProperty,
-  shuffleWithSeed,
+    alternateByProperty,
+    shuffleWithSeed,
 } from "../../utils/feedAlgorithm";
 
 type FirestoreLesson = {
@@ -288,6 +288,7 @@ export default function VideosScreen() {
         lessons={lessons}
         trendingLessons={trendingLessons}
         cardWidth={cardWidth}
+        headerWidth={horizontalPadding === 0 ? "90%" : "100%"}
         onTrendingSectionLayout={(y) => {
           trendingSectionY.current = y;
         }}

@@ -108,6 +108,7 @@ export default function ProfileScreen() {
     });
   }, [navigation, onRefresh, route.key]);
   const padding = getHorizontalPadding(width);
+  const cardWidth = padding === 0 ? "90%" : "100%";
   return (
     <SafeAreaView
       style={[s.safe, { backgroundColor: themeColors.background }]}
@@ -131,20 +132,27 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         {loading ? (
-          <Skeleton />
+          <View style={{ width: cardWidth, alignSelf: "center" }}>
+            <Skeleton />
+          </View>
         ) : !user ? (
           <View style={s.sections}>
-            <DownloadedResources />
-            <SavedResources profile={null} signedIn={false} />
+            <View style={{ width: cardWidth, alignSelf: "center" }}>
+              <DownloadedResources />
+            </View>
+            <View style={{ width: cardWidth, alignSelf: "center" }}>
+              <SavedResources profile={null} signedIn={false} />
+            </View>
           </View>
         ) : profile ? (
           <Animated.View entering={FadeIn.duration(220)} style={s.sections}>
-            <View style={[s.profileHeader, { marginHorizontal: -padding }]}>
+            <View style={s.profileHeader}>
               <ProfileHeader profile={profile} photoURL={user.photoURL} />
             </View>
             <View
               style={[
                 s.roleStatus,
+                { width: cardWidth, alignSelf: "center", marginHorizontal: 0 },
                 {
                   backgroundColor: themeColors.lightBackground,
                   borderColor: themeColors.border,
@@ -179,6 +187,9 @@ export default function ProfileScreen() {
                 style={[
                   s.reviewBanner,
                   {
+                    width: cardWidth,
+                    alignSelf: "center",
+                    marginHorizontal: 0,
                     backgroundColor: themeColors.primaryLight,
                     borderColor: themeColors.border,
                   },
@@ -199,6 +210,9 @@ export default function ProfileScreen() {
                   s.reviewBanner,
                   s.rejectedBanner,
                   {
+                    width: cardWidth,
+                    alignSelf: "center",
+                    marginHorizontal: 0,
                     backgroundColor: themeColors.lightBackground,
                     borderColor: themeColors.border,
                   },
@@ -281,10 +295,16 @@ export default function ProfileScreen() {
                 </Pressable>
               </>
             )}
-            <UserInfoCard profile={profile} />
-            <DownloadedResources />
+            <View style={{ width: cardWidth, alignSelf: "center" }}>
+              <UserInfoCard profile={profile} />
+            </View>
+            <View style={{ width: cardWidth, alignSelf: "center" }}>
+              <DownloadedResources />
+            </View>
             {/* <InterestsCarousel subjects={profile.subjects} /> */}
-            <SavedResources profile={profile} signedIn />
+            <View style={{ width: cardWidth, alignSelf: "center" }}>
+              <SavedResources profile={profile} signedIn />
+            </View>
           </Animated.View>
         ) : (
           <View style={s.error}>

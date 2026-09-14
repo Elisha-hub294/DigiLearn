@@ -28,7 +28,7 @@ const VIEWABILITY_CONFIG = { viewAreaCoveragePercentThreshold: 50 };
 const SLIDES = [
   {
     id: "slide1",
-    headline: "Welcome to\nOpero Stephen platform",
+    headline: "Welcome to\nOpen Source platform",
     subtitle:
       "Discover a library of lessons, books and past papers to help you learn, grow and achieve more.",
 

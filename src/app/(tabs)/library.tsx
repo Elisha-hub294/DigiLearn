@@ -3,15 +3,15 @@ import { router } from "expo-router";
 import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,11 +19,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { auth } from "../../../firebaseConfig";
 import { BookCarousel } from "../../components/home/BookCarousel";
 import {
-  FeaturedNoteCard,
-  FeaturedNoteItem,
-  loadFeaturedNotes,
-  loadFeaturedNotesMetadata,
-  TopicalNote,
+    FeaturedNoteCard,
+    FeaturedNoteItem,
+    loadFeaturedNotes,
+    loadFeaturedNotesMetadata,
+    TopicalNote,
 } from "../../components/home/FeaturedNoteCard";
 import { fetchPastPaperTypes } from "../../components/library/add-item/firebaseService";
 import { BookCard } from "../../components/library/BookCard";
@@ -40,19 +40,19 @@ import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
-  PaperItem,
-  PaperSection,
-  useLibraryData,
+    PaperItem,
+    PaperSection,
+    useLibraryData,
 } from "../../hooks/useLibraryData";
 import { recordUserActivity } from "../../services/activityService";
 import { BookRecord, loadBooks } from "../../services/booksService";
 import {
-  interleaveFeedItems,
-  shuffleWithSeed,
+    interleaveFeedItems,
+    shuffleWithSeed,
 } from "../../utils/feedAlgorithm";
 import {
-  matchesUserInterests,
-  shouldFilterByInterests,
+    matchesUserInterests,
+    shouldFilterByInterests,
 } from "../../utils/interestFilter";
 
 type LibraryCategory = {
@@ -211,6 +211,7 @@ export default function LibraryScreen() {
 
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
+  const cardWidth = horizontalPadding === 0 ? "90%" : "100%";
 
   // Interest filtered collections
   const filterActive = shouldFilterByInterests(profile);
@@ -413,7 +414,10 @@ export default function LibraryScreen() {
         >
           <Animated.View
             entering={FadeInUp.duration(320)}
-            style={styles.headerWrap}
+            style={[
+              styles.headerWrap,
+              horizontalPadding === 0 && styles.phoneChrome,
+            ]}
           >
             <Header
               title="Library"
@@ -422,7 +426,10 @@ export default function LibraryScreen() {
               notificationTypes={["book", "page", "paper"]}
             />
           </Animated.View>
-          <Animated.View entering={FadeInUp.duration(360)}>
+          <Animated.View
+            entering={FadeInUp.duration(360)}
+            style={horizontalPadding === 0 ? styles.phoneChrome : undefined}
+          >
             <SearchBar placeholder=" Search in Library" source="library" />
           </Animated.View>
           <Animated.View entering={FadeInUp.duration(400)}>
@@ -502,7 +509,10 @@ export default function LibraryScreen() {
                 {visibleLibraryFeed.map((item) => {
                   if (item.kind === "page") {
                     return (
-                      <View key={item.id} style={styles.feedCardWrapper}>
+                      <View
+                        key={item.id}
+                        style={[styles.feedCardWrapper, { width: cardWidth }]}
+                      >
                         <View style={styles.badgeRow}>
                           <Text
                             style={[
@@ -527,7 +537,10 @@ export default function LibraryScreen() {
 
                   if (item.kind === "book") {
                     return (
-                      <View key={item.id} style={styles.feedCardWrapper}>
+                      <View
+                        key={item.id}
+                        style={[styles.feedCardWrapper, { width: cardWidth }]}
+                      >
                         <View style={styles.badgeRow}>
                           <Text
                             style={[
@@ -575,7 +588,10 @@ export default function LibraryScreen() {
 
                   if (item.kind === "paper") {
                     return (
-                      <View key={item.id} style={styles.feedCardWrapper}>
+                      <View
+                        key={item.id}
+                        style={[styles.feedCardWrapper, { width: cardWidth }]}
+                      >
                         <View style={styles.badgeRow}>
                           <Text
                             style={[
@@ -663,11 +679,15 @@ export default function LibraryScreen() {
                   <BookCarousel />
                 </View>
                 <View style={{ marginTop: spacing.lg }}>
-                  <SectionHeader title="All Textbooks" actionLabel="" />
+                  <SectionHeader
+                    title="All Textbooks"
+                    actionLabel=""
+                    titleMarginLeft={horizontalPadding === 0 ? spacing.sm : 0}
+                  />
                   {shuffledCategoryBooks.map((book) => (
                     <View
                       key={`cat-book-${book.id}`}
-                      style={styles.feedCardWrapper}
+                      style={[styles.feedCardWrapper, { width: cardWidth }]}
                     >
                       <BookCard
                         item={{
@@ -710,6 +730,7 @@ export default function LibraryScreen() {
                 >
                   <SectionHeader
                     title={section.title}
+                    titleMarginLeft={horizontalPadding === 0 ? spacing.sm : 0}
                     onSeeAll={() =>
                       router.push({
                         pathname: "/see-all",
@@ -758,6 +779,10 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   headerWrap: { marginBottom: spacing.lg },
+  phoneChrome: {
+    width: "90%",
+    alignSelf: "center",
+  },
   section: { marginBottom: spacing.xl },
   filterSection: { marginTop: spacing.md, marginBottom: spacing.lg },
   stickyFilter: {
@@ -803,6 +828,7 @@ const styles = StyleSheet.create({
   booksCategoryView: { width: "100%" },
   feedCardWrapper: {
     marginBottom: spacing.lg,
+    alignSelf: "center",
   },
   badgeRow: {
     marginBottom: 6,

@@ -18,6 +18,7 @@ type VideosScreenHeaderProps = {
   lessons: VideoLesson[];
   trendingLessons: VideoLesson[];
   cardWidth: number;
+  headerWidth?: "90%" | "100%";
   onTrendingSectionLayout?: (y: number) => void;
 };
 
@@ -28,6 +29,7 @@ export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
   lessons,
   trendingLessons,
   cardWidth,
+  headerWidth = "100%",
   onTrendingSectionLayout,
 }) => {
   const { colors } = useTheme();
@@ -40,15 +42,19 @@ export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
         entering={FadeInUp.duration(320)}
         style={styles.headerWrap}
       >
-        <Header
-          title="Videos"
-          rightIconName="video"
-          notificationTypes={["lesson"]}
-        />
+        <View style={{ width: headerWidth, alignSelf: "center" }}>
+          <Header
+            title="Videos"
+            rightIconName="video"
+            notificationTypes={["lesson"]}
+          />
+        </View>
       </Animated.View>
 
       <Animated.View entering={FadeInUp.duration(360)}>
-        <SearchBar placeholder="Search Lessons" category="Videos" hideChips />
+        <View style={{ width: headerWidth, alignSelf: "center" }}>
+          <SearchBar placeholder="Search Lessons" category="Videos" hideChips />
+        </View>
       </Animated.View>
 
       <Animated.View
@@ -94,7 +100,9 @@ export const VideosScreenHeader: React.FC<VideosScreenHeaderProps> = ({
           style={styles.section}
           onLayout={handleTrendingLayout}
         >
-          <SectionHeader title="Trending Lessons" />
+          <View style={{ marginLeft: headerWidth === "90%" ? spacing.sm : 0 }}>
+            <SectionHeader title="Trending Lessons" />
+          </View>
         </Animated.View>
       )}
     </>

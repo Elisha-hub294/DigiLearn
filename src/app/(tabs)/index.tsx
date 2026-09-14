@@ -4,15 +4,15 @@ import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,19 +22,19 @@ import { BookCarousel } from "../../components/home/BookCarousel";
 import { ContinueLearningShelf } from "../../components/home/ContinueLearningShelf";
 import { CoursesCarousel } from "../../components/home/CoursesCarousel";
 import {
-  FeaturedNoteItem,
-  loadFeaturedNotes,
-  loadFeaturedNotesMetadata,
-  TopicalNote,
+    FeaturedNoteItem,
+    loadFeaturedNotes,
+    loadFeaturedNotesMetadata,
+    TopicalNote,
 } from "../../components/home/FeaturedNoteCard";
 import { FloatingAssistantButton } from "../../components/home/FloatingAssistantButton";
 import { PublicHome } from "../../components/home/PublicHome";
 import { TeacherFollowCarousel } from "../../components/home/TeacherFollowCarousel";
 import {
-  loadTeacherMetadata,
-  loadTeacherPosts,
-  TeacherPost,
-  TeacherPostItem,
+    loadTeacherMetadata,
+    loadTeacherPosts,
+    TeacherPost,
+    TeacherPostItem,
 } from "../../components/home/TeacherPostCard";
 import { TopicalNotesSlider } from "../../components/home/TopicalNotesSlider";
 import { BookCard } from "../../components/library/BookCard";
@@ -59,8 +59,8 @@ import { loadTrendingLessons } from "../../services/trendingLessonsService";
 import { getUserOnboardingState } from "../../services/userProfile";
 import { interleaveFeedItems } from "../../utils/feedAlgorithm";
 import {
-  matchesUserInterests,
-  shouldFilterByInterests,
+    matchesUserInterests,
+    shouldFilterByInterests,
 } from "../../utils/interestFilter";
 import LoadingScreen from "../loading";
 
@@ -403,6 +403,7 @@ export default function HomeScreen() {
           <View style={styles.breakSection}>
             <SectionHeader
               title={section.title}
+              titleMarginLeft={horizontalPadding === 0 ? spacing.sm : 0}
               onSeeAll={() =>
                 router.push({
                   pathname: "/see-all",
@@ -540,8 +541,12 @@ export default function HomeScreen() {
               />
             }
           >
-            <Header showPublishButton />
-            <SearchBar placeholder="Search OS platform..." />
+            <View
+              style={horizontalPadding === 0 ? styles.phoneChrome : undefined}
+            >
+              <Header showPublishButton />
+              <SearchBar placeholder="Search OS platform..." />
+            </View>
 
             {/* Daily Learning Streak Card */}
             {/* <StreakCard /> */}
@@ -780,6 +785,10 @@ const styles = StyleSheet.create({
   },
   feedCardWrapper: {
     marginBottom: spacing.lg,
+    alignSelf: "center",
+  },
+  phoneChrome: {
+    width: "90%",
     alignSelf: "center",
   },
   breakWrapper: {

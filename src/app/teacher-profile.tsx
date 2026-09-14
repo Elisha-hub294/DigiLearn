@@ -1,30 +1,30 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Feather as Icon } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  query,
-  where,
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    limit,
+    query,
+    where,
 } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  FlatList,
-  Linking,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    FlatList,
+    Linking,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { db } from "../../firebaseConfig";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
 import { TeacherPostItem } from "../components/home/TeacherPostCard";
@@ -41,8 +41,8 @@ import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { subscribeToResourceDeleted } from "../services/resourceDeletion";
 import {
-  getTeacherCommunityStatus,
-  setTeacherCommunityMembership,
+    getTeacherCommunityStatus,
+    setTeacherCommunityMembership,
 } from "../services/teacherCommunity";
 
 type TeacherRecord = {
@@ -183,6 +183,7 @@ export default function TeacherProfileScreen() {
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
+  const cardWidth = horizontalPadding === 0 ? "90%" : "100%";
   const avatarSize = Math.min(150, Math.max(104, width * 0.32));
   const compactActionRow = width < 390;
   const actionRowGap = compactActionRow ? 10 : 16;
@@ -1143,25 +1144,35 @@ export default function TeacherProfileScreen() {
             )}
           </View>
 
-          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { color: themeColors.text },
+              horizontalPadding === 0 && styles.sectionTitleInset,
+            ]}
+          >
             Resources
           </Text>
 
-          <SearchBar
-            isInput={true}
-            showBack={false}
-            value={search}
-            onChangeText={setSearch}
-            placeholder={
-              isOwnProfile
-                ? "Search your resources"
-                : `Search ${teacher?.name?.split(" ")[0] || "teacher"}'s resources`
-            }
-            autoFocus={false}
-            searchIconColor={accentColor}
-            inputContainerStyle={{ borderColor: accentColor }}
-            containerStyle={styles.searchBarOuter}
-          />
+          <View
+            style={horizontalPadding === 0 ? styles.phoneChrome : undefined}
+          >
+            <SearchBar
+              isInput={true}
+              showBack={false}
+              value={search}
+              onChangeText={setSearch}
+              placeholder={
+                isOwnProfile
+                  ? "Search your resources"
+                  : `Search ${teacher?.name?.split(" ")[0] || "teacher"}'s resources`
+              }
+              autoFocus={false}
+              searchIconColor={accentColor}
+              inputContainerStyle={{ borderColor: accentColor }}
+              containerStyle={styles.searchBarOuter}
+            />
+          </View>
 
           <ScrollView
             horizontal
@@ -1247,57 +1258,61 @@ export default function TeacherProfileScreen() {
     ({ item, index }: { item: ResourceItem; index: number }) => {
       if (item.type === "page") {
         return (
-          <FeaturedNoteCard
-            notes={[
-              {
-                id: item.id,
-                title: item.title,
-                description: item.description,
-                subject: item.subject,
-                document: item.document,
-                cover: item.image,
-                book: item.book,
-                createdAt: item.createdAt,
-                owner: item.owner,
-              },
-            ]}
-            source="pages"
-            includeHiddenItems
-            filterByInterests={false}
-            returnTo="/teacher-profile"
-            teacherId={teacher?.id || params.id || ""}
-            teacherName={teacher?.name || teacherName}
-          />
+          <View style={{ width: cardWidth, alignSelf: "center" }}>
+            <FeaturedNoteCard
+              notes={[
+                {
+                  id: item.id,
+                  title: item.title,
+                  description: item.description,
+                  subject: item.subject,
+                  document: item.document,
+                  cover: item.image,
+                  book: item.book,
+                  createdAt: item.createdAt,
+                  owner: item.owner,
+                },
+              ]}
+              source="pages"
+              includeHiddenItems
+              filterByInterests={false}
+              returnTo="/teacher-profile"
+              teacherId={teacher?.id || params.id || ""}
+              teacherName={teacher?.name || teacherName}
+            />
+          </View>
         );
       }
 
       if (item.type === "book") {
         return (
-          <BookCard
-            item={{
-              id: item.id,
-              title: item.title,
-              author: Array.isArray(item.author)
-                ? item.author[0] || "Unknown author"
-                : item.author || "Unknown author",
-              description: item.description || "",
-              image: item.image ? { uri: item.image } : undefined,
-              owner: item.owner,
-            }}
-            width={contentMaxWidth}
-            onPress={() => {
-              router.push({
-                pathname: "/book-preview",
-                params: {
-                  id: item.id,
-                  source: "teacher-profile",
-                  returnTo: "/teacher-profile",
-                  teacherId: teacher?.id || params.id || "",
-                  teacherName: teacher?.name || teacherName,
-                },
-              } as any);
-            }}
-          />
+          <View style={{ width: cardWidth, alignSelf: "center" }}>
+            <BookCard
+              item={{
+                id: item.id,
+                title: item.title,
+                author: Array.isArray(item.author)
+                  ? item.author[0] || "Unknown author"
+                  : item.author || "Unknown author",
+                description: item.description || "",
+                image: item.image ? { uri: item.image } : undefined,
+                owner: item.owner,
+              }}
+              width="100%"
+              onPress={() => {
+                router.push({
+                  pathname: "/book-preview",
+                  params: {
+                    id: item.id,
+                    source: "teacher-profile",
+                    returnTo: "/teacher-profile",
+                    teacherId: teacher?.id || params.id || "",
+                    teacherName: teacher?.name || teacherName,
+                  },
+                } as any);
+              }}
+            />
+          </View>
         );
       }
 
@@ -1307,58 +1322,62 @@ export default function TeacherProfileScreen() {
         item.type === "pdf"
       ) {
         return (
-          <TeacherPostItem
-            postItem={{
-              id: item.id,
-              title: item.title,
-              teacher: item.teacher || teacher?.name || teacherName,
-              owner: item.owner,
-              ownerType: item.ownerType,
-              subject: item.subject,
-              description: item.description,
-              hasCover:
-                typeof item.hasCover === "boolean"
-                  ? item.hasCover
-                  : item.hasCover === "true",
-              cover: item.image,
-              document: item.document,
-              fileType: item.fileType,
-              createdAt:
-                typeof item.createdAt === "number"
-                  ? new Date(item.createdAt)
-                  : typeof item.createdAt === "string"
+          <View style={{ width: cardWidth, alignSelf: "center" }}>
+            <TeacherPostItem
+              postItem={{
+                id: item.id,
+                title: item.title,
+                teacher: item.teacher || teacher?.name || teacherName,
+                owner: item.owner,
+                ownerType: item.ownerType,
+                subject: item.subject,
+                description: item.description,
+                hasCover:
+                  typeof item.hasCover === "boolean"
+                    ? item.hasCover
+                    : item.hasCover === "true",
+                cover: item.image,
+                document: item.document,
+                fileType: item.fileType,
+                createdAt:
+                  typeof item.createdAt === "number"
                     ? new Date(item.createdAt)
-                    : null,
-            }}
-            teacherAvatars={
-              teacher?.avatar && teacher?.name
-                ? { [teacher.name]: teacher.avatar }
-                : {}
-            }
-          />
+                    : typeof item.createdAt === "string"
+                      ? new Date(item.createdAt)
+                      : null,
+              }}
+              teacherAvatars={
+                teacher?.avatar && teacher?.name
+                  ? { [teacher.name]: teacher.avatar }
+                  : {}
+              }
+            />
+          </View>
         );
       }
 
       return (
-        <VideoCard
-          item={{
-            id: item.id,
-            title: item.title,
-            subject: item.subject || "",
-            teacher: item.teacher || teacher?.name || teacherName,
-            uploadedAt: formatResourceTime(item.createdAt),
-            duration: item.duration || "0:00",
-            thumbnail: item.thumbnail || item.image || "",
-            avatar: teacher?.avatar,
-            link: item.link || "",
-            owner: item.owner,
-            isNew: false,
-          }}
-          index={index}
-        />
+        <View style={{ width: cardWidth, alignSelf: "center" }}>
+          <VideoCard
+            item={{
+              id: item.id,
+              title: item.title,
+              subject: item.subject || "",
+              teacher: item.teacher || teacher?.name || teacherName,
+              uploadedAt: formatResourceTime(item.createdAt),
+              duration: item.duration || "0:00",
+              thumbnail: item.thumbnail || item.image || "",
+              avatar: teacher?.avatar,
+              link: item.link || "",
+              owner: item.owner,
+              isNew: false,
+            }}
+            index={index}
+          />
+        </View>
       );
     },
-    [contentMaxWidth, params.id, router, teacher, teacherName],
+    [cardWidth, params.id, router, teacher, teacherName],
   );
 
   if (loading) {
@@ -1568,6 +1587,10 @@ const styles = StyleSheet.create({
     position: "relative",
     height: 220,
   },
+  phoneChrome: {
+    width: "90%",
+    alignSelf: "center",
+  },
   headerPanel: {
     position: "absolute",
     top: 0,
@@ -1683,6 +1706,9 @@ const styles = StyleSheet.create({
   subjectPillText: {
     fontSize: 12,
     fontWeight: "700",
+  },
+  sectionTitleInset: {
+    marginLeft: spacing.sm,
   },
   reviewNotice: {
     flexDirection: "row",
