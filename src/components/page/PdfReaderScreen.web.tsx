@@ -29,6 +29,7 @@ import {
   extractDocxText,
   extractPptxContent,
 } from "../library/add-item/pdfService";
+import { WatchAdModal } from "../ads/WatchAdModal";
 import { ActionDialog } from "../ui/ActionDialog";
 
 const PDF_JS_CDN =
@@ -260,6 +261,7 @@ export function PdfReaderScreen() {
   const [iframeError, setIframeError] = useState(false);
   const [offlineNoticeVisible, setOfflineNoticeVisible] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [showAdModal, setShowAdModal] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
@@ -453,7 +455,14 @@ export function PdfReaderScreen() {
     };
   }, [decodedUri, documentUniqueName, rawUri]);
 
-  const handleDownload = async () => {
+  /** Intercept download button press to recommend watching an ad first */
+  const handleDownload = () => {
+    if (!decodedUri || downloading || downloaded) return;
+    setShowAdModal(true);
+  };
+
+  /** Execute actual file download after ad reward is earned */
+  const executeDownload = async () => {
     if (!decodedUri || downloading || downloaded) return;
 
     setDownloading(true);
@@ -548,6 +557,12 @@ export function PdfReaderScreen() {
         primaryText={missingDocument ? "Go back" : "OK"}
         onPrimary={missingDocument ? goBack : closeReaderDialog}
         onClose={missingDocument ? goBack : closeReaderDialog}
+      />
+      <WatchAdModal
+        visible={showAdModal}
+        resourceTitle={typeof title === "string" ? title : undefined}
+        onClose={() => setShowAdModal(false)}
+        onAdRewardEarned={() => void executeDownload()}
       />
       {/* ── Header ── */}
       <View

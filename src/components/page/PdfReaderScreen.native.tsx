@@ -36,6 +36,7 @@ import {
   extractDocxText,
   extractPptxContent,
 } from "../library/add-item/pdfService";
+import { WatchAdModal } from "../ads/WatchAdModal";
 import { ActionDialog } from "../ui/ActionDialog";
 
 // Fallback timeout: if onLoadEnd never fires (can happen with some PDFs),
@@ -152,6 +153,7 @@ export function PdfReaderScreen() {
     title: string;
     message: string;
   } | null>(null);
+  const [showAdModal, setShowAdModal] = useState(false);
   const [progressAnim] = useState(() => new Animated.Value(0));
   const [downloadProgressAnim] = useState(() => new Animated.Value(0));
   const [downloadScale] = useState(() => new Animated.Value(1));
@@ -523,8 +525,14 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
     if (router.canGoBack()) router.back();
   };
 
-  /** Download the PDF with real-time progress animation */
-  const handleDownload = async () => {
+  /** Intercept download button press to recommend watching an ad first */
+  const handleDownload = () => {
+    if (!decodedUri || downloading || downloaded || isLocalFile) return;
+    setShowAdModal(true);
+  };
+
+  /** Execute actual file download after ad reward is earned */
+  const executeDownload = async () => {
     if (!decodedUri || downloading || downloaded || isLocalFile) return;
 
     setDownloading(true);
@@ -774,6 +782,12 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
                 setOfflineNoticeDismissed(true);
               }
         }
+      />
+      <WatchAdModal
+        visible={showAdModal}
+        resourceTitle={typeof title === "string" ? title : undefined}
+        onClose={() => setShowAdModal(false)}
+        onAdRewardEarned={() => void executeDownload()}
       />
       <View
         style={[styles.screen, { backgroundColor: themeColors.background }]}
