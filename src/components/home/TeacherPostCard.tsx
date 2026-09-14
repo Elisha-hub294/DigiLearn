@@ -3,7 +3,15 @@ import { Feather as Icon, Ionicons } from "@expo/vector-icons";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import * as Clipboard from "expo-clipboard";
+import {
+  collection,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+} from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
@@ -22,7 +30,9 @@ import { db } from "../../../firebaseConfig";
 import { radius, spacing, colors as staticColors } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import { recordUserActivity } from "../../services/activityService";
 import { toggleSavedItem } from "../../services/userProfile";
+import { openGoogleMeetSession } from "../../utils/googleMeet";
 import {
   matchesUserInterests,
   shouldFilterByInterests,
@@ -46,6 +56,12 @@ export type TeacherPost = {
   createdAt?: Date | null;
   document?: string;
   fileType?: "image" | "doc" | "";
+  postType?: "live" | "announcement" | "post";
+  type?: string;
+  meetCode?: string;
+  meetUrl?: string;
+  isLive?: boolean;
+  status?: "live" | "ended";
 };
 
 const GradientTitle = ({
@@ -174,6 +190,28 @@ export const normalizeTeacherPost = (doc: {
         ? [cover]
         : [];
 
+  const postType =
+    typeof data.postType === "string"
+      ? (data.postType as "live" | "announcement" | "post")
+      : typeof data.type === "string" && data.type === "live"
+        ? "live"
+        : undefined;
+
+  const meetCode =
+    typeof data.meetCode === "string" ? data.meetCode : undefined;
+  const meetUrl =
+    typeof data.meetUrl === "string" ? data.meetUrl : undefined;
+  const isLive =
+    typeof data.isLive === "boolean"
+      ? data.isLive
+      : postType === "live" || Boolean(meetCode || meetUrl);
+  const status =
+    data.status === "ended"
+      ? ("ended" as const)
+      : isLive
+        ? ("live" as const)
+        : undefined;
+
   return {
     id: doc.id,
     title,
@@ -187,6 +225,12 @@ export const normalizeTeacherPost = (doc: {
     images,
     document,
     fileType,
+    postType,
+    type: typeof data.type === "string" ? data.type : postType,
+    meetCode,
+    meetUrl,
+    isLive,
+    status,
     createdAt,
   } satisfies TeacherPost;
 };
@@ -642,6 +686,54 @@ export const TeacherPostItem = ({
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
 
+  const [localStatus, setLocalStatus] = useState<"live" | "ended" | undefined>(
+    postItem.status,
+  );
+  const [isEndingSession, setIsEndingSession] = useState(false);
+
+  const isLivePost =
+    postItem.postType === "live" ||
+    postItem.type === "live" ||
+    Boolean(postItem.meetCode) ||
+    Boolean(postItem.meetUrl);
+
+  const isEnded = localStatus === "ended" || postItem.status === "ended";
+  const isHost = Boolean(user && postItem.owner === user.uid);
+
+  const handleJoinLiveSession = async () => {
+    const target = postItem.meetUrl || postItem.meetCode;
+    if (!target) return;
+    if (user?.uid) {
+      void recordUserActivity(user.uid, "lesson", postItem.id);
+    }
+    showNativeToast("Opening Google Meet...");
+    await openGoogleMeetSession(target);
+  };
+
+  const handleCopyMeetCode = async () => {
+    if (!postItem.meetCode) return;
+    await Clipboard.setStringAsync(postItem.meetCode);
+    showNativeToast(`Meeting code copied: ${postItem.meetCode}`);
+  };
+
+  const handleEndLiveSession = async () => {
+    if (isEndingSession) return;
+    setIsEndingSession(true);
+    try {
+      await updateDoc(doc(db, "teacherPosts", postItem.id), {
+        status: "ended",
+        isLive: false,
+      });
+      setLocalStatus("ended");
+      showNativeToast("Live session ended.");
+    } catch (err) {
+      console.error("Failed to end live session:", err);
+      showNativeToast("Could not end live session.");
+    } finally {
+      setIsEndingSession(false);
+    }
+  };
+
   const ownerProfile = postItem.owner
     ? ownerProfiles[postItem.owner]
     : undefined;
@@ -755,7 +847,7 @@ export const TeacherPostItem = ({
         </View>
 
         {/* Document preview */}
-        {postItem.fileType === "doc" && postItem.document && postItem.cover ? (
+        {!isLivePost && postItem.fileType === "doc" && postItem.document && postItem.cover ? (
           <Pressable
             {...({
               onHoverIn: () => setIsHovered(true),
@@ -776,12 +868,141 @@ export const TeacherPostItem = ({
         ) : null}
 
         {/* Multi-image photo layout */}
-        {postItem.fileType !== "doc" && postImages.length > 0 ? (
+        {!isLivePost && postItem.fileType !== "doc" && postImages.length > 0 ? (
           <MultiImageLayout
             images={postImages}
             onImagePress={handleImagePress}
             onSeeAllPress={() => handleOpenSeeAll(0)}
           />
+        ) : null}
+
+        {/* Dedicated Live Google Meet Session Card */}
+        {isLivePost ? (
+          <View style={styles.liveCardContainer}>
+            <View style={styles.liveCardBannerWrap}>
+              <Image
+                source={{
+                  uri:
+                    postItem.cover ||
+                    (postImages.length > 0
+                      ? postImages[0]
+                      : "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80"),
+                }}
+                style={styles.liveCardBannerImage}
+                contentFit="cover"
+              />
+              <LinearGradient
+                colors={["rgba(15, 23, 42, 0.45)", "rgba(15, 23, 42, 0.94)"]}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.liveBannerBadgeRow}>
+                <View
+                  style={[
+                    styles.liveStatusPill,
+                    isEnded && styles.endedStatusPill,
+                  ]}
+                >
+                  {!isEnded && <View style={styles.liveStatusDot} />}
+                  <Text style={styles.liveStatusPillText}>
+                    {isEnded ? "SESSION ENDED" : "GOOGLE MEET LIVE"}
+                  </Text>
+                </View>
+                {postItem.subject ? (
+                  <View style={styles.liveSubjectPill}>
+                    <Text style={styles.liveSubjectText}>
+                      {postItem.subject}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+
+              {/* Coordinates & Code section */}
+              {postItem.meetCode ? (
+                <View style={styles.liveCoordsRow}>
+                  <View style={styles.meetIconShell}>
+                    <Icon name="video" size={16} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.liveCoordsInfo}>
+                    <Text style={styles.liveCoordsLabel}>Meeting Code</Text>
+                    <Text style={styles.liveCoordsValue}>
+                      {postItem.meetCode}
+                    </Text>
+                  </View>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Copy meeting code"
+                    onPress={handleCopyMeetCode}
+                    style={styles.copyCodeButton}
+                  >
+                    <Icon name="copy" size={13} color="#FFFFFF" />
+                    <Text style={styles.copyCodeText}>Copy</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+
+              {/* Join Live Session Action Button */}
+              {!isEnded ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Join live session on Google Meet"
+                  onPress={handleJoinLiveSession}
+                  style={({ pressed }: any) => [
+                    styles.joinLiveButton,
+                    pressed && {
+                      opacity: 0.92,
+                      transform: [{ scale: 0.99 }],
+                    },
+                  ]}
+                >
+                  <LinearGradient
+                    colors={["#EA4335", "#D93025"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.joinLiveGradient}
+                  >
+                    <Icon name="video" size={18} color="#FFFFFF" />
+                    <Text style={styles.joinLiveButtonText}>
+                      Join Live Session
+                    </Text>
+                    <Icon name="arrow-up-right" size={16} color="#FFFFFF" />
+                  </LinearGradient>
+                </Pressable>
+              ) : (
+                <View style={styles.endedBannerNotice}>
+                  <Icon name="check-circle" size={15} color="#94A3B8" />
+                  <Text style={styles.endedBannerNoticeText}>
+                    This live session has concluded
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Host Controls */}
+            {isHost && !isEnded ? (
+              <View
+                style={[
+                  styles.hostControlsBar,
+                  { backgroundColor: colors.lightBackground },
+                ]}
+              >
+                <Text style={[styles.hostNotice, { color: colors.subtitle }]}>
+                  You are the host of this live session
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="End live session"
+                  onPress={handleEndLiveSession}
+                  disabled={isEndingSession}
+                  style={styles.endSessionButton}
+                >
+                  <Icon name="slash" size={12} color="#EF4444" />
+                  <Text style={styles.endSessionButtonText}>
+                    {isEndingSession ? "Ending..." : "End Session"}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
         ) : null}
 
         <Modal
@@ -908,12 +1129,28 @@ export const TeacherPostItem = ({
                 }
               >
                 <View>
-                  <Text
-                    style={[styles.name, { color: colors.text }]}
-                    maxFontSizeMultiplier={1.3}
-                  >
-                    {teacherName}
-                  </Text>
+                  <View style={styles.nameRow}>
+                    <Text
+                      style={[styles.name, { color: colors.text }]}
+                      maxFontSizeMultiplier={1.3}
+                    >
+                      {teacherName}
+                    </Text>
+                    {isLivePost ? (
+                      <View style={styles.headerLiveWrap}>
+                        {!isEnded ? (
+                          <View style={styles.headerLiveBadge}>
+                            <View style={styles.headerLiveDot} />
+                            <Text style={styles.headerLiveText}>LIVE</Text>
+                          </View>
+                        ) : (
+                          <View style={styles.headerEndedBadge}>
+                            <Text style={styles.headerEndedText}>ENDED</Text>
+                          </View>
+                        )}
+                      </View>
+                    ) : null}
+                  </View>
                   <Text
                     style={[styles.time, { color: colors.subtitle }]}
                     maxFontSizeMultiplier={1.3}
@@ -1058,6 +1295,206 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   name: { fontSize: 14, fontWeight: "500" },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  headerLiveWrap: {
+    marginLeft: 6,
+  },
+  headerLiveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EF4444",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    gap: 4,
+  },
+  headerLiveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#FFFFFF",
+  },
+  headerLiveText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  headerEndedBadge: {
+    backgroundColor: "rgba(100, 116, 139, 0.2)",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
+  headerEndedText: {
+    color: "#64748B",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  liveCardContainer: {
+    marginBottom: spacing.md,
+    borderRadius: 18,
+    overflow: "hidden",
+  },
+  liveCardBannerWrap: {
+    position: "relative",
+    borderRadius: 18,
+    overflow: "hidden",
+    padding: spacing.md,
+    minHeight: 180,
+    justifyContent: "space-between",
+  },
+  liveCardBannerImage: {
+    ...StyleSheet.absoluteFill,
+  },
+  liveBannerBadgeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.md,
+  },
+  liveStatusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(234, 67, 53, 0.95)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    gap: 6,
+  },
+  endedStatusPill: {
+    backgroundColor: "rgba(100, 116, 139, 0.85)",
+  },
+  liveStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#FFFFFF",
+  },
+  liveStatusPillText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  liveSubjectPill: {
+    backgroundColor: "rgba(255, 255, 255, 0.22)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
+  liveSubjectText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  liveCoordsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    padding: spacing.sm,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  meetIconShell: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(234, 67, 53, 0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  liveCoordsInfo: {
+    flex: 1,
+  },
+  liveCoordsLabel: {
+    color: "#94A3B8",
+    fontSize: 10,
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  liveCoordsValue: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  copyCodeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+  },
+  copyCodeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  joinLiveButton: {
+    borderRadius: radius.md,
+    overflow: "hidden",
+  },
+  joinLiveGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 13,
+    paddingHorizontal: spacing.lg,
+    gap: 8,
+  },
+  joinLiveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  endedBannerNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "rgba(15, 23, 42, 0.7)",
+    paddingVertical: 12,
+    borderRadius: radius.md,
+  },
+  endedBannerNoticeText: {
+    color: "#94A3B8",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  hostControlsBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    borderRadius: radius.md,
+    marginTop: 6,
+  },
+  hostNotice: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  endSessionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+  },
+  endSessionButtonText: {
+    color: "#EF4444",
+    fontSize: 11,
+    fontWeight: "700",
+  },
   time: { fontSize: 12, marginTop: 2 },
 
   caption: {

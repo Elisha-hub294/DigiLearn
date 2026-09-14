@@ -57,8 +57,12 @@ export type TeacherPost = {
   previewImage?: ImageSourcePropType;
   images?: (ImageSourcePropType | string)[];
   document?: string;
-  type: "pdf" | "image" | "announcement";
+  type: "pdf" | "image" | "announcement" | "live";
   subject: SubjectKey;
+  meetCode?: string;
+  meetUrl?: string;
+  isLive?: boolean;
+  status?: "live" | "ended";
 };
 
 export type CourseItem = {

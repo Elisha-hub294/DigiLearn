@@ -46,6 +46,13 @@ const publishOptions = [
     route: "book",
   },
   {
+    title: "Start Live Session",
+    description: "Host a live Google Meet class for learners",
+    icon: "video" as const,
+    color: "#EA4335",
+    route: "live",
+  },
+  {
     title: "Add Video Lesson",
     description: "Publish a lesson learners can watch",
     icon: "play-circle" as const,
@@ -62,6 +69,10 @@ export default function PublishScreen() {
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
 
   const openComposer = (route: string) => {
+    if (route === "live") {
+      router.push("/start-live-session" as never);
+      return;
+    }
     if (route === "page") {
       router.push("/add-page" as never);
       return;

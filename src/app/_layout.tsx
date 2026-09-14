@@ -178,6 +178,7 @@ function AppShell() {
           <Stack.Screen name="pdf-reader" />
           <Stack.Screen name="preferences" />
           <Stack.Screen name="publish" />
+          <Stack.Screen name="start-live-session" />
           <Stack.Screen name="see-all" />
           <Stack.Screen name="settings" />
           <Stack.Screen name="signup" />

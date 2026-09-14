@@ -24,6 +24,7 @@ import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { toggleSavedItem } from "../services/userProfile";
+import { openGoogleMeetSession } from "../utils/googleMeet";
 import { feedbackMessages, showNativeToast } from "../utils/nativeToast";
 import { ActionDialog } from "./ui/ActionDialog";
 
@@ -215,6 +216,30 @@ export const TeacherPostCard = ({
             </View>
           </Pressable>
         )}
+        {(post.type === "live" || Boolean(post.meetCode)) && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Join live session"
+            onPress={async () => {
+              const target = post.meetUrl || post.meetCode;
+              if (target) {
+                showNativeToast("Opening Google Meet...");
+                await openGoogleMeetSession(target);
+              }
+            }}
+            style={styles.joinLiveButton}
+          >
+            <LinearGradient
+              colors={["#EA4335", "#D93025"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.joinLiveGradient}
+            >
+              <Icon name="video" size={16} color="#FFFFFF" />
+              <Text style={styles.joinLiveButtonText}>Join Live Session</Text>
+            </LinearGradient>
+          </Pressable>
+        )}
         {!hideActions && (
           <View style={styles.footer}>
             <Pressable
@@ -376,5 +401,22 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     justifyContent: "center",
     alignItems: "center",
+  },
+  joinLiveButton: {
+    borderRadius: radius.md,
+    overflow: "hidden",
+    marginBottom: spacing.md,
+  },
+  joinLiveGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    gap: 8,
+  },
+  joinLiveButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "700",
   },
 });

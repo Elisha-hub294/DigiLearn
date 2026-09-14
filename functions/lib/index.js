@@ -802,6 +802,10 @@ exports.changeAccountType = (0, https_1.onCall)(async (request) => {
         ...defaultProfileFields(request),
         ...(teacherSnapshot.data() ?? userSnapshot.data() ?? {}),
     };
+    const currentType = userData.type || "";
+    if (currentType === accountType) {
+        throw new https_1.HttpsError("failed-precondition", `You already have a ${currentType || "selected"} account. Choose a different account type to continue.`);
+    }
     if (userData.teacherApprovalStatus === "pending") {
         throw new https_1.HttpsError("failed-precondition", "Account type cannot be changed while the teacher application is under review.");
     }
