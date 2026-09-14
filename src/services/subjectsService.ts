@@ -9,7 +9,7 @@ import { readThroughFirestoreCache } from "./firestoreReadCache";
 
 const CACHE_KEY = LOCAL_CACHE_KEYS.subjects;
 const CACHE_VERSION = 1;
-const CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const CACHE_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 
 export type SubjectRecord = {
   id: string;
