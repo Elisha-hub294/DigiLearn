@@ -167,6 +167,7 @@ export default function VideosScreen() {
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
   const contentWidth = contentMaxWidth;
   const cardWidth = getTrendingCardWidth(width, contentWidth);
+  const listCardWidth = horizontalPadding === 0 ? "90%" : "100%";
 
   const loadVideos = useCallback(async (force = false) => {
     try {
@@ -331,7 +332,9 @@ export default function VideosScreen() {
             data={visibleLatest}
             numColumns={isTablet ? 2 : 1}
             renderItem={({ item, index }) => (
-              <VideoCard item={item} index={index} isGrid={isTablet} />
+              <View style={{ width: listCardWidth, alignSelf: "center" }}>
+                <VideoCard item={item} index={index} isGrid={isTablet} />
+              </View>
             )}
             keyExtractor={(item) => item.id}
             ListHeaderComponent={header}

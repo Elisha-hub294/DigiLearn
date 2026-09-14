@@ -71,7 +71,7 @@ export default function WelcomeScreen() {
                 OS
               </Text>
               <Text style={[styles.brandBlack, { color: themeColors.dark }]}>
-                Platform
+                platform
               </Text>
             </Text>
           </View>

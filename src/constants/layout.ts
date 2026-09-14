@@ -3,7 +3,7 @@ export function getHorizontalPadding(width: number): number {
   if (width >= 1200) return 150;
   if (width >= 900) return 50;
   if (width >= 600) return 30;
-  return 5;
+  return 0;
 }
 
 /** Width available to tab content after the desktop navigation rail. */

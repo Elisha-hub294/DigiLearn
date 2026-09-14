@@ -113,6 +113,7 @@ export default function HomeScreen() {
 
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1100, width - horizontalPadding * 2);
+  const cardWidth = horizontalPadding === 0 ? "90%" : "100%";
 
   // Fetch all pool data
   const loadAllFeedPools = useCallback(
@@ -557,7 +558,10 @@ export default function HomeScreen() {
             {visibleFeed.map((item, idx) => {
               if (item.kind === "teacherPost") {
                 return (
-                  <View key={item.id} style={styles.feedCardWrapper}>
+                  <View
+                    key={item.id}
+                    style={[styles.feedCardWrapper, { width: cardWidth }]}
+                  >
                     <TeacherPostItem
                       postItem={item.data}
                       index={idx}
@@ -572,7 +576,10 @@ export default function HomeScreen() {
 
               if (item.kind === "videoLesson") {
                 return (
-                  <View key={item.id} style={styles.feedCardWrapper}>
+                  <View
+                    key={item.id}
+                    style={[styles.feedCardWrapper, { width: cardWidth }]}
+                  >
                     <VideoCard item={item.data} index={idx} isGrid={false} />
                   </View>
                 );
@@ -580,7 +587,10 @@ export default function HomeScreen() {
 
               if (item.kind === "featuredNote") {
                 return (
-                  <View key={item.id} style={styles.feedCardWrapper}>
+                  <View
+                    key={item.id}
+                    style={[styles.feedCardWrapper, { width: cardWidth }]}
+                  >
                     <FeaturedNoteItem
                       note={item.data}
                       subjectAvatars={notesMeta.subjectAvatars}
@@ -594,7 +604,10 @@ export default function HomeScreen() {
 
               if (item.kind === "book") {
                 return (
-                  <View key={item.id} style={styles.feedCardWrapper}>
+                  <View
+                    key={item.id}
+                    style={[styles.feedCardWrapper, { width: cardWidth }]}
+                  >
                     <View style={styles.itemHeaderBadge}>
                       <Text
                         style={[
@@ -641,7 +654,10 @@ export default function HomeScreen() {
 
               if (item.kind === "paper") {
                 return (
-                  <View key={item.id} style={styles.feedCardWrapper}>
+                  <View
+                    key={item.id}
+                    style={[styles.feedCardWrapper, { width: cardWidth }]}
+                  >
                     <View style={styles.itemHeaderBadge}>
                       <Text
                         style={[
@@ -764,6 +780,7 @@ const styles = StyleSheet.create({
   },
   feedCardWrapper: {
     marginBottom: spacing.lg,
+    alignSelf: "center",
   },
   breakWrapper: {
     marginVertical: spacing.md,
