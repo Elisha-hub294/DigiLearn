@@ -1,6 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 
-import { RewardedAd, RewardedAdEventType } from "react-native-google-mobile-ads";
+import {
+  RewardedAd,
+  RewardedAdEventType,
+} from "react-native-google-mobile-ads";
 import { REWARDED_AD_UNIT_ID } from "../../constants/ads";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -142,7 +145,7 @@ export function WatchAdModal({
 
             {/* Title */}
             <Text style={[styles.title, { color: themeColors.text }]}>
-              Support DigiLearn Platform
+              Support OS platform
             </Text>
 
             {resourceTitle ? (
@@ -286,7 +289,7 @@ export function WatchAdModal({
                 <View style={styles.adLogoBadge}>
                   <Feather name="zap" size={24} color="#F59E0B" />
                 </View>
-                <Text style={styles.adTitle}>DigiLearn Platform Sponsor</Text>
+                <Text style={styles.adTitle}>OS platform Sponsor</Text>
                 <Text style={styles.adSubtitle}>
                   Empowering your learning journey everywhere you go.
                 </Text>
@@ -300,9 +303,7 @@ export function WatchAdModal({
                 { backgroundColor: themeColors.lightBackground },
               ]}
             >
-              <Animated.View
-                style={[styles.adFill, { width: progressWidth }]}
-              >
+              <Animated.View style={[styles.adFill, { width: progressWidth }]}>
                 <LinearGradient
                   colors={["#006eff", "#6C63FF", "#A855F7"]}
                   start={{ x: 0, y: 0 }}
@@ -318,7 +319,7 @@ export function WatchAdModal({
               >
                 {countdown > 0
                   ? "Please complete watching the ad to unlock your download..."
-                  : "Thank you for supporting DigiLearn! Starting download..."}
+                  : "Thank you for supporting OS platform! Starting download..."}
               </Text>
             </View>
           </View>

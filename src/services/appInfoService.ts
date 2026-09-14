@@ -9,5 +9,5 @@ export async function getAppVersion(): Promise<string> {
 }
 
 export function formatAppVersion(version: string): string {
-  return `digilearn@${version}`;
+  return `os-platform@${version}`;
 }

@@ -147,7 +147,7 @@ export default function AboutScreen() {
   );
 
   const versionLabel = useMemo(
-    () => (version ? formatAppVersion(version) : "digilearn@…"),
+    () => (version ? formatAppVersion(version) : "os-platform@…"),
     [version],
   );
 
