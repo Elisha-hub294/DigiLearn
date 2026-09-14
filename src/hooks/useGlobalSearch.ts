@@ -273,10 +273,14 @@ export function useGlobalSearch(
 
     const applyCache = (data: SearchCache, preserveExisting = false) => {
       setTopicalNotes((existing) =>
-        preserveExisting ? mergeItems(existing, data.topicalNotes) : data.topicalNotes,
+        preserveExisting
+          ? mergeItems(existing, data.topicalNotes)
+          : data.topicalNotes,
       );
       setPastPapers((existing) =>
-        preserveExisting ? mergeItems(existing, data.pastPapers) : data.pastPapers,
+        preserveExisting
+          ? mergeItems(existing, data.pastPapers)
+          : data.pastPapers,
       );
       setVideos((existing) =>
         preserveExisting ? mergeItems(existing, data.videos) : data.videos,
@@ -286,7 +290,9 @@ export function useGlobalSearch(
       );
       setTeachers((existing) =>
         filterApprovedTeachers(
-          preserveExisting ? mergeItems(existing, data.teachers) : data.teachers,
+          preserveExisting
+            ? mergeItems(existing, data.teachers)
+            : data.teachers,
         ),
       );
       setSubjectsMap(data.subjectsMap);

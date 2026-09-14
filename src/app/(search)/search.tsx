@@ -442,6 +442,7 @@ export default function SearchScreen() {
               data={results}
               renderItem={renderResultCard}
               keyExtractor={(item, index) => `${item.type}-${item.id}-${index}`}
+              extraData={debouncedQuery}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.listContainer}
