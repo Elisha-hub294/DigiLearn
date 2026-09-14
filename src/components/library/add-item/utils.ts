@@ -77,9 +77,21 @@ export const uriToBlob = async (uri: string): Promise<Blob> => {
     const base64 = await FileSystem.readAsStringAsync(uri, {
       encoding: FileSystem.EncodingType.Base64,
     });
-    const mimeType = uri.toLowerCase().endsWith(".pdf")
-      ? "application/pdf"
-      : "application/octet-stream";
+    const mimeType = (() => {
+      const lower = uri.toLowerCase();
+      if (lower.endsWith(".pdf")) return "application/pdf";
+      if (lower.endsWith(".docx"))
+        return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+      if (lower.endsWith(".doc")) return "application/msword";
+      if (lower.endsWith(".pptx"))
+        return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+      if (lower.endsWith(".ppt")) return "application/vnd.ms-powerpoint";
+      if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+      if (lower.endsWith(".png")) return "image/png";
+      if (lower.endsWith(".gif")) return "image/gif";
+      if (lower.endsWith(".webp")) return "image/webp";
+      return "application/octet-stream";
+    })();
     return base64ToBlob(base64, mimeType);
   }
 

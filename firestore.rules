@@ -40,36 +40,47 @@ service cloud.firestore {
       allow read: if isVerified() && request.auth.uid == userId;
       allow update: if isVerified()
         && (
-          request.auth.uid == userId
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'name',
-          'email',
-          'photoURL',
-          'bio',
-          'level',
-          'school',
-          'gender',
-          'subjects',
-          'filterFeedByInterests',
-          'phone',
-          'youtube',
-          'socials-youtube',
-          'socials-phone',
-          'socials-email',
-          'socials-whatsapp',
-          'socials-whatsapp-channel',
-          'marked-as-read',
-          'hidden-pages',
-          'saved-pages',
-          'saved-books',
-          'saved-lessons',
-          'saved-papers',
-          'saved-posts',
-          'savedAt',
-          'notifications'
-          ]
-        )
-        || (isVerified() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin')
+          (
+            request.auth.uid == userId
+            && (
+              request.resource.data.type == resource.data.type
+              || (
+                (!resource.data.keys().hasAll(['type']) || resource.data.type == '' || resource.data.type == 'student')
+                && request.resource.data.type == 'student'
+              )
+            )
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'name',
+              'email',
+              'photoURL',
+              'bio',
+              'level',
+              'school',
+              'gender',
+              'subjects',
+              'filterFeedByInterests',
+              'phone',
+              'youtube',
+              'socials-youtube',
+              'socials-phone',
+              'socials-email',
+              'socials-whatsapp',
+              'socials-whatsapp-channel',
+              'marked-as-read',
+              'hidden-pages',
+              'saved-pages',
+              'saved-books',
+              'saved-lessons',
+              'saved-papers',
+              'saved-posts',
+              'paper-revision-status',
+              'savedAt',
+              'notifications',
+              'accountTypeCompleted',
+              'type'
+            ])
+          )
+          || (isVerified() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin')
         );
       allow delete: if false;
 

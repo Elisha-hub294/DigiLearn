@@ -1208,6 +1208,7 @@ export function AddItemModal({
             blob,
             "Uploading page document",
             updateUploadProgress,
+            { contentType: file.mimeType || undefined },
           );
 
           try {
@@ -1268,6 +1269,7 @@ export function AddItemModal({
             blob,
             "Uploading past paper",
             updateUploadProgress,
+            { contentType: file.mimeType || undefined },
           );
 
           try {

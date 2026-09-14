@@ -184,6 +184,43 @@ test("verified users can save pages and update saved timestamps", async () => {
   );
 });
 
+test("verified students can save profile details and complete onboarding", async () => {
+  await seedUser("student-1", "student", undefined);
+  const context = firestoreContext(auth("student-1"));
+
+  await assertSucceeds(
+    setDoc(
+      doc(context.firestore(), "users", "student-1"),
+      {
+        type: "student",
+        accountTypeCompleted: true,
+        name: "Student Name",
+        level: "Ordinary Level (O-Level)",
+        school: "Sample School",
+        subjects: ["Mathematics"],
+        filterFeedByInterests: true,
+      },
+      { merge: true },
+    ),
+  );
+});
+
+test("verified students cannot elevate type to admin", async () => {
+  await seedUser("student-1", "student", undefined);
+  const context = firestoreContext(auth("student-1"));
+
+  await assertFails(
+    setDoc(
+      doc(context.firestore(), "users", "student-1"),
+      {
+        type: "admin",
+      },
+      { merge: true },
+    ),
+  );
+});
+
+
 test("guests can read published teacher resources", async () => {
   await testEnv.withSecurityRulesDisabled(async (disabled) => {
     for (const collectionName of [

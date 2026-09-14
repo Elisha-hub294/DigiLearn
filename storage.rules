@@ -27,10 +27,10 @@ service firebase.storage {
 
     match /{resourcePrefix}/{userId}/{fileName} {
       allow create, update: if isVerifiedOwner(userId)
-        && resourcePrefix.matches('(book-covers|page-covers|past-paper-covers|docs|post-covers|post-documents|past-papers)')
+        && resourcePrefix.matches('(book-covers|book-samples|page-covers|past-paper-covers|docs|post-covers|post-documents|post-images|past-papers)')
         && isSafeUpload();
       allow delete: if isVerifiedOwner(userId)
-        && resourcePrefix.matches('(book-covers|page-covers|past-paper-covers|docs|post-covers|post-documents|past-papers)');
+        && resourcePrefix.matches('(book-covers|book-samples|page-covers|past-paper-covers|docs|post-covers|post-documents|post-images|past-papers)');
     }
   }
 }

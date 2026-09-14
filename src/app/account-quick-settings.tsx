@@ -54,7 +54,19 @@ function getSubjectNames(items: unknown): string[] {
     }
   });
 
-  return result;
+function getErrorMessage(error: unknown, fallback: string) {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "permission-denied"
+  ) {
+    return "You don't have permission to perform this update. Please try signing in again.";
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
 }
 
 function InfoMessage({ children }: { children: string }) {
