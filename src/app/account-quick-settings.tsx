@@ -227,9 +227,12 @@ export default function AccountQuickSettingsScreen() {
       await setDoc(doc(db, "users", user.uid), payload, { merge: true });
       router.dismissAll();
       router.replace("/" as never);
-    } catch {
+    } catch (error) {
       setSaveError(
-        "Couldn't save your profile details. Please check your connection and try again.",
+        getErrorMessage(
+          error,
+          "Couldn't save your profile details. Please check your connection and try again.",
+        ),
       );
     } finally {
       setIsSaving(false);
