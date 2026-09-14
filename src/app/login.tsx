@@ -18,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
+import { GoogleIcon } from "../components/ui/GoogleIcon";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
@@ -416,7 +417,7 @@ export default function LoginScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Sign in with Google"
               >
-                <FontAwesome name="google" size={20} color="#EA4335" />
+                <GoogleIcon size={20} />
               </Pressable>
 
               <Pressable

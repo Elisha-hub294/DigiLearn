@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { GoogleIcon } from "../components/ui/GoogleIcon";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
@@ -354,7 +355,7 @@ export default function SignUpScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Sign up with Google"
               >
-                <FontAwesome name="google" size={20} color="#EA4335" />
+                <GoogleIcon size={20} />
               </Pressable>
 
               <Pressable
