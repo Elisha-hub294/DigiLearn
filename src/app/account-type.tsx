@@ -9,7 +9,6 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   BackHandler,
   FlatList,
   NativeScrollEvent,
@@ -24,6 +23,7 @@ import {
 } from "react-native";
 
 import { auth } from "../../firebaseConfig";
+import { ActionDialog } from "../components/ui/ActionDialog";
 import { Skeleton } from "../components/ui/Skeleton";
 import { getHorizontalPadding } from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
@@ -83,6 +83,7 @@ export default function AccountTypeScreen() {
   const [isReviewPending, setIsReviewPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [showTeacherReviewDialog, setShowTeacherReviewDialog] = useState(false);
 
   const horizontalPadding = useMemo(() => getHorizontalPadding(width), [width]);
   const contentMaxWidth = Math.min(500, width - horizontalPadding * 2);
@@ -207,17 +208,7 @@ export default function AccountTypeScreen() {
       await saveAccountTypeDecision(user, selectedAccountType);
       if (openedFromSettings) {
         if (selectedAccountType === "teacher") {
-          Alert.alert(
-            "Application under review",
-            "Your teacher application was sent to the OS platform team. We will notify you when a decision is made.",
-            [
-              {
-                text: "Continue",
-                onPress: () =>
-                  router.replace("/teacher-account-quick-settings" as never),
-              },
-            ],
-          );
+          setShowTeacherReviewDialog(true);
         } else {
           router.back();
         }
@@ -368,6 +359,17 @@ export default function AccountTypeScreen() {
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: themeColors.background }]}
     >
+      <ActionDialog
+        visible={showTeacherReviewDialog}
+        title="Application under review"
+        message="Your teacher application was sent to the OS platform team. We will notify you when a decision is made."
+        primaryText="Continue"
+        onPrimary={() => {
+          setShowTeacherReviewDialog(false);
+          router.replace("/teacher-account-quick-settings" as never);
+        }}
+        onClose={() => setShowTeacherReviewDialog(false)}
+      />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
