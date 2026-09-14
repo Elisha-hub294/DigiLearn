@@ -111,7 +111,7 @@ async function queueActivityEvent(event: PendingActivityEvent): Promise<void> {
     const nextEvents = [...pendingEvents, event];
     await AsyncStorage.setItem(queueKey, JSON.stringify(nextEvents));
 
-    if (nextEvents.length >= ACTIVITY_EVENT_BATCH_SIZE) {
+    if (AppState.currentState === "active") {
       await flushActivityEventsLocked(event.userId);
     }
   });
