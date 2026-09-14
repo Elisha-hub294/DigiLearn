@@ -362,7 +362,9 @@ export default function SearchScreen() {
                     accessibilityRole="button"
                     onPress={() => {
                       setSelectedCategory(cat);
-                      triggerManualSearch();
+                      if (query.trim()) {
+                        triggerManualSearch();
+                      }
                     }}
                     style={[
                       styles.categoryChip,

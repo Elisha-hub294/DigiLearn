@@ -301,15 +301,7 @@ export function useGlobalSearch(
     };
 
     const loadSearchResults = async () => {
-      if (!hasSubmittedSearch) {
-  setLoading(false);
-  return;
-}
-if (!hasSubmittedSearch) {
-  setLoading(false);
-  return;
-}
-const searchTerm = hasSubmittedSearch ? debouncedQuery.trim() : "";
+      const searchTerm = debouncedQuery.trim();
       const resultLimit = searchTerm
         ? SEARCH_QUERY_LIMIT
         : SUGGESTION_QUERY_LIMIT;
