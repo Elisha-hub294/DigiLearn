@@ -1,9 +1,9 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { Feather as Icon, Ionicons } from "@expo/vector-icons";
 import MaskedView from "@react-native-masked-view/masked-view";
+import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import * as Clipboard from "expo-clipboard";
 import {
   collection,
   doc,
@@ -12,7 +12,7 @@ import {
   query,
   updateDoc,
 } from "firebase/firestore";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Modal,
@@ -199,8 +199,7 @@ export const normalizeTeacherPost = (doc: {
 
   const meetCode =
     typeof data.meetCode === "string" ? data.meetCode : undefined;
-  const meetUrl =
-    typeof data.meetUrl === "string" ? data.meetUrl : undefined;
+  const meetUrl = typeof data.meetUrl === "string" ? data.meetUrl : undefined;
   const isLive =
     typeof data.isLive === "boolean"
       ? data.isLive
@@ -393,6 +392,21 @@ export const TeacherPostCard = ({
     );
   }
 
+  const renderPostItem = useCallback(
+    ({ item: postItem, index }: { item: TeacherPost; index: number }) => (
+      <TeacherPostItem
+        postItem={postItem}
+        index={index}
+        isWide={isWide}
+        teacherAvatars={teacherAvatars}
+        ownerProfiles={ownerProfiles}
+        defaultUserAvatar={defaultUserAvatar}
+        isVisible={visiblePostIds.has(postItem.id)}
+      />
+    ),
+    [defaultUserAvatar, isWide, ownerProfiles, teacherAvatars, visiblePostIds],
+  );
+
   if (displayedPosts.length === 0) {
     return null;
   }
@@ -405,18 +419,7 @@ export const TeacherPostCard = ({
       scrollEnabled={false}
       viewabilityConfig={viewabilityConfig}
       onViewableItemsChanged={onViewableItemsChanged}
-      renderItem={({ item: postItem, index }) => (
-        <TeacherPostItem
-          key={postItem.id}
-          postItem={postItem}
-          index={index}
-          isWide={isWide}
-          teacherAvatars={teacherAvatars}
-          ownerProfiles={ownerProfiles}
-          defaultUserAvatar={defaultUserAvatar}
-          isVisible={visiblePostIds.has(postItem.id)}
-        />
-      )}
+      renderItem={renderPostItem}
     />
   );
 };
@@ -661,7 +664,7 @@ function MultiImageLayout({
   );
 }
 
-export const TeacherPostItem = ({
+export const TeacherPostItem = memo(function TeacherPostItem({
   postItem,
   index = 0,
   isWide = false,
@@ -677,7 +680,7 @@ export const TeacherPostItem = ({
   ownerProfiles?: Record<string, { name: string; avatar?: string }>;
   defaultUserAvatar?: string | null;
   isVisible?: boolean;
-}) => {
+}) {
   const { user, profile } = useProfile();
   const { colors } = useTheme();
   const router = useRouter();
@@ -847,7 +850,10 @@ export const TeacherPostItem = ({
         </View>
 
         {/* Document preview */}
-        {!isLivePost && postItem.fileType === "doc" && postItem.document && postItem.cover ? (
+        {!isLivePost &&
+        postItem.fileType === "doc" &&
+        postItem.document &&
+        postItem.cover ? (
           <Pressable
             {...({
               onHoverIn: () => setIsHovered(true),
@@ -1218,7 +1224,7 @@ export const TeacherPostItem = ({
       />
     </Animated.View>
   );
-};
+});
 
 const SkeletonTeacherPostCard = () => {
   const { colors } = useTheme();
