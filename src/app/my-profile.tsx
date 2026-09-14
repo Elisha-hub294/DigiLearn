@@ -363,9 +363,9 @@ export default function MyProfileScreen() {
             <View style={styles.header}>
               <View style={styles.headerRow}>
                 <Pressable
-                  onPress={() => router.push("/settings" as never)}
+                  onPress={() => router.back()}
                   style={styles.backButton}
-                  accessibilityLabel="Back to settings"
+                  accessibilityLabel="Go back"
                 >
                   <Feather
                     name="arrow-left"
