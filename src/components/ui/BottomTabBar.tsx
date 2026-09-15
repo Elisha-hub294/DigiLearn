@@ -10,6 +10,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { auth } from "../../../firebaseConfig";
 import { radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
@@ -46,6 +47,7 @@ const tabs = [
 
 export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const { profile } = useProfile();
   const { colors } = useTheme();
   const [authUser, setAuthUser] = useState(auth.currentUser);
@@ -181,6 +183,7 @@ export const BottomTabBar = ({ state, navigation }: BottomTabBarProps) => {
         {
           borderTopColor: colors.border,
           backgroundColor: colors.background,
+          paddingBottom: insets.bottom,
         },
       ]}
     >
