@@ -2,7 +2,6 @@ import { useRouter } from "expo-router";
 import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -114,19 +113,18 @@ export default function ProfileScreen() {
     });
   }, [navigation, onRefresh, route.key]);
   const padding = getHorizontalPadding(width);
-  const cardWidth = padding === 0 ? "90%" : "100%";
+  const cardWidth = padding === 0 ? "95%" : "100%";
   return (
     <SafeAreaView
       style={[
         s.safe,
         {
-          backgroundColor:
-            Platform.OS === "web" ? themeColors.background : profileAccent,
+          backgroundColor: themeColors.background,
         },
       ]}
       edges={["top"]}
     >
-      <StatusBar backgroundColor={profileAccent} />
+      <StatusBar backgroundColor={profileAccent} barStyle="light-content" />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[

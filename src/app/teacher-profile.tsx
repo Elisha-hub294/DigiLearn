@@ -58,6 +58,7 @@ type TeacherRecord = {
   phone?: string;
   email?: string;
   youtube?: string;
+  whatsappChannel?: string;
   verified?: boolean;
   subjects?: string[];
   createdAt?: unknown;
@@ -216,7 +217,7 @@ export default function TeacherProfileScreen() {
   const hasPhone = Boolean(teacher?.phone);
   const hasYoutube = Boolean(teacher?.youtube);
   const hasEmail = Boolean(teacher?.email);
-  const hasCommunityLink = hasPhone || hasYoutube;
+  const hasCommunityLink = Boolean(teacher?.whatsappChannel);
   const isOwnProfile =
     (teacher?.id && user?.uid && teacher.id === user.uid) ||
     (user?.uid && params.id === user.uid) ||
@@ -246,9 +247,14 @@ export default function TeacherProfileScreen() {
               avatar: getTeacherAvatar(data),
               bio: pickString(data.bio, "Teacher at OS platform"),
               accent: pickString(data.accent, colors.primaryDark),
-              phone: pickString(data.phone),
-              email: pickString(data.email),
-              youtube: pickString(data.youtube),
+              phone: pickString(
+                data.phone || data["socials-phone"] || data["socials-whatsapp"],
+              ),
+              email: pickString(data.email || data["socials-email"]),
+              youtube: pickString(data.youtube || data["socials-youtube"]),
+              whatsappChannel: pickString(
+                data.whatsappChannel || data["socials-whatsapp-channel"],
+              ),
               verified: Boolean(data.verified),
               subjects: pickArray(data.subjects),
               createdAt: data.createdAt,
@@ -281,9 +287,14 @@ export default function TeacherProfileScreen() {
           avatar: getTeacherAvatar(data),
           bio: pickString(data.bio, "Teacher at OS platform"),
           accent: pickString(data.accent, colors.primary),
-          phone: pickString(data.phone),
-          email: pickString(data.email),
-          youtube: pickString(data.youtube),
+          phone: pickString(
+            data.phone || data["socials-phone"] || data["socials-whatsapp"],
+          ),
+          email: pickString(data.email || data["socials-email"]),
+          youtube: pickString(data.youtube || data["socials-youtube"]),
+          whatsappChannel: pickString(
+            data.whatsappChannel || data["socials-whatsapp-channel"],
+          ),
           verified: Boolean(data.verified),
           subjects: pickArray(data.subjects),
           createdAt: data.createdAt,
@@ -1576,7 +1587,9 @@ export default function TeacherProfileScreen() {
           secondaryText="Cancel"
           onPrimary={() => {
             setCommunityDialogVisible(false);
-            if (teacher?.phone) {
+            if (teacher?.whatsappChannel) {
+              Linking.openURL(teacher.whatsappChannel);
+            } else if (teacher?.phone) {
               const message = `Hello Teacher ${teacherFirstName}, I would like to join your OS platform learning community.`;
               Linking.openURL(
                 `https://wa.me/${teacher.phone}?text=${encodeURIComponent(message)}`,
