@@ -30,15 +30,22 @@ export interface UploadProgressCallback {
  */
 export const uploadAssetToStorage = async (
   path: string,
-  blob: Blob,
+  blob: Blob | Uint8Array | ArrayBuffer,
   label: string,
   onProgress: UploadProgressCallback,
   metadata?: { contentType?: string },
 ): Promise<string> => {
   const storageRef = ref(storage, path);
+  const effectiveMetadata = {
+    ...metadata,
+    contentType:
+      metadata?.contentType ||
+      (blob as any)?.type ||
+      "application/octet-stream",
+  };
 
   return new Promise<string>((resolve, reject) => {
-    const task = uploadBytesResumable(storageRef, blob, metadata);
+    const task = uploadBytesResumable(storageRef, blob, effectiveMetadata);
 
     task.on(
       "state_changed",

@@ -29,28 +29,38 @@ export const getTitleDocId = (title: string): string => {
 export const base64ToBlob = (
   base64: string,
   mimeType = "application/octet-stream",
-): Blob => {
+): Blob | Uint8Array => {
   const normalized = base64.includes(",") ? base64.split(",")[1] : base64;
   const cleaned = normalized.replace(/\s/g, "");
   const binary = atob(cleaned);
-  const bytes = new Uint8Array(binary.length);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
 
-  for (let i = 0; i < binary.length; i += 1) {
+  for (let i = 0; i < len; i += 1) {
     bytes[i] = binary.charCodeAt(i);
   }
 
-  return new Blob([bytes], { type: mimeType });
+  try {
+    return new Blob([bytes], { type: mimeType });
+  } catch {
+    // In React Native, BlobManager explicitly rejects ArrayBuffer/ArrayBufferView:
+    // "Creating blobs from 'ArrayBuffer' and 'ArrayBufferView' are not supported"
+    // Firebase Storage natively supports uploading Uint8Array directly.
+    Object.defineProperty(bytes, "type", { value: mimeType, configurable: true, writable: true });
+    Object.defineProperty(bytes, "size", { value: bytes.byteLength, configurable: true, writable: true });
+    return bytes;
+  }
 };
 
 /**
- * Converts a local or remote file URI into a Blob.
+ * Converts a local or remote file URI into a Blob or Uint8Array.
  * Native file URIs must be read as base64 because XMLHttpRequest cannot fetch
  * file:// URIs on Android/iOS.
  */
 export const uriToBlob = async (
   uri: string,
   expectedMimeType?: string,
-): Promise<Blob> => {
+): Promise<Blob | Uint8Array> => {
   if (!uri) {
     throw new Error("File URI is required");
   }

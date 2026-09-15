@@ -36,3 +36,33 @@ test("uriToBlob throws if URI is empty", async () => {
     { message: "File URI is required" },
   );
 });
+
+test("base64ToBlob gracefully falls back to Uint8Array when new Blob throws on native", async () => {
+  const { base64ToBlob } =
+    await import("../../src/components/library/add-item/utils.ts");
+
+  const originalBlob = globalThis.Blob;
+  // Simulate React Native's Blob constructor behavior
+  globalThis.Blob = class MockRNBlob {
+    constructor(parts) {
+      for (const part of parts) {
+        if (ArrayBuffer.isView(part) || part instanceof ArrayBuffer) {
+          throw new Error(
+            "Creating blobs from 'ArrayBuffer' and 'ArrayBufferView' are not supported",
+          );
+        }
+      }
+    }
+  };
+
+  try {
+    const pdfBase64 = "JVBERi0xLjQK";
+    const result = base64ToBlob(pdfBase64, "application/pdf");
+
+    assert.ok(result instanceof Uint8Array, "should return Uint8Array");
+    assert.equal(result.type, "application/pdf");
+    assert.ok(result.size > 0, "size property should match byte length");
+  } finally {
+    globalThis.Blob = originalBlob;
+  }
+});
