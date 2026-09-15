@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 import { doc, updateDoc } from "firebase/firestore";
 import { Platform } from "react-native";
 import { db } from "../../firebaseConfig";
@@ -9,6 +10,10 @@ const PUSH_ENABLED_KEY = "digilearn.pushNotificationsEnabled";
 const REMINDERS_ENABLED_KEY = "digilearn.remindersEnabled";
 const REMINDER_ID_KEY = "digilearn.continueLearningReminderId";
 const REMINDER_CHANNEL_ID = "learning-reminders";
+
+const isExpoGo =
+  Constants.appOwnership === "expo" ||
+  Constants.executionEnvironment === "storeClient";
 
 export async function getPushNotificationSettings() {
   const [push, reminders] = await Promise.all([
@@ -51,7 +56,7 @@ export async function registerDeviceForPushNotifications(
   userId: string,
   collectionName: NotificationProfileCollection = "users",
 ) {
-  if (!userId || Platform.OS === "web") return false;
+  if (!userId || Platform.OS === "web" || isExpoGo) return false;
   if (!(await ensurePermission())) return false;
 
   const token = await Notifications.getDevicePushTokenAsync();

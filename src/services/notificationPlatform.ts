@@ -1,27 +1,97 @@
-import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
+import { Platform } from "react-native";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+type NotificationsModule = typeof import("expo-notifications");
 
-export const AndroidImportance = Notifications.AndroidImportance;
-export const IosAuthorizationStatus = Notifications.IosAuthorizationStatus;
-export const SchedulableTriggerInputTypes =
-  Notifications.SchedulableTriggerInputTypes;
+const isExpoGoAndroid =
+  Platform.OS === "android" &&
+  (Constants.appOwnership === "expo" ||
+    Constants.executionEnvironment === "storeClient");
 
-export const getPermissionsAsync = Notifications.getPermissionsAsync;
-export const requestPermissionsAsync = Notifications.requestPermissionsAsync;
-export const setNotificationChannelAsync =
-  Notifications.setNotificationChannelAsync;
-export const getDevicePushTokenAsync = Notifications.getDevicePushTokenAsync;
-export const cancelScheduledNotificationAsync =
-  Notifications.cancelScheduledNotificationAsync;
-export const scheduleNotificationAsync =
-  Notifications.scheduleNotificationAsync;
-export const getAllScheduledNotificationsAsync =
-  Notifications.getAllScheduledNotificationsAsync;
+let notificationsPromise: Promise<NotificationsModule | null> | undefined;
+
+function getNotifications(): Promise<NotificationsModule | null> {
+  if (isExpoGoAndroid) return Promise.resolve(null);
+
+  notificationsPromise ??= import("expo-notifications").then(
+    (Notifications) => {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowBanner: true,
+          shouldShowList: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+        }),
+      });
+      return Notifications;
+    },
+  );
+
+  return notificationsPromise;
+}
+
+export const AndroidImportance = { DEFAULT: 3 } as const;
+export const IosAuthorizationStatus = {
+  PROVISIONAL:
+    "provisional" as unknown as NotificationsModule["IosAuthorizationStatus"]["PROVISIONAL"],
+};
+export const SchedulableTriggerInputTypes = {
+  TIME_INTERVAL:
+    "timeInterval" as NotificationsModule["SchedulableTriggerInputTypes"]["TIME_INTERVAL"],
+} as const;
+
+export async function getPermissionsAsync() {
+  const Notifications = await getNotifications();
+  return (
+    Notifications?.getPermissionsAsync() ?? { granted: false, ios: undefined }
+  );
+}
+
+export async function requestPermissionsAsync() {
+  const Notifications = await getNotifications();
+  return (
+    Notifications?.requestPermissionsAsync() ?? {
+      granted: false,
+      ios: undefined,
+    }
+  );
+}
+
+export async function setNotificationChannelAsync(
+  ...args: Parameters<NotificationsModule["setNotificationChannelAsync"]>
+) {
+  const Notifications = await getNotifications();
+  if (Notifications) return Notifications.setNotificationChannelAsync(...args);
+  return null;
+}
+
+export async function getDevicePushTokenAsync() {
+  const Notifications = await getNotifications();
+  if (!Notifications)
+    throw new Error(
+      "Push notifications are unavailable in Expo Go on Android.",
+    );
+  return Notifications.getDevicePushTokenAsync();
+}
+
+export async function cancelScheduledNotificationAsync(identifier: string) {
+  const Notifications = await getNotifications();
+  if (Notifications)
+    return Notifications.cancelScheduledNotificationAsync(identifier);
+}
+
+export async function scheduleNotificationAsync(
+  ...args: Parameters<NotificationsModule["scheduleNotificationAsync"]>
+) {
+  const Notifications = await getNotifications();
+  if (!Notifications)
+    throw new Error(
+      "Scheduled notifications are unavailable in Expo Go on Android.",
+    );
+  return Notifications.scheduleNotificationAsync(...args);
+}
+
+export async function getAllScheduledNotificationsAsync() {
+  const Notifications = await getNotifications();
+  return Notifications?.getAllScheduledNotificationsAsync() ?? [];
+}

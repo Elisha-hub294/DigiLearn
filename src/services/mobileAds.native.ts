@@ -1,4 +1,8 @@
-import mobileAds from "react-native-google-mobile-ads";
+import Constants from "expo-constants";
+
+const isExpoGo =
+  Constants.appOwnership === "expo" ||
+  Constants.executionEnvironment === "storeClient";
 
 let isInitialized = false;
 
@@ -7,9 +11,11 @@ let isInitialized = false;
  * Safe to call multiple times; only initializes once.
  */
 export async function initializeMobileAds(): Promise<void> {
-  if (isInitialized) return;
+  if (isInitialized || isExpoGo) return;
 
   try {
+    const { default: mobileAds } =
+      await import("react-native-google-mobile-ads");
     const adapterStatuses = await mobileAds().initialize();
     isInitialized = true;
     if (__DEV__) {
