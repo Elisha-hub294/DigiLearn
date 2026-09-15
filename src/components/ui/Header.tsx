@@ -34,7 +34,13 @@ import { openGoogleMeetSession } from "../../utils/googleMeet";
 const LIVE_RED = "#E53935";
 const LIVE_RED_DEEP = "#B71C1C";
 
-function LiveJoinButton({ meetCode, meetUrl }: { meetCode?: string; meetUrl?: string }) {
+function LiveJoinButton({
+  meetCode,
+  meetUrl,
+}: {
+  meetCode?: string;
+  meetUrl?: string;
+}) {
   // Scale pulse: the button breathes in/out subtly
   const scale = useSharedValue(1);
   // Glow ring opacity: ripple-out effect
@@ -121,6 +127,7 @@ type HeaderProps = {
   rightIconName?: string;
   showBadge?: boolean;
   showPublishButton?: boolean;
+  showGoLiveButton?: boolean;
   showDownloadsButton?: boolean;
   notificationTypes?: readonly NotificationType[];
 };
@@ -130,6 +137,7 @@ export const Header = ({
   rightIconName = "bell",
   showBadge = true,
   showPublishButton = false,
+  showGoLiveButton = false,
   showDownloadsButton = false,
   notificationTypes,
 }: HeaderProps) => {
@@ -143,11 +151,12 @@ export const Header = ({
   // Show the Join Live button only to students (not teachers / admins who started it).
   // We exclude teacher and admin rather than positively listing student types
   // to avoid TypeScript narrowing issues with the AccountType union.
-  const isStudent =
-    profile?.type !== "teacher" && profile?.type !== "admin";
+  const isStudent = profile?.type !== "teacher" && profile?.type !== "admin";
   const showLiveButton = isStudent && liveSession !== null;
 
-
+  const canGoLive =
+    showGoLiveButton &&
+    (profile?.type === "teacher" || profile?.type === "admin");
   const canPublish =
     showPublishButton &&
     (profile?.type === "teacher" || profile?.type === "admin");
@@ -231,6 +240,17 @@ export const Header = ({
             meetCode={liveSession.meetCode}
             meetUrl={liveSession.meetUrl}
           />
+        ) : null}
+
+        {canGoLive ? (
+          <Pressable
+            accessibilityLabel="Go live"
+            onPress={() => router.push("/start-live-session" as any)}
+            style={styles.goLiveButton}
+          >
+            <Icon name="video" size={16} color="#FFFFFF" />
+            <Text style={styles.goLiveButtonText}>Go Live</Text>
+          </Pressable>
         ) : null}
 
         {/* ── Publish button (teachers / admins) ───────────────────── */}
@@ -421,6 +441,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "800",
     letterSpacing: 0.3,
+  },
+
+  goLiveButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    borderRadius: 18,
+    backgroundColor: LIVE_RED,
+    elevation: 3,
+  },
+  goLiveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "800",
   },
 
   // ── Publish button ───────────────────────────────────────────────────────

@@ -41,6 +41,7 @@ import { BookCard } from "../../components/library/BookCard";
 import { PaperCard } from "../../components/library/PaperCard";
 import { PaperCarousel } from "../../components/library/PaperCarousel";
 import { Header } from "../../components/ui/Header";
+import { LiveSessionsCarousel } from "../../components/home/LiveSessionsCarousel";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { SectionHeader } from "../../components/ui/SectionHeader";
 import { Skeleton } from "../../components/ui/Skeleton";
@@ -553,12 +554,19 @@ export default function HomeScreen() {
             <View
               style={horizontalPadding === 0 ? styles.phoneChrome : undefined}
             >
-              <Header showPublishButton />
+              <Header showGoLiveButton showPublishButton />
               <SearchBar placeholder="Search OS platform..." />
             </View>
 
             {/* Daily Learning Streak Card */}
             {/* <StreakCard /> */}
+
+            <LiveSessionsCarousel
+              posts={teacherPosts}
+              teacherAvatars={teacherMeta.teacherAvatars}
+              ownerProfiles={teacherMeta.ownerProfiles}
+              defaultUserAvatar={teacherMeta.defaultUserAvatar}
+            />
 
             {/* Story-style topical discovery slider always at top */}
             <View style={[styles.storiesSection]}>
