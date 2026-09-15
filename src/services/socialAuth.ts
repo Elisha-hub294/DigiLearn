@@ -98,6 +98,10 @@ export function parseAuthError(error: unknown): string {
     return "Google Sign-In is temporarily unavailable because its OAuth client was deleted. Please contact support.";
   }
 
+  if (/getTokens requires a user to be signed in/i.test(message)) {
+    return "Google sign-in failed. Please try again.";
+  }
+
   if (error && typeof error === "object" && "code" in error) {
     const code = (error as { code: string }).code;
     switch (code) {
