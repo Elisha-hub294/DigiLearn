@@ -9,6 +9,7 @@ export type Book = {
   year?: string;
   edition?: string;
   author: string[];
+  owner?: string;
   subject: string[];
   pages?: string;
   rating?: number;

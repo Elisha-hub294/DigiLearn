@@ -3,6 +3,7 @@ import { colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   Pressable,
@@ -21,7 +22,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import { auth } from "../../firebaseConfig";
+import { auth, db } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import {
   getHorizontalPadding,
@@ -84,10 +85,12 @@ export default function LessonPlayerScreen() {
     link?: string;
     thumbnail?: string;
     avatar?: string;
+    owner?: string;
     source?: "activity" | "videos";
     returnTo?: string;
   }>();
   const lessonId = params.id;
+  const [teacherAvatar, setTeacherAvatar] = useState(params.avatar ?? "");
   const lessonReturnPath = (() => {
     const search = Object.entries(params)
       .filter(
@@ -102,6 +105,39 @@ export default function LessonPlayerScreen() {
 
     return search ? `/lesson-player?${search}` : "/lesson-player";
   })();
+
+  useEffect(() => {
+    let active = true;
+    const owner = params.owner?.trim();
+
+    if (!owner) {
+      setTeacherAvatar(params.avatar ?? "");
+      return () => {
+        active = false;
+      };
+    }
+
+    void getDoc(doc(db, "teachers", owner))
+      .then((snapshot) => {
+        const data = snapshot.data() as Record<string, unknown> | undefined;
+        const avatar = [
+          data?.avatar,
+          data?.profilePicture,
+          data?.photoURL,
+        ].find(
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        );
+        if (active) setTeacherAvatar(avatar?.trim() ?? params.avatar ?? "");
+      })
+      .catch(() => {
+        if (active) setTeacherAvatar(params.avatar ?? "");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [params.avatar, params.owner]);
 
   useEffect(() => {
     if (lessonId) {
@@ -446,6 +482,7 @@ export default function LessonPlayerScreen() {
               entering={FadeInDown.delay(150).duration(400)}
               style={[
                 styles.detailsCard,
+                horizontalPadding === 0 && styles.zeroPaddingCard,
                 {
                   backgroundColor: themeColors.white,
                   borderColor: themeColors.border,
@@ -457,9 +494,27 @@ export default function LessonPlayerScreen() {
               </Text>
 
               {/* Instructor Profile */}
-              <View style={styles.instructorRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Open teacher profile: ${params.teacher ?? "Educator"}`}
+                disabled={!params.owner}
+                onPress={() => {
+                  if (!params.owner) return;
+                  router.push({
+                    pathname: "/teacher-profile",
+                    params: {
+                      id: params.owner,
+                      name: params.teacher ?? "Educator",
+                    },
+                  } as never);
+                }}
+                style={({ pressed }) => [
+                  styles.instructorRow,
+                  pressed && styles.instructorPressed,
+                ]}
+              >
                 <Image
-                  source={params.avatar ? { uri: params.avatar } : undefined}
+                  source={teacherAvatar ? { uri: teacherAvatar } : undefined}
                   fallbackSource={getThemeAsset("userDefault", isDark)}
                   style={[
                     styles.avatarImage,
@@ -492,7 +547,7 @@ export default function LessonPlayerScreen() {
                     Verified Educator
                   </Text>
                 </View>
-              </View>
+              </Pressable>
 
               {/* Specs / Quick Info Grid */}
               <View style={styles.specsRow}>
@@ -571,6 +626,7 @@ export default function LessonPlayerScreen() {
               entering={FadeInDown.delay(200).duration(400)}
               style={[
                 styles.overviewCard,
+                horizontalPadding === 0 && styles.zeroPaddingCard,
                 {
                   backgroundColor: themeColors.white,
                   borderColor: themeColors.border,
@@ -598,6 +654,7 @@ export default function LessonPlayerScreen() {
               entering={FadeInDown.delay(250).duration(400)}
               style={[
                 styles.aiCard,
+                horizontalPadding === 0 && styles.zeroPaddingCard,
                 {
                   backgroundColor: themeColors.white,
                   borderColor: themeColors.border,
@@ -775,8 +832,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   scrollContent: {
-    paddingBottom: 40,
-    paddingTop: 16,
+    paddingBottom: 20,
   },
   heroCardContainer: {
     aspectRatio: 1.6,
@@ -850,6 +906,10 @@ const styles = StyleSheet.create({
     marginTop: 18,
     padding: 18,
   },
+  zeroPaddingCard: {
+    alignSelf: "center",
+    width: "95%",
+  },
   title: {
     fontSize: 22,
     fontWeight: "600",
@@ -862,6 +922,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     marginTop: 16,
+  },
+  instructorPressed: {
+    opacity: 0.75,
   },
   avatarImage: {
     borderRadius: 22,

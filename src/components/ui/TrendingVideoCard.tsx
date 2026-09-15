@@ -91,6 +91,7 @@ export function TrendingVideoCard({
         link: item.link ?? "",
         thumbnail: typeof item.thumbnail === "string" ? item.thumbnail : "",
         avatar: typeof item.avatar === "string" ? item.avatar : "",
+        owner: rawItem.owner ?? "",
       },
     });
   }

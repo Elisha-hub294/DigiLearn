@@ -1404,6 +1404,7 @@ export default function TeacherProfileScreen() {
               isNew: false,
             }}
             index={index}
+            disableTeacherProfileNavigation
           />
         </View>
       );

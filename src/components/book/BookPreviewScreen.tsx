@@ -102,6 +102,7 @@ function mapBook(id: string, d: Record<string, unknown>): Book {
         : undefined,
     edition: typeof d.edition === "string" ? d.edition : undefined,
     author: strings(d.author),
+    owner: typeof d.owner === "string" ? d.owner.trim() : undefined,
     subject: strings(d.subject),
     pages:
       typeof d.pages === "string" || typeof d.pages === "number"
@@ -129,6 +130,9 @@ export function BookPreviewScreen() {
   const [teacherAvatars, setTeacherAvatars] = useState<Record<string, string>>(
     {},
   );
+  const [teacherAvatarsById, setTeacherAvatarsById] = useState<
+    Record<string, string>
+  >({});
   const [teacherIdsByName, setTeacherIdsByName] = useState<
     Record<string, string>
   >({});
@@ -209,14 +213,24 @@ export function BookPreviewScreen() {
 
         // Map teacher names (normalized lowercase) to their avatar URLs, IDs, and phone numbers
         const avatarsMap: Record<string, string> = {};
+        const avatarsByIdMap: Record<string, string> = {};
         const idsMap: Record<string, string> = {};
         const phonesMap: Record<string, string> = {};
         teachersSnapshot.docs.forEach((docSnap) => {
           const data = docSnap.data();
           if (typeof data.name === "string") {
             const key = normalizeKey(data.name);
-            if (typeof data.avatar === "string") {
-              avatarsMap[key] = data.avatar.trim();
+            const avatar = [
+              data.avatar,
+              data.profilePicture,
+              data.photoURL,
+            ].find(
+              (value): value is string =>
+                typeof value === "string" && value.trim().length > 0,
+            );
+            if (avatar) {
+              avatarsMap[key] = avatar.trim();
+              avatarsByIdMap[docSnap.id] = avatar.trim();
             }
             if (typeof docSnap.id === "string" && docSnap.id.trim()) {
               idsMap[key] = docSnap.id.trim();
@@ -227,6 +241,7 @@ export function BookPreviewScreen() {
           }
         });
         setTeacherAvatars(avatarsMap);
+        setTeacherAvatarsById(avatarsByIdMap);
         setTeacherIdsByName(idsMap);
         setTeacherPhones(phonesMap);
 
@@ -275,14 +290,18 @@ export function BookPreviewScreen() {
     if (!book) return [];
     return book.author.map((authorName) => ({
       name: authorName,
-      avatar: resolveAuthorAvatar(
-        authorName,
-        teacherAvatars,
-        defaultUserAvatar,
-      ),
+      avatar:
+        (book.owner ? teacherAvatarsById[book.owner] : undefined) ||
+        resolveAuthorAvatar(authorName, teacherAvatars, defaultUserAvatar),
       teacherId: teacherIdsByName[normalizeKey(authorName)],
     }));
-  }, [book, teacherAvatars, teacherIdsByName, defaultUserAvatar]);
+  }, [
+    book,
+    teacherAvatars,
+    teacherAvatarsById,
+    teacherIdsByName,
+    defaultUserAvatar,
+  ]);
 
   const similar = useMemo(
     () =>

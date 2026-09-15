@@ -1,16 +1,16 @@
 import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { useState } from "react";
 import {
-  DimensionValue,
-  ImageSourcePropType,
-  LayoutChangeEvent,
-  Pressable,
-  StyleProp,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-  ViewStyle,
+    DimensionValue,
+    ImageSourcePropType,
+    LayoutChangeEvent,
+    Pressable,
+    StyleProp,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
+    ViewStyle,
 } from "react-native";
 import { radius, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";

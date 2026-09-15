@@ -34,10 +34,12 @@ export function VideoCard({
   item: rawItem,
   index,
   isGrid = false,
+  disableTeacherProfileNavigation = false,
 }: {
   item: VideoLesson;
   index: number;
   isGrid?: boolean;
+  disableTeacherProfileNavigation?: boolean;
 }) {
   const router = useRouter();
   const { user, profile } = useProfile();
@@ -137,6 +139,7 @@ export function VideoCard({
         link: item.link ?? "",
         thumbnail: typeof item.thumbnail === "string" ? item.thumbnail : "",
         avatar: typeof item.avatar === "string" ? item.avatar : "",
+        owner: rawItem.owner ?? "",
       },
     });
   }
@@ -334,7 +337,9 @@ export function VideoCard({
           name={item.teacher}
           uploadedAt={item.uploadedAt}
           avatar={item.avatar}
-          onPress={openTeacherProfile}
+          onPress={
+            disableTeacherProfileNavigation ? undefined : openTeacherProfile
+          }
         />
         <Text numberOfLines={2} style={[styles.title, { color: colors.text }]}>
           {item.title}
