@@ -1114,7 +1114,7 @@ export const TeacherPostItem = memo(function TeacherPostItem({
                 onPress={() =>
                   router.push({
                     pathname: "/teacher-profile",
-                    params: { name: rawTeacherName },
+                    params: { id: postItem.owner, name: rawTeacherName },
                   } as never)
                 }
               >
@@ -1130,7 +1130,7 @@ export const TeacherPostItem = memo(function TeacherPostItem({
                 onPress={() =>
                   router.push({
                     pathname: "/teacher-profile",
-                    params: { name: rawTeacherName },
+                    params: { id: postItem.owner, name: rawTeacherName },
                   } as never)
                 }
               >
