@@ -33,6 +33,35 @@ function isNativeUploadFile(value: unknown): value is NativeUploadFile {
   return Platform.OS !== "web" && value instanceof File;
 }
 
+function readHeader(headers: Record<string, string>, name: string): string {
+  const normalizedName = name.toLowerCase();
+  return (
+    Object.entries(headers).find(
+      ([headerName]) => headerName.toLowerCase() === normalizedName,
+    )?.[1] ?? ""
+  );
+}
+
+function getDownloadUrlFromUploadResponse(
+  responseBody: string,
+  bucket: string,
+  path: string,
+): string | null {
+  try {
+    const metadata = JSON.parse(responseBody) as { downloadTokens?: unknown };
+    const tokens =
+      typeof metadata.downloadTokens === "string"
+        ? metadata.downloadTokens.split(",").filter(Boolean)
+        : [];
+    const token = tokens[0];
+    if (!token) return null;
+
+    return `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodeURIComponent(path)}?alt=media&token=${encodeURIComponent(token)}`;
+  } catch {
+    return null;
+  }
+}
+
 async function uploadNativeFileToStorage(
   path: string,
   file: NativeUploadFile,
@@ -112,8 +141,20 @@ async function uploadNativeFileToStorage(
     );
   }
 
+  if (readHeader(result.headers, "x-goog-upload-status") !== "final") {
+    throw new Error(
+      "Firebase did not finalize the document upload. Please retry the upload.",
+    );
+  }
+
   onProgress(label, 100);
-  return getDownloadURL(ref(storage, path));
+  // Firebase returns a download token in the final resumable-upload response.
+  // Use it directly to avoid sending the completed native upload back through
+  // the Web Storage SDK just to look up its URL.
+  return (
+    getDownloadUrlFromUploadResponse(result.body, bucket, path) ??
+    (await getDownloadURL(ref(storage, path)))
+  );
 }
 
 /**
