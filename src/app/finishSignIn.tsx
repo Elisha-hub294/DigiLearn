@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -38,30 +39,41 @@ export default function FinishSignInScreen() {
   const [linkUrl, setLinkUrl] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [needsEmail, setNeedsEmail] = useState(false);
+  const [isBrowserPending, setIsBrowserPending] = useState(false);
   const [isCompleting, setIsCompleting] = useState(true);
   const [isComplete, setIsComplete] = useState(false);
   const hasAttempted = useRef(false);
 
-  const navigateToApp = useCallback(async (uid: string) => {
-    try {
-      await initializeUserProfile();
-      const onboarding = await getUserOnboardingState(uid);
-      router.dismissAll();
-      router.replace(
-        onboarding.accountTypeCompleted && onboarding.type
-          ? ("/" as never)
-          : ("/account-type" as never),
-      );
-    } catch (err) {
-      console.warn("Failed to complete onboarding transition", err);
-      router.replace("/" as never);
-    }
-  }, [router]);
+  const navigateToApp = useCallback(
+    async (uid: string) => {
+      try {
+        await initializeUserProfile();
+        const onboarding = await getUserOnboardingState(uid);
+        router.dismissAll();
+        router.replace(
+          onboarding.accountTypeCompleted && onboarding.type
+            ? ("/" as never)
+            : ("/account-type" as never),
+        );
+      } catch (err) {
+        console.warn("Failed to complete onboarding transition", err);
+        router.replace("/" as never);
+      }
+    },
+    [router],
+  );
 
   const finishSignIn = useCallback(
     async (url: string, emailOverride?: string) => {
       setErrorMessage("");
       setIsCompleting(true);
+
+      if (Platform.OS === "web") {
+        setLinkUrl(url);
+        setIsBrowserPending(true);
+        setIsCompleting(false);
+        return;
+      }
 
       try {
         const user = await completeEmailLink(url, emailOverride);
@@ -162,6 +174,13 @@ export default function FinishSignInScreen() {
     router.replace("/" as never);
   }, [router]);
 
+  const handleOpenNativeApp = useCallback(() => {
+    if (Platform.OS !== "web" || !linkUrl) return;
+    window.location.assign(
+      `digilearn://finishSignIn?link=${encodeURIComponent(linkUrl)}`,
+    );
+  }, [linkUrl]);
+
   const handleBackToLogin = useCallback(() => {
     router.replace("/login" as never);
   }, [router]);
@@ -179,22 +198,37 @@ export default function FinishSignInScreen() {
         ) : null}
 
         <Text style={[styles.title, { color: themeColors.text }]}>
-          {isComplete
-            ? "Email confirmed"
-            : needsEmail || errorMessage
-              ? "Confirm your email address"
-              : "Signing you in"}
+          {isBrowserPending
+            ? "Return to OS platform"
+            : isComplete
+              ? "Email confirmed"
+              : needsEmail || errorMessage
+                ? "Confirm your email address"
+                : "Signing you in"}
         </Text>
 
         <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
-          {isComplete
-            ? "Redirecting you to OS platform..."
-            : needsEmail
-              ? "Enter the email address used to request this link."
-              : errorMessage || "Finishing your email verification..."}
+          {isBrowserPending
+            ? "This link must be opened in the OS platform app on this device to finish signing you in."
+            : isComplete
+              ? "Redirecting you to OS platform..."
+              : needsEmail
+                ? "Enter the email address used to request this link."
+                : errorMessage || "Finishing your email verification..."}
         </Text>
 
-        {isComplete ? (
+        {isBrowserPending ? (
+          <Pressable
+            onPress={handleOpenNativeApp}
+            style={({ pressed }) => [
+              styles.continueButton,
+              styles.buttonSpacing,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.continueButtonText}>Open OS platform</Text>
+          </Pressable>
+        ) : isComplete ? (
           <Pressable
             onPress={handleContinueManual}
             style={({ pressed }) => [

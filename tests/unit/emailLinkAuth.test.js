@@ -30,3 +30,21 @@ test("email-link continue URL uses an authorized https URL and avoids custom dee
     "Expected Android email links to target the installed app package.",
   );
 });
+
+test("browser email-link fallback hands the single-use link to the native app", () => {
+  const finishSignInSource = fs.readFileSync(
+    path.join(__dirname, "../../src/app/finishSignIn.tsx"),
+    "utf8",
+  );
+
+  assert.match(
+    finishSignInSource,
+    /Platform\.OS === "web"[\s\S]*?setIsBrowserPending\(true\)/,
+    "Expected the browser callback to stop before consuming the email link.",
+  );
+  assert.match(
+    finishSignInSource,
+    /digilearn:\/\/finishSignIn\?link=/,
+    "Expected the browser callback to offer the original link to the native app.",
+  );
+});
