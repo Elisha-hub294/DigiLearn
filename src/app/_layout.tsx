@@ -27,6 +27,7 @@ import {
   getUserOnboardingState,
   initializeUserProfile,
 } from "../services/userProfile";
+import { initializeMobileAds } from "../services/mobileAds";
 import { warmNativeStartupCache } from "../utils/startupNativeCache";
 import LoadingScreen from "./loading";
 
@@ -46,6 +47,7 @@ function AppShell() {
   useEffect(() => {
     if (Platform.OS !== "web") {
       void warmNativeStartupCache();
+      void initializeMobileAds();
     }
   }, []);
 

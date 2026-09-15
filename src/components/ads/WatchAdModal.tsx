@@ -1,15 +1,8 @@
 import { Feather } from "@expo/vector-icons";
-
-import {
-  RewardedAd,
-  RewardedAdEventType,
-} from "react-native-google-mobile-ads";
-import { REWARDED_AD_UNIT_ID } from "../../constants/ads";
-
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  Animated,
+  ActivityIndicator,
   Modal,
   Platform,
   Pressable,
@@ -17,11 +10,10 @@ import {
   Text,
   View,
 } from "react-native";
+import { useRewardedAd } from "react-native-google-mobile-ads";
+import { REWARDED_AD_UNIT_ID } from "../../constants/ads";
 import { radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
-
-// Create rewarded ad instance
-const rewardedAd = RewardedAd.createForAdRequest(REWARDED_AD_UNIT_ID);
 
 interface WatchAdModalProps {
   visible: boolean;
@@ -37,293 +29,377 @@ export function WatchAdModal({
   onAdRewardEarned,
 }: WatchAdModalProps) {
   const { colors: themeColors } = useTheme();
-  const [step, setStep] = useState<"prompt" | "playing">("prompt");
-  const [countdown, setCountdown] = useState(5);
-  const [adProgress] = useState(() => new Animated.Value(0));
 
+  const {
+    isLoaded,
+    isClosed,
+    error,
+    isEarnedReward,
+    isShowing,
+    load,
+    show,
+  } = useRewardedAd(REWARDED_AD_UNIT_ID, {
+    requestNonPersonalizedAdsOnly: true,
+  });
+
+  const [isWaitingForAd, setIsWaitingForAd] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [closedEarlyNotice, setClosedEarlyNotice] = useState(false);
+  const hasRewardBeenClaimed = useRef(false);
+
+  // Preload ad on mount or when modal becomes visible
   useEffect(() => {
     if (visible) {
-      setStep("prompt");
-      setCountdown(5);
-      adProgress.setValue(0);
-    }
-  }, [adProgress, visible]);
+      setErrorMessage(null);
+      setClosedEarlyNotice(false);
+      setIsWaitingForAd(false);
+      hasRewardBeenClaimed.current = false;
 
+      if (!isLoaded && !isShowing) {
+        load();
+      }
+    }
+  }, [visible, isLoaded, isShowing, load]);
+
+  // If user tapped watch ad while it was loading, show as soon as loaded
   useEffect(() => {
-    let timer: ReturnType<typeof setInterval>;
-    if (step === "playing") {
-      Animated.timing(adProgress, {
-        toValue: 1,
-        duration: 5000,
-        useNativeDriver: false,
-      }).start();
-
-      timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setTimeout(() => {
-              onAdRewardEarned();
-              onClose();
-            }, 500);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    if (isWaitingForAd && isLoaded && !isShowing) {
+      setIsWaitingForAd(false);
+      try {
+        show();
+      } catch (err) {
+        console.warn("[WatchAdModal] Error showing rewarded ad:", err);
+        setErrorMessage("Could not launch advertisement. You can continue downloading directly.");
+      }
     }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [adProgress, onAdRewardEarned, onClose, step]);
+  }, [isWaitingForAd, isLoaded, isShowing, show]);
+
+  // Handle ad load / presentation errors
+  useEffect(() => {
+    if (error && visible) {
+      setIsWaitingForAd(false);
+      if (__DEV__) {
+        console.warn("[WatchAdModal] Ad error:", error);
+      }
+      setErrorMessage("Advertisement unavailable at the moment. You can still download this resource directly.");
+    }
+  }, [error, visible]);
+
+  // Handle earned reward and ad closure
+  useEffect(() => {
+    if (!visible) return;
+
+    if (isEarnedReward && !hasRewardBeenClaimed.current) {
+      hasRewardBeenClaimed.current = true;
+      const timer = setTimeout(() => {
+        onAdRewardEarned();
+        onClose();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+
+    if (isClosed && !hasRewardBeenClaimed.current && !isShowing) {
+      setClosedEarlyNotice(true);
+      setIsWaitingForAd(false);
+      // Reload for next attempt
+      load();
+    }
+  }, [isEarnedReward, isClosed, isShowing, visible, onAdRewardEarned, onClose, load]);
 
   const handleStartAd = () => {
-    setStep("playing");
-    setCountdown(5);
-    adProgress.setValue(0);
+    setClosedEarlyNotice(false);
+    setErrorMessage(null);
 
-    // Listen for reward earned — fires when user completes the ad
-    const unsubscribeEarned = rewardedAd.addAdEventListener(
-      RewardedAdEventType.EARNED_REWARD,
-      () => {
-        unsubscribeEarned();
-        unsubscribeLoaded();
-        setTimeout(() => {
-          onAdRewardEarned();
-          onClose();
-        }, 500);
-      },
-    );
+    if (isLoaded) {
+      try {
+        show();
+      } catch (err) {
+        console.warn("[WatchAdModal] Failed to show ad:", err);
+        setErrorMessage("Unable to display ad. You can proceed with direct download.");
+      }
+    } else {
+      setIsWaitingForAd(true);
+      load();
 
-    // Load & show the ad once it's ready
-    const unsubscribeLoaded = rewardedAd.addAdEventListener(
-      RewardedAdEventType.LOADED,
-      () => {
-        rewardedAd.show();
-      },
-    );
+      // Timeout fallback: if ad fails to load within 8s, allow direct download
+      setTimeout(() => {
+        setIsWaitingForAd((current) => {
+          if (current) {
+            setErrorMessage("Ad loading took longer than expected. You can download directly.");
+            return false;
+          }
+          return false;
+        });
+      }, 8000);
+    }
+  };
 
-    rewardedAd.load();
+  const handleBypassDownload = () => {
+    onAdRewardEarned();
+    onClose();
   };
 
   if (!visible) return null;
 
-  const progressWidth = adProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0%", "100%"],
-  });
-
   return (
     <Modal
-      visible={visible}
+      visible={visible && !isShowing}
       transparent
       animationType="fade"
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        {step === "prompt" ? (
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: themeColors.white,
-                borderColor: themeColors.border,
-              },
-            ]}
-          >
-            {/* Header Icon & Tag */}
-            <View style={styles.headerIconContainer}>
-              <LinearGradient
-                colors={["#006eff", "#6C63FF", "#A855F7"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.iconCircle}
-              >
-                <Feather name="tv" size={26} color="#FFFFFF" />
-              </LinearGradient>
-            </View>
-
-            {/* Title */}
-            <Text style={[styles.title, { color: themeColors.text }]}>
-              Support OS platform
-            </Text>
-
-            {resourceTitle ? (
-              <View
-                style={[
-                  styles.resourceBadge,
-                  { backgroundColor: themeColors.lightBackground },
-                ]}
-              >
-                <Feather
-                  name="file-text"
-                  size={13}
-                  color={themeColors.primary}
-                />
-                <Text
-                  style={[
-                    styles.resourceTitleText,
-                    { color: themeColors.primary },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {resourceTitle}
-                </Text>
-              </View>
-            ) : null}
-
-            {/* Apology & Information Body */}
-            <View style={styles.bodyContainer}>
-              <Text
-                style={[styles.apologyText, { color: themeColors.subtitle }]}
-              >
-                We apologize for interrupting your study session!
-              </Text>
-              <Text style={[styles.bodyText, { color: themeColors.text }]}>
-                To support our platform and keep educational resources free and
-                accessible for all students, downloading resources for offline
-                use requires watching a short advertisement.
-              </Text>
-              <View
-                style={[
-                  styles.onlineNoteBox,
-                  {
-                    backgroundColor: themeColors.lightBackground,
-                    borderColor: themeColors.border,
-                  },
-                ]}
-              >
-                <Feather
-                  name="info"
-                  size={16}
-                  color={themeColors.primary}
-                  style={styles.infoIcon}
-                />
-                <Text
-                  style={[
-                    styles.onlineNoteText,
-                    { color: themeColors.subtitle },
-                  ]}
-                >
-                  If you prefer no interruptions, you can continue reading this
-                  resource online anytime right in the app!
-                </Text>
-              </View>
-            </View>
-
-            {/* Action Buttons */}
-            <View style={styles.actionContainer}>
-              {/* Primary Action: Watch Ad to Download */}
-              <Pressable
-                onPress={handleStartAd}
-                style={({ pressed }) => [
-                  styles.primaryBtn,
-                  pressed && { opacity: 0.9 },
-                ]}
-              >
-                <LinearGradient
-                  colors={["#006eff", "#6C63FF", "#A855F7"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.primaryGradient}
-                >
-                  <Feather name="play-circle" size={18} color="#FFFFFF" />
-                  <Text style={styles.primaryBtnText}>
-                    Watch Ad to Download
-                  </Text>
-                </LinearGradient>
-              </Pressable>
-
-              {/* Secondary Action: Read Online */}
-              <Pressable
-                onPress={onClose}
-                style={({ pressed }) => [
-                  styles.secondaryBtn,
-                  {
-                    backgroundColor: themeColors.lightBackground,
-                    borderColor: themeColors.border,
-                  },
-                  pressed && { opacity: 0.8 },
-                ]}
-              >
-                <Feather name="book-open" size={16} color={themeColors.text} />
-                <Text
-                  style={[styles.secondaryBtnText, { color: themeColors.text }]}
-                >
-                  Read Online
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        ) : (
-          /* Playing Step - Rewarded Ad Player View */
-          <View
-            style={[
-              styles.adPlayerCard,
-              { backgroundColor: themeColors.white },
-            ]}
-          >
-            {/* Top Bar */}
-            <View style={styles.adHeader}>
-              <View style={styles.adSponsorTag}>
-                <Feather name="shield" size={12} color="#006eff" />
-                <Text style={styles.adSponsorLabel}>Sponsored Message</Text>
-              </View>
-
-              <View style={styles.countdownBadge}>
-                <Feather name="clock" size={12} color="#FFFFFF" />
-                <Text style={styles.countdownText}>
-                  {countdown > 0 ? `Reward in ${countdown}s` : "Reward Earned!"}
-                </Text>
-              </View>
-            </View>
-
-            {/* Ad Banner Content */}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: themeColors.white,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
+          {/* Header Icon */}
+          <View style={styles.headerIconContainer}>
             <LinearGradient
-              colors={["#0f172a", "#1e1b4b", "#311042"]}
+              colors={
+                hasRewardBeenClaimed.current
+                  ? ["#10B981", "#059669"]
+                  : errorMessage
+                  ? ["#F59E0B", "#D97706"]
+                  : ["#006eff", "#6C63FF", "#A855F7"]
+              }
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.adBannerArea}
+              style={styles.iconCircle}
             >
-              <View style={styles.adContentInner}>
-                <View style={styles.adLogoBadge}>
-                  <Feather name="zap" size={24} color="#F59E0B" />
-                </View>
-                <Text style={styles.adTitle}>OS platform Sponsor</Text>
-                <Text style={styles.adSubtitle}>
-                  Empowering your learning journey everywhere you go.
-                </Text>
-              </View>
+              <Feather
+                name={
+                  hasRewardBeenClaimed.current
+                    ? "check"
+                    : errorMessage
+                    ? "alert-circle"
+                    : "tv"
+                }
+                size={26}
+                color="#FFFFFF"
+              />
             </LinearGradient>
+          </View>
 
-            {/* Ad Progress Bar */}
+          {/* Title */}
+          <Text style={[styles.title, { color: themeColors.text }]}>
+            {hasRewardBeenClaimed.current
+              ? "Download Unlocked!"
+              : errorMessage
+              ? "Ad Notice"
+              : "Support Free Education"}
+          </Text>
+
+          {/* Resource Title Badge */}
+          {resourceTitle ? (
             <View
               style={[
-                styles.adTrack,
+                styles.resourceBadge,
                 { backgroundColor: themeColors.lightBackground },
               ]}
             >
-              <Animated.View style={[styles.adFill, { width: progressWidth }]}>
-                <LinearGradient
-                  colors={["#006eff", "#6C63FF", "#A855F7"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={StyleSheet.absoluteFill}
-                />
-              </Animated.View>
-            </View>
-
-            <View style={styles.adFooter}>
+              <Feather
+                name="file-text"
+                size={13}
+                color={themeColors.primary}
+              />
               <Text
-                style={[styles.adFooterText, { color: themeColors.subtitle }]}
+                style={[
+                  styles.resourceTitleText,
+                  { color: themeColors.primary },
+                ]}
+                numberOfLines={1}
               >
-                {countdown > 0
-                  ? "Please complete watching the ad to unlock your download..."
-                  : "Thank you for supporting OS platform! Starting download..."}
+                {resourceTitle}
               </Text>
             </View>
+          ) : null}
+
+          {/* Body Content */}
+          <View style={styles.bodyContainer}>
+            {hasRewardBeenClaimed.current ? (
+              <Text style={[styles.bodyText, { color: themeColors.text }]}>
+                Thank you for watching! Your document download is starting now...
+              </Text>
+            ) : errorMessage ? (
+              <View
+                style={[
+                  styles.noticeBox,
+                  {
+                    backgroundColor: "#FEF3C7",
+                    borderColor: "#FCD34D",
+                  },
+                ]}
+              >
+                <Feather name="info" size={16} color="#D97706" style={styles.infoIcon} />
+                <Text style={[styles.noticeText, { color: "#92400E" }]}>
+                  {errorMessage}
+                </Text>
+              </View>
+            ) : closedEarlyNotice ? (
+              <View
+                style={[
+                  styles.noticeBox,
+                  {
+                    backgroundColor: "#FEF2F2",
+                    borderColor: "#FECACA",
+                  },
+                ]}
+              >
+                <Feather name="alert-triangle" size={16} color="#DC2626" style={styles.infoIcon} />
+                <Text style={[styles.noticeText, { color: "#991B1B" }]}>
+                  The ad was closed before completion. Please watch the full ad to unlock your offline download.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <Text
+                  style={[styles.apologyText, { color: themeColors.subtitle }]}
+                >
+                  Help keep learning materials accessible to all!
+                </Text>
+                <Text style={[styles.bodyText, { color: themeColors.text }]}>
+                  To support our platform and keep educational resources completely free, downloading for offline study requires watching a short video sponsor.
+                </Text>
+                <View
+                  style={[
+                    styles.onlineNoteBox,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
+                >
+                  <Feather
+                    name="book-open"
+                    size={16}
+                    color={themeColors.primary}
+                    style={styles.infoIcon}
+                  />
+                  <Text
+                    style={[
+                      styles.onlineNoteText,
+                      { color: themeColors.subtitle },
+                    ]}
+                  >
+                    You can also continue reading online without downloading anytime!
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
-        )}
+
+          {/* Action Buttons */}
+          <View style={styles.actionContainer}>
+            {hasRewardBeenClaimed.current ? (
+              <View style={styles.rewardSuccessIndicator}>
+                <ActivityIndicator size="small" color={themeColors.primary} />
+                <Text style={[styles.rewardSuccessText, { color: themeColors.primary }]}>
+                  Preparing your file...
+                </Text>
+              </View>
+            ) : errorMessage ? (
+              <>
+                <Pressable
+                  onPress={handleBypassDownload}
+                  style={({ pressed }) => [
+                    styles.primaryBtn,
+                    pressed && { opacity: 0.9 },
+                  ]}
+                >
+                  <LinearGradient
+                    colors={["#006eff", "#6C63FF"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.primaryGradient}
+                  >
+                    <Feather name="download" size={18} color="#FFFFFF" />
+                    <Text style={styles.primaryBtnText}>
+                      Download Directly
+                    </Text>
+                  </LinearGradient>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleStartAd}
+                  style={({ pressed }) => [
+                    styles.secondaryBtn,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      borderColor: themeColors.border,
+                    },
+                    pressed && { opacity: 0.8 },
+                  ]}
+                >
+                  <Feather name="refresh-cw" size={16} color={themeColors.text} />
+                  <Text style={[styles.secondaryBtnText, { color: themeColors.text }]}>
+                    Try Loading Ad Again
+                  </Text>
+                </Pressable>
+              </>
+            ) : (
+              <>
+                {/* Primary Action: Watch Ad */}
+                <Pressable
+                  onPress={handleStartAd}
+                  disabled={isWaitingForAd}
+                  style={({ pressed }) => [
+                    styles.primaryBtn,
+                    (pressed || isWaitingForAd) && { opacity: 0.85 },
+                  ]}
+                >
+                  <LinearGradient
+                    colors={["#006eff", "#6C63FF", "#A855F7"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.primaryGradient}
+                  >
+                    {isWaitingForAd ? (
+                      <>
+                        <ActivityIndicator size="small" color="#FFFFFF" />
+                        <Text style={styles.primaryBtnText}>
+                          Loading Sponsor Ad...
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Feather name="play-circle" size={18} color="#FFFFFF" />
+                        <Text style={styles.primaryBtnText}>
+                          {isLoaded ? "Watch Ad to Download" : "Load Ad & Download"}
+                        </Text>
+                      </>
+                    )}
+                  </LinearGradient>
+                </Pressable>
+
+                {/* Secondary Action: Read Online */}
+                <Pressable
+                  onPress={onClose}
+                  style={({ pressed }) => [
+                    styles.secondaryBtn,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      borderColor: themeColors.border,
+                    },
+                    pressed && { opacity: 0.8 },
+                  ]}
+                >
+                  <Feather name="book-open" size={16} color={themeColors.text} />
+                  <Text
+                    style={[styles.secondaryBtnText, { color: themeColors.text }]}
+                  >
+                    Read Online
+                  </Text>
+                </Pressable>
+              </>
+            )}
+          </View>
+        </View>
       </View>
     </Modal>
   );
@@ -413,6 +489,21 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 4,
   },
+  noticeBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: 8,
+    marginVertical: 4,
+  },
+  noticeText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "500",
+  },
   infoIcon: {
     marginTop: 2,
   },
@@ -456,98 +547,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
-
-  // Playing / Rewarded Ad Player Styles
-  adPlayerCard: {
-    width: "100%",
-    maxWidth: 420,
-    borderRadius: radius.lg,
-    overflow: "hidden",
-    ...Platform.select({
-      ios: {
-        boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.3)",
-      },
-      android: { elevation: 12 },
-    }),
-  },
-  adHeader: {
-    height: 44,
-    backgroundColor: "#090d16",
+  rewardSuccessIndicator: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: spacing.md,
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: spacing.md,
   },
-  adSponsorTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  adSponsorLabel: {
-    color: "#94A3B8",
-    fontSize: 11,
+  rewardSuccessText: {
+    fontSize: 15,
     fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  countdownBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-  },
-  countdownText: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  adBannerArea: {
-    height: 200,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: spacing.lg,
-  },
-  adContentInner: {
-    alignItems: "center",
-    gap: 8,
-  },
-  adLogoBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  adTitle: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  adSubtitle: {
-    color: "#CBD5E1",
-    fontSize: 13,
-    textAlign: "center",
-    lineHeight: 18,
-  },
-  adTrack: {
-    height: 6,
-    width: "100%",
-  },
-  adFill: {
-    height: 6,
-  },
-  adFooter: {
-    padding: spacing.md,
-    alignItems: "center",
-  },
-  adFooterText: {
-    fontSize: 12,
-    fontWeight: "500",
-    textAlign: "center",
   },
 });
