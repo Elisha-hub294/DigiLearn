@@ -114,7 +114,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   filterSection: {
-    marginTop: spacing.md,
     marginBottom: spacing.lg,
   },
   section: {

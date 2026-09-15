@@ -2,13 +2,13 @@ import { FirebaseImage as Image } from "@/components/ui/FirebaseImage";
 import { colors } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import {
   Pressable,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -272,7 +272,12 @@ export default function LessonPlayerScreen() {
       style={[styles.safeArea, { backgroundColor: themeColors.background }]}
     >
       <StatusBar
-        style={themeColors.background === colors.background ? "dark" : "light"}
+        backgroundColor={themeColors.background}
+        barStyle={
+          themeColors.background === colors.background
+            ? "dark-content"
+            : "light-content"
+        }
       />
       <View style={styles.page}>
         <View

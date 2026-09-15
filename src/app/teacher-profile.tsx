@@ -873,7 +873,12 @@ export default function TeacherProfileScreen() {
               </Pressable>
             )}
 
-          <View style={styles.statsRow}>
+          <View
+            style={[
+              styles.statsRow,
+              horizontalPadding === 0 && styles.phoneWidth,
+            ]}
+          >
             <View
               style={[
                 styles.statChip,
@@ -940,6 +945,7 @@ export default function TeacherProfileScreen() {
               disabled={isCommunityActionPending}
               style={[
                 styles.communityButton,
+                horizontalPadding === 0 && styles.phoneWidth,
                 {
                   backgroundColor: isCommunityMember
                     ? themeColors.surfaceMuted
@@ -969,7 +975,13 @@ export default function TeacherProfileScreen() {
             </Pressable>
           )}
 
-          <View style={[styles.contactRow, { gap: actionRowGap }]}>
+          <View
+            style={[
+              styles.contactRow,
+              horizontalPadding === 0 && styles.phoneWidth,
+              { gap: actionRowGap },
+            ]}
+          >
             {viewerRole === "own" ? (
               <>
                 <Pressable
@@ -1450,12 +1462,23 @@ export default function TeacherProfileScreen() {
                 <View style={styles.profileBody}>
                   <Skeleton style={styles.skeletonTitle} />
                   <Skeleton style={styles.skeletonBio} />
-                  <View style={styles.statsRow}>
+                  <View
+                    style={[
+                      styles.statsRow,
+                      horizontalPadding === 0 && styles.phoneWidth,
+                    ]}
+                  >
                     {Array.from({ length: 4 }, (_, index) => (
                       <Skeleton key={index} style={styles.skeletonStatChip} />
                     ))}
                   </View>
-                  <View style={[styles.contactRow, { gap: actionRowGap }]}>
+                  <View
+                    style={[
+                      styles.contactRow,
+                      horizontalPadding === 0 && styles.phoneWidth,
+                      { gap: actionRowGap },
+                    ]}
+                  >
                     <Skeleton style={styles.skeletonContactButton} />
                     {Array.from({ length: 3 }, (_, index) => (
                       <Skeleton
@@ -1623,6 +1646,10 @@ const styles = StyleSheet.create({
   },
   phoneChrome: {
     width: "90%",
+    alignSelf: "center",
+  },
+  phoneWidth: {
+    width: "95%",
     alignSelf: "center",
   },
   headerPanel: {

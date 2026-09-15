@@ -2,11 +2,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Linking from "expo-linking";
 import { Stack, usePathname, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
+  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -22,12 +22,12 @@ import {
 import { ProfileProvider } from "../contexts/ProfileContext";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { completeEmailLink } from "../services/emailLinkAuth";
+import { initializeMobileAds } from "../services/mobileAds";
 import { getSharedResourceRoute, PLAY_STORE_URL } from "../services/shareLinks";
 import {
   getUserOnboardingState,
   initializeUserProfile,
 } from "../services/userProfile";
-import { initializeMobileAds } from "../services/mobileAds";
 import { warmNativeStartupCache } from "../utils/startupNativeCache";
 import LoadingScreen from "./loading";
 
@@ -38,7 +38,7 @@ void SplashScreen.preventAutoHideAsync();
 const startupBackground = "#FFFFFF";
 
 function AppShell() {
-  const { isDark, isHydrated } = useTheme();
+  const { colors: themeColors, isDark, isHydrated } = useTheme();
   const { isDeletingAccount } = useAccountDeletion();
   const [showStartupLoading, setShowStartupLoading] = useState(true);
   const router = useRouter();
@@ -141,7 +141,10 @@ function AppShell() {
 
   return (
     <ErrorBoundary>
-      <StatusBar style={isDark ? "light" : "dark"} />
+      <StatusBar
+        backgroundColor={themeColors.background}
+        barStyle={isDark ? "light-content" : "dark-content"}
+      />
       <ProfileProvider>
         <Stack
           screenOptions={{
