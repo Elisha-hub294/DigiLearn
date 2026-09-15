@@ -47,7 +47,10 @@ export const base64ToBlob = (
  * Native file URIs must be read as base64 because XMLHttpRequest cannot fetch
  * file:// URIs on Android/iOS.
  */
-export const uriToBlob = async (uri: string): Promise<Blob> => {
+export const uriToBlob = async (
+  uri: string,
+  expectedMimeType?: string,
+): Promise<Blob> => {
   if (!uri) {
     throw new Error("File URI is required");
   }
@@ -55,7 +58,9 @@ export const uriToBlob = async (uri: string): Promise<Blob> => {
   if (uri.startsWith("data:")) {
     const [header, payload] = uri.split(",");
     const mimeType =
-      header.match(/data:([^;]+);base64/i)?.[1] || "application/octet-stream";
+      expectedMimeType ||
+      header.match(/data:([^;]+);base64/i)?.[1] ||
+      "application/octet-stream";
     return base64ToBlob(payload || "", mimeType);
   }
 
@@ -65,33 +70,41 @@ export const uriToBlob = async (uri: string): Promise<Blob> => {
     let FileSystem: any = null;
 
     try {
+      // In modern Expo SDK versions, legacy methods like readAsStringAsync are in expo-file-system/legacy
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      FileSystem = require("expo-file-system");
-    } catch (error) {
-      console.error("Failed to load expo-file-system for native upload", error);
-      throw new Error(
-        "Expo FileSystem is not available for this native upload.",
-      );
+      FileSystem = require("expo-file-system/legacy");
+    } catch {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        FileSystem = require("expo-file-system");
+      } catch (error) {
+        console.error("Failed to load expo-file-system for native upload", error);
+        throw new Error(
+          "Expo FileSystem is not available for this native upload.",
+        );
+      }
     }
 
     const base64 = await FileSystem.readAsStringAsync(uri, {
       encoding: FileSystem.EncodingType.Base64,
     });
-    const mimeType = (() => {
-      const lower = uri.toLowerCase();
-      if (lower.endsWith(".pdf")) return "application/pdf";
-      if (lower.endsWith(".docx"))
-        return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-      if (lower.endsWith(".doc")) return "application/msword";
-      if (lower.endsWith(".pptx"))
-        return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-      if (lower.endsWith(".ppt")) return "application/vnd.ms-powerpoint";
-      if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
-      if (lower.endsWith(".png")) return "image/png";
-      if (lower.endsWith(".gif")) return "image/gif";
-      if (lower.endsWith(".webp")) return "image/webp";
-      return "application/octet-stream";
-    })();
+    const mimeType =
+      expectedMimeType ||
+      (() => {
+        const lower = uri.toLowerCase();
+        if (lower.endsWith(".pdf")) return "application/pdf";
+        if (lower.endsWith(".docx"))
+          return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        if (lower.endsWith(".doc")) return "application/msword";
+        if (lower.endsWith(".pptx"))
+          return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+        if (lower.endsWith(".ppt")) return "application/vnd.ms-powerpoint";
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        if (lower.endsWith(".png")) return "image/png";
+        if (lower.endsWith(".gif")) return "image/gif";
+        if (lower.endsWith(".webp")) return "image/webp";
+        return "application/octet-stream";
+      })();
     return base64ToBlob(base64, mimeType);
   }
 

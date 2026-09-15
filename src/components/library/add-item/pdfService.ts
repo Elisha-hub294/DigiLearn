@@ -6,10 +6,16 @@ let FileSystem: any = null;
 
 if (Platform.OS !== "web") {
   try {
+    // In modern Expo SDK versions, legacy methods like readAsStringAsync are in expo-file-system/legacy
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    FileSystem = require("expo-file-system");
-  } catch (error) {
-    console.error("Failed to load FileSystem:", error);
+    FileSystem = require("expo-file-system/legacy");
+  } catch {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      FileSystem = require("expo-file-system");
+    } catch (error) {
+      console.error("Failed to load FileSystem:", error);
+    }
   }
 }
 
@@ -23,7 +29,9 @@ export const getWebViewHtml = (): string => `
   <meta charset="utf-8">
   <script src="${PDF_JS_CDN}"></script>
   <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '${PDF_WORKER_CDN}';
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '${PDF_WORKER_CDN}';
+    }
   </script>
   <style>
     body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: white; }
@@ -33,21 +41,46 @@ export const getWebViewHtml = (): string => `
 <body>
   <canvas id="pdf-canvas"></canvas>
   <script>
-    setTimeout(() => {
+    function notifyReady() {
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'ready' }));
       }
-    }, 150);
+    }
+
+    // Wait until pdfjsLib is loaded or fallback after 3s so docxCover can still proceed
+    let checkAttempts = 0;
+    const readyInterval = setInterval(() => {
+      checkAttempts++;
+      if (typeof pdfjsLib !== 'undefined' || checkAttempts > 30) {
+        clearInterval(readyInterval);
+        if (typeof pdfjsLib !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = '${PDF_WORKER_CDN}';
+        }
+        notifyReady();
+      }
+    }, 100);
 
     window.addEventListener('message', async (event) => {
       try {
         const data = JSON.parse(event.data);
-          if (data.mode !== 'docxCover' && !data.base64Data) {
+        if (data.mode !== 'docxCover' && !data.base64Data) {
           window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'error', error: 'No PDF data provided' }));
           return;
         }
 
         const { base64Data, mode = 'cover', docxText = '' } = data;
+
+        if (mode !== 'docxCover' && typeof pdfjsLib === 'undefined') {
+          let waitCount = 0;
+          while (typeof pdfjsLib === 'undefined' && waitCount < 30) {
+            await new Promise((r) => setTimeout(r, 100));
+            waitCount++;
+          }
+          if (typeof pdfjsLib === 'undefined') {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ status: 'error', error: 'PDF engine failed to load' }));
+            return;
+          }
+        }
 
         if (mode === 'docxCover') {
           const canvas = document.getElementById('pdf-canvas');
@@ -395,11 +428,21 @@ export const generatePdfFirstPageThumbnail = async (
     }
 
     return new Promise<string>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error("Presentation thumbnail timed out"));
+      }, 15000);
+
       setPdfToProcess({
         docxText: presentationText,
         mode: "docxCover",
-        resolve,
-        reject,
+        resolve: (res: string) => {
+          clearTimeout(timer);
+          resolve(res);
+        },
+        reject: (err: any) => {
+          clearTimeout(timer);
+          reject(err);
+        },
       });
     });
   }
@@ -419,7 +462,22 @@ export const generatePdfFirstPageThumbnail = async (
     });
     const text = await extractDocxText(base64Data);
     return new Promise<string>((resolve, reject) => {
-      setPdfToProcess({ docxText: text, mode: "docxCover", resolve, reject });
+      const timer = setTimeout(() => {
+        reject(new Error("Docx thumbnail timed out"));
+      }, 15000);
+
+      setPdfToProcess({
+        docxText: text,
+        mode: "docxCover",
+        resolve: (res: string) => {
+          clearTimeout(timer);
+          resolve(res);
+        },
+        reject: (err: any) => {
+          clearTimeout(timer);
+          reject(err);
+        },
+      });
     });
   }
 
@@ -436,10 +494,20 @@ export const generatePdfFirstPageThumbnail = async (
   });
 
   return new Promise<string>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error("PDF thumbnail generation timed out"));
+    }, 15000);
+
     setPdfToProcess({
       base64Data,
-      resolve,
-      reject,
+      resolve: (res: string) => {
+        clearTimeout(timer);
+        resolve(res);
+      },
+      reject: (err: any) => {
+        clearTimeout(timer);
+        reject(err);
+      },
     });
   });
 };
@@ -479,10 +547,20 @@ export const getPdfPageCount = async (
   });
 
   return new Promise<number>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      resolve(1);
+    }, 15000);
+
     setPdfToProcess({
       base64Data,
-      resolve: (result: any) => resolve(Number(result) || 1),
-      reject,
+      resolve: (result: any) => {
+        clearTimeout(timer);
+        resolve(Number(result) || 1);
+      },
+      reject: (err: any) => {
+        clearTimeout(timer);
+        resolve(1);
+      },
       mode: "pageCount",
     });
   });

@@ -1147,7 +1147,7 @@ export function AddItemModal({
           coverUrl = uploadedImageUrls[0] || "";
         } else if (selectedFile?.assets?.[0]) {
           const file = selectedFile.assets[0];
-          const blob = await uriToBlob(file.uri);
+          const blob = await uriToBlob(file.uri, file.mimeType || undefined);
           const documentName = sanitizeFileName(file.name || "document");
           documentUrl = await uploadAssetToStorage(
             `post-documents/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}_${documentName}`,
@@ -1157,20 +1157,28 @@ export function AddItemModal({
             { contentType: file.mimeType || undefined },
           );
 
-          const coverDataUrl = await generatePdfFirstPageThumbnail(
-            file.uri,
-            setPdfToProcess,
-            webViewRef,
-            file.name,
-          );
-          const coverBlob = await uriToBlob(coverDataUrl);
-          coverUrl = await uploadAssetToStorage(
-            `post-covers/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
-            coverBlob,
-            "",
-            updatePreviewProgress,
-            { contentType: "image/jpeg" },
-          );
+          try {
+            const coverDataUrl = await generatePdfFirstPageThumbnail(
+              file.uri,
+              setPdfToProcess,
+              webViewRef,
+              file.name,
+            );
+            const coverBlob = await uriToBlob(coverDataUrl, "image/jpeg");
+            coverUrl = await uploadAssetToStorage(
+              `post-covers/${userId}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.jpg`,
+              coverBlob,
+              "",
+              updatePreviewProgress,
+              { contentType: "image/jpeg" },
+            );
+          } catch (coverError: any) {
+            console.error(
+              "Failed to generate or upload cover image for announcement",
+              coverError,
+            );
+            coverUrl = FALLBACK_ICON_URL;
+          }
         }
 
         createdItemId = await addBanner(
@@ -1201,7 +1209,7 @@ export function AddItemModal({
           selectedFile.assets.length > 0
         ) {
           const file = selectedFile.assets[0];
-          const blob = await uriToBlob(file.uri);
+          const blob = await uriToBlob(file.uri, file.mimeType || undefined);
           const uniqueName = `${Date.now()}_${file.name || "document"}`;
           documentUrl = await uploadAssetToStorage(
             `docs/${userId}/${uniqueName}`,
@@ -1218,7 +1226,7 @@ export function AddItemModal({
               webViewRef,
               file.name,
             );
-            const coverBlob = await uriToBlob(coverDataUrl);
+            const coverBlob = await uriToBlob(coverDataUrl, "image/jpeg");
             const uniqueCoverId = `${Date.now()}_${Math.random()
               .toString(36)
               .substring(2, 9)}.jpg`;
@@ -1262,7 +1270,7 @@ export function AddItemModal({
           selectedFile.assets.length > 0
         ) {
           const file = selectedFile.assets[0];
-          const blob = await uriToBlob(file.uri);
+          const blob = await uriToBlob(file.uri, file.mimeType || undefined);
           const uniqueName = `${Date.now()}_${file.name || "past-paper"}`;
           documentUrl = await uploadAssetToStorage(
             `past-papers/${userId}/${uniqueName}`,
@@ -1279,7 +1287,7 @@ export function AddItemModal({
               webViewRef,
               file.name,
             );
-            const coverBlob = await uriToBlob(coverDataUrl);
+            const coverBlob = await uriToBlob(coverDataUrl, "image/jpeg");
             const sanitizedFileName = sanitizeFileName(
               file.name || "past-paper",
             );
@@ -2536,10 +2544,20 @@ export function AddItemModal({
         }}
       />
       {pdfToProcess && Platform.OS !== "web" && (
-        <View style={{ width: 0, height: 0, opacity: 0, position: "absolute" }}>
+        <View
+          pointerEvents="none"
+          style={{
+            width: 1,
+            height: 1,
+            opacity: 0,
+            position: "absolute",
+            overflow: "hidden",
+          }}
+        >
           <WebView
             ref={webViewRef}
             source={{ html: getWebViewHtml() }}
+            originWhitelist={["*"]}
             onMessage={(event: any) => {
               try {
                 const res = JSON.parse(event.nativeEvent.data);
