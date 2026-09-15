@@ -144,6 +144,7 @@ export default function OnboardingScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
+  const contentWidth = horizontalPadding === 0 ? width * 0.95 : width;
 
   const currentSlide = SLIDES[currentIndex];
   const isLast = currentIndex === SLIDES.length - 1;
@@ -195,7 +196,12 @@ export default function OnboardingScreen() {
 
       <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
         {/* Skip button */}
-        <View style={[styles.header, { paddingHorizontal: horizontalPadding }]}>
+        <View
+          style={[
+            styles.header,
+            { paddingHorizontal: horizontalPadding, width: contentWidth },
+          ]}
+        >
           <Pressable
             onPress={() => void finish()}
             style={({ pressed }) => [
@@ -214,10 +220,12 @@ export default function OnboardingScreen() {
           ref={flatListRef}
           data={SLIDES}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <SlideItem item={item} width={width} />}
+          renderItem={({ item }) => (
+            <SlideItem item={item} width={contentWidth} />
+          )}
           getItemLayout={(_, index) => ({
-            length: width,
-            offset: width * index,
+            length: contentWidth,
+            offset: contentWidth * index,
             index,
           })}
           horizontal
@@ -227,11 +235,16 @@ export default function OnboardingScreen() {
           viewabilityConfig={VIEWABILITY_CONFIG}
           scrollEventThrottle={16}
           bounces={false}
-          style={styles.flatList}
+          style={[styles.flatList, { width: contentWidth }]}
         />
 
         {/* Bottom section */}
-        <View style={[styles.bottom, { paddingHorizontal: horizontalPadding }]}>
+        <View
+          style={[
+            styles.bottom,
+            { paddingHorizontal: horizontalPadding, width: contentWidth },
+          ]}
+        >
           {/* Text */}
           <View style={styles.textBlock}>
             <Text style={[styles.headline, { color: "#FFFFFF" }]}>
@@ -303,6 +316,7 @@ const styles = StyleSheet.create({
     paddingTop:
       Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) + 8 : 8,
     alignItems: "flex-end",
+    alignSelf: "center",
   },
   skipBtn: {
     paddingHorizontal: 16,
@@ -320,6 +334,7 @@ const styles = StyleSheet.create({
   },
   flatList: {
     flex: 1,
+    alignSelf: "center",
   },
   slide: {
     flex: 1,
@@ -356,6 +371,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingBottom: 24,
     gap: 24,
+    alignSelf: "center",
   },
   textBlock: {
     gap: 10,
