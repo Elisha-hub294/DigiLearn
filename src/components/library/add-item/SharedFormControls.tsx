@@ -59,6 +59,23 @@ export function UploadStatusModal({
 }) {
   const { colors: themeColors } = useTheme();
   const safeProgress = Math.max(0, Math.min(progress, 100));
+  const [animatedProgress] = useState(
+    () => new Animated.Value(safeProgress),
+  );
+
+  useEffect(() => {
+    Animated.timing(animatedProgress, {
+      toValue: safeProgress,
+      duration: 180,
+      useNativeDriver: false,
+    }).start();
+  }, [animatedProgress, safeProgress]);
+
+  const progressWidth = animatedProgress.interpolate({
+    inputRange: [0, 100],
+    outputRange: ["0%", "100%"],
+    extrapolate: "clamp",
+  });
 
   return (
     <Modal animationType="fade" transparent visible={visible}>
@@ -87,10 +104,16 @@ export function UploadStatusModal({
             {message}
           </Text>
 
-          <View style={styles.uploadDialogBarWrap}>
+          <View
+            accessible
+            accessibilityRole="progressbar"
+            accessibilityLabel={`${title}: ${safeProgress}% complete`}
+            accessibilityValue={{ min: 0, max: 100, now: safeProgress }}
+            style={styles.uploadDialogBarWrap}
+          >
             <View style={styles.progressTrack}>
-              <View
-                style={[styles.progressFill, { width: `${safeProgress}%` }]}
+              <Animated.View
+                style={[styles.progressFill, { width: progressWidth }]}
               />
             </View>
             <Text

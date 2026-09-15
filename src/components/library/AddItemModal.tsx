@@ -589,6 +589,7 @@ export function AddItemModal({
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
+        copyToCacheDirectory: true,
         type: [
           "application/pdf",
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -618,6 +619,7 @@ export function AddItemModal({
   const pickSampleDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
+        copyToCacheDirectory: true,
         type: [
           "application/pdf",
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

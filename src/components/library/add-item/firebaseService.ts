@@ -26,7 +26,9 @@ export interface UploadProgressCallback {
 }
 
 /**
- * Uploads an asset to Firebase Storage with progress tracking
+ * Uploads an asset to Firebase Storage with progress tracking.
+ * Native callers pass Expo File objects (Blob-compatible) directly, avoiding
+ * base64 expansion before Firebase's resumable uploader streams the file.
  */
 export const uploadAssetToStorage = async (
   path: string,
@@ -57,7 +59,12 @@ export const uploadAssetToStorage = async (
       },
       (error) => {
         onProgress(label, 0);
-        reject(error);
+        reject(
+          new Error(
+            `Storage upload failed for ${path}: ${error.code || error.message || String(error)}`,
+            { cause: error },
+          ),
+        );
       },
       async () => {
         try {

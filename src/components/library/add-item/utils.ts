@@ -34,10 +34,29 @@ export const getTitleDocId = (title: string): string => {
 export const base64ToBlob = (
   base64: string,
   mimeType = "application/octet-stream",
-): Promise<Blob> => {
+): Blob | Uint8Array | Promise<Blob> => {
   const normalized = base64.includes(",") ? base64.split(",")[1] : base64;
   const cleaned = normalized.replace(/\s/g, "");
   const dataUri = `data:${mimeType};base64,${cleaned}`;
+
+  // Browsers and Node-based tests can make a Blob directly. Native takes the
+  // XMLHttpRequest branch below because React Native does not accept typed
+  // arrays in its Blob constructor.
+  if (typeof XMLHttpRequest === "undefined") {
+    const binary = atob(cleaned);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    try {
+      return new Blob([bytes], { type: mimeType });
+    } catch {
+      const nativeSafeBytes = bytes as Uint8Array & {
+        type?: string;
+        size?: number;
+      };
+      nativeSafeBytes.type = mimeType;
+      nativeSafeBytes.size = bytes.byteLength;
+      return nativeSafeBytes;
+    }
+  }
 
   return new Promise<Blob>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -75,53 +94,29 @@ export const uriToBlob = async (
       header.match(/data:([^;]+);base64/i)?.[1] ||
       "application/octet-stream";
     // Re-fetch the data: URI as a blob to get a proper React Native Blob
-    return base64ToBlob(uri, mimeType);
+    return (await base64ToBlob(uri, mimeType)) as Blob;
   }
 
   const isNativeFileUri = /^(file:|content:|ph:|assets-library:)/i.test(uri);
 
   if (isNativeFileUri) {
-    let FileSystem: any = null;
-
     try {
-      // In modern Expo SDK versions, legacy methods like readAsStringAsync are in expo-file-system/legacy
+      // Expo File is Blob-compatible on native. Keep the PDF on disk rather
+      // than expanding it to base64 before Firebase's resumable upload.
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      FileSystem = require("expo-file-system/legacy");
-    } catch {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        FileSystem = require("expo-file-system");
-      } catch (error) {
-        console.error("Failed to load expo-file-system for native upload", error);
-        throw new Error(
-          "Expo FileSystem is not available for this native upload.",
-        );
+      const { File } = require("expo-file-system");
+      const file = new File(uri);
+      if (!file.exists) {
+        throw new Error("The selected file is no longer available on this device.");
       }
+      return file as Blob;
+    } catch (error) {
+      console.error("Failed to prepare native file for upload", error);
+      throw new Error(
+        "The selected file could not be accessed. Please choose it again and retry.",
+      );
     }
 
-    const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    const mimeType =
-      expectedMimeType ||
-      (() => {
-        const lower = uri.toLowerCase();
-        if (lower.endsWith(".pdf")) return "application/pdf";
-        if (lower.endsWith(".docx"))
-          return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        if (lower.endsWith(".doc")) return "application/msword";
-        if (lower.endsWith(".pptx"))
-          return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-        if (lower.endsWith(".ppt")) return "application/vnd.ms-powerpoint";
-        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
-        if (lower.endsWith(".png")) return "image/png";
-        if (lower.endsWith(".gif")) return "image/gif";
-        if (lower.endsWith(".webp")) return "image/webp";
-        return "application/octet-stream";
-      })();
-    // Fetch the data: URI as a blob — goes through RN's native networking and
-    // returns a proper Blob that Firebase Storage can use without throwing.
-    return base64ToBlob(base64, mimeType);
   }
 
   return new Promise((resolve, reject) => {
