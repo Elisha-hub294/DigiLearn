@@ -6,10 +6,10 @@ export function getHorizontalPadding(width: number): number {
   return 0;
 }
 
-/** Keeps compact screen content inset while leaving headers full width. */
+/** Keeps compact screen content full width while leaving headers full width. */
 export function getScreenContentStyle(horizontalPadding: number) {
   return horizontalPadding === 0
-    ? { width: "90%" as const, alignSelf: "center" as const }
+    ? { width: "100%" as const, alignSelf: "center" as const }
     : undefined;
 }
 

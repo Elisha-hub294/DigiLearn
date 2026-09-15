@@ -42,7 +42,7 @@ const SLIDES = [
       "Find books, past papers, videos and lessons in one organised library built for your learning journey.",
 
     animation: require("../../assets/animations/Resources.json"),
-    accentColor: "#4F8EF7",
+    accentColor: "#a333ff",
   },
   {
     id: "slide3",
@@ -51,7 +51,7 @@ const SLIDES = [
       "Ask questions, simplify difficult topics and get helpful explanations whenever you need support.",
 
     animation: require("../../assets/animations/Artificial Intelligence.json"),
-    accentColor: "#fff",
+    accentColor: "#47bbff",
   },
   {
     id: "slide4",
@@ -60,7 +60,7 @@ const SLIDES = [
       "Learn wherever you are with resources that fit your pace, your goals and the way you study best.",
 
     animation: require("../../assets/animations/Student.json"),
-    accentColor: "#f658f1",
+    accentColor: "#ffeb78",
   },
   {
     id: "slide5",
@@ -69,7 +69,7 @@ const SLIDES = [
       "Keep your target in sight, build momentum and take the next step toward the future you want.",
 
     animation: require("../../assets/animations/Target.json"),
-    accentColor: "#eaffa0",
+    accentColor: "#37ffff",
   },
 ] as const;
 
