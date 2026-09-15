@@ -672,6 +672,7 @@ export const TeacherPostItem = memo(function TeacherPostItem({
   ownerProfiles = {},
   defaultUserAvatar = null,
   isVisible = true,
+  disableTeacherProfileNavigation = false,
 }: {
   postItem: TeacherPost;
   index?: number;
@@ -680,6 +681,7 @@ export const TeacherPostItem = memo(function TeacherPostItem({
   ownerProfiles?: Record<string, { name: string; avatar?: string }>;
   defaultUserAvatar?: string | null;
   isVisible?: boolean;
+  disableTeacherProfileNavigation?: boolean;
 }) {
   const { user, profile } = useProfile();
   const { colors } = useTheme();
@@ -1109,13 +1111,18 @@ export const TeacherPostItem = memo(function TeacherPostItem({
           {!hideOwner && (
             <View style={styles.profileRow}>
               <Pressable
-                accessibilityRole="button"
+                accessibilityRole={
+                  disableTeacherProfileNavigation ? undefined : "button"
+                }
                 accessibilityLabel={`Open teacher profile: ${rawTeacherName}`}
-                onPress={() =>
-                  router.push({
-                    pathname: "/teacher-profile",
-                    params: { id: postItem.owner, name: rawTeacherName },
-                  } as never)
+                onPress={
+                  disableTeacherProfileNavigation
+                    ? undefined
+                    : () =>
+                        router.push({
+                          pathname: "/teacher-profile",
+                          params: { id: postItem.owner, name: rawTeacherName },
+                        } as never)
                 }
               >
                 <Image
@@ -1125,13 +1132,18 @@ export const TeacherPostItem = memo(function TeacherPostItem({
                 />
               </Pressable>
               <Pressable
-                accessibilityRole="button"
+                accessibilityRole={
+                  disableTeacherProfileNavigation ? undefined : "button"
+                }
                 accessibilityLabel={`Open teacher profile: ${rawTeacherName}`}
-                onPress={() =>
-                  router.push({
-                    pathname: "/teacher-profile",
-                    params: { id: postItem.owner, name: rawTeacherName },
-                  } as never)
+                onPress={
+                  disableTeacherProfileNavigation
+                    ? undefined
+                    : () =>
+                        router.push({
+                          pathname: "/teacher-profile",
+                          params: { id: postItem.owner, name: rawTeacherName },
+                        } as never)
                 }
               >
                 <View>

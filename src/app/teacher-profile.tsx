@@ -1342,6 +1342,7 @@ export default function TeacherProfileScreen() {
         return (
           <View style={{ width: cardWidth, alignSelf: "center" }}>
             <TeacherPostItem
+              disableTeacherProfileNavigation
               postItem={{
                 id: item.id,
                 title: item.title,
