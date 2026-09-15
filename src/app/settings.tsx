@@ -119,7 +119,7 @@ export default function SettingsScreen() {
         setPushEnabled(!value);
       }
     },
-    [isOffline, profile, user],
+    [isOffline, profile, setSettingsError, user],
   );
 
   const toggleReminders = useCallback(async (value: boolean) => {
@@ -158,7 +158,7 @@ export default function SettingsScreen() {
       console.error("Logout failed:", error);
       setLogoutError("We couldn't log you out. Please try again.");
     }
-  }, [router]);
+  }, [router, setLogoutError]);
 
   useFocusEffect(
     useCallback(() => {

@@ -15,7 +15,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Linking,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -188,7 +187,7 @@ export default function TeacherProfileScreen() {
   const { width } = useWindowDimensions();
   const horizontalPadding = getHorizontalPadding(width);
   const contentMaxWidth = Math.min(1000, width - horizontalPadding * 2);
-  const cardWidth = horizontalPadding === 0 ? "90%" : "100%";
+  const cardWidth = horizontalPadding === 0 ? "95%" : "100%";
   const avatarSize = Math.min(150, Math.max(104, width * 0.32));
   const compactActionRow = width < 390;
   const actionRowGap = compactActionRow ? 10 : 16;
@@ -690,14 +689,7 @@ export default function TeacherProfileScreen() {
     } finally {
       setCommunityActionPending(false);
     }
-  }, [
-    isCommunityMember,
-    router,
-    setCommunityActionPending,
-    setContactDialog,
-    teacher,
-    user,
-  ]);
+  }, [isCommunityMember, router, setContactDialog, teacher, user]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -1230,6 +1222,7 @@ export default function TeacherProfileScreen() {
       failedAvatarUri,
       fallbackAvatar,
       canViewSaved,
+      horizontalPadding,
       openContactSheet,
       openEmailPrompt,
       openYoutubePrompt,
@@ -1253,7 +1246,6 @@ export default function TeacherProfileScreen() {
       hasEmail,
       hasPhone,
       hasYoutube,
-      horizontalPadding,
       themeColors.border,
       themeColors.inactive,
       themeColors.surfaceMuted,
@@ -1401,12 +1393,11 @@ export default function TeacherProfileScreen() {
         style={[
           styles.safeArea,
           {
-            backgroundColor:
-              Platform.OS === "web" ? themeColors.background : accentColor,
+            backgroundColor: themeColors.background,
           },
         ]}
       >
-        <StatusBar backgroundColor={accentColor} />
+        <StatusBar backgroundColor={accentColor} barStyle="light-content" />
         <Animated.View
           entering={FadeInUp.duration(420)}
           style={[
@@ -1500,12 +1491,11 @@ export default function TeacherProfileScreen() {
       style={[
         styles.safeArea,
         {
-          backgroundColor:
-            Platform.OS === "web" ? themeColors.background : accentColor,
+          backgroundColor: themeColors.background,
         },
       ]}
     >
-      <StatusBar backgroundColor={accentColor} />
+      <StatusBar backgroundColor={accentColor} barStyle="light-content" />
       <Animated.View
         entering={FadeInUp.duration(420)}
         style={[

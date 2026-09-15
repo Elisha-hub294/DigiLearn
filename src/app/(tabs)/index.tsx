@@ -426,7 +426,7 @@ export default function HomeScreen() {
     });
 
     return items;
-  }, [filteredPaperCollections, router, shuffleSeed]);
+  }, [filteredPaperCollections, horizontalPadding, router, shuffleSeed]);
 
   // Interleave and randomize individual items into a continuous social feed!
   const feedItems = useMemo<FeedItem[]>(() => {
