@@ -28,6 +28,7 @@ import {
   TopicalNote,
 } from "../../components/home/FeaturedNoteCard";
 import { FloatingAssistantButton } from "../../components/home/FloatingAssistantButton";
+import { LiveSessionsCarousel } from "../../components/home/LiveSessionsCarousel";
 import { PublicHome } from "../../components/home/PublicHome";
 import { TeacherFollowCarousel } from "../../components/home/TeacherFollowCarousel";
 import {
@@ -41,7 +42,6 @@ import { BookCard } from "../../components/library/BookCard";
 import { PaperCard } from "../../components/library/PaperCard";
 import { PaperCarousel } from "../../components/library/PaperCarousel";
 import { Header } from "../../components/ui/Header";
-import { LiveSessionsCarousel } from "../../components/home/LiveSessionsCarousel";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { SectionHeader } from "../../components/ui/SectionHeader";
 import { Skeleton } from "../../components/ui/Skeleton";
@@ -524,6 +524,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      edges={["top"]}
     >
       <Animated.View entering={FadeInUp.duration(480)} style={styles.page}>
         <View

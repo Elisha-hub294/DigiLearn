@@ -353,6 +353,7 @@ export default function LibraryScreen() {
     return (
       <SafeAreaView
         style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+        edges={["top"]}
       >
         <View
           style={[
@@ -395,6 +396,7 @@ export default function LibraryScreen() {
   return (
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      edges={["top"]}
     >
       <View
         style={[

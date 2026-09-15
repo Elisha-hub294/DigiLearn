@@ -195,7 +195,8 @@ export function PaperCard({
 const styles = StyleSheet.create({
   card: {
     width: 220,
-    marginLeft: spacing.md,
+    marginRight: spacing.md,
+    marginLeft: 5,
     backgroundColor: colors.white,
     overflow: "hidden",
     borderRadius: 12,
