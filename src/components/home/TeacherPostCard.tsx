@@ -690,6 +690,7 @@ export const TeacherPostItem = memo(function TeacherPostItem({
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [localStatus, setLocalStatus] = useState<"live" | "ended" | undefined>(
     postItem.status,
@@ -822,6 +823,7 @@ export const TeacherPostItem = memo(function TeacherPostItem({
   return (
     <Animated.View
       entering={FadeInUp.duration(500 + index * 80)}
+      pointerEvents={isDeleting ? "none" : "auto"}
       style={{ width: "100%" }}
     >
       <Pressable
@@ -847,6 +849,7 @@ export const TeacherPostItem = memo(function TeacherPostItem({
               cover: postItem.cover,
               document: postItem.document,
             }}
+            onDeleting={() => setIsDeleting(true)}
             light
           />
         </View>

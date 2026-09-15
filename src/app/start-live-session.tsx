@@ -16,6 +16,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../../firebaseConfig";
 import { AdminPublishHeader } from "../components/library/AdminPublishHeader";
 import { PublishAccessGate } from "../components/library/PublishAccessGate";
@@ -180,435 +181,469 @@ export default function StartLiveSessionScreen() {
   };
 
   return (
-    <PublishAccessGate
-      isAuthorizedPublisher={isAuthorizedPublisher}
-      title="Start Live Session"
-      unauthorizedMessage="Only approved teacher accounts can host live sessions. Please request teacher approval to continue."
-      onBack={() => router.back()}
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: themeColors.background }}
+      edges={["top", "bottom"]}
     >
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingHorizontal: horizontalPadding },
-        ]}
-        showsVerticalScrollIndicator={false}
+      <PublishAccessGate
+        isAuthorizedPublisher={isAuthorizedPublisher}
+        title="Start Live Session"
+        unauthorizedMessage="Only approved teacher accounts can host live sessions. Please request teacher approval to continue."
+        onBack={() => router.back()}
       >
-        <View
-          style={[
-            styles.container,
-            { maxWidth: contentMaxWidth },
-            getScreenContentStyle(horizontalPadding),
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingHorizontal: horizontalPadding },
           ]}
+          showsVerticalScrollIndicator={false}
         >
-          <AdminPublishHeader
-            title="Start Live Session"
-            onBack={() => router.back()}
-            disabled={submitting}
-          />
-
-          {/* Intro Hero Card */}
-          <LinearGradient
-            colors={["#102F70", "#1E52B7"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroCard}
-          >
-            <View style={styles.heroIconWrap}>
-              <Icon name="video" size={24} color="#FFFFFF" />
-            </View>
-            <View style={styles.heroTextWrap}>
-              <View style={styles.heroBadgeRow}>
-                <View style={styles.heroLivePill}>
-                  <View style={styles.heroLiveDot} />
-                  <Text style={styles.heroLiveText}>GOOGLE MEET</Text>
-                </View>
-              </View>
-              <Text style={styles.heroTitle}>Host a Live Learning Session</Text>
-              <Text style={styles.heroSubtitle}>
-                Add your Google Meet invitation code so learners can tap & join
-                directly from their feed.
-              </Text>
-            </View>
-          </LinearGradient>
-
-          {/* Form Card */}
           <View
             style={[
-              styles.formCard,
-              {
-                backgroundColor: themeColors.white,
-                borderColor: themeColors.border,
-              },
+              styles.container,
+              { maxWidth: contentMaxWidth },
+              getScreenContentStyle(horizontalPadding),
             ]}
           >
-            {/* Title Input */}
-            <View style={styles.inputGroup}>
-              <View style={styles.labelRow}>
-                <Text style={[styles.inputLabel, { color: themeColors.text }]}>
-                  Session Title <Text style={styles.requiredAsterisk}>*</Text>
-                </Text>
-                <Text
-                  style={[styles.charCounter, { color: themeColors.subtitle }]}
-                >
-                  {title.length}/{TITLE_MAX_LENGTH}
-                </Text>
-              </View>
-              <TextInput
-                value={title}
-                onChangeText={(text) =>
-                  setTitle(text.slice(0, TITLE_MAX_LENGTH))
-                }
-                placeholder="e.g. S.4 Physics - Electricity & Magnetism Revision"
-                placeholderTextColor={themeColors.inactive}
-                style={[
-                  styles.textInput,
-                  {
-                    backgroundColor: themeColors.lightBackground,
-                    color: themeColors.text,
-                    borderColor: themeColors.border,
-                  },
-                ]}
-                editable={!submitting}
-              />
-            </View>
-
-            {/* Subject Selection */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: themeColors.text }]}>
-                Subject <Text style={styles.requiredAsterisk}>*</Text>
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.subjectChipsList}
-              >
-                {subjects
-                  .filter((sub) => sub.toLowerCase() !== "all")
-                  .map((subName) => {
-                    const isSelected = selectedSubject === subName;
-                    return (
-                      <Pressable
-                        key={subName}
-                        onPress={() => setSelectedSubject(subName)}
-                        disabled={submitting}
-                        style={[
-                          styles.subjectChip,
-                          {
-                            backgroundColor: isSelected
-                              ? themeColors.primary
-                              : themeColors.lightBackground,
-                            borderColor: isSelected
-                              ? themeColors.primary
-                              : themeColors.border,
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.subjectChipText,
-                            {
-                              color: isSelected ? "#FFFFFF" : themeColors.text,
-                              fontWeight: isSelected ? "700" : "500",
-                            },
-                          ]}
-                        >
-                          {subName}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-              </ScrollView>
-            </View>
-
-            {/* Google Meet Coordinates Input */}
-            <View style={styles.inputGroup}>
-              <View style={styles.labelRow}>
-                <Text style={[styles.inputLabel, { color: themeColors.text }]}>
-                  Google Meet Code or Link{" "}
-                  <Text style={styles.requiredAsterisk}>*</Text>
-                </Text>
-                <Pressable
-                  onPress={handlePaste}
-                  disabled={pasteLoading || submitting}
-                  style={styles.pasteButton}
-                >
-                  {pasteLoading ? (
-                    <ActivityIndicator
-                      size="small"
-                      color={themeColors.primary}
-                    />
-                  ) : (
-                    <>
-                      <Icon
-                        name="clipboard"
-                        size={14}
-                        color={themeColors.primary}
-                      />
-                      <Text
-                        style={[
-                          styles.pasteButtonText,
-                          { color: themeColors.primary },
-                        ]}
-                      >
-                        Paste
-                      </Text>
-                    </>
-                  )}
-                </Pressable>
-              </View>
-              <Text
-                style={[styles.fieldHelper, { color: themeColors.subtitle }]}
-              >
-                Enter your meeting code (e.g. abc-defg-hij) or paste the Google
-                Meet link.
-              </Text>
-              <TextInput
-                value={meetInput}
-                onChangeText={setMeetInput}
-                placeholder="e.g. abc-defg-hij or https://meet.google.com/abc-defg-hij"
-                placeholderTextColor={themeColors.inactive}
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={[
-                  styles.textInput,
-                  {
-                    backgroundColor: themeColors.lightBackground,
-                    color: themeColors.text,
-                    borderColor:
-                      meetInput.trim() && !validation.isValid
-                        ? colors.danger
-                        : themeColors.border,
-                  },
-                ]}
-                editable={!submitting}
-              />
-
-              {/* Validation Status & Live Preview */}
-              {meetInput.trim().length > 0 && (
-                <View style={styles.validationFeedbackWrap}>
-                  {validation.isValid && validation.code ? (
-                    <View
-                      style={[
-                        styles.validPreviewCard,
-                        {
-                          backgroundColor: isDark
-                            ? "rgba(16, 185, 129, 0.12)"
-                            : "#ECFDF5",
-                          borderColor: isDark ? "#065F46" : "#A7F3D0",
-                        },
-                      ]}
-                    >
-                      <View style={styles.validHeaderRow}>
-                        <View style={styles.validStatusRow}>
-                          <Icon name="check-circle" size={16} color="#10B981" />
-                          <Text style={styles.validCodeTitle}>
-                            Meeting Code:{" "}
-                            <Text style={styles.validCodeValue}>
-                              {validation.code}
-                            </Text>
-                          </Text>
-                        </View>
-                        <Pressable
-                          onPress={handleTestLink}
-                          disabled={testingLink || submitting}
-                          style={styles.testLinkButton}
-                        >
-                          {testingLink ? (
-                            <ActivityIndicator size="small" color="#10B981" />
-                          ) : (
-                            <>
-                              <Icon
-                                name="external-link"
-                                size={12}
-                                color="#047857"
-                              />
-                              <Text style={styles.testLinkText}>Test room</Text>
-                            </>
-                          )}
-                        </Pressable>
-                      </View>
-                      <Text style={styles.validUrlText} numberOfLines={1}>
-                        {validation.url}
-                      </Text>
-                    </View>
-                  ) : (
-                    <View style={styles.invalidRow}>
-                      <Icon
-                        name="alert-circle"
-                        size={14}
-                        color={colors.danger}
-                      />
-                      <Text
-                        style={[styles.invalidText, { color: colors.danger }]}
-                      >
-                        {validation.error}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
-            </View>
-
-            {/* Agenda / Description */}
-            <View style={styles.inputGroup}>
-              <View style={styles.labelRow}>
-                <Text style={[styles.inputLabel, { color: themeColors.text }]}>
-                  Session Agenda / Description (Optional)
-                </Text>
-                <Text
-                  style={[styles.charCounter, { color: themeColors.subtitle }]}
-                >
-                  {description.length}/{DESCRIPTION_MAX_LENGTH}
-                </Text>
-              </View>
-              <TextInput
-                value={description}
-                onChangeText={(text) =>
-                  setDescription(text.slice(0, DESCRIPTION_MAX_LENGTH))
-                }
-                placeholder="What topics will you discuss? Mention any notes or calculators students should bring."
-                placeholderTextColor={themeColors.inactive}
-                multiline
-                numberOfLines={4}
-                style={[
-                  styles.textArea,
-                  {
-                    backgroundColor: themeColors.lightBackground,
-                    color: themeColors.text,
-                    borderColor: themeColors.border,
-                  },
-                ]}
-                editable={!submitting}
-              />
-            </View>
-
-            {/* Optional Cover Banner */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: themeColors.text }]}>
-                Room Cover Image (Optional)
-              </Text>
-              <Text
-                style={[styles.fieldHelper, { color: themeColors.subtitle }]}
-              >
-                A high-resolution visual backdrop displayed on the live session
-                card.
-              </Text>
-              <Pressable
-                onPress={handlePickCover}
-                disabled={submitting}
-                style={[
-                  styles.coverPicker,
-                  {
-                    backgroundColor: themeColors.lightBackground,
-                    borderColor: themeColors.border,
-                  },
-                ]}
-              >
-                {coverImage ? (
-                  <View style={styles.coverImageWrap}>
-                    <Image
-                      source={{ uri: coverImage }}
-                      style={styles.coverImagePreview}
-                      resizeMode="cover"
-                    />
-                    <View style={styles.changeCoverBadge}>
-                      <Icon name="camera" size={12} color="#FFFFFF" />
-                      <Text style={styles.changeCoverText}>Change</Text>
-                    </View>
-                  </View>
-                ) : (
-                  <View style={styles.coverPlaceholder}>
-                    <Icon name="image" size={24} color={themeColors.subtitle} />
-                    <Text
-                      style={[
-                        styles.coverPlaceholderText,
-                        { color: themeColors.subtitle },
-                      ]}
-                    >
-                      Tap to choose a custom cover image, or use the default
-                      live theme
-                    </Text>
-                  </View>
-                )}
-              </Pressable>
-            </View>
-
-            {/* Notify Followers Toggle */}
-            <Pressable
-              onPress={() => setNotifyFollowers((prev) => !prev)}
+            <AdminPublishHeader
+              title="Start Live Session"
+              onBack={() => router.back()}
               disabled={submitting}
+            />
+
+            {/* Intro Hero Card */}
+            <LinearGradient
+              colors={["#102F70", "#1E52B7"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroCard}
+            >
+              <View style={styles.heroIconWrap}>
+                <Icon name="video" size={24} color="#FFFFFF" />
+              </View>
+              <View style={styles.heroTextWrap}>
+                <View style={styles.heroBadgeRow}>
+                  <View style={styles.heroLivePill}>
+                    <View style={styles.heroLiveDot} />
+                    <Text style={styles.heroLiveText}>GOOGLE MEET</Text>
+                  </View>
+                </View>
+                <Text style={styles.heroTitle}>
+                  Host a Live Learning Session
+                </Text>
+                <Text style={styles.heroSubtitle}>
+                  Add your Google Meet invitation code so learners can tap &
+                  join directly from their feed.
+                </Text>
+              </View>
+            </LinearGradient>
+
+            {/* Form Card */}
+            <View
               style={[
-                styles.notifyRow,
+                styles.formCard,
                 {
-                  backgroundColor: themeColors.lightBackground,
+                  backgroundColor: themeColors.white,
                   borderColor: themeColors.border,
                 },
               ]}
             >
-              <View style={styles.notifyCopy}>
-                <Text style={[styles.notifyTitle, { color: themeColors.text }]}>
-                  Notify your student community
+              {/* Title Input */}
+              <View style={styles.inputGroup}>
+                <View style={styles.labelRow}>
+                  <Text
+                    style={[styles.inputLabel, { color: themeColors.text }]}
+                  >
+                    Session Title <Text style={styles.requiredAsterisk}>*</Text>
+                  </Text>
+                  <Text
+                    style={[
+                      styles.charCounter,
+                      { color: themeColors.subtitle },
+                    ]}
+                  >
+                    {title.length}/{TITLE_MAX_LENGTH}
+                  </Text>
+                </View>
+                <TextInput
+                  value={title}
+                  onChangeText={(text) =>
+                    setTitle(text.slice(0, TITLE_MAX_LENGTH))
+                  }
+                  placeholder="e.g. S.4 Physics - Electricity & Magnetism Revision"
+                  placeholderTextColor={themeColors.inactive}
+                  style={[
+                    styles.textInput,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      color: themeColors.text,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
+                  editable={!submitting}
+                />
+              </View>
+
+              {/* Subject Selection */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: themeColors.text }]}>
+                  Subject <Text style={styles.requiredAsterisk}>*</Text>
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.subjectChipsList}
+                >
+                  {subjects
+                    .filter((sub) => sub.toLowerCase() !== "all")
+                    .map((subName) => {
+                      const isSelected = selectedSubject === subName;
+                      return (
+                        <Pressable
+                          key={subName}
+                          onPress={() => setSelectedSubject(subName)}
+                          disabled={submitting}
+                          style={[
+                            styles.subjectChip,
+                            {
+                              backgroundColor: isSelected
+                                ? themeColors.primary
+                                : themeColors.lightBackground,
+                              borderColor: isSelected
+                                ? themeColors.primary
+                                : themeColors.border,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.subjectChipText,
+                              {
+                                color: isSelected
+                                  ? "#FFFFFF"
+                                  : themeColors.text,
+                                fontWeight: isSelected ? "700" : "500",
+                              },
+                            ]}
+                          >
+                            {subName}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                </ScrollView>
+              </View>
+
+              {/* Google Meet Coordinates Input */}
+              <View style={styles.inputGroup}>
+                <View style={styles.labelRow}>
+                  <Text
+                    style={[styles.inputLabel, { color: themeColors.text }]}
+                  >
+                    Google Meet Code or Link{" "}
+                    <Text style={styles.requiredAsterisk}>*</Text>
+                  </Text>
+                  <Pressable
+                    onPress={handlePaste}
+                    disabled={pasteLoading || submitting}
+                    style={styles.pasteButton}
+                  >
+                    {pasteLoading ? (
+                      <ActivityIndicator
+                        size="small"
+                        color={themeColors.primary}
+                      />
+                    ) : (
+                      <>
+                        <Icon
+                          name="clipboard"
+                          size={14}
+                          color={themeColors.primary}
+                        />
+                        <Text
+                          style={[
+                            styles.pasteButtonText,
+                            { color: themeColors.primary },
+                          ]}
+                        >
+                          Paste
+                        </Text>
+                      </>
+                    )}
+                  </Pressable>
+                </View>
+                <Text
+                  style={[styles.fieldHelper, { color: themeColors.subtitle }]}
+                >
+                  Enter your meeting code (e.g. abc-defg-hij) or paste the
+                  Google Meet link.
+                </Text>
+                <TextInput
+                  value={meetInput}
+                  onChangeText={setMeetInput}
+                  placeholder="e.g. abc-defg-hij or https://meet.google.com/abc-defg-hij"
+                  placeholderTextColor={themeColors.inactive}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={[
+                    styles.textInput,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      color: themeColors.text,
+                      borderColor:
+                        meetInput.trim() && !validation.isValid
+                          ? colors.danger
+                          : themeColors.border,
+                    },
+                  ]}
+                  editable={!submitting}
+                />
+
+                {/* Validation Status & Live Preview */}
+                {meetInput.trim().length > 0 && (
+                  <View style={styles.validationFeedbackWrap}>
+                    {validation.isValid && validation.code ? (
+                      <View
+                        style={[
+                          styles.validPreviewCard,
+                          {
+                            backgroundColor: isDark
+                              ? "rgba(16, 185, 129, 0.12)"
+                              : "#ECFDF5",
+                            borderColor: isDark ? "#065F46" : "#A7F3D0",
+                          },
+                        ]}
+                      >
+                        <View style={styles.validHeaderRow}>
+                          <View style={styles.validStatusRow}>
+                            <Icon
+                              name="check-circle"
+                              size={16}
+                              color="#10B981"
+                            />
+                            <Text style={styles.validCodeTitle}>
+                              Meeting Code:{" "}
+                              <Text style={styles.validCodeValue}>
+                                {validation.code}
+                              </Text>
+                            </Text>
+                          </View>
+                          <Pressable
+                            onPress={handleTestLink}
+                            disabled={testingLink || submitting}
+                            style={styles.testLinkButton}
+                          >
+                            {testingLink ? (
+                              <ActivityIndicator size="small" color="#10B981" />
+                            ) : (
+                              <>
+                                <Icon
+                                  name="external-link"
+                                  size={12}
+                                  color="#047857"
+                                />
+                                <Text style={styles.testLinkText}>
+                                  Test room
+                                </Text>
+                              </>
+                            )}
+                          </Pressable>
+                        </View>
+                        <Text style={styles.validUrlText} numberOfLines={1}>
+                          {validation.url}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={styles.invalidRow}>
+                        <Icon
+                          name="alert-circle"
+                          size={14}
+                          color={colors.danger}
+                        />
+                        <Text
+                          style={[styles.invalidText, { color: colors.danger }]}
+                        >
+                          {validation.error}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </View>
+
+              {/* Agenda / Description */}
+              <View style={styles.inputGroup}>
+                <View style={styles.labelRow}>
+                  <Text
+                    style={[styles.inputLabel, { color: themeColors.text }]}
+                  >
+                    Session Agenda / Description (Optional)
+                  </Text>
+                  <Text
+                    style={[
+                      styles.charCounter,
+                      { color: themeColors.subtitle },
+                    ]}
+                  >
+                    {description.length}/{DESCRIPTION_MAX_LENGTH}
+                  </Text>
+                </View>
+                <TextInput
+                  value={description}
+                  onChangeText={(text) =>
+                    setDescription(text.slice(0, DESCRIPTION_MAX_LENGTH))
+                  }
+                  placeholder="What topics will you discuss? Mention any notes or calculators students should bring."
+                  placeholderTextColor={themeColors.inactive}
+                  multiline
+                  numberOfLines={4}
+                  style={[
+                    styles.textArea,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      color: themeColors.text,
+                      borderColor: themeColors.border,
+                    },
+                  ]}
+                  editable={!submitting}
+                />
+              </View>
+
+              {/* Optional Cover Banner */}
+              <View style={styles.inputGroup}>
+                <Text style={[styles.inputLabel, { color: themeColors.text }]}>
+                  Room Cover Image (Optional)
                 </Text>
                 <Text
+                  style={[styles.fieldHelper, { color: themeColors.subtitle }]}
+                >
+                  A high-resolution visual backdrop displayed on the live
+                  session card.
+                </Text>
+                <Pressable
+                  onPress={handlePickCover}
+                  disabled={submitting}
                   style={[
-                    styles.notifySubtitle,
-                    { color: themeColors.subtitle },
+                    styles.coverPicker,
+                    {
+                      backgroundColor: themeColors.lightBackground,
+                      borderColor: themeColors.border,
+                    },
                   ]}
                 >
-                  Send an instant alert to followers so they can join right away
-                </Text>
+                  {coverImage ? (
+                    <View style={styles.coverImageWrap}>
+                      <Image
+                        source={{ uri: coverImage }}
+                        style={styles.coverImagePreview}
+                        resizeMode="cover"
+                      />
+                      <View style={styles.changeCoverBadge}>
+                        <Icon name="camera" size={12} color="#FFFFFF" />
+                        <Text style={styles.changeCoverText}>Change</Text>
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.coverPlaceholder}>
+                      <Icon
+                        name="image"
+                        size={24}
+                        color={themeColors.subtitle}
+                      />
+                      <Text
+                        style={[
+                          styles.coverPlaceholderText,
+                          { color: themeColors.subtitle },
+                        ]}
+                      >
+                        Tap to choose a custom cover image, or use the default
+                        live theme
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
               </View>
-              <View
+
+              {/* Notify Followers Toggle */}
+              <Pressable
+                onPress={() => setNotifyFollowers((prev) => !prev)}
+                disabled={submitting}
                 style={[
-                  styles.checkbox,
+                  styles.notifyRow,
                   {
-                    backgroundColor: notifyFollowers
-                      ? themeColors.primary
-                      : "transparent",
-                    borderColor: notifyFollowers
-                      ? themeColors.primary
-                      : themeColors.border,
+                    backgroundColor: themeColors.lightBackground,
+                    borderColor: themeColors.border,
                   },
                 ]}
               >
-                {notifyFollowers && (
-                  <Icon name="check" size={14} color="#FFFFFF" />
-                )}
-              </View>
-            </Pressable>
+                <View style={styles.notifyCopy}>
+                  <Text
+                    style={[styles.notifyTitle, { color: themeColors.text }]}
+                  >
+                    Notify your student community
+                  </Text>
+                  <Text
+                    style={[
+                      styles.notifySubtitle,
+                      { color: themeColors.subtitle },
+                    ]}
+                  >
+                    Send an instant alert to followers so they can join right
+                    away
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.checkbox,
+                    {
+                      backgroundColor: notifyFollowers
+                        ? themeColors.primary
+                        : "transparent",
+                      borderColor: notifyFollowers
+                        ? themeColors.primary
+                        : themeColors.border,
+                    },
+                  ]}
+                >
+                  {notifyFollowers && (
+                    <Icon name="check" size={14} color="#FFFFFF" />
+                  )}
+                </View>
+              </Pressable>
 
-            {/* Submit Action */}
-            <Pressable
-              onPress={handleSubmit}
-              disabled={submitting}
-              style={({ pressed }) => [
-                styles.submitButton,
-                pressed && { opacity: 0.9 },
-                submitting && { opacity: 0.7 },
-              ]}
-            >
-              <LinearGradient
-                colors={["#EA4335", "#C5221F"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.submitGradient}
+              {/* Submit Action */}
+              <Pressable
+                onPress={handleSubmit}
+                disabled={submitting}
+                style={({ pressed }) => [
+                  styles.submitButton,
+                  pressed && { opacity: 0.9 },
+                  submitting && { opacity: 0.7 },
+                ]}
               >
-                {submitting ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <>
-                    <Icon name="radio" size={18} color="#FFFFFF" />
-                    <Text style={styles.submitButtonText}>
-                      Go Live & Publish Session
-                    </Text>
-                  </>
-                )}
-              </LinearGradient>
-            </Pressable>
+                <LinearGradient
+                  colors={["#EA4335", "#C5221F"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.submitGradient}
+                >
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Icon name="radio" size={18} color="#FFFFFF" />
+                      <Text style={styles.submitButtonText}>
+                        Go Live & Publish Session
+                      </Text>
+                    </>
+                  )}
+                </LinearGradient>
+              </Pressable>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </PublishAccessGate>
+        </ScrollView>
+      </PublishAccessGate>
+    </SafeAreaView>
   );
 }
 
