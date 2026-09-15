@@ -23,55 +23,59 @@ export const getTitleDocId = (title: string): string => {
 };
 
 /**
- * Converts base64 content to a Blob object.
- * This is required for native file URIs, where XHR cannot fetch file:// URLs.
+ * Converts base64 content to a native Blob by fetching a data: URI.
+ *
+ * React Native's BlobManager.createFromParts() explicitly rejects
+ * ArrayBuffer/ArrayBufferView inputs, so `new Blob([uint8Array])` always throws
+ * on native. Fetching a data: URI with responseType="blob" routes through
+ * React Native's native networking layer which produces a proper Blob that
+ * Firebase Storage can wrap and upload via multipart or resumable upload.
  */
 export const base64ToBlob = (
   base64: string,
   mimeType = "application/octet-stream",
-): Blob | Uint8Array => {
+): Promise<Blob> => {
   const normalized = base64.includes(",") ? base64.split(",")[1] : base64;
   const cleaned = normalized.replace(/\s/g, "");
-  const binary = atob(cleaned);
-  const len = binary.length;
-  const bytes = new Uint8Array(len);
+  const dataUri = `data:${mimeType};base64,${cleaned}`;
 
-  for (let i = 0; i < len; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  try {
-    return new Blob([bytes], { type: mimeType });
-  } catch {
-    // In React Native, BlobManager explicitly rejects ArrayBuffer/ArrayBufferView:
-    // "Creating blobs from 'ArrayBuffer' and 'ArrayBufferView' are not supported"
-    // Firebase Storage natively supports uploading Uint8Array directly.
-    Object.defineProperty(bytes, "type", { value: mimeType, configurable: true, writable: true });
-    Object.defineProperty(bytes, "size", { value: bytes.byteLength, configurable: true, writable: true });
-    return bytes;
-  }
+  return new Promise<Blob>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function () {
+      resolve(xhr.response as Blob);
+    };
+    xhr.onerror = function () {
+      reject(new Error("Failed to convert base64 to Blob via data: URI fetch"));
+    };
+    xhr.responseType = "blob";
+    xhr.open("GET", dataUri, true);
+    xhr.send(null);
+  });
 };
 
 /**
- * Converts a local or remote file URI into a Blob or Uint8Array.
- * Native file URIs must be read as base64 because XMLHttpRequest cannot fetch
- * file:// URIs on Android/iOS.
+ * Converts a local or remote file URI into a Blob.
+ * Native file URIs (file://, content://, ph://, assets-library://) are read
+ * as base64 via expo-file-system, then converted to a proper Blob by fetching
+ * a data: URI — this avoids React Native BlobManager's ArrayBufferView
+ * restriction and produces a Blob that Firebase Storage can upload correctly.
  */
 export const uriToBlob = async (
   uri: string,
   expectedMimeType?: string,
-): Promise<Blob | Uint8Array> => {
+): Promise<Blob> => {
   if (!uri) {
     throw new Error("File URI is required");
   }
 
   if (uri.startsWith("data:")) {
-    const [header, payload] = uri.split(",");
+    const [header] = uri.split(",");
     const mimeType =
       expectedMimeType ||
       header.match(/data:([^;]+);base64/i)?.[1] ||
       "application/octet-stream";
-    return base64ToBlob(payload || "", mimeType);
+    // Re-fetch the data: URI as a blob to get a proper React Native Blob
+    return base64ToBlob(uri, mimeType);
   }
 
   const isNativeFileUri = /^(file:|content:|ph:|assets-library:)/i.test(uri);
@@ -115,13 +119,15 @@ export const uriToBlob = async (
         if (lower.endsWith(".webp")) return "image/webp";
         return "application/octet-stream";
       })();
+    // Fetch the data: URI as a blob — goes through RN's native networking and
+    // returns a proper Blob that Firebase Storage can use without throwing.
     return base64ToBlob(base64, mimeType);
   }
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.onload = function () {
-      resolve(xhr.response);
+      resolve(xhr.response as Blob);
     };
     xhr.onerror = function (e) {
       console.error("XHR failed", e);
