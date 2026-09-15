@@ -3,25 +3,27 @@ import { Feather as Icon } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    limit,
-    query,
-    where,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  query,
+  where,
 } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    FlatList,
-    Linking,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  FlatList,
+  Linking,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -34,15 +36,18 @@ import { ActionDialog } from "../components/ui/ActionDialog";
 import { SearchBar } from "../components/ui/SearchBar";
 import { Skeleton } from "../components/ui/Skeleton";
 import { VideoCard } from "../components/ui/VideoCard";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { getThemeAsset } from "../constants/themeAssets";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { subscribeToResourceDeleted } from "../services/resourceDeletion";
 import {
-    getTeacherCommunityStatus,
-    setTeacherCommunityMembership,
+  getTeacherCommunityStatus,
+  setTeacherCommunityMembership,
 } from "../services/teacherCommunity";
 
 type TeacherRecord = {
@@ -1383,13 +1388,21 @@ export default function TeacherProfileScreen() {
   if (loading) {
     return (
       <SafeAreaView
-        style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+        style={[
+          styles.safeArea,
+          {
+            backgroundColor:
+              Platform.OS === "web" ? themeColors.background : accentColor,
+          },
+        ]}
       >
+        <StatusBar backgroundColor={accentColor} />
         <Animated.View
           entering={FadeInUp.duration(420)}
           style={[
             styles.container,
             { maxWidth: contentMaxWidth, paddingHorizontal: horizontalPadding },
+            getScreenContentStyle(horizontalPadding),
           ]}
         >
           <FlatList
@@ -1474,8 +1487,15 @@ export default function TeacherProfileScreen() {
 
   return (
     <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: themeColors.background }]}
+      style={[
+        styles.safeArea,
+        {
+          backgroundColor:
+            Platform.OS === "web" ? themeColors.background : accentColor,
+        },
+      ]}
     >
+      <StatusBar backgroundColor={accentColor} />
       <Animated.View
         entering={FadeInUp.duration(420)}
         style={[

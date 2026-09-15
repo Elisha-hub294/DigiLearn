@@ -2,9 +2,11 @@ import { useRouter } from "expo-router";
 import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -18,7 +20,10 @@ import { PublishButton } from "../../components/profile/PublishButton";
 import { SavedResources } from "../../components/profile/SavedResources";
 import { UserInfoCard } from "../../components/profile/UserInfoCard";
 import { Skeleton as UiSkeleton } from "../../components/ui/Skeleton";
-import { getHorizontalPadding } from "../../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -79,6 +84,7 @@ export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const { user, profile, loading, error, refresh } = useProfile();
   const { newReportCount, pendingApplicationCount } = useAdminReviewSignals();
+  const profileAccent = profile?.accent || themeColors.primaryDark;
   const [refreshing, setRefreshing] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const rejectionComment = profile?.teacherReviewReason?.trim();
@@ -111,15 +117,23 @@ export default function ProfileScreen() {
   const cardWidth = padding === 0 ? "90%" : "100%";
   return (
     <SafeAreaView
-      style={[s.safe, { backgroundColor: themeColors.background }]}
+      style={[
+        s.safe,
+        {
+          backgroundColor:
+            Platform.OS === "web" ? themeColors.background : profileAccent,
+        },
+      ]}
       edges={["top"]}
     >
+      <StatusBar backgroundColor={profileAccent} />
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[
           s.content,
           !loading && !user && s.guestContent,
           { paddingHorizontal: padding },
+          getScreenContentStyle(padding),
         ]}
         refreshControl={
           <RefreshControl
