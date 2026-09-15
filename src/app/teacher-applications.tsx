@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../firebaseConfig";
+import { getScreenContentStyle } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -139,6 +140,7 @@ export default function TeacherApplicationsScreen() {
             maxWidth,
             backgroundColor: themeColors.white,
           },
+          getScreenContentStyle(padding),
         ]}
       >
         <Pressable
@@ -202,6 +204,7 @@ export default function TeacherApplicationsScreen() {
         contentContainerStyle={[
           styles.list,
           { paddingHorizontal: padding, maxWidth },
+          getScreenContentStyle(padding),
         ]}
         ListEmptyComponent={
           <View style={styles.empty}>

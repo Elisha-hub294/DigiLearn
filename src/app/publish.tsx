@@ -12,7 +12,10 @@ import {
   View,
   type ViewStyle,
 } from "react-native";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -103,6 +106,7 @@ export default function PublishScreen() {
         contentContainerStyle={[
           styles.content,
           { paddingHorizontal: horizontalPadding, maxWidth: contentMaxWidth },
+          getScreenContentStyle(horizontalPadding),
         ]}
         showsVerticalScrollIndicator={false}
       >

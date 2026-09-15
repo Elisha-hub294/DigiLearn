@@ -30,7 +30,10 @@ import { getTitleDocId } from "../components/library/add-item/utils";
 import { AdminPublishHeader } from "../components/library/AdminPublishHeader";
 import { FirebaseImage } from "../components/ui/FirebaseImage";
 import { useSubjects } from "../components/ui/SubjectFilter";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { getThemeAsset } from "../constants/themeAssets";
 import { useProfile } from "../contexts/ProfileContext";
@@ -277,6 +280,7 @@ export default function AddTrendingLessonScreen() {
           contentContainerStyle={[
             styles.content,
             { paddingHorizontal: horizontalPadding, maxWidth: contentMaxWidth },
+            getScreenContentStyle(horizontalPadding),
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}

@@ -15,7 +15,10 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { auth, db } from "../../../firebaseConfig";
-import { getHorizontalPadding } from "../../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../../constants/layout";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
   recordBookVisit,
@@ -463,7 +466,13 @@ export function BookPreviewScreen() {
           { alignItems: "center", backgroundColor: themeColors.background },
         ]}
       >
-        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth: contentMaxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[

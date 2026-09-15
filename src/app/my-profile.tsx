@@ -25,7 +25,10 @@ import WebProfilePictureCropper from "../components/profile/WebProfilePictureCro
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { FirebaseImage } from "../components/ui/FirebaseImage";
 import { Skeleton } from "../components/ui/Skeleton";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { getThemeAsset } from "../constants/themeAssets";
 import { useAccountDeletion } from "../contexts/AccountDeletionContext";
@@ -350,7 +353,13 @@ export default function MyProfileScreen() {
         onClose={() => setDeleteDialogVisible(false)}
       />
       <View style={styles.page}>
-        <View style={[styles.contentContainer, { maxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <ScrollView
             contentContainerStyle={[
               styles.container,

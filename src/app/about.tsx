@@ -14,7 +14,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { getThemeAsset } from "../constants/themeAssets";
 import { useTheme } from "../contexts/ThemeContext";
@@ -187,7 +190,13 @@ export default function AboutScreen() {
       edges={["top", "bottom"]}
     >
       <View style={styles.page}>
-        <View style={[styles.contentContainer, { maxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <View
             style={[styles.headerRow, { paddingHorizontal: horizontalPadding }]}
           >

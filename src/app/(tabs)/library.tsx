@@ -3,15 +3,15 @@ import { router } from "expo-router";
 import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    NativeScrollEvent,
-    NativeSyntheticEvent,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,11 +19,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { auth } from "../../../firebaseConfig";
 import { BookCarousel } from "../../components/home/BookCarousel";
 import {
-    FeaturedNoteCard,
-    FeaturedNoteItem,
-    loadFeaturedNotes,
-    loadFeaturedNotesMetadata,
-    TopicalNote,
+  FeaturedNoteCard,
+  FeaturedNoteItem,
+  loadFeaturedNotes,
+  loadFeaturedNotesMetadata,
+  TopicalNote,
 } from "../../components/home/FeaturedNoteCard";
 import { fetchPastPaperTypes } from "../../components/library/add-item/firebaseService";
 import { BookCard } from "../../components/library/BookCard";
@@ -35,24 +35,27 @@ import { Header } from "../../components/ui/Header";
 import { SearchBar } from "../../components/ui/SearchBar";
 import { SectionHeader } from "../../components/ui/SectionHeader";
 import { Skeleton } from "../../components/ui/Skeleton";
-import { getHorizontalPadding } from "../../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
-    PaperItem,
-    PaperSection,
-    useLibraryData,
+  PaperItem,
+  PaperSection,
+  useLibraryData,
 } from "../../hooks/useLibraryData";
 import { recordUserActivity } from "../../services/activityService";
 import { BookRecord, loadBooks } from "../../services/booksService";
 import {
-    interleaveFeedItems,
-    shuffleWithSeed,
+  interleaveFeedItems,
+  shuffleWithSeed,
 } from "../../utils/feedAlgorithm";
 import {
-    matchesUserInterests,
-    shouldFilterByInterests,
+  matchesUserInterests,
+  shouldFilterByInterests,
 } from "../../utils/interestFilter";
 
 type LibraryCategory = {
@@ -355,6 +358,7 @@ export default function LibraryScreen() {
           style={[
             styles.skeletonContent,
             { paddingHorizontal: horizontalPadding, maxWidth: contentMaxWidth },
+            getScreenContentStyle(horizontalPadding),
           ]}
         >
           <Skeleton style={styles.skeletonHeader} />
@@ -392,7 +396,13 @@ export default function LibraryScreen() {
     <SafeAreaView
       style={[styles.safeArea, { backgroundColor: themeColors.background }]}
     >
-      <View style={[styles.page, { maxWidth: contentMaxWidth }]}>
+      <View
+        style={[
+          styles.page,
+          { maxWidth: contentMaxWidth },
+          getScreenContentStyle(horizontalPadding),
+        ]}
+      >
         <ScrollView
           ref={scrollRef}
           style={styles.scrollView}

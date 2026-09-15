@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { auth, db } from "../../../firebaseConfig";
+import { getScreenContentStyle } from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import { PaperRevisionStatus } from "../../services/userProfile";
@@ -214,6 +215,7 @@ export function PaperRevisionDashboard() {
       contentContainerStyle={[
         styles.content,
         { paddingHorizontal: padding, maxWidth },
+        getScreenContentStyle(padding),
       ]}
       showsVerticalScrollIndicator={false}
     >

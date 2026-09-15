@@ -15,7 +15,10 @@ import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { Skeleton } from "../components/ui/Skeleton";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import {
@@ -250,6 +253,7 @@ export default function DownloadsScreen() {
           contentContainerStyle={[
             styles.listContainer,
             { paddingHorizontal: horizontalPadding },
+            getScreenContentStyle(horizontalPadding),
           ]}
           refreshControl={
             <RefreshControl

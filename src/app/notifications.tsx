@@ -20,7 +20,10 @@ import {
 } from "../components/ui/NotificationCard";
 import { NotificationEmptyState } from "../components/ui/NotificationEmptyState";
 import { NotificationSkeleton } from "../components/ui/NotificationSkeleton";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNotifications } from "../hooks/useNotifications";
@@ -394,7 +397,13 @@ export default function NotificationsScreen() {
       <SafeAreaView
         style={[styles.safeArea, { backgroundColor: themeColors.background }]}
       >
-        <View style={[styles.page, { maxWidth }]}>
+        <View
+          style={[
+            styles.page,
+            { maxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <View
             style={[styles.content, { paddingHorizontal: horizontalPadding }]}
           >
@@ -469,7 +478,13 @@ export default function NotificationsScreen() {
           })
         }
       />
-      <View style={[styles.page, { maxWidth }]}>
+      <View
+        style={[
+          styles.page,
+          { maxWidth },
+          getScreenContentStyle(horizontalPadding),
+        ]}
+      >
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[

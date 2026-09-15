@@ -4,18 +4,18 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
 import { auth, db } from "../../firebaseConfig";
@@ -23,14 +23,17 @@ import { NotifyToggle } from "../components/library/add-item/SharedFormControls"
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { Skeleton } from "../components/ui/Skeleton";
 import { SubjectChip } from "../components/ui/SubjectChip";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import {
-    MAX_PROFILE_FIELD_LENGTH,
-    normalizeProfileText,
-    sanitizeProfileText,
-    validateProfileText,
+  MAX_PROFILE_FIELD_LENGTH,
+  normalizeProfileText,
+  sanitizeProfileText,
+  validateProfileText,
 } from "../utils/profileValidation";
 
 type Subject = { id: string; name: string };
@@ -360,7 +363,13 @@ export default function AccountQuickSettingsScreen() {
         style={[styles.safeArea, { backgroundColor: themeColors.background }]}
       >
         <View style={[styles.page, { paddingHorizontal: horizontalPadding }]}>
-          <View style={[styles.authContainer, { maxWidth: contentMaxWidth }]}>
+          <View
+            style={[
+              styles.authContainer,
+              { maxWidth: contentMaxWidth },
+              getScreenContentStyle(horizontalPadding),
+            ]}
+          >
             {renderAuthState()}
           </View>
         </View>
@@ -386,7 +395,13 @@ export default function AccountQuickSettingsScreen() {
           showsVerticalScrollIndicator={false}
           style={styles.scroll}
         >
-          <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
+          <View
+            style={[
+              styles.container,
+              { maxWidth: contentMaxWidth },
+              getScreenContentStyle(horizontalPadding),
+            ]}
+          >
             <View style={styles.headerRow}>
               <Pressable
                 accessibilityRole="button"

@@ -25,7 +25,10 @@ import {
 import { auth } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { Skeleton } from "../components/ui/Skeleton";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import {
@@ -298,7 +301,13 @@ export default function AccountTypeScreen() {
             },
           ]}
         >
-          <View style={[styles.authState, { maxWidth: contentMaxWidth }]}>
+          <View
+            style={[
+              styles.authState,
+              { maxWidth: contentMaxWidth },
+              getScreenContentStyle(horizontalPadding),
+            ]}
+          >
             <Text style={[styles.title, { color: themeColors.text }]}>
               You are not signed in
             </Text>
@@ -383,7 +392,13 @@ export default function AccountTypeScreen() {
         <View
           style={[styles.page, { backgroundColor: themeColors.background }]}
         >
-          <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
+          <View
+            style={[
+              styles.container,
+              { maxWidth: contentMaxWidth },
+              getScreenContentStyle(horizontalPadding),
+            ]}
+          >
             <Text style={[styles.title, { color: themeColors.text }]}>
               {openedFromSettings ? "Choose your account type" : "Account type"}
             </Text>

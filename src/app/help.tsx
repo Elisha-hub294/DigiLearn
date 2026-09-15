@@ -14,7 +14,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ActionDialog } from "../components/ui/ActionDialog";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -199,7 +202,13 @@ export default function HelpScreen() {
       edges={["top", "bottom"]}
     >
       <View style={styles.page}>
-        <View style={[styles.contentContainer, { maxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <View
             style={[styles.headerRow, { paddingHorizontal: horizontalPadding }]}
           >

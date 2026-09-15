@@ -9,22 +9,25 @@ import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getHorizontalPadding } from "../../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { loadTrendingLessons } from "../../services/trendingLessonsService";
 import {
-    alternateByProperty,
-    shuffleWithSeed,
+  alternateByProperty,
+  shuffleWithSeed,
 } from "../../utils/feedAlgorithm";
 
 type FirestoreLesson = {
@@ -304,7 +307,11 @@ export default function VideosScreen() {
     >
       <Animated.View
         entering={FadeIn.duration(380)}
-        style={[styles.container, { maxWidth: contentMaxWidth }]}
+        style={[
+          styles.container,
+          { maxWidth: contentMaxWidth },
+          getScreenContentStyle(horizontalPadding),
+        ]}
       >
         {showEmptyState || (isOffline && lessons.length === 0) ? (
           <ScrollView

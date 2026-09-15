@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { db } from "../../firebaseConfig";
 import { FeaturedNoteCard } from "../components/home/FeaturedNoteCard";
+import { getScreenContentStyle } from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -112,6 +113,7 @@ export default function HiddenItemsScreen() {
   const containerStyle = [
     styles.container,
     { paddingHorizontal: padding, maxWidth },
+    getScreenContentStyle(padding),
   ];
 
   if (!user) {

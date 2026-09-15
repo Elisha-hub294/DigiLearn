@@ -23,7 +23,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { auth } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { getThemeAsset } from "../constants/themeAssets";
 import { useTheme } from "../contexts/ThemeContext";
 import {
@@ -272,7 +275,13 @@ export default function LessonPlayerScreen() {
         style={themeColors.background === colors.background ? "dark" : "light"}
       />
       <View style={styles.page}>
-        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth: contentMaxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           {/* Navigation Header */}
           <View
             style={[

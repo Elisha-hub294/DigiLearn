@@ -29,6 +29,10 @@ import { PromptChip } from "../components/assistant/PromptChip";
 import { TypingIndicator } from "../components/assistant/TypingIndicator";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { Skeleton } from "../components/ui/Skeleton";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { getThemeAsset } from "../constants/themeAssets";
 import { useProfile } from "../contexts/ProfileContext";
@@ -327,6 +331,7 @@ export default function AssistantScreen() {
           style={[
             styles.content,
             contentMaxWidth ? { maxWidth: contentMaxWidth } : null,
+            getScreenContentStyle(getHorizontalPadding(screenWidth)),
           ]}
         >
           <AssistantHeader

@@ -21,7 +21,10 @@ import { AdminPublishHeader } from "../components/library/AdminPublishHeader";
 import { PublishAccessGate } from "../components/library/PublishAccessGate";
 import { getTitleDocId } from "../components/library/add-item/utils";
 import { useSubjects } from "../components/ui/SubjectFilter";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -190,7 +193,13 @@ export default function StartLiveSessionScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
+        <View
+          style={[
+            styles.container,
+            { maxWidth: contentMaxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <AdminPublishHeader
             title="Start Live Session"
             onBack={() => router.back()}
@@ -324,7 +333,10 @@ export default function StartLiveSessionScreen() {
                   style={styles.pasteButton}
                 >
                   {pasteLoading ? (
-                    <ActivityIndicator size="small" color={themeColors.primary} />
+                    <ActivityIndicator
+                      size="small"
+                      color={themeColors.primary}
+                    />
                   ) : (
                     <>
                       <Icon
@@ -427,10 +439,7 @@ export default function StartLiveSessionScreen() {
                         color={colors.danger}
                       />
                       <Text
-                        style={[
-                          styles.invalidText,
-                          { color: colors.danger },
-                        ]}
+                        style={[styles.invalidText, { color: colors.danger }]}
                       >
                         {validation.error}
                       </Text>
@@ -509,19 +518,15 @@ export default function StartLiveSessionScreen() {
                   </View>
                 ) : (
                   <View style={styles.coverPlaceholder}>
-                    <Icon
-                      name="image"
-                      size={24}
-                      color={themeColors.subtitle}
-                    />
+                    <Icon name="image" size={24} color={themeColors.subtitle} />
                     <Text
                       style={[
                         styles.coverPlaceholderText,
                         { color: themeColors.subtitle },
                       ]}
                     >
-                      Tap to choose a custom cover image, or use the default live
-                      theme
+                      Tap to choose a custom cover image, or use the default
+                      live theme
                     </Text>
                   </View>
                 )}

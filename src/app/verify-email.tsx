@@ -3,25 +3,28 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { reload, signOut } from "firebase/auth";
 import { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../firebaseConfig";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { sendEmailLink } from "../services/emailLinkAuth";
 import {
-    getUserOnboardingState,
-    initializeUserProfile,
+  getUserOnboardingState,
+  initializeUserProfile,
 } from "../services/userProfile";
 
 function getErrorMessage(error: unknown) {
@@ -136,7 +139,13 @@ export default function VerifyEmailScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
+        <View
+          style={[
+            styles.container,
+            { maxWidth: contentMaxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <View style={styles.iconCircle}>
             <Feather name="mail" size={30} color={themeColors.primary} />
           </View>

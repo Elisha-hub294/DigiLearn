@@ -17,7 +17,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -70,7 +73,13 @@ export default function TermsAndPoliciesScreen() {
       edges={["top", "bottom"]}
     >
       <View style={styles.page}>
-        <View style={[styles.contentContainer, { maxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           {/* Header */}
           <View
             style={[styles.headerRow, { paddingHorizontal: horizontalPadding }]}
@@ -408,9 +417,9 @@ function PrivacyPolicyContent({
         themeColors={themeColors}
       >
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • OS platform is designed for primary, secondary, and advanced learners.
-          We do not display behavioral advertising, tracking cookies, or sell
-          student data to third parties.
+          • OS platform is designed for primary, secondary, and advanced
+          learners. We do not display behavioral advertising, tracking cookies,
+          or sell student data to third parties.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • All communication between the app and our database is encrypted in
@@ -450,8 +459,8 @@ function TermsOfServiceContent({
     <View style={styles.contentWrapper}>
       <Text style={[styles.introText, { color: themeColors.text }]}>
         These Terms of Service (&quot;Terms&quot;) govern your access to and use
-        of OS platform. By creating an account or accessing learning materials on
-        the platform, you agree to be bound by these Terms.
+        of OS platform. By creating an account or accessing learning materials
+        on the platform, you agree to be bound by these Terms.
       </Text>
 
       <Section
@@ -500,8 +509,8 @@ function TermsOfServiceContent({
         themeColors={themeColors}
       >
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
-          • OS platform, including its logo, interface, branding, algorithms, and
-          software, is the exclusive intellectual property of OS platform.
+          • OS platform, including its logo, interface, branding, algorithms,
+          and software, is the exclusive intellectual property of OS platform.
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.subtitle }]}>
           • Authors and creators retain copyright in their original educational

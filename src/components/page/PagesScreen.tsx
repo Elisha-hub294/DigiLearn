@@ -27,7 +27,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../../../firebaseConfig";
-import { getHorizontalPadding } from "../../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -654,7 +657,13 @@ export default function PagesScreen() {
         entering={FadeInUp.duration(420)}
         style={[styles.page, { backgroundColor: themeColors.background }]}
       >
-        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth: contentMaxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <View
             style={[styles.headerRow, { paddingHorizontal: horizontalPadding }]}
           >

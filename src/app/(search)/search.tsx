@@ -25,7 +25,10 @@ import { SearchResultVideoCard } from "../../components/search/SearchResultVideo
 import { SearchSkeleton } from "../../components/search/SearchSkeleton";
 import { ActionDialog } from "../../components/ui/ActionDialog";
 import { SearchBar } from "../../components/ui/SearchBar";
-import { getHorizontalPadding } from "../../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../../constants/layout";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
   SearchCategory,
@@ -297,6 +300,7 @@ export default function SearchScreen() {
             maxWidth: contentMaxWidth,
             paddingHorizontal: horizontalPadding,
           },
+          getScreenContentStyle(horizontalPadding),
         ]}
       >
         {/* Reusable Search Bar input component with back arrow */}

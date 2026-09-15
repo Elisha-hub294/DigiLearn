@@ -21,7 +21,10 @@ import { TopicalNote } from "../components/page/pageTypes";
 import { DownloadedResources } from "../components/profile/DownloadedResources";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { Skeleton } from "../components/ui/Skeleton";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { PaperItem, useLibraryData } from "../hooks/useLibraryData";
@@ -298,7 +301,13 @@ export default function SeeAllScreen() {
           { backgroundColor: themeColors.lightBackground },
         ]}
       >
-        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth: contentMaxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <View
             style={[
               styles.header,

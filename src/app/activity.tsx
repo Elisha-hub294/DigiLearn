@@ -13,7 +13,10 @@ import {
 } from "react-native";
 import { ActivityCard } from "../components/ui/ActivityCard";
 import { ActivitySkeleton } from "../components/ui/ActivitySkeleton";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -240,7 +243,13 @@ export default function ActivityScreen() {
       style={[styles.safe, { backgroundColor: themeColors.background }]}
     >
       <View style={styles.page}>
-        <View style={[styles.contentContainer, { maxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           {/* Header */}
           <View
             style={[styles.headerRow, { paddingHorizontal: horizontalPadding }]}

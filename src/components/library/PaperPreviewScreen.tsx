@@ -2,39 +2,42 @@ import { Feather, Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    limit,
-    query,
-    where,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  query,
+  where,
 } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import {
-    FlatList,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { auth, db } from "../../../firebaseConfig";
-import { getHorizontalPadding } from "../../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../../constants/layout";
 import { colors, radius, spacing } from "../../constants/theme";
 import { useTheme } from "../../contexts/ThemeContext";
 import { recordUserActivity } from "../../services/activityService";
 import { readThroughFirestoreCache } from "../../services/firestoreReadCache";
 import {
-    getOpenedResourceCache,
-    saveOpenedResourceCache,
+  getOpenedResourceCache,
+  saveOpenedResourceCache,
 } from "../../services/openedResourceCache";
 import { shareResource } from "../../services/shareLinks";
 import {
-    getSavedItemsProfile,
-    toggleSavedItem,
+  getSavedItemsProfile,
+  toggleSavedItem,
 } from "../../services/userProfile";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
@@ -487,7 +490,13 @@ export function PaperPreviewScreen() {
           { alignItems: "center", backgroundColor: themeColors.background },
         ]}
       >
-        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth: contentMaxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <ScrollView
             style={[styles.screen, { backgroundColor: themeColors.background }]}
             contentContainerStyle={[

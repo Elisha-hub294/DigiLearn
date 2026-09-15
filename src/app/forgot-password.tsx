@@ -17,7 +17,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { auth } from "../../firebaseConfig";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 
@@ -115,7 +118,13 @@ export default function ForgotPasswordScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
+          <View
+            style={[
+              styles.container,
+              { maxWidth: contentMaxWidth },
+              getScreenContentStyle(horizontalPadding),
+            ]}
+          >
             <View style={styles.headerWithBack}>
               <Pressable
                 onPress={handleBack}
@@ -131,8 +140,8 @@ export default function ForgotPasswordScreen() {
             </View>
 
             <Text style={[styles.subtitle, { color: themeColors.subtitle }]}>
-              Enter the email address associated with your OS platform account and
-              we&apos;ll send you a password reset link.
+              Enter the email address associated with your OS platform account
+              and we&apos;ll send you a password reset link.
             </Text>
 
             <View style={styles.form}>

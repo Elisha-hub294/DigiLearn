@@ -4,15 +4,15 @@ import { useNavigation, useRoute } from "expo-router/react-navigation";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-    NativeScrollEvent,
-    NativeSyntheticEvent,
-    Platform,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    useWindowDimensions,
-    View,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,19 +22,19 @@ import { BookCarousel } from "../../components/home/BookCarousel";
 import { ContinueLearningShelf } from "../../components/home/ContinueLearningShelf";
 import { CoursesCarousel } from "../../components/home/CoursesCarousel";
 import {
-    FeaturedNoteItem,
-    loadFeaturedNotes,
-    loadFeaturedNotesMetadata,
-    TopicalNote,
+  FeaturedNoteItem,
+  loadFeaturedNotes,
+  loadFeaturedNotesMetadata,
+  TopicalNote,
 } from "../../components/home/FeaturedNoteCard";
 import { FloatingAssistantButton } from "../../components/home/FloatingAssistantButton";
 import { PublicHome } from "../../components/home/PublicHome";
 import { TeacherFollowCarousel } from "../../components/home/TeacherFollowCarousel";
 import {
-    loadTeacherMetadata,
-    loadTeacherPosts,
-    TeacherPost,
-    TeacherPostItem,
+  loadTeacherMetadata,
+  loadTeacherPosts,
+  TeacherPost,
+  TeacherPostItem,
 } from "../../components/home/TeacherPostCard";
 import { TopicalNotesSlider } from "../../components/home/TopicalNotesSlider";
 import { BookCard } from "../../components/library/BookCard";
@@ -46,7 +46,10 @@ import { SectionHeader } from "../../components/ui/SectionHeader";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { VideoLesson } from "../../components/ui/TrendingVideoCard";
 import { VideoCard } from "../../components/ui/VideoCard";
-import { getHorizontalPadding } from "../../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../../constants/layout";
 import { colors, spacing } from "../../constants/theme";
 import { useProfile } from "../../contexts/ProfileContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -59,8 +62,8 @@ import { loadTrendingLessons } from "../../services/trendingLessonsService";
 import { getUserOnboardingState } from "../../services/userProfile";
 import { interleaveFeedItems } from "../../utils/feedAlgorithm";
 import {
-    matchesUserInterests,
-    shouldFilterByInterests,
+  matchesUserInterests,
+  shouldFilterByInterests,
 } from "../../utils/interestFilter";
 import LoadingScreen from "../loading";
 
@@ -522,7 +525,13 @@ export default function HomeScreen() {
       style={[styles.safeArea, { backgroundColor: themeColors.background }]}
     >
       <Animated.View entering={FadeInUp.duration(480)} style={styles.page}>
-        <View style={[styles.contentContainer, { maxWidth: contentMaxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth: contentMaxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <ScrollView
             ref={scrollRef}
             style={styles.container}

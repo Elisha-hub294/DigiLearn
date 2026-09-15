@@ -19,7 +19,10 @@ import { NotifyToggle } from "../components/library/add-item/SharedFormControls"
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { SettingsRow } from "../components/ui/SettingsRow";
 import { SettingsSection } from "../components/ui/SettingsSection";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -189,7 +192,13 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.page}>
-        <View style={[styles.contentContainer, { maxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <ScrollView
             contentContainerStyle={[
               styles.container,

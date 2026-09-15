@@ -19,7 +19,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { auth } from "../../firebaseConfig";
 import { ActionDialog } from "../components/ui/ActionDialog";
 import { GoogleIcon } from "../components/ui/GoogleIcon";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, radius, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { sendEmailLink } from "../services/emailLinkAuth";
@@ -263,7 +266,13 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
+          <View
+            style={[
+              styles.container,
+              { maxWidth: contentMaxWidth },
+              getScreenContentStyle(horizontalPadding),
+            ]}
+          >
             <View style={styles.headerWithBack}>
               <Pressable
                 onPress={handleBack}

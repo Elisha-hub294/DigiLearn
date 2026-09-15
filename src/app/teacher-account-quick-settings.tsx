@@ -26,7 +26,10 @@ import { NotifyToggle } from "../components/library/add-item/SharedFormControls"
 import { FirebaseImage } from "../components/ui/FirebaseImage";
 import { Skeleton } from "../components/ui/Skeleton";
 import { SubjectChip } from "../components/ui/SubjectChip";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useTheme } from "../contexts/ThemeContext";
 import { loadSubjects } from "../services/subjectsService";
@@ -514,14 +517,20 @@ export default function TeacherAccountQuickSettingsScreen() {
         style={[styles.safeArea, { backgroundColor: themeColors.background }]}
       >
         <View style={[styles.page, { paddingHorizontal: horizontalPadding }]}>
-          <View style={[styles.authContainer, { maxWidth: contentMaxWidth }]}>
+          <View
+            style={[
+              styles.authContainer,
+              { maxWidth: contentMaxWidth },
+              getScreenContentStyle(horizontalPadding),
+            ]}
+          >
             <View style={styles.authState}>
               <Text style={[styles.authTitle, { color: themeColors.text }]}>
                 You&apos;re not signed in
               </Text>
               <Text style={[styles.authText, { color: themeColors.subtitle }]}>
-                Log in or create an account to finish setting up your OS platform
-                teacher profile.
+                Log in or create an account to finish setting up your OS
+                platform teacher profile.
               </Text>
 
               <View style={styles.authActions}>
@@ -598,7 +607,13 @@ export default function TeacherAccountQuickSettingsScreen() {
           showsVerticalScrollIndicator={false}
           style={styles.scroll}
         >
-          <View style={[styles.container, { maxWidth: contentMaxWidth }]}>
+          <View
+            style={[
+              styles.container,
+              { maxWidth: contentMaxWidth },
+              getScreenContentStyle(horizontalPadding),
+            ]}
+          >
             <View style={styles.headerRow}>
               <Pressable
                 accessibilityRole="button"

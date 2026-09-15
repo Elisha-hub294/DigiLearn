@@ -16,7 +16,10 @@ import {
 import { db } from "../../firebaseConfig";
 import { NotifyToggle } from "../components/library/add-item/SharedFormControls";
 import { Skeleton } from "../components/ui/Skeleton";
-import { getHorizontalPadding } from "../constants/layout";
+import {
+  getHorizontalPadding,
+  getScreenContentStyle,
+} from "../constants/layout";
 import { colors, spacing } from "../constants/theme";
 import { useProfile } from "../contexts/ProfileContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -226,7 +229,13 @@ export default function PreferencesScreen() {
       style={[styles.safe, { backgroundColor: themeColors.background }]}
     >
       <View style={styles.page}>
-        <View style={[styles.contentContainer, { maxWidth }]}>
+        <View
+          style={[
+            styles.contentContainer,
+            { maxWidth },
+            getScreenContentStyle(horizontalPadding),
+          ]}
+        >
           <ScrollView
             contentContainerStyle={[
               styles.container,
