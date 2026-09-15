@@ -1409,6 +1409,7 @@ export function AddItemModal({
               ? [
                   styles.screenCard,
                   {
+                    width: width < 600 ? "95%" : "100%",
                     maxWidth: Math.max(
                       0,
                       width - getHorizontalPadding(width) * 2,

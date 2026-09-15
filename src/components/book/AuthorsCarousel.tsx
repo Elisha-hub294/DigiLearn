@@ -2,14 +2,16 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTheme } from "../../contexts/ThemeContext";
 import { AuthorCard } from "./AuthorCard";
 
-type AuthorItem = string | { name: string; avatar?: string };
+type AuthorItem =
+  | string
+  | { name: string; avatar?: string; teacherId?: string };
 
 export function AuthorsCarousel({
   authors,
   onAuthorPress,
 }: {
   authors: AuthorItem[];
-  onAuthorPress?: (name: string) => void;
+  onAuthorPress?: (name: string, teacherId?: string) => void;
 }) {
   const { colors } = useTheme();
   const visibleAuthors = authors.length ? authors : ["Unknown author"];
@@ -25,6 +27,8 @@ export function AuthorsCarousel({
         {visibleAuthors.map((item, index) => {
           const name = typeof item === "string" ? item : item.name;
           const avatar = typeof item === "string" ? undefined : item.avatar;
+          const teacherId =
+            typeof item === "string" ? undefined : item.teacherId;
 
           return (
             <AuthorCard
@@ -32,7 +36,9 @@ export function AuthorsCarousel({
               name={name}
               avatar={avatar}
               index={index}
-              onPress={onAuthorPress ? () => onAuthorPress(name) : undefined}
+              onPress={
+                onAuthorPress ? () => onAuthorPress(name, teacherId) : undefined
+              }
             />
           );
         })}

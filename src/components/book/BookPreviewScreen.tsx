@@ -34,6 +34,7 @@ import {
   getSavedItemsProfile,
   toggleSavedItem,
 } from "../../services/userProfile";
+import { buildTeacherProfileRouteParams } from "../../utils/bookAuthorNavigation";
 import { feedbackMessages, showNativeToast } from "../../utils/nativeToast";
 import { ActionDialog } from "../ui/ActionDialog";
 import { MissingResourceDialog } from "../ui/MissingResourceDialog";
@@ -128,6 +129,9 @@ export function BookPreviewScreen() {
   const [teacherAvatars, setTeacherAvatars] = useState<Record<string, string>>(
     {},
   );
+  const [teacherIdsByName, setTeacherIdsByName] = useState<
+    Record<string, string>
+  >({});
   const [teacherPhones, setTeacherPhones] = useState<Record<string, string>>(
     {},
   );
@@ -203,8 +207,9 @@ export function BookPreviewScreen() {
         });
         setDefaultUserAvatar(defaultAvatar);
 
-        // Map teacher names (normalized lowercase) to their avatar URLs and phone numbers
+        // Map teacher names (normalized lowercase) to their avatar URLs, IDs, and phone numbers
         const avatarsMap: Record<string, string> = {};
+        const idsMap: Record<string, string> = {};
         const phonesMap: Record<string, string> = {};
         teachersSnapshot.docs.forEach((docSnap) => {
           const data = docSnap.data();
@@ -213,12 +218,16 @@ export function BookPreviewScreen() {
             if (typeof data.avatar === "string") {
               avatarsMap[key] = data.avatar.trim();
             }
+            if (typeof docSnap.id === "string" && docSnap.id.trim()) {
+              idsMap[key] = docSnap.id.trim();
+            }
             if (typeof data.phone === "string" && data.phone.trim()) {
               phonesMap[key] = data.phone.trim();
             }
           }
         });
         setTeacherAvatars(avatarsMap);
+        setTeacherIdsByName(idsMap);
         setTeacherPhones(phonesMap);
 
         setAllBooks(
@@ -271,8 +280,9 @@ export function BookPreviewScreen() {
         teacherAvatars,
         defaultUserAvatar,
       ),
+      teacherId: teacherIdsByName[normalizeKey(authorName)],
     }));
-  }, [book, teacherAvatars, defaultUserAvatar]);
+  }, [book, teacherAvatars, teacherIdsByName, defaultUserAvatar]);
 
   const similar = useMemo(
     () =>
@@ -495,12 +505,15 @@ export function BookPreviewScreen() {
               <BookOverview book={book} />
               <AuthorsCarousel
                 authors={authorsWithAvatars}
-                onAuthorPress={(name) =>
+                onAuthorPress={(name, teacherId) => {
                   router.push({
                     pathname: "/teacher-profile",
-                    params: { name },
-                  } as any)
-                }
+                    params: buildTeacherProfileRouteParams(
+                      name,
+                      teacherIdsByName,
+                    ),
+                  } as any);
+                }}
               />
               <SimilarBooks
                 books={similar}
