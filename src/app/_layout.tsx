@@ -150,6 +150,7 @@ function AppShell() {
           screenOptions={{
             headerShown: false,
             animation: "slide_from_right",
+            statusBarStyle: isDark ? "light" : "dark",
           }}
         >
           <Stack.Screen name="(tabs)" />

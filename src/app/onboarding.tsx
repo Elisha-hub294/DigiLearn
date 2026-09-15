@@ -179,11 +179,7 @@ export default function OnboardingScreen() {
 
   return (
     <View style={styles.root}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
-      />
+      <StatusBar barStyle="light-content" backgroundColor="#05091A" />
 
       {/* Gradient background layers */}
       <View style={styles.bgBase} />

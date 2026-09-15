@@ -146,7 +146,7 @@ export function HeroBookCarousel({ data }: HeroBookCarouselProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
   },
   carouselContent: {
     paddingHorizontal: spacing.sm,
