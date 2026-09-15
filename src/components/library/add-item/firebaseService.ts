@@ -7,7 +7,9 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
-import { db, storage } from "../../../../firebaseConfig";
+import { File, UploadType } from "expo-file-system";
+import { Platform } from "react-native";
+import { auth, db, storage } from "../../../../firebaseConfig";
 import { invalidateFirestoreReadCache } from "../../../services/firestoreReadCache";
 import {
   appendNotificationToAllUsers,
@@ -25,6 +27,95 @@ export interface UploadProgressCallback {
   (label: string, progress: number): void;
 }
 
+type NativeUploadFile = File;
+
+function isNativeUploadFile(value: unknown): value is NativeUploadFile {
+  return Platform.OS !== "web" && value instanceof File;
+}
+
+async function uploadNativeFileToStorage(
+  path: string,
+  file: NativeUploadFile,
+  label: string,
+  onProgress: UploadProgressCallback,
+  contentType: string,
+): Promise<string> {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Sign in again before uploading a document.");
+  }
+
+  if (!file.exists || !file.size) {
+    throw new Error("The selected file is unavailable or empty. Please choose it again.");
+  }
+
+  const bucket = storage.app.options.storageBucket;
+  if (!bucket) {
+    throw new Error("Firebase Storage is not configured for this app.");
+  }
+
+  const idToken = await user.getIdToken();
+  const uploadStartUrl =
+    `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o` +
+    `?name=${encodeURIComponent(path)}`;
+  const authHeader = `Firebase ${idToken}`;
+
+  // Start a Firebase resumable session with a small JSON request. The PDF is
+  // never read into JavaScript; Expo's native networking uploads it from disk.
+  const startResponse = await fetch(uploadStartUrl, {
+    method: "POST",
+    headers: {
+      Authorization: authHeader,
+      "Content-Type": "application/json; charset=utf-8",
+      "X-Goog-Upload-Protocol": "resumable",
+      "X-Goog-Upload-Command": "start",
+      "X-Goog-Upload-Header-Content-Length": String(file.size),
+      "X-Goog-Upload-Header-Content-Type": contentType,
+    },
+    body: JSON.stringify({
+      fullPath: path,
+      size: file.size,
+      contentType,
+    }),
+  });
+
+  const sessionUrl = startResponse.headers.get("x-goog-upload-url");
+  const sessionStatus = startResponse.headers.get("x-goog-upload-status");
+  if (!startResponse.ok || !sessionUrl || sessionStatus !== "active") {
+    const responseText = await startResponse.text().catch(() => "");
+    throw new Error(
+      `Could not start the document upload (${startResponse.status}). ${responseText}`,
+    );
+  }
+
+  const result = await file.upload(sessionUrl, {
+    httpMethod: "POST",
+    uploadType: UploadType.BINARY_CONTENT,
+    mimeType: contentType,
+    sessionType: "foreground",
+    headers: {
+      Authorization: authHeader,
+      "Content-Type": contentType,
+      "X-Goog-Upload-Command": "upload, finalize",
+      "X-Goog-Upload-Offset": "0",
+    },
+    onProgress: ({ bytesSent, totalBytes }) => {
+      const total = totalBytes > 0 ? totalBytes : file.size;
+      const progress = total > 0 ? Math.round((bytesSent / total) * 100) : 0;
+      onProgress(label, Math.max(0, Math.min(progress, 100)));
+    },
+  });
+
+  if (result.status < 200 || result.status >= 300) {
+    throw new Error(
+      `Document upload failed (${result.status}). ${result.body || "No response body."}`,
+    );
+  }
+
+  onProgress(label, 100);
+  return getDownloadURL(ref(storage, path));
+}
+
 /**
  * Uploads an asset to Firebase Storage with progress tracking.
  * Native callers pass Expo File objects (Blob-compatible) directly, avoiding
@@ -37,7 +128,6 @@ export const uploadAssetToStorage = async (
   onProgress: UploadProgressCallback,
   metadata?: { contentType?: string },
 ): Promise<string> => {
-  const storageRef = ref(storage, path);
   const effectiveMetadata = {
     ...metadata,
     contentType:
@@ -45,6 +135,18 @@ export const uploadAssetToStorage = async (
       (blob as any)?.type ||
       "application/octet-stream",
   };
+
+  if (isNativeUploadFile(blob)) {
+    return uploadNativeFileToStorage(
+      path,
+      blob,
+      label,
+      onProgress,
+      effectiveMetadata.contentType,
+    );
+  }
+
+  const storageRef = ref(storage, path);
 
   return new Promise<string>((resolve, reject) => {
     const task = uploadBytesResumable(storageRef, blob, effectiveMetadata);
