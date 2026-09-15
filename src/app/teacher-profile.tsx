@@ -631,7 +631,7 @@ export default function TeacherProfileScreen() {
         }
       },
     });
-  }, [teacher]);
+  }, [setContactDialog, teacher]);
 
   const openYoutubePrompt = useCallback(() => {
     const youtube = teacher?.youtube;
@@ -645,7 +645,7 @@ export default function TeacherProfileScreen() {
       secondaryText: "Cancel",
       onPrimary: () => Linking.openURL(youtube),
     });
-  }, [teacher]);
+  }, [setContactDialog, teacher]);
 
   const openEmailPrompt = useCallback(() => {
     if (!teacher?.email) return;
@@ -659,11 +659,11 @@ export default function TeacherProfileScreen() {
         Linking.openURL(`mailto:${teacher.email}?subject=${subject}`);
       },
     });
-  }, [teacher]);
+  }, [setContactDialog, teacher]);
 
   const openCommunityDialog = useCallback(() => {
     setCommunityDialogVisible(true);
-  }, []);
+  }, [setCommunityDialogVisible]);
 
   const toggleCommunityMembership = useCallback(async () => {
     if (!teacher) return;
@@ -690,7 +690,14 @@ export default function TeacherProfileScreen() {
     } finally {
       setCommunityActionPending(false);
     }
-  }, [isCommunityMember, router, teacher, user]);
+  }, [
+    isCommunityMember,
+    router,
+    setCommunityActionPending,
+    setContactDialog,
+    teacher,
+    user,
+  ]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -1217,6 +1224,8 @@ export default function TeacherProfileScreen() {
     ),
     [
       accentColor,
+      accentDark,
+      accentMid,
       activeTab,
       failedAvatarUri,
       fallbackAvatar,
@@ -1244,6 +1253,7 @@ export default function TeacherProfileScreen() {
       hasEmail,
       hasPhone,
       hasYoutube,
+      horizontalPadding,
       themeColors.border,
       themeColors.inactive,
       themeColors.surfaceMuted,
