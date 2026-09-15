@@ -2,23 +2,23 @@ import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  AppState,
-  Pressable,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
+    AppState,
+    Pressable,
+    StyleSheet,
+    Text,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import Animated, {
-  Easing,
-  FadeIn,
-  FadeOut,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
+    Easing,
+    FadeIn,
+    FadeOut,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -26,15 +26,15 @@ import { colors, radius, spacing } from "../../constants/theme";
 import { getThemeAsset } from "../../constants/themeAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
-  getAssistantContent,
-  getCachedAssistantMessage,
-  isAssistantEnabled,
-  setCachedAssistantMessage,
+    getAssistantContent,
+    getCachedAssistantMessage,
+    isAssistantEnabled,
+    setCachedAssistantMessage,
 } from "../../services/aiAssistantService";
 import {
-  DEFAULT_ASSISTANT_FALLBACK_MESSAGE,
-  normalizeAssistantMessage,
-  sanitizeAssistantMessages,
+    DEFAULT_ASSISTANT_FALLBACK_MESSAGE,
+    normalizeAssistantMessage,
+    sanitizeAssistantMessages,
 } from "../../utils/assistantMessageUtils";
 
 const TYPING_INTERVAL_MS = 32;
@@ -297,24 +297,26 @@ export function FloatingAssistantButton() {
           animatedContainerStyle,
         ]}
       >
-        <Animated.View
-          style={[
-            styles.bubbleWrapper,
-            { pointerEvents: "none" },
-            animatedBubbleStyle,
-          ]}
-        >
-          <View
+        {activeMessage.length > 0 && (
+          <Animated.View
             style={[
-              styles.messageBubble,
-              { pointerEvents: "none", maxWidth: bubbleWidth },
+              styles.bubbleWrapper,
+              { pointerEvents: "none" },
+              animatedBubbleStyle,
             ]}
           >
-            <Text numberOfLines={2} style={styles.messageText}>
-              {activeMessage}
-            </Text>
-          </View>
-        </Animated.View>
+            <View
+              style={[
+                styles.messageBubble,
+                { pointerEvents: "none", maxWidth: bubbleWidth },
+              ]}
+            >
+              <Text numberOfLines={2} style={styles.messageText}>
+                {activeMessage}
+              </Text>
+            </View>
+          </Animated.View>
+        )}
 
         <Pressable
           accessibilityRole="button"
