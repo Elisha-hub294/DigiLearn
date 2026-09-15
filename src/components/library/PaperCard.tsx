@@ -1,5 +1,6 @@
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   DimensionValue,
   Pressable,
@@ -53,6 +54,7 @@ export function PaperCard({
 }: PaperCardProps) {
   const router = useRouter();
   const { colors: themeColors } = useTheme();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const normalizedPaperCode = paperCode?.trim();
   const normalizedPaperNumber =
@@ -109,6 +111,7 @@ export function PaperCard({
 
   return (
     <View
+      pointerEvents={isDeleting ? "none" : "auto"}
       style={[
         styles.card,
         { backgroundColor: themeColors.white, borderColor: themeColors.border },
@@ -180,6 +183,7 @@ export function PaperCard({
           id={id ?? title}
           title={title}
           data={{ owner, cover: image, document }}
+          onDeleting={() => setIsDeleting(true)}
           onDeleted={onDeleted}
           light
         />

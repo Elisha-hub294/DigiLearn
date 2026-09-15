@@ -14,6 +14,7 @@ export function ResourceDeleteMenu({
   id,
   title,
   data,
+  onDeleting,
   onDeleted,
   light = false,
 }: {
@@ -21,6 +22,7 @@ export function ResourceDeleteMenu({
   id: string;
   title: string;
   data: Record<string, unknown>;
+  onDeleting?: () => void;
   onDeleted?: () => void;
   light?: boolean;
 }) {
@@ -51,6 +53,7 @@ export function ResourceDeleteMenu({
   const confirmDelete = async () => {
     setConfirmVisible(false);
     setBusy(true);
+    onDeleting?.();
     try {
       await deleteResource(collection, id);
       onDeleted?.();

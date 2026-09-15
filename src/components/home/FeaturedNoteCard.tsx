@@ -433,6 +433,7 @@ export const FeaturedNoteItem = ({
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
   const [dialogState, setDialogState] = useState<{
     title: string;
@@ -585,6 +586,7 @@ export const FeaturedNoteItem = ({
   );
 
   const handleDelete = async () => {
+    setIsDeleting(true);
     try {
       await deleteResource("pages", note.id);
     } catch (error) {
@@ -645,6 +647,7 @@ export const FeaturedNoteItem = ({
     <>
       <Animated.View
         entering={FadeInUp.duration(420)}
+        pointerEvents={isDeleting ? "none" : "auto"}
         style={[styles.itemWrapper, isWide && styles.itemWrapperWide]}
       >
         <View

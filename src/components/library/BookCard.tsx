@@ -48,6 +48,7 @@ export function BookCard({
   const fallbackCover = getThemeAsset("bookCoverDefault", isDark);
   const [cardWidth, setCardWidth] = useState(0);
   const [coverRatio, setCoverRatio] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleCardLayout = (event: LayoutChangeEvent) => {
     const nextWidth = event.nativeEvent.layout.width;
@@ -72,6 +73,7 @@ export function BookCard({
   return (
     <View
       onLayout={handleCardLayout}
+      pointerEvents={isDeleting ? "none" : "auto"}
       style={[
         styles.card,
         {
@@ -160,6 +162,7 @@ export function BookCard({
           id={item.id}
           title={item.title}
           data={{ owner: item.owner, cover: item.image }}
+          onDeleting={() => setIsDeleting(true)}
           light
         />
       </View>

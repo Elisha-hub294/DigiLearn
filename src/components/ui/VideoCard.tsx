@@ -60,6 +60,7 @@ export function VideoCard({
   const [showGuestSaveDialog, setShowGuestSaveDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [checkingVideo, setCheckingVideo] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
   const menuButtonRef = useRef<View>(null);
@@ -93,6 +94,7 @@ export function VideoCard({
   );
 
   const handleDelete = async () => {
+    setIsDeleting(true);
     try {
       await deleteResource("trendingLessons", item.id);
     } catch (error) {
@@ -290,6 +292,7 @@ export function VideoCard({
     <>
       <Animated.View
         entering={FadeInDown.delay(Math.min(index * 60, 300)).duration(380)}
+        pointerEvents={isDeleting ? "none" : "auto"}
         style={[styles.card, isGrid && styles.gridCard]}
       >
         <View style={styles.thumbnail}>
